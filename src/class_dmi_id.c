@@ -156,7 +156,7 @@ gboolean dmi_id_verify(sysobj *obj) {
     if (!strcmp(obj->name, "id")) {
         if (verify_parent_name(obj, "dmi"))
             return TRUE;
-    } else if (verify_parent(obj, "dmi/id"))
+    } else if (verify_parent(obj, "/dmi/id"))
         return TRUE;
     return FALSE;
 }

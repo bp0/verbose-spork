@@ -24,6 +24,7 @@ enum {
     FMT_OPT_SHORT    = 1<<1,   /* shortest version please */
     FMT_OPT_NO_UNIT  = 1<<2,   /* don't include unit */
     FMT_OPT_NO_JUNK  = 1<<3,   /* class specific, for example: dmi/id ignores placeholder strings */
+    FMT_NO_TRANSLATE = 1<<4,   /* don't translate via gettext() */
 
     FMT_OPT_ATERM  = 1<<16,  /* ANSI color terminal */
     FMT_OPT_PANGO  = 1<<17,  /* pango markup for gtk */

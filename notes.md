@@ -25,5 +25,5 @@ notes/todo
   - id lookup
 * [ ] usb
 * [X] any human-readable class
-* [ ] cputopo
+* [X] cputopo
 

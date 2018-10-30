@@ -134,8 +134,11 @@ gchar *cpufreq_format_policy(sysobj *obj, int fmt_opts) {
         gchar *scl_cur =
             sysobj_format_from_fn(obj->path, "scaling_cur_freq", fmt_opts | FMT_OPT_PART);
 
-        ret = g_strdup_printf("%s %s (%s - %s) [ %s ]",
-                scl_drv, scl_gov, scl_min, scl_max, scl_cur );
+        if (fmt_opts & FMT_OPT_SHORT)
+            ret = g_strdup_printf("%s", scl_cur );
+        else
+            ret = g_strdup_printf("%s %s (%s - %s) [ %s ]",
+                    scl_drv, scl_gov, scl_min, scl_max, scl_cur );
 
         g_free(scl_min);
         g_free(scl_max);

@@ -20,8 +20,17 @@ uint32_t cpu_get_id(const gchar *name) {
 
 gchar *cpu_format(sysobj *obj, int fmt_opts) {
     if (obj) {
-        /* TODO: get nice description */
-        return g_strdup_printf(_("Logical CPU #%u"), cpu_get_id(obj->name) );
+        /* TODO: more description */
+        gchar *topo_str =
+            sysobj_format_from_fn(obj->path, "topology", fmt_opts | FMT_OPT_SHORT );
+        gchar *freq_str =
+            sysobj_format_from_fn(obj->path, "cpufreq", fmt_opts | FMT_OPT_SHORT );
+
+        gchar *ret = g_strdup_printf(_("Logical CPU %s %s"), topo_str, freq_str );
+
+        g_free(topo_str);
+        g_free(freq_str);
+        return ret;
     }
     return simple_format(obj, fmt_opts);
 }
