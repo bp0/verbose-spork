@@ -8,6 +8,7 @@
 #include <unistd.h>  /* for getuid() */
 #include "config.h"
 #include "gettext.h"
+#include "term_color.h" /* used in formatting output */
 
 enum {
     OF_NONE          = 0,
@@ -22,8 +23,9 @@ enum {
     FMT_OPT_PART     = 1,      /* part of larger string */
     FMT_OPT_SHORT    = 1<<1,   /* shortest version please */
     FMT_OPT_NO_UNIT  = 1<<2,   /* don't include unit */
+    FMT_OPT_NO_JUNK  = 1<<3,   /* class specific, for example: dmi/id ignores placeholder strings */
 
-    FMT_OPT_TERM   = 1<<16,  /* terminal */
+    FMT_OPT_ATERM  = 1<<16,  /* ANSI color terminal */
     FMT_OPT_PANGO  = 1<<17,  /* pango markup for gtk */
     FMT_OPT_HTML   = 1<<18,  /* html */
 };
@@ -32,6 +34,7 @@ typedef struct sysobj sysobj;
 typedef struct sysobj_data sysobj_data;
 
 typedef struct sysobj_class {
+    const gchar *tag;
     const gchar *pattern;
     guint flags;
     const gchar *s_label; /* label for "simple" classes */
@@ -43,6 +46,7 @@ typedef struct sysobj_class {
     gchar *(*f_format) (sysobj *obj, int fmt_opts);  /* translated human-readable value */
     double (*f_update_interval) (sysobj *obj); /* time until the value might change */
     int (*f_compare) (const sysobj_data *a, const sysobj_data *b);
+    guint (*f_flags) (sysobj *obj); /* provide flags, result replaces flags */
 } sysobj_class;
 
 typedef struct sysobj_data {
@@ -67,12 +71,17 @@ struct sysobj {
     gchar *path;     /* canonical */
     gchar *name;
 
+    gboolean req_is_link;
+
     gboolean exists;
     gboolean is_dir;
     gboolean access_fail; /* needed root, but didn't have it */
     sysobj_data data;
     const sysobj_class *cls;
 };
+
+extern gchar sysobj_root[];
+gboolean sysobj_root_set(const gchar *alt_root);
 
 gboolean util_have_root();
 void util_null_trailing_slash(gchar *str);
@@ -83,6 +92,7 @@ gsize util_count_lines(const gchar *str);
 gboolean verify_lblnum(sysobj *obj, const gchar *lbl);
 gboolean verify_lblnum_child(sysobj *obj, const gchar *lbl);
 gboolean verify_parent_name(sysobj *obj, const gchar *parent_name);
+gboolean verify_parent(sysobj *obj, const gchar *parent_path_suffix);
 
 /* to be used by sysobj_class::f_compare */
 int compare_str_base10(const sysobj_data *a, const sysobj_data *b);
@@ -94,8 +104,16 @@ int compare_str_base10(const sysobj_data *a, const sysobj_data *b);
 
 void class_init();
 GSList *class_get_list();
-void class_add(sysobj_class *c);
-void class_add_simple(const gchar *pattern, const gchar *label, guint flags);
+
+#define class_new() g_new0(sysobj_class, 1)
+#define class_free(c) g_free(c)
+const sysobj_class *class_add(sysobj_class *c);
+const sysobj_class *class_add_full(sysobj_class *base,
+    const gchar *tag, const gchar *pattern, const gchar *s_label, const gchar *s_info, guint flags,
+    void *f_verify, void *f_label, void *f_info,
+    void *f_format, void *f_update_interval, void *f_compare, void *f_flags );
+const sysobj_class *class_add_simple(const gchar *pattern, const gchar *label, const gchar *tag, guint flags);
+
 gboolean class_has_flag(const sysobj_class *c, guint flag);
 void class_free_list(); /* should be called by class_cleanup(); */
 void class_cleanup();
@@ -107,6 +125,7 @@ sysobj *sysobj_new();
 sysobj *sysobj_new_from_fn(const gchar *base, const gchar *name);
 void sysobj_fscheck(sysobj *s);
 void sysobj_classify(sysobj *s);
+gboolean sysobj_has_flag(sysobj *s, guint flag);
 void sysobj_read_data(sysobj *s);
 const gchar *sysobj_label(sysobj *s);
 gchar *sysobj_format(sysobj *s, int fmt_opts);

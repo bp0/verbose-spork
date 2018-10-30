@@ -1,6 +1,13 @@
 
 #include "sysobj.h"
 
+gchar sysobj_root[1024] = "";
+gboolean sysobj_root_set(const gchar *alt_root) {
+    snprintf(sysobj_root, sizeof(sysobj_root) - 1, "%s", alt_root);
+    util_null_trailing_slash(sysobj_root);
+    return TRUE;
+}
+
 gboolean util_have_root() {
     return (getuid() == 0) ? TRUE : FALSE;
 }
@@ -88,27 +95,66 @@ gchar *simple_format(sysobj* obj, int fmt_opts) {
     return NULL;
 }
 
-void class_add(sysobj_class *c) {
-    if (c) {
+const sysobj_class *class_add(sysobj_class *c) {
+    if (c)
         class_list = g_slist_append(class_list, c);
-    }
+    return c;
 }
 
-void class_add_simple(const gchar *pattern, const gchar *label, guint flags) {
-    if (pattern) {
-        sysobj_class *c = g_new0(sysobj_class, 1);
-        c->pattern = pattern;
-        c->s_label = label;
-        c->flags = flags;
-        c->f_label = simple_label;
-        c->f_format = simple_format;
-        class_add(c);
+const sysobj_class *class_add_full(sysobj_class *base,
+    const gchar *tag, const gchar *pattern,
+    const gchar *s_label, const gchar *s_info, guint flags,
+    void *f_verify, void *f_label, void *f_info,
+    void *f_format, void *f_update_interval, void *f_compare,
+    void *f_flags ) {
+
+    sysobj_class *nc = g_new0(sysobj_class, 1);
+#define CLASS_PROVIDE_OR_INHERIT(M) nc->M = M ? M : (base ? base->M : 0 )
+    CLASS_PROVIDE_OR_INHERIT(tag);
+    CLASS_PROVIDE_OR_INHERIT(pattern);
+    CLASS_PROVIDE_OR_INHERIT(s_label);
+    CLASS_PROVIDE_OR_INHERIT(s_info);
+    CLASS_PROVIDE_OR_INHERIT(flags);
+    CLASS_PROVIDE_OR_INHERIT(f_verify);
+    CLASS_PROVIDE_OR_INHERIT(f_label);
+    CLASS_PROVIDE_OR_INHERIT(f_info);
+    CLASS_PROVIDE_OR_INHERIT(f_format);
+    CLASS_PROVIDE_OR_INHERIT(f_update_interval);
+    CLASS_PROVIDE_OR_INHERIT(f_compare);
+    CLASS_PROVIDE_OR_INHERIT(f_flags);
+
+    if (nc->pattern)
+        return class_add(nc);
+    else
+        g_free(nc);
+
+    return NULL;
+}
+
+const sysobj_class *class_add_simple(const gchar *pattern, const gchar *label, const gchar *tag, guint flags) {
+    return class_add_full(NULL, tag, pattern, label, NULL, flags, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+}
+
+gboolean sysobj_has_flag(sysobj *s, guint flag) {
+    if (s) {
+        const sysobj_class *c = s->cls;
+        if (c) {
+            guint f = c->flags;
+            if (c->f_flags)
+                f = c->f_flags(s);
+            if (f & flag)
+                return TRUE;
+        }
     }
+    return FALSE;
 }
 
 gboolean class_has_flag(const sysobj_class *c, guint flag) {
     if (c) {
-        if (c->flags & flag)
+        guint f = c->flags;
+        if (c->f_flags)
+            f = c->f_flags(NULL);
+        if (f & flag)
             return TRUE;
     }
     return FALSE;
@@ -198,7 +244,7 @@ void sysobj_read_data(sysobj *s) {
                 s->data.is_utf8 = g_utf8_validate(s->data.str, s->data.len, NULL);
                 s->data.lines = util_count_lines(s->data.str);
             } else {
-                if (class_has_flag(s->cls, OF_REQ_ROOT) && !util_have_root())
+                if (sysobj_has_flag(s, OF_REQ_ROOT) && !util_have_root())
                     s->access_fail = TRUE;
                 if (error && error->code == G_FILE_ERROR_ACCES)
                     s->access_fail = TRUE;
@@ -212,7 +258,8 @@ sysobj *sysobj_new_from_fn(const gchar *base, const gchar *name) {
     sysobj *s = NULL;
     if (base) {
         s = sysobj_new();
-        gchar *nbase = g_strdup(base);
+        gchar *nbase = g_strdup_printf("%s%s%s",
+            sysobj_root, (*base == '/') ? "" : "/", base );
         util_null_trailing_slash(nbase);
         if (name) {
             s->path_req = g_strdup_printf("%s/%s", nbase, name);
@@ -221,6 +268,7 @@ sysobj *sysobj_new_from_fn(const gchar *base, const gchar *name) {
             s->path_req = nbase;
         }
         s->name_req = g_path_get_basename(s->path_req);
+        s->req_is_link = g_file_test(s->path_req, G_FILE_TEST_IS_SYMLINK);
 
         s->path = util_canonicalize(s->path_req);
         if (!s->path)
@@ -279,11 +327,22 @@ void class_dump_list() {
     }
 }
 
+gboolean verify_parent(sysobj *obj, const gchar *parent_path_suffix) {
+    gboolean verified = FALSE;
+    if (obj && obj->name) {
+        gchar *pp = sysobj_parent_path(obj);
+        if (g_str_has_suffix(pp, parent_path_suffix))
+            verified = TRUE;
+        g_free(pp);
+    }
+    return verified;
+}
+
 gboolean verify_parent_name(sysobj *obj, const gchar *parent_name) {
     gboolean verified = FALSE;
     if (obj && obj->name) {
         gchar *pn = sysobj_parent_name(obj);
-        if (strcmp(pn, parent_name) == 0)
+        if (!strcmp(pn, parent_name))
             verified = TRUE;
         g_free(pn);
     }

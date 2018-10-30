@@ -1,6 +1,8 @@
 #include <stdio.h> /* for sscanf() */
 #include "sysobj.h"
 
+#define VSPK_CLASS_TAG "cpu/cache"
+
 /* in class_cpu.c */
 gboolean cpu_verify_child(sysobj *obj);
 
@@ -115,6 +117,7 @@ void class_cpucache() {
     sysobj_class *c = NULL;
 
     c = g_new0(sysobj_class, 1);
+    c->tag = VSPK_CLASS_TAG;
     c->pattern = "*/cpu*/cache";
     c->flags = OF_GLOB_PATTERN;
     c->f_verify = cpu_verify_child;
@@ -124,6 +127,7 @@ void class_cpucache() {
     class_add(c);
 
     c = g_new0(sysobj_class, 1);
+    c->tag = VSPK_CLASS_TAG;
     c->pattern = "*/cache/index*";
     c->flags = OF_GLOB_PATTERN;
     c->f_verify = cpucache_verify_index;
@@ -133,6 +137,7 @@ void class_cpucache() {
     class_add(c);
 
     c = g_new0(sysobj_class, 1);
+    c->tag = VSPK_CLASS_TAG;
     c->pattern = "*/cache/index*/type";
     c->flags = OF_GLOB_PATTERN;
     c->f_verify = cpucache_verify_index_child;
@@ -142,6 +147,7 @@ void class_cpucache() {
     class_add(c);
 
     c = g_new0(sysobj_class, 1);
+    c->tag = VSPK_CLASS_TAG;
     c->pattern = "*/cache/index*/size";
     c->flags = OF_GLOB_PATTERN;
     c->f_verify = cpucache_verify_index_child;

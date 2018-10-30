@@ -2,6 +2,8 @@
 #include <stdio.h> /* for sscanf() */
 #include "sysobj.h"
 
+#define VSPK_CLASS_TAG "cpu/cache"
+
 gboolean cpu_verify(sysobj *obj) {
     return verify_lblnum(obj, "cpu");
 }
@@ -36,6 +38,7 @@ void class_cpu() {
     sysobj_class *c = NULL;
 
     c = g_new0(sysobj_class, 1);
+    c->tag = VSPK_CLASS_TAG;
     c->pattern = "*/cpu*";
     c->flags = OF_GLOB_PATTERN;
     c->f_verify = cpu_verify;
@@ -45,6 +48,7 @@ void class_cpu() {
     class_add(c);
 
     c = g_new0(sysobj_class, 1);
+    c->tag = VSPK_CLASS_TAG;
     c->pattern = "*/cpu*/online";
     c->flags = OF_GLOB_PATTERN;
     c->f_verify = cpu_verify_child;
@@ -53,5 +57,5 @@ void class_cpu() {
     c->s_info = NULL; //TODO:
     class_add(c);
 
-    class_add_simple("microcode/version", _("Version"), OF_REQ_ROOT);
+    class_add_simple("microcode/version", _("Version"), VSPK_CLASS_TAG, OF_REQ_ROOT);
 }

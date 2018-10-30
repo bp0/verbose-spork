@@ -147,7 +147,6 @@ gchar *cpufreq_format_policy(sysobj *obj, int fmt_opts) {
     return simple_format(obj, fmt_opts);
 }
 
-
 void class_cpufreq() {
     sysobj_class *c = NULL;
 
@@ -162,6 +161,7 @@ void class_cpufreq() {
 
 #define CLS_PLZ(pat, unit)       \
     c = g_new0(sysobj_class, 1); \
+    c->tag = "cpufreq";          \
     c->pattern = pat;            \
     c->flags = OF_GLOB_PATTERN;  \
     cpufreq_class_for_##unit (c); \
