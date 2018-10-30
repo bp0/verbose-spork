@@ -127,6 +127,7 @@ void sysobj_fscheck(sysobj *s);
 void sysobj_classify(sysobj *s);
 gboolean sysobj_has_flag(sysobj *s, guint flag);
 void sysobj_read_data(sysobj *s);
+void sysobj_unread_data(sysobj *s); /* frees data, but keeps is_utf8, len, lines, etc. */
 const gchar *sysobj_label(sysobj *s);
 gchar *sysobj_format(sysobj *s, int fmt_opts);
 void sysobj_free(sysobj *s);

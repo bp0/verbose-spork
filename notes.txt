@@ -24,6 +24,6 @@ notes/todo
 * [ ] pci
     id lookup
 * [ ] usb
-* [ ] human-readable class
+* [X] any human-readable class
 * [ ] cputopo
 

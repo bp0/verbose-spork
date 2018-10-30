@@ -254,6 +254,14 @@ void sysobj_read_data(sysobj *s) {
     }
 }
 
+void sysobj_unread_data(sysobj *s) {
+    if (s) {
+        if (s->data.was_read && s->data.any)
+            g_free(s->data.any);
+        s->data.was_read = FALSE;
+    }
+}
+
 sysobj *sysobj_new_from_fn(const gchar *base, const gchar *name) {
     sysobj *s = NULL;
     if (base) {
@@ -322,7 +330,7 @@ void class_dump_list() {
     PARAM_NOT_UNUSED(c);
     while (l) {
         c = l->data;
-        DEBUG("class [ %s ] 0x%x", c->pattern, c->flags);
+        DEBUG("class {%s} [ %s ] 0x%x", c->tag ? c->tag : "none", c->pattern, c->flags);
         l = l->next;
     }
 }

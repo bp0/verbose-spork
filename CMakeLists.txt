@@ -32,6 +32,7 @@ add_executable(bsysinfo
         src/class_cpu.c
         src/class_cpufreq.c
         src/class_cpucache.c
+        src/class_any_utf8.c
 )
 target_link_libraries(bsysinfo
         ${GLIB_LIBRARIES}
