@@ -1,28 +1,28 @@
 notes/todo
 ==========
 
-# general
+## general
 
 * [ ] snapshot:
-    sysfs_snapshot.c / bin
-    store any classed item
+  - sysfs_snapshot.c / bin
+  - store any classed item
 
 * [ ] cmake: only build what can be built
 
 
-# sysobj
+## sysobj
 
 * [ ] in_scope:
-    sysobj::in_scope
-    sysobj::check_scope()
-        include/exclude pattern list
+  - sysobj::in_scope
+  - sysobj::check_scope()
+  - include/exclude pattern list
 
 * [X] class tags
 
-# classes
+## classes
 
 * [ ] pci
-    id lookup
+  - id lookup
 * [ ] usb
 * [X] any human-readable class
 * [ ] cputopo
