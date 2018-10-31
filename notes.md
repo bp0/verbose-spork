@@ -18,6 +18,7 @@ notes/todo
   - include/exclude pattern list
 
 * [X] class tags
+* [X] virtual items
 
 ## classes
 
@@ -26,4 +27,17 @@ notes/todo
 * [ ] usb
 * [X] any human-readable class
 * [X] cputopo
+* [ ] device tree
 
+## virtual
+
+* [X] :computer/board
+* [ ] :computer/cpu
+* [ ] :computer/mem
+* [ ] :computer/gpu
+* [ ] :computer/os
+* [ ] :computer/security
+  - ex: /sys/devices/system/cpu/vulnerabilities
+
+* [ ] :dmidecode
+  - started

@@ -24,13 +24,16 @@ typedef struct pin_list {
 } pin_list;
 
 pin *pin_new();
-pin *pin_new_sysobj(sysobj *obj);
+pin *pin_new_sysobj(sysobj *obj); /* takes ownership of obj */
 void pin_update(pin *p, gboolean force);
 void pin_free(void *p); /* void for glib */
 
 pin_list *pins_new();
-void pins_add_from_fn(pin_list *pl, const gchar *base, const gchar *name);
+int pins_add_from_fn(pin_list *pl, const gchar *base, const gchar *name);
 void pins_refresh(pin_list *pl);
+pin *pins_get_nth(pin_list *pl, int i);
+const pin *pins_pin_if_updated_since(pin_list *pl, int pi, double seconds_ago); /* NULL if unchanged, or pin* to avoid another pins_get_nth() */
+void pins_clear(pin_list *pl);
 void pins_free(pin_list *pl);
 
 #endif

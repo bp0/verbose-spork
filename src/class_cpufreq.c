@@ -92,8 +92,10 @@ const gchar *cpufreq_info(sysobj *obj) {
 }
 
 double cpufreq_update_interval_for_khz(sysobj *obj) {
-    if (obj)
-        return 100;
+    if (obj) {
+        if (g_strrstr(obj->name, "_cur_"))
+            return 0.25;
+    }
     return 0;
 }
 
@@ -155,6 +157,7 @@ void class_cpufreq() {
 
     c = g_new0(sysobj_class, 1);
     c->pattern = "*/cpufreq/policy*";
+    c->tag = "cpufreq/policy";
     c->flags = OF_GLOB_PATTERN;
     c->f_verify = cpufreq_verify_policy;
     c->s_label = _("Frequency Scaling Policy");

@@ -44,17 +44,16 @@ const gchar *cputopo_label(sysobj *obj) {
     return NULL;
 }
 
-int cpu_get_id(const gchar *name); /* in class_cpu.c */
 void cpu_pct(sysobj *obj, int *logical, int *pack, int *core_of_pack, int *thread_of_core) {
     gchar *pn = sysobj_parent_name(obj);
-    *logical = cpu_get_id(pn);
+    *logical = util_get_did(pn, "cpu");
 
     gchar *pack_str =
-        sysobj_format_from_fn(obj->path, "physical_package_id", FMT_NO_TRANSLATE | FMT_OPT_PART | FMT_OPT_NO_UNIT );
+        sysobj_format_from_fn(obj->path, "physical_package_id", FMT_OPT_RAW_OR_NULL );
     gchar *core_id =
-        sysobj_format_from_fn(obj->path, "core_id", FMT_NO_TRANSLATE | FMT_OPT_PART | FMT_OPT_NO_UNIT );
+        sysobj_format_from_fn(obj->path, "core_id", FMT_OPT_RAW_OR_NULL );
     gchar *thread_sibs =
-        sysobj_format_from_fn(obj->path, "thread_siblings_list", FMT_NO_TRANSLATE | FMT_OPT_PART | FMT_OPT_NO_UNIT );
+        sysobj_format_from_fn(obj->path, "thread_siblings_list", FMT_OPT_RAW_OR_NULL );
 
     *pack = pack_str ? strtol(pack_str, NULL, 10) : -1;
     *core_of_pack = core_id ? strtol(core_id, NULL, 10) : -1;
@@ -85,27 +84,13 @@ gchar *topology_summary(sysobj *obj, int fmt_opts) {
     int logical = 0, pack = 0, core_of_pack = 0, thread_of_core = 0;
     cpu_pct(obj, &logical, &pack, &core_of_pack, &thread_of_core);
     return g_strdup_printf(
-        (fmt_opts & FMT_NO_TRANSLATE) ? fmt : _(fmt),
+        (fmt_opts & FMT_OPT_NO_TRANSLATE) ? fmt : _(fmt),
         logical, pack, core_of_pack, thread_of_core);
 }
 
 gchar *cputopo_format(sysobj *obj, int fmt_opts) {
     if (!strcmp(obj->name, "topology"))
         return topology_summary(obj, fmt_opts);
-/*
-    if (fmt_opts & FMT_OPT_NO_JUNK && dmi_value_is_placeholder(obj) ) {
-        gchar *ret = NULL, *v = g_strdup(obj->data.str);
-        g_strchomp(v);
-        if (fmt_opts & FMT_OPT_HTML || fmt_opts & FMT_OPT_PANGO)
-            ret = g_strdup_printf("<s>%s</s>", v);
-        else if (fmt_opts & FMT_OPT_ATERM)
-            ret = g_strdup_printf(ANSI_COLOR_RED "%s" ANSI_COLOR_RESET, v);
-        else
-            ret = g_strdup_printf("[X] %s", v);
-        g_free(v);
-        return ret;
-    }
-    */
     return simple_format(obj, fmt_opts);
 }
 

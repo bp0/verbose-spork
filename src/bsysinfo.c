@@ -24,9 +24,6 @@ void print_obj(sysobj *s) {
 }
 
 int main(int argc, char **argv) {
-    GDir *dir;
-    const gchar *fn;
-
     const gchar *altroot = NULL;
     const gchar *query = NULL;
 
@@ -42,7 +39,7 @@ int main(int argc, char **argv) {
         query = argv[2];
     }
 
-    class_init();
+    sysobj_init();
 
     if (DEBUG_BUILD)
         class_dump_list();
@@ -59,23 +56,23 @@ int main(int argc, char **argv) {
 
     if (ex_obj->exists) {
         print_obj(ex_obj);
-
         if (ex_obj->is_dir) {
-            dir = g_dir_open(ex_obj->path, 0 , NULL);
-            if (dir) {
-                printf("------------------\n");
-                while((fn = g_dir_read_name(dir)) != NULL) {
-                    sysobj *obj = sysobj_new_from_fn(ex_obj->path, fn);
-                    print_obj(obj);
-                    sysobj_free(obj);
-                }
-                g_dir_close(dir);
+            GSList *l = NULL, *childs = sysobj_children(ex_obj);
+            int len = g_slist_length(childs);
+            printf("---[%d items]------------------------ \n", len);
+            l = childs;
+            while(l) {
+                sysobj *obj = sysobj_new_from_fn(ex_obj->path, l->data);
+                print_obj(obj);
+                sysobj_free(obj);
+                l = l->next;
             }
+            g_slist_free_full(childs, g_free);
         }
     }
     sysobj_free(ex_obj);
 
-    class_cleanup();
+    sysobj_cleanup();
 
     return 0;
 }
