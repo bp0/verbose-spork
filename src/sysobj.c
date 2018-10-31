@@ -357,17 +357,23 @@ gboolean verify_parent_name(sysobj *obj, const gchar *parent_name) {
     return verified;
 }
 
+int32_t util_get_did(gchar *str, const gchar *lbl) {
+    int32_t id = -2;
+    gchar tmpfmt[128] = "";
+    gchar tmpchk[128] = "";
+    sprintf(tmpfmt, "%s%s", lbl, "%d");
+    if ( sscanf(str, tmpfmt, &id) ) {
+        sprintf(tmpchk, tmpfmt, id);
+        if ( strcmp(str, tmpchk) == 0 )
+            return id;
+    }
+    return -1;
+}
+
 gboolean verify_lblnum(sysobj *obj, const gchar *lbl) {
     if (lbl && obj && obj->name) {
-        uint32_t id = 0;
-        gchar tmpfmt[128] = "";
-        gchar tmpchk[128] = "";
-        sprintf(tmpfmt, "%s%s", lbl, "%u");
-        if ( sscanf(obj->name, tmpfmt, &id) ) {
-            sprintf(tmpchk, tmpfmt, id);
-            if ( strcmp(obj->name, tmpchk) == 0 )
-                return TRUE;
-        }
+        if ( util_get_did(obj->name, lbl) >= 0 )
+            return TRUE;
     }
     return FALSE;
 }
@@ -375,17 +381,10 @@ gboolean verify_lblnum(sysobj *obj, const gchar *lbl) {
 gboolean verify_lblnum_child(sysobj *obj, const gchar *lbl) {
     gboolean verified = FALSE;
     if (lbl && obj && obj->name) {
-        uint32_t id = 0;
-        gchar tmpfmt[128] = "";
-        gchar tmpchk[128] = "";
-        sprintf(tmpfmt, "%s%s", lbl, "%u");
         gchar *parent_name = sysobj_parent_name(obj);
-        if ( sscanf(parent_name, tmpfmt, &id) ) {
-            sprintf(tmpchk, tmpfmt, id);
-            if ( strcmp(parent_name, tmpchk) == 0 )
-                verified = TRUE;
-            g_free(parent_name);
-        }
+        if ( util_get_did(parent_name, lbl) >= 0 )
+            verified = TRUE;
+        g_free(parent_name);
     }
     return verified;
 }

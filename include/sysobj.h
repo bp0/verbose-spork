@@ -88,6 +88,7 @@ gboolean util_have_root();
 void util_null_trailing_slash(gchar *str);
 gchar *util_canonicalize(const gchar *path);
 gsize util_count_lines(const gchar *str);
+int32_t util_get_did(gchar *str, const gchar *lbl); /* ("cpu6", "cpu") -> 6 */
 
 /* to be called by sysobj_class::f_verify */
 gboolean verify_lblnum(sysobj *obj, const gchar *lbl);
