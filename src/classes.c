@@ -16,7 +16,7 @@ void class_init() {
 
 /* consumes every direct child, careful with order */
     class_dmi_id();
-/* consumes every child, careful with order */
+/* anything left that is human-readable */
     class_any_utf8();
 }
 

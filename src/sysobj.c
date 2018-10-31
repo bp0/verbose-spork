@@ -61,6 +61,22 @@ const gchar *simple_label(sysobj* obj) {
     return NULL;
 }
 
+gboolean sysobj_exists(sysobj *s) {
+    if (s) {
+        sysobj_fscheck(s);
+        return s->exists;
+    }
+    return FALSE;
+}
+
+gboolean sysobj_exists_from_fn(const gchar *base, const gchar *name) {
+    gboolean exists = FALSE;
+    sysobj *obj = sysobj_new_from_fn(base, name);
+    exists = sysobj_exists(obj);
+    sysobj_free(obj);
+    return exists;
+}
+
 gchar *sysobj_format_from_fn(const gchar *base, const gchar *name, int fmt_opts) {
     gchar *ret = NULL;
     sysobj *obj = sysobj_new_from_fn(base, name);
@@ -69,25 +85,35 @@ gchar *sysobj_format_from_fn(const gchar *base, const gchar *name, int fmt_opts)
     return ret;
 }
 
+#define TERM_COLOR_FMT(CLR) ((fmt_opts & FMT_OPT_ATERM) ? (CLR "%s" ANSI_COLOR_RESET) : "%s")
+
 gchar *simple_format(sysobj* obj, int fmt_opts) {
     static const gchar *special[] = {
         N_("<needs root>"),
         N_("<node>"),
         N_("<binary value>"),
+        N_("<not found>"),
     };
-
-    FMT_OPTS_IGNORE();
 
     if (obj) {
         gchar *nice = NULL;
-        if ( obj->access_fail )
-            nice = g_strdup( special[0] );
+        if ( !obj->exists ) {
+            if (fmt_opts & FMT_OPT_NULL_IF_MISSING)
+                nice = NULL;
+            else
+                nice = g_strdup_printf( TERM_COLOR_FMT(ANSI_COLOR_RED), special[3] );
+        } else if ( obj->access_fail )
+            nice = g_strdup_printf( TERM_COLOR_FMT(ANSI_COLOR_RED), special[0] );
         else if ( obj->is_dir )
-            nice = g_strdup( special[1] );
+            nice = g_strdup_printf( TERM_COLOR_FMT(ANSI_COLOR_BLUE), special[1] );
         else if ( !obj->data.is_utf8 )
-            nice = g_strdup( special[2] );
+            nice = g_strdup_printf( TERM_COLOR_FMT(ANSI_COLOR_YELLOW), special[2] );
         else {
-            nice = g_strdup( obj->data.str );
+            if ( *(obj->data.str) == 0
+                && ( fmt_opts & FMT_OPT_NULL_IF_MISSING) )
+                nice = NULL;
+            else
+                nice = g_strdup( obj->data.str );
             g_strchomp(nice);
         }
         return nice;

@@ -26,4 +26,5 @@ notes/todo
 * [ ] usb
 * [X] any human-readable class
 * [X] cputopo
+* [ ] device tree
 

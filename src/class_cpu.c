@@ -12,24 +12,24 @@ gboolean cpu_verify_child(sysobj *obj) {
     return verify_lblnum_child(obj, "cpu");
 }
 
-uint32_t cpu_get_id(const gchar *name) {
-    uint32_t id = 0;
-    sscanf(name, "cpu%u", &id);
-    return id;
-}
-
 gchar *cpu_format(sysobj *obj, int fmt_opts) {
     if (obj) {
         /* TODO: more description */
-        gchar *topo_str =
-            sysobj_format_from_fn(obj->path, "topology", fmt_opts | FMT_OPT_SHORT );
-        gchar *freq_str =
-            sysobj_format_from_fn(obj->path, "cpufreq", fmt_opts | FMT_OPT_SHORT );
+        int logical = util_get_did(obj->name, "cpu");
+        gchar *lstr = g_strdup_printf("%d", logical);
 
-        gchar *ret = g_strdup_printf(_("Logical CPU %s %s"), topo_str, freq_str );
+        gchar *topo_str =
+            sysobj_format_from_fn(obj->path, "topology", fmt_opts | FMT_OPT_SHORT | FMT_OPT_OR_NULL );
+        gchar *freq_str =
+            sysobj_format_from_fn(obj->path, "cpufreq", fmt_opts | FMT_OPT_SHORT | FMT_OPT_OR_NULL );
+
+        gchar *ret = g_strdup_printf(_("Logical CPU %s %s"),
+            topo_str ? topo_str : lstr,
+            freq_str ? freq_str : "");
 
         g_free(topo_str);
         g_free(freq_str);
+        g_free(lstr);
         return ret;
     }
     return simple_format(obj, fmt_opts);

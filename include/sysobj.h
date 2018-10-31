@@ -19,17 +19,23 @@ enum {
 };
 
 enum {
-    FMT_OPT_NONE     = 0,      /* plain */
-    FMT_OPT_PART     = 1,      /* part of larger string */
-    FMT_OPT_SHORT    = 1<<1,   /* shortest version please */
-    FMT_OPT_NO_UNIT  = 1<<2,   /* don't include unit */
-    FMT_OPT_NO_JUNK  = 1<<3,   /* class specific, for example: dmi/id ignores placeholder strings */
-    FMT_NO_TRANSLATE = 1<<4,   /* don't translate via gettext() */
+    FMT_OPT_NONE     = 0,          /* plain */
+    FMT_OPT_PART     = 1,          /* part of larger string */
+    FMT_OPT_SHORT    = 1<<1,       /* shortest version please */
+    FMT_OPT_NO_UNIT  = 1<<2,       /* don't include unit */
+    FMT_OPT_NO_JUNK  = 1<<3,       /* class specific, for example: dmi/id ignores placeholder strings */
+    FMT_OPT_NO_TRANSLATE = 1<<4,   /* don't translate via gettext() */
+
+    FMT_OPT_NULL_IF_EMPTY   = 1<<8,
+    FMT_OPT_NULL_IF_MISSING = 1<<9,
 
     FMT_OPT_ATERM  = 1<<16,  /* ANSI color terminal */
     FMT_OPT_PANGO  = 1<<17,  /* pango markup for gtk */
     FMT_OPT_HTML   = 1<<18,  /* html */
 };
+
+#define FMT_OPT_OR_NULL      FMT_OPT_NULL_IF_EMPTY | FMT_OPT_NULL_IF_MISSING
+#define FMT_OPT_RAW_OR_NULL  FMT_OPT_NO_TRANSLATE | FMT_OPT_PART | FMT_OPT_NO_UNIT | FMT_OPT_OR_NULL
 
 typedef struct sysobj sysobj;
 typedef struct sysobj_data sysobj_data;
@@ -127,6 +133,8 @@ sysobj *sysobj_new();
 sysobj *sysobj_new_from_fn(const gchar *base, const gchar *name);
 void sysobj_fscheck(sysobj *s);
 void sysobj_classify(sysobj *s);
+gboolean sysobj_exists(sysobj *s);
+gboolean sysobj_exists_from_fn(const gchar *base, const gchar *name);
 gboolean sysobj_has_flag(sysobj *s, guint flag);
 void sysobj_read_data(sysobj *s);
 void sysobj_unread_data(sysobj *s); /* frees data, but keeps is_utf8, len, lines, etc. */
