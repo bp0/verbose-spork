@@ -47,7 +47,7 @@ char *kv_col_names[] = {
 };
 
 typedef struct {
-    pin *p;
+    const pin *p;
     GtkWidget *container;
     GtkWidget *box;
 } pin_inspect;
@@ -65,7 +65,7 @@ pin_inspect *pin_inspect_create() {
     return pi;
 }
 
-void pin_inspect_do(pin_inspect *pi, pin *p, int fmt_opts) {
+void pin_inspect_do(pin_inspect *pi, const pin *p, int fmt_opts) {
     pi->p = p;
 
     /* clear */
@@ -271,7 +271,7 @@ void pins_list_view_append(pins_list_view *plv, const gchar *path) {
 gboolean pins_list_view_update_row(GtkTreeModel *model, GtkTreePath *path, GtkTreeIter *iter, gpointer data) {
     int pi, live;
     const pin *p = NULL;
-    const pins_list_view *plv = data;
+    pins_list_view *plv = data;
     gtk_tree_model_get(model, iter, KV_COL_LIVE, &live, -1);
     if (live) {
         gtk_tree_model_get(model, iter, KV_COL_INDEX, &pi, -1);
@@ -280,8 +280,11 @@ gboolean pins_list_view_update_row(GtkTreeModel *model, GtkTreePath *path, GtkTr
             gchar *nice = sysobj_format(p->obj, plv->fmt_opts);
             gtk_tree_store_set(GTK_TREE_STORE(model), iter, KV_COL_VALUE, nice, -1);
             g_free(nice);
+            if (plv->pinspect->p == p)
+                pin_inspect_do(plv->pinspect, p, plv->fmt_opts);
         }
     }
+    return FALSE;
 }
 
 static void pins_list_view_update(pins_list_view *plv) {
