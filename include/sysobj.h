@@ -121,6 +121,7 @@ void sysobj_virt_add(sysobj_virt *vo);
 sysobj_virt *sysobj_virt_find(const gchar *path);
 gchar *sysobj_virt_get_data(const sysobj_virt *vo, const gchar *req);
 int sysobj_virt_get_type(const sysobj_virt *vo, const gchar *req);
+GSList *sysobj_virt_children_auto(const sysobj_virt *vo, const gchar *req);
 GSList *sysobj_virt_children(const sysobj_virt *vo, const gchar *req);
 void sysobj_virt_cleanup();
 
@@ -182,6 +183,7 @@ void sysobj_free(sysobj *s);
 gchar *sysobj_parent_path(sysobj *s);
 gchar *sysobj_parent_name(sysobj *s);
 GSList *sysobj_children(sysobj *s);
+GSList *sysobj_children_ex(sysobj *s, gchar *include_glob, gchar *exclude_glob, gboolean sort);
 
 gchar *sysobj_format_from_fn(const gchar *base, const gchar *name, int fmt_opts);
 

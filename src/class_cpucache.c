@@ -27,8 +27,6 @@ gchar *cpucache_format_type(sysobj *obj, int fmt_opts) {
         { NULL, NULL, NULL }
     };
 
-    /* -Wunused-variable */
-
     if (obj) {
         if (obj->data.str) {
             gchar *ret = NULL;
@@ -102,13 +100,23 @@ gchar *cpucache_format_index(sysobj *obj, int fmt_opts) {
 
 gchar *cpucache_format_collection(sysobj *obj, int fmt_opts) {
     if (obj) {
-        gchar *ret = NULL;
-        //TODO: step through and get them all
-        gchar *i0 =
-            sysobj_format_from_fn(obj->path, "index0", fmt_opts | FMT_OPT_SHORT | FMT_OPT_PART );
-        ret = g_strdup_printf("%s ...", i0);
-        g_free(i0);
-        return ret;
+        gchar ret[256] = "";
+        int count = 0;
+        GSList *index_list = sysobj_children_ex(obj, "index*", NULL, TRUE);
+        GSList *l = index_list;
+        while(l) {
+            //TODO: check length
+            gchar *ix = sysobj_format_from_fn(obj->path, l->data, fmt_opts | FMT_OPT_SHORT | FMT_OPT_PART );
+            if (ix) {
+                if (count)
+                    strcat(ret, " ");
+                strcat(ret, ix);
+                count++;
+            }
+            g_free(ix);
+            l = l->next;
+        }
+        return g_strdup(ret);
     }
     return simple_format(obj, fmt_opts);
 }
@@ -118,7 +126,7 @@ void class_cpucache() {
 
     c = g_new0(sysobj_class, 1);
     c->tag = VSPK_CLASS_TAG;
-    c->pattern = "*/cpu*/cache";
+    c->pattern = "/sys/*/cpu*/cache";
     c->flags = OF_GLOB_PATTERN;
     c->f_verify = cpu_verify_child;
     c->f_format = cpucache_format_collection;
@@ -128,7 +136,7 @@ void class_cpucache() {
 
     c = g_new0(sysobj_class, 1);
     c->tag = VSPK_CLASS_TAG;
-    c->pattern = "*/cache/index*";
+    c->pattern = "/sys/*/cache/index*";
     c->flags = OF_GLOB_PATTERN;
     c->f_verify = cpucache_verify_index;
     c->f_format = cpucache_format_index;
@@ -138,7 +146,7 @@ void class_cpucache() {
 
     c = g_new0(sysobj_class, 1);
     c->tag = VSPK_CLASS_TAG;
-    c->pattern = "*/cache/index*/type";
+    c->pattern = "/sys/*/cache/index*/type";
     c->flags = OF_GLOB_PATTERN;
     c->f_verify = cpucache_verify_index_child;
     c->f_format = cpucache_format_type;
@@ -148,7 +156,7 @@ void class_cpucache() {
 
     c = g_new0(sysobj_class, 1);
     c->tag = VSPK_CLASS_TAG;
-    c->pattern = "*/cache/index*/size";
+    c->pattern = "/sys/*/cache/index*/size";
     c->flags = OF_GLOB_PATTERN;
     c->f_verify = cpucache_verify_index_child;
     c->f_format = cpucache_format_size;

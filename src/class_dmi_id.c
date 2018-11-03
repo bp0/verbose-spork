@@ -358,7 +358,7 @@ void class_dmi_id() {
 
     cls_dmi_id = class_new();
     cls_dmi_id->tag = "dmi/id";
-    cls_dmi_id->pattern = "*/dmi/id*";
+    cls_dmi_id->pattern = "/sys/*/dmi/id*";
     cls_dmi_id->flags = OF_GLOB_PATTERN;
     cls_dmi_id->f_verify = dmi_id_verify;
     cls_dmi_id->f_label = dmi_id_label;

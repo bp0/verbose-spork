@@ -35,6 +35,11 @@ gchar *cpu_format(sysobj *obj, int fmt_opts) {
     return simple_format(obj, fmt_opts);
 }
 
+double cpu_update_interval(sysobj *obj) {
+    PARAM_NOT_UNUSED(obj);
+    return 1.0;
+}
+
 gchar *cpu_format_1yes0no(sysobj *obj, int fmt_opts) {
     if (obj && obj->data.str) {
         int value = strtol(obj->data.str, NULL, 10);
@@ -48,17 +53,18 @@ void class_cpu() {
 
     c = g_new0(sysobj_class, 1);
     c->tag = VSPK_CLASS_TAG;
-    c->pattern = "*/cpu*";
+    c->pattern = "/sys/*/cpu*";
     c->flags = OF_GLOB_PATTERN;
     c->f_verify = cpu_verify;
     c->f_format = cpu_format;
+    c->f_update_interval = cpu_update_interval;
     c->s_label = _("Logical CPU");
     c->s_info = NULL; //TODO:
     class_add(c);
 
     c = g_new0(sysobj_class, 1);
     c->tag = VSPK_CLASS_TAG;
-    c->pattern = "*/cpu*/online";
+    c->pattern = "/sys/*/cpu*/online";
     c->flags = OF_GLOB_PATTERN;
     c->f_verify = cpu_verify_child;
     c->f_format = cpu_format_1yes0no;

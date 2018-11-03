@@ -54,13 +54,16 @@ typedef struct {
 
 pin_inspect *pin_inspect_create() {
     pin_inspect *pi = g_new0(pin_inspect, 1);
-    pi->box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
 
-    pi->container = gtk_scrolled_window_new(NULL, NULL);
-    gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(pi->container), GTK_SHADOW_IN);
-    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(pi->container), GTK_POLICY_AUTOMATIC, GTK_POLICY_ALWAYS);
-    gtk_container_add(GTK_CONTAINER(pi->container), pi->box);
-    gtk_widget_show(pi->box);
+    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+    GtkWidget *scroll = gtk_scrolled_window_new(NULL, NULL);
+    //gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scroll), GTK_SHADOW_IN);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_ALWAYS);
+    gtk_container_add(GTK_CONTAINER(scroll), box);
+    gtk_widget_show(box);
+
+    pi->box = box;
+    pi->container = scroll;
 
     return pi;
 }
@@ -119,9 +122,11 @@ typedef struct {
     GtkWidget *container;
     int fmt_opts;
     pin_inspect *pinspect;
+    GtkWidget *btn_watch; /* */
 } pins_list_view;
 
 void browser_navigate(const gchar *new_location);
+void watchlist_add(gchar *path);
 
 void pins_list_view_select(GtkTreeView *tree_view, gpointer user_data) {
     GtkTreeIter iter;
@@ -136,6 +141,15 @@ void pins_list_view_select(GtkTreeView *tree_view, gpointer user_data) {
         if (pi >= 0) {
             pin *p = pins_get_nth(plv->pins, pi);
             pin_inspect_do(plv->pinspect, p, plv->fmt_opts);
+
+            /* disable watchlist add button if new location is already watched
+            if (plv->btn_watch) {
+                pin *wp = pins_find_by_path(pwl, p->obj->path);
+                if (wp)
+                    gtk_widget_set_sensitive (plv->btn_watch, FALSE);
+                else
+                    gtk_widget_set_sensitive (plv->btn_watch, TRUE);
+            }*/
         }
     } else
         pin_inspect_do(plv->pinspect, NULL, 0);
@@ -302,7 +316,26 @@ static void add_notebook_page(const gchar *label, GtkWidget *notebook, GtkWidget
 
 struct {
     GtkWidget *container;
+    pins_list_view *plv;
+} gwl;
+
+void watchlist_init() {
+    gwl.plv = pins_list_view_create(FALSE);
+    gwl.container = gwl.plv->container;
+}
+
+void watchlist_add(gchar *path) {
+    pins_list_view_append(gwl.plv, path);
+}
+
+void watchlist_cleanup() {
+    pins_free(gwl.plv->pins);
+}
+
+struct {
+    GtkWidget *container;
     GtkWidget *query;
+    GtkWidget *btn_watch;
     pins_list_view *browser;
     GSList *history;
     int h_pos; /* index into history */
@@ -314,6 +347,14 @@ void browser_activate(GtkEntry *entry, gpointer  user_data) {
     browser_navigate(loc);
 }
 
+void browser_watch (GtkButton *button, gpointer user_data) {
+    watchlist_add(gel.browser->pinspect->p->obj->path);
+}
+
+void browser_refresh (GtkButton *button, gpointer user_data) {
+    GSList *li = g_slist_nth(gel.history, gel.h_pos);
+    browser_navigate(li->data);
+}
 
 void browser_up (GtkButton *button, gpointer user_data) {
     if (gel.h_pos >= 0) {
@@ -326,9 +367,7 @@ void browser_up (GtkButton *button, gpointer user_data) {
 }
 
 void browser_back (GtkButton *button, gpointer user_data) {
-
     DEBUG("history len = %u, current = %d", gel.h_len, gel.h_pos);
-
     gel.h_pos++;
     if (gel.h_pos >= gel.h_len)
         gel.h_pos = gel.h_len-1;
@@ -340,17 +379,27 @@ void browser_back (GtkButton *button, gpointer user_data) {
 
 void browser_init() {
     GtkWidget *btn_back = gtk_button_new_from_icon_name("go-previous", GTK_ICON_SIZE_LARGE_TOOLBAR);
+    gtk_widget_set_tooltip_text(btn_back, _("Back"));
     GtkWidget *btn_up = gtk_button_new_from_icon_name("go-up", GTK_ICON_SIZE_LARGE_TOOLBAR);
+    gtk_widget_set_tooltip_text(btn_up, _("Parent"));
+    GtkWidget *btn_ref = gtk_button_new_from_icon_name("view-refresh", GTK_ICON_SIZE_LARGE_TOOLBAR);
+    gtk_widget_set_tooltip_text(btn_ref, _("Reload"));
+    GtkWidget *btn_watch = gtk_button_new_from_icon_name("list-add", GTK_ICON_SIZE_LARGE_TOOLBAR);
+    gtk_widget_set_tooltip_text(btn_watch, _("Add to Watchlist"));
     GtkWidget *btns = gel.container = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
     gel.query = gtk_entry_new();
     gtk_box_pack_start (GTK_BOX (btns), btn_back, FALSE, FALSE, 0); gtk_widget_show (btn_back);
     gtk_box_pack_start (GTK_BOX (btns), btn_up, FALSE, FALSE, 0); gtk_widget_show (btn_up);
+    gtk_box_pack_start (GTK_BOX (btns), btn_ref, FALSE, FALSE, 0); gtk_widget_show (btn_ref);
     gtk_box_pack_start (GTK_BOX (btns), gel.query, TRUE, TRUE, 0); gtk_widget_show (gel.query);
+    gtk_box_pack_start (GTK_BOX (btns), btn_watch, FALSE, FALSE, 0); gtk_widget_show (btn_watch);
     gel.browser = pins_list_view_create(TRUE);
     gel.browser->fmt_opts = FMT_OPT_PANGO | FMT_OPT_NO_JUNK;
     gel.container = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     gtk_box_pack_start (GTK_BOX (gel.container), btns, FALSE, FALSE, 0); gtk_widget_show (btns);
     gtk_box_pack_start (GTK_BOX (gel.container), gel.browser->container, TRUE, TRUE, 5); gtk_widget_show (gel.browser->container);
+
+    gel.btn_watch = btn_watch;
 
     g_signal_connect (gel.query, "activate",
           G_CALLBACK (browser_activate), NULL);
@@ -358,6 +407,10 @@ void browser_init() {
           G_CALLBACK (browser_back), NULL);
     g_signal_connect (btn_up, "clicked",
           G_CALLBACK (browser_up), NULL);
+    g_signal_connect (btn_ref, "clicked",
+          G_CALLBACK (browser_refresh), NULL);
+    g_signal_connect (btn_watch, "clicked",
+          G_CALLBACK (browser_watch), NULL);
 
     gel.h_len = 0;
     gel.h_pos = -1;
@@ -386,7 +439,7 @@ void browser_navigate(const gchar *new_location) {
     pins_add_from_fn(gel.browser->pins, ex_obj->path_req, NULL);
     if (ex_obj->exists) {
         if (ex_obj->is_dir) {
-            GSList *l = NULL, *childs = sysobj_children(ex_obj);
+            GSList *l = NULL, *childs = sysobj_children_ex(ex_obj, NULL, NULL, TRUE);
             l = childs;
             while(l) {
                 fn = l->data;
@@ -426,24 +479,6 @@ void browser_navigate(const gchar *new_location) {
 
     if (notebook)
         gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), PAGE_BROWSER);
-}
-
-struct {
-    GtkWidget *container;
-    pins_list_view *plv;
-} gwl;
-
-void watchlist_init() {
-    gwl.plv = pins_list_view_create(FALSE);
-    gwl.container = gwl.plv->container;
-}
-
-void watchlist_add(gchar *path) {
-    pins_list_view_append(gwl.plv, path);
-}
-
-void watchlist_cleanup() {
-    pins_free(gwl.plv->pins);
 }
 
 static gboolean delete_event( GtkWidget *widget,
@@ -527,9 +562,9 @@ int main(int argc, char **argv) {
     /* notebook pages */
     notebook = gtk_notebook_new();
     gtk_notebook_set_tab_pos(GTK_NOTEBOOK (notebook), GTK_POS_TOP);
-    add_notebook_page("Browser", notebook, gel.container, 0);
-    add_notebook_page("Watchlist", notebook, gwl.container, 0);
-    add_notebook_page("About", notebook, about, 0);
+    add_notebook_page(_("Browser"), notebook, gel.container, 0);
+    add_notebook_page(_("Watchlist"), notebook, gwl.container, 0);
+    add_notebook_page(_("About"), notebook, about, 0);
 
     if (query) {
         browser_navigate(query);
@@ -537,12 +572,11 @@ int main(int argc, char **argv) {
         //browser_navigate("/sys/class/dmi/id");
         browser_navigate("/sys/devices/system/cpu");
     }
-    /*
+
     watchlist_add("/sys/devices/system/cpu/cpu0");
     watchlist_add("/sys/devices/system/cpu/cpu1");
     watchlist_add("/sys/devices/system/cpu/cpu2");
     watchlist_add("/sys/devices/system/cpu/cpu3");
-    */
 
     /* This packs the notebook into the window (a gtk container). */
     gtk_container_add (GTK_CONTAINER (window), notebook);

@@ -81,10 +81,31 @@ pin_list *pins_new() {
     return pl;
 }
 
+pin *pins_find_by_path(pin_list *pl, const gchar *path) {
+    if (pl && path) {
+        GSList *l = pl->list;
+        while (l) {
+            pin *p = l->data;
+            if (g_strcmp0(p->obj->path, path) == 0)
+                return p;
+            l = l->next;
+        }
+    }
+    return NULL;
+}
+
 int pins_add_from_fn(pin_list *pl, const gchar *base, const gchar *name) {
     sysobj *obj = sysobj_new_from_fn(base, name);
     if (obj->exists) {
-        pin *p = pin_new_sysobj(obj);
+        /* check if already in list */
+        pin *p = pins_find_by_path(pl, obj->path);
+        if (p) {
+            sysobj_free(obj);
+            return -1;
+        }
+
+        /* if not, then add */
+        p = pin_new_sysobj(obj);
         pl->list = g_slist_append(pl->list, p);
         if (p->update_interval) {
             if (p->update_interval > pl->longest_interval)

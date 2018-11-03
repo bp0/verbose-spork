@@ -359,8 +359,8 @@ double sysobj_update_interval(sysobj *s) {
     return UPDATE_INTERVAL_NEVER;
 }
 
-GSList *sysobj_children(sysobj *s) {
-    GSList *ret = NULL;
+GSList *sysobj_children_ex(sysobj *s, gchar *include_glob, gchar *exclude_glob, gboolean sort) {
+    GSList *ret = NULL, *l, *n;
     GDir *dir;
     const gchar *fn;
 
@@ -380,8 +380,45 @@ GSList *sysobj_children(sysobj *s) {
                 g_dir_close(dir);
             }
         }
+
+        if (ret && include_glob) {
+            GPatternSpec *pat = g_pattern_spec_new(include_glob);
+            l = ret;
+            while(l) {
+                n = l->next;
+                gchar *f = l->data;
+                gsize len = strlen(f);
+                gboolean match = g_pattern_match(pat, len, f, NULL);
+                if (!match)
+                    ret = g_slist_delete_link(ret, l);
+                l = n;
+            }
+            g_pattern_spec_free(pat);
+        }
+
+        if (ret && exclude_glob) {
+            GPatternSpec *pat = g_pattern_spec_new(exclude_glob);
+            l = ret;
+            while(l) {
+                n = l->next;
+                gchar *f = l->data;
+                gsize len = strlen(f);
+                gboolean match = g_pattern_match(pat, len, f, NULL);
+                if (match)
+                    ret = g_slist_delete_link(ret, l);
+                l = n;
+            }
+            g_pattern_spec_free(pat);
+        }
+
+        if (sort)
+            ret = g_slist_sort(ret, (GCompareFunc)g_strcmp0);
     }
     return ret;
+}
+
+GSList *sysobj_children(sysobj *s) {
+    return sysobj_children_ex(s, NULL, NULL, FALSE);
 }
 
 gchar *sysobj_make_path(const gchar *base, const gchar *name) {
@@ -670,6 +707,27 @@ int sysobj_virt_get_type(const sysobj_virt *vo, const gchar *req) {
             ret = vo->f_get_type(req ? req : vo->path);
         else
             ret = vo->type;
+    }
+    return ret;
+}
+
+GSList *sysobj_virt_children_auto(const sysobj_virt *vo, const gchar *req) {
+    GSList *ret = NULL;
+    if (vo && req) {
+        gchar *fn = NULL;
+        gchar *spath = g_strdup_printf("%s/", req);
+        GSList *l = vo_list;
+        while (l) {
+            sysobj_virt *vo = l->data;
+            /* find all vo paths that are immediate children */
+            if ( g_str_has_prefix(vo->path, spath) ) {
+                fn = g_path_get_basename(vo->path);
+                ret = g_slist_append(ret, fn);
+            }
+
+            l = l->next;
+        }
+        g_free(spath);
     }
     return ret;
 }

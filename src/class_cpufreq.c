@@ -8,11 +8,11 @@ typedef struct {
 } cpufreq_item;
 
 static const cpufreq_item cpufreq_items[] = {
-    { "scaling_min_freq", N_("Minimum"), N_("Minimum clock frequency (via scaling driver)") },
-    { "scaling_max_freq", N_("Maximum"), N_("Maximum clock frequency (via scaling driver)") },
-    { "scaling_cur_freq", N_("Current"), N_("Current clock frequency (via scaling driver)") },
+    { "scaling_min_freq", N_("Scaling Minimum"), N_("Minimum clock frequency (via scaling driver)") },
+    { "scaling_max_freq", N_("Scaling Maximum"), N_("Maximum clock frequency (via scaling driver)") },
+    { "scaling_cur_freq", N_("Scaling Current"), N_("Current clock frequency (via scaling driver)") },
 
-    { "bios_limit", N_("Maximum"), N_("Maximum clock frequency (via BIOS)") },
+    { "bios_limit", N_("BIOS-reported Maximum"), N_("Maximum clock frequency (via BIOS)") },
 
     { "cpuinfo_min_freq", N_("Minimum"), N_("Minimum clock frequency (via cpuinfo)") },
     { "cpuinfo_max_freq", N_("Maximum"), N_("Maximum clock frequency (via cpuinfo)") },
@@ -95,6 +95,8 @@ double cpufreq_update_interval_for_khz(sysobj *obj) {
     if (obj) {
         if (g_strrstr(obj->name, "_cur_"))
             return 0.25;
+        if (g_str_has_prefix(obj->name, "policy"))
+            return 0.5;
     }
     return 0;
 }
