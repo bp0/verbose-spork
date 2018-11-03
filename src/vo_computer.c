@@ -196,15 +196,14 @@ got_mobo_ok:
     return ret;
 }
 
-
 static sysobj_virt vol[] = {
     { .path = ":computer",
       .type = VSO_TYPE_DIR | VSO_TYPE_CONST,
-      .str = "board",
+      .str = "*",
       .f_get_data = NULL },
     { .path = ":computer/board",
       .type = VSO_TYPE_DIR | VSO_TYPE_CONST,
-      .str = "board_name\n" "dmi_id\n" "dt_model",
+      .str = "*",
       .f_get_data = NULL },
     { .path = ":computer/board/board_name",
       .type = VSO_TYPE_STRING | VSO_TYPE_CONST,
@@ -216,7 +215,7 @@ static sysobj_virt vol[] = {
       .f_get_data = NULL },
     { .path = ":computer/board/dt_model",
       .type = VSO_TYPE_SYMLINK | VSO_TYPE_CONST,
-      .str = ":devicetree/model",
+      .str = ":devicetree/base/model",
       .f_get_data = NULL },
 };
 

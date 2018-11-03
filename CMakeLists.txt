@@ -35,6 +35,7 @@ add_library(sysobj STATIC
         src/pin.c
         src/classes.c
         src/class_dmi_id.c
+        src/class_dt.c
         src/class_cpu.c
         src/class_cpufreq.c
         src/class_cpucache.c

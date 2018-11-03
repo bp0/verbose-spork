@@ -423,12 +423,15 @@ GSList *sysobj_children(sysobj *s) {
 
 gchar *sysobj_make_path(const gchar *base, const gchar *name) {
     gchar *ret = NULL, *built = NULL, *nbase = NULL;
+    int alt_root_len = 0;
 
     if (*base == ':')
         nbase = g_strdup(base);
-    else
+    else {
         nbase = g_strdup_printf("%s%s%s",
             sysobj_root, (*base == '/') ? "" : "/", base );
+        alt_root_len = strlen(sysobj_root) + (*base == '/' ? 0 : 1);
+    }
     util_null_trailing_slash(nbase);
 
     if (name) {
@@ -446,16 +449,16 @@ gchar *sysobj_make_path(const gchar *base, const gchar *name) {
             g_free(ret);
             ret = built;
         }
+        DEBUG("alt_root_len=%d str=%s", alt_root_len, ret+alt_root_len);
 
-        if (! (g_str_has_prefix(ret, ":")
-            || g_str_has_prefix(ret, "/sys")
-            || g_str_has_prefix(ret, "/proc")
+        if (! (g_str_has_prefix(ret + alt_root_len, ":")
+            || g_str_has_prefix(ret + alt_root_len, "/sys")
+            || g_str_has_prefix(ret + alt_root_len, "/proc")
             ) ) {
                 DEBUG("BAD PATH: %s\n", ret);
             g_free(ret);
             ret = g_strdup(":error/bad_path");
         }
-
     }
 
     return ret;
@@ -739,14 +742,18 @@ GSList *sysobj_virt_children(const sysobj_virt *vo, const gchar *req) {
     if (type & VSO_TYPE_DIR) {
         int i = 0, len = 0;
         gchar *data = sysobj_virt_get_data(vo, req);
-        childs = g_strsplit(data, "\n", 0);
-        len = g_strv_length(childs);
-        for(i = 0; i < len; i++) {
-            if (*childs[i] != 0)
-                ret = g_slist_append(ret, g_strdup(childs[i]));
+        if (*data == '*') {
+            return sysobj_virt_children_auto(vo, req);
+        } else {
+            childs = g_strsplit(data, "\n", 0);
+            len = g_strv_length(childs);
+            for(i = 0; i < len; i++) {
+                if (*childs[i] != 0)
+                    ret = g_slist_append(ret, g_strdup(childs[i]));
+            }
+            g_free(data);
+            g_strfreev(childs);
         }
-        g_free(data);
-        g_strfreev(childs);
     }
     return ret;
 }

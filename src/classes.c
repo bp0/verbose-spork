@@ -4,6 +4,7 @@
 void vo_computer();
 
 void class_dmi_id();
+void class_dt();
 void class_cpu();
 void class_cpufreq();
 void class_cpucache();
@@ -19,6 +20,7 @@ void class_init() {
     class_cputopo();
 /* consumes every direct child, careful with order */
     class_dmi_id();
+    class_dt();
 /* anything left that is human-readable */
     class_any_utf8();
 }
