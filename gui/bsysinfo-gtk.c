@@ -507,9 +507,30 @@ static void destroy( GtkWidget *widget,
 GtkWidget *about;
 
 void about_init() {
-    GtkTextBuffer *about_text_buffer = gtk_text_buffer_new (NULL);
-    gtk_text_buffer_set_text (about_text_buffer, about_text, -1);
-    about = gtk_text_view_new_with_buffer(about_text_buffer);
+    gchar *glib_version_info =
+        g_strdup_printf("GLib %d.%d.%d (built against: %d.%d.%d)",
+            glib_major_version, glib_minor_version, glib_micro_version,
+            GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION, GLIB_MICRO_VERSION );
+    gchar *gtk_version_info =
+        g_strdup_printf("GTK %d.%d.%d (built against: %d.%d.%d)",
+            gtk_major_version, gtk_minor_version, gtk_micro_version,
+            GTK_MAJOR_VERSION, GTK_MINOR_VERSION, GTK_MICRO_VERSION );
+
+    gchar *text = g_strdup_printf("\n%s%s\n%s\n", about_text, glib_version_info, gtk_version_info);
+
+    GtkWidget *lbl;
+    lbl = gtk_label_new(NULL);
+    gtk_label_set_text(GTK_LABEL(lbl), text);
+    gtk_label_set_line_wrap(GTK_LABEL(lbl), TRUE);
+    gtk_widget_set_halign(lbl, GTK_ALIGN_START);
+    gtk_widget_set_valign(lbl, GTK_ALIGN_START);
+    gtk_widget_set_margin_start(lbl, 10);
+    gtk_widget_show(lbl);
+
+    about = lbl;
+
+    g_free(glib_version_info);
+    g_free(gtk_version_info);
 }
 
 static gboolean refresh_data(gpointer data) {
