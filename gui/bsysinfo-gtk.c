@@ -106,6 +106,7 @@ void pin_inspect_do(pin_inspect *pi, const pin *p, int fmt_opts) {
 
     GtkWidget *lbl;
     lbl = gtk_label_new(NULL);
+    gtk_label_set_line_wrap(GTK_LABEL(lbl), TRUE);
     gtk_label_set_markup(GTK_LABEL(lbl), mt);
     gtk_widget_show(lbl);
     gtk_widget_set_halign(lbl, GTK_ALIGN_START);
@@ -390,13 +391,13 @@ void browser_init() {
     gel.query = gtk_entry_new();
     gtk_box_pack_start (GTK_BOX (btns), btn_back, FALSE, FALSE, 0); gtk_widget_show (btn_back);
     gtk_box_pack_start (GTK_BOX (btns), btn_up, FALSE, FALSE, 0); gtk_widget_show (btn_up);
-    gtk_box_pack_start (GTK_BOX (btns), btn_ref, FALSE, FALSE, 0); gtk_widget_show (btn_ref);
+    gtk_box_pack_start (GTK_BOX (btns), btn_ref, FALSE, FALSE, 5); gtk_widget_show (btn_ref);
     gtk_box_pack_start (GTK_BOX (btns), gel.query, TRUE, TRUE, 0); gtk_widget_show (gel.query);
-    gtk_box_pack_start (GTK_BOX (btns), btn_watch, FALSE, FALSE, 0); gtk_widget_show (btn_watch);
+    gtk_box_pack_start (GTK_BOX (btns), btn_watch, FALSE, FALSE, 5); gtk_widget_show (btn_watch);
     gel.browser = pins_list_view_create(TRUE);
     gel.browser->fmt_opts = FMT_OPT_PANGO | FMT_OPT_NO_JUNK;
     gel.container = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-    gtk_box_pack_start (GTK_BOX (gel.container), btns, FALSE, FALSE, 0); gtk_widget_show (btns);
+    gtk_box_pack_start (GTK_BOX (gel.container), btns, FALSE, FALSE, 5); gtk_widget_show (btns);
     gtk_box_pack_start (GTK_BOX (gel.container), gel.browser->container, TRUE, TRUE, 5); gtk_widget_show (gel.browser->container);
 
     gel.btn_watch = btn_watch;
@@ -562,9 +563,9 @@ int main(int argc, char **argv) {
     /* notebook pages */
     notebook = gtk_notebook_new();
     gtk_notebook_set_tab_pos(GTK_NOTEBOOK (notebook), GTK_POS_TOP);
-    add_notebook_page(_("Browser"), notebook, gel.container, 0);
-    add_notebook_page(_("Watchlist"), notebook, gwl.container, 0);
-    add_notebook_page(_("About"), notebook, about, 0);
+    add_notebook_page(_("Browser"), notebook, gel.container, 5);
+    add_notebook_page(_("Watchlist"), notebook, gwl.container, 5);
+    add_notebook_page(_("About"), notebook, about, 5);
 
     if (query) {
         browser_navigate(query);
