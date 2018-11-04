@@ -2,8 +2,10 @@
 #include "sysobj.h"
 
 gchar sysobj_root[1024] = "";
+#define USING_ALT_ROOT (*sysobj_root != 0)
 gboolean sysobj_root_set(const gchar *alt_root) {
-    snprintf(sysobj_root, sizeof(sysobj_root) - 1, "%s", alt_root);
+    gchar *fspath = util_canonicalize_path(alt_root);
+    snprintf(sysobj_root, sizeof(sysobj_root) - 1, "%s", fspath);
     util_null_trailing_slash(sysobj_root);
     return TRUE;
 }
@@ -215,9 +217,9 @@ sysobj *sysobj_new() {
 /* keep the pointer, but make it like the result of sysobj_new() */
 static void sysobj_free_and_clean(sysobj *s) {
     if (s) {
-        g_free(s->path_req);
+        g_free(s->path_req_fs);
         g_free(s->name_req);
-        g_free(s->path);
+        g_free(s->path_fs);
         g_free(s->name);
         g_free(s->data.any);
         memset(s, 0, sizeof(sysobj) );
@@ -270,9 +272,9 @@ void sysobj_fscheck(sysobj *s) {
                     s->is_dir = TRUE;
             }
         } else {
-            s->exists = g_file_test(s->path, G_FILE_TEST_EXISTS);
+            s->exists = g_file_test(s->path_fs, G_FILE_TEST_EXISTS);
             if (s->exists) {
-                s->is_dir = g_file_test(s->path, G_FILE_TEST_IS_DIR);
+                s->is_dir = g_file_test(s->path_fs, G_FILE_TEST_IS_DIR);
             }
         }
     }
@@ -323,7 +325,7 @@ void sysobj_read_data(sysobj *s) {
             }
         } else {
             s->data.was_read =
-                g_file_get_contents(s->path, &s->data.str, &s->data.len, &error);
+                g_file_get_contents(s->path_fs, &s->data.str, &s->data.len, &error);
                 if (s->data.str) {
                     s->data.is_utf8 = g_utf8_validate(s->data.str, s->data.len, NULL);
                     s->data.lines = util_count_lines(s->data.str);
@@ -372,7 +374,7 @@ GSList *sysobj_children_ex(sysobj *s, gchar *include_glob, gchar *exclude_glob, 
                 return sysobj_virt_children(vo, s->path);
         } else {
             /* normal */
-            dir = g_dir_open(s->path, 0 , NULL);
+            dir = g_dir_open(s->path_fs, 0 , NULL);
             if (dir) {
                 while((fn = g_dir_read_name(dir)) != NULL) {
                     ret = g_slist_append(ret, g_strdup(fn));
@@ -421,81 +423,113 @@ GSList *sysobj_children(sysobj *s) {
     return sysobj_children_ex(s, NULL, NULL, FALSE);
 }
 
-gchar *sysobj_make_path(const gchar *base, const gchar *name) {
-    gchar *ret = NULL, *built = NULL, *nbase = NULL;
-    int alt_root_len = 0;
-
-    if (*base == ':')
-        nbase = g_strdup(base);
-    else {
-        nbase = g_strdup_printf("%s%s%s",
-            sysobj_root, (*base == '/') ? "" : "/", base );
-        alt_root_len = strlen(sysobj_root) + (*base == '/' ? 0 : 1);
+gchar *sysobj_virt_is_symlink(gchar *req) {
+    const sysobj_virt *vo = sysobj_virt_find(req);
+    if (vo) {
+        long long unsigned int t = sysobj_virt_get_type(vo, req);
+        if (t & VSO_TYPE_SYMLINK)
+            return sysobj_virt_get_data(vo, req);
     }
-    util_null_trailing_slash(nbase);
+    return NULL;
+}
 
-    if (name) {
-        built = g_strdup_printf("%s/%s", nbase, name);
-        g_free(nbase);
+gboolean sysobj_config_paths(sysobj *s, const gchar *base, const gchar *name) {
+    gchar *req = NULL, *norm = NULL, *vlink = NULL, *chkpath = NULL, *fspath = NULL;
+    gboolean target_is_real = FALSE, req_is_real = FALSE;
+
+    if (!s) return FALSE;
+
+    if (name)
+        req = g_strdup_printf("%s/%s", base, name);
+    else
+        req = strdup(base);
+    util_null_trailing_slash(req);
+    norm = util_normalize_path(req, "/");
+    g_free(req);
+    if (g_str_has_prefix(norm, "/:")) {
+        req = g_strdup(norm+1);
+        g_free(norm);
     } else
-        built = nbase;
+        req = norm;
+    /* norm is now used or freed */
 
-    if (built) {
-        util_null_trailing_slash(built);
-        ret = util_normalize_path(built, "/");
-        g_free(built);
-        if ( g_str_has_prefix(ret, "/:") ) {
-            built = g_strdup(ret+1);
-            g_free(ret);
-            ret = built;
-        }
-        DEBUG("alt_root_len=%d str=%s", alt_root_len, ret+alt_root_len);
+    /* virtual symlink */
+    req_is_real = (*req == ':') ? FALSE : TRUE;
 
-        if (! (g_str_has_prefix(ret + alt_root_len, ":")
-            || g_str_has_prefix(ret + alt_root_len, "/sys")
-            || g_str_has_prefix(ret + alt_root_len, "/proc")
-            ) ) {
-                DEBUG("BAD PATH: %s\n", ret);
-            g_free(ret);
-            ret = g_strdup(":error/bad_path");
+    if (!req_is_real)
+        vlink = sysobj_virt_is_symlink(req);
+
+    if (vlink)
+        target_is_real = (*vlink == ':') ? FALSE : TRUE;
+    else
+        target_is_real = (*req == ':') ? FALSE : TRUE;
+
+    /* canonicalize: follow all symlinks if target is real */
+    if (target_is_real) {
+        if (USING_ALT_ROOT) {
+            gchar chkchr = vlink ? *vlink : *req;
+            chkpath = g_strdup_printf("%s%s%s", sysobj_root, (chkchr == '/') ? "" : "/", vlink ? vlink : req);
+        } else
+            chkpath = g_strdup(vlink ? vlink : req);
+
+        fspath = util_canonicalize_path(chkpath);
+    } else {
+        fspath = g_strdup(req);
+    }
+
+    if (!fspath)
+        fspath = chkpath; /* the path may not exist */
+    else
+        g_free(chkpath);
+
+    /* set object paths */
+    s->path_req = s->path_req_fs = req;
+    s->path = s->path_fs = fspath;
+    if (USING_ALT_ROOT) {
+        int alt_root_len = strlen(sysobj_root);
+        if (target_is_real) {
+            /* check for .. beyond sysobj_root */
+            if (!g_str_has_prefix(s->path_fs, sysobj_root) )
+                goto config_bad_path;
+
+            s->path = s->path_fs + alt_root_len;
         }
     }
 
-    return ret;
+    if (vlink)
+        s->req_is_link = TRUE;
+    else
+        s->req_is_link = g_file_test(s->path_req_fs, G_FILE_TEST_IS_SYMLINK);
+
+    //DEBUG("\n{ .path_req_fs = %s\n  .path_req = %s\n  .path_fs = %s\n  .path = %s\n  .req_is_link = %s }",
+    //    s->path_req_fs, s->path_req, s->path_fs, s->path, s->req_is_link ? "TRUE" : "FALSE" );
+
+    /* check for desirable paths */
+    if (! (g_str_has_prefix(s->path, ":")
+        || g_str_has_prefix(s->path, "/sys")
+        || g_str_has_prefix(s->path, "/proc")
+        ) ) {
+        goto config_bad_path;
+    }
+
+    g_free(vlink);
+    return TRUE;
+
+config_bad_path:
+    DEBUG("BAD PATH: %s -> %s (%s)", s->path_req, s->path, s->path_fs);
+    g_free(fspath);
+    g_free(vlink);
+    s->path = s->path_fs = g_strdup(":error/bad_path");
+    return FALSE;
 }
 
 sysobj *sysobj_new_from_fn(const gchar *base, const gchar *name) {
     sysobj *s = NULL;
     if (base) {
         s = sysobj_new();
-        s->path_req = sysobj_make_path(base, name);
-        if (*base == ':') {
-            /* virtual object */
-            const sysobj_virt *vo = sysobj_virt_find(s->path_req);
-            if (vo) {
-                int t = sysobj_virt_get_type(vo, s->path_req);
-                if (t & VSO_TYPE_SYMLINK) {
-                    gchar *lpath = sysobj_virt_get_data(vo, s->path_req);
-                    DEBUG("virt link %s", lpath);
-                    if (lpath && *lpath != ':') {
-                        s->path = util_canonicalize_path(lpath);
-                        g_free(lpath);
-                    } else
-                        s->path = lpath;
-                    s->req_is_link = TRUE;
-                }
-            }
-        } else {
-            /* real object */
-            s->req_is_link = g_file_test(s->path_req, G_FILE_TEST_IS_SYMLINK);
-            s->path = util_canonicalize_path(s->path_req);
-        }
+        sysobj_config_paths(s, base, name);
         s->name_req = g_path_get_basename(s->path_req);
-
-        if (!s->path)
-            s->path = g_strdup(s->path_req); /* the path may not exist */
         s->name = g_path_get_basename(s->path);
-
         sysobj_fscheck(s);
         sysobj_classify(s);
     }

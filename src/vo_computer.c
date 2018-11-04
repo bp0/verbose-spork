@@ -51,7 +51,7 @@ guint mobo_flags(sysobj *obj) {
     return cls_mobo ? cls_mobo->flags : OF_NONE;
 }
 
-#define dt_get_model() sysobj_format_from_fn(":devicetree", "model", FMT_OPT_OR_NULL );
+#define dt_get_model() sysobj_format_from_fn(":devicetree/base", "model", FMT_OPT_OR_NULL );
 #define dmi_get_str(k) sysobj_format_from_fn(":dmidecode/best_available", k, FMT_OPT_NO_JUNK | FMT_OPT_OR_NULL );
 gchar *mobo_get_name(const gchar *path) {
     gchar *board_name, *board_vendor, *board_version;
@@ -213,10 +213,10 @@ static sysobj_virt vol[] = {
       .type = VSO_TYPE_AUTOLINK | VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_CONST,
       .str = "/sys/devices/virtual/dmi/id",
       .f_get_data = NULL },
-    { .path = ":computer/board/dt_model",
+/*  { .path = ":computer/board/dt_model",
       .type = VSO_TYPE_SYMLINK | VSO_TYPE_CONST,
       .str = ":devicetree/base/model",
-      .f_get_data = NULL },
+      .f_get_data = NULL }, */
 };
 
 void vo_computer() {

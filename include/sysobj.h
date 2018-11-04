@@ -77,10 +77,12 @@ typedef struct sysobj_data {
 } sysobj_data;
 
 struct sysobj {
-    gchar *path_req; /* requested */
+    gchar *path_req_fs;  /* includes sysobj_root */
+    gchar *path_req; /* requested, points into path_req_fs */
     gchar *name_req;
 
-    gchar *path;     /* canonical */
+    gchar *path_fs;  /* includes sysobj_root */
+    gchar *path;     /* canonical, points into path_fs */
     gchar *name;
 
     gboolean req_is_link;
@@ -101,7 +103,7 @@ enum {
     VSO_TYPE_SYMLINK  = 1<<16, /* note: sysobj_virt symlink to sysobj_virt symlink is not supported */
     VSO_TYPE_DYN      = 1<<17, /* any path beyond */
     VSO_TYPE_AUTOLINK = 1<<18,
-    VSO_TYPE_CONST    = 1<<31, /* don't free */
+    VSO_TYPE_CONST    = 1<<30, /* don't free */
 };
 
 typedef struct sysobj_virt {
