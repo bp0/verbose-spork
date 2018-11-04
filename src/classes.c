@@ -24,7 +24,3 @@ void class_init() {
 /* anything left that is human-readable */
     class_any_utf8();
 }
-
-void class_cleanup() {
-    class_free_list();
-}

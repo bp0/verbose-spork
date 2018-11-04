@@ -59,6 +59,7 @@ typedef struct sysobj_class {
     double (*f_update_interval) (sysobj *obj); /* time until the value might change, in seconds */
     int (*f_compare) (const sysobj_data *a, const sysobj_data *b);
     guint (*f_flags) (sysobj *obj); /* provide flags, result replaces flags */
+    void (*f_cleanup) (void); /* shutdown/cleanup function */
 } sysobj_class;
 
 typedef struct sysobj_data {
@@ -163,7 +164,6 @@ const sysobj_class *class_add_full(sysobj_class *base,
     void *f_format, void *f_update_interval, void *f_compare, void *f_flags );
 const sysobj_class *class_add_simple(const gchar *pattern, const gchar *label, const gchar *tag, guint flags);
 gboolean class_has_flag(const sysobj_class *c, guint flag);
-void class_free_list(); /* should be called by class_cleanup(); */
 void class_cleanup();
 
 const gchar *simple_label(sysobj* obj);

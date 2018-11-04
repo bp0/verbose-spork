@@ -54,11 +54,15 @@ GSList *class_get_list() {
 }
 
 void class_free(sysobj_class *s) {
-    if (s && !(s->flags & OF_CONST) )
-        g_free(s);
+    if (s) {
+        if (s->f_cleanup)
+            s->f_cleanup();
+        if (!(s->flags & OF_CONST) )
+            g_free(s);
+    }
 }
 
-void class_free_list() {
+void class_cleanup() {
     g_slist_free_full(class_list, (GDestroyNotify)class_free);
 }
 
@@ -248,6 +252,8 @@ void sysobj_classify(sysobj *s) {
 
             if (match && c->f_verify)
                 match = c->f_verify(s);
+
+            //DEBUG("try [%s] %s for %s ... %s \n", class_has_flag(c, OF_GLOB_PATTERN) ? "glob" : "no-glob", c->pattern, s->path, match ? "match" : "no-match");
 
             if (match) {
                 s->cls = c;
