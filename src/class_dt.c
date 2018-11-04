@@ -17,6 +17,7 @@ typedef uint64_t dt_uint64; /* big-endian */
 static gchar *dtr_format(sysobj *obj, int fmt_opts);
 static guint dtr_flags(sysobj *obj);
 static gchar *dt_messages(const gchar *path);
+static double dtr_update_interval(sysobj *obj) { PARAM_NOT_UNUSED(obj); return 0.0; } /* dt is static */
 
 void class_dt_cleanup();
 
@@ -47,10 +48,10 @@ enum {
 
 static sysobj_class cls_dtr[] = {
   { .tag = "devicetree/compat", .pattern = DTROOT "*/compatible", .flags = CLS_DT_FLAGS,
-    .f_verify = NULL, .f_label = NULL, .f_format = dtr_format, .f_flags = NULL },
+    .f_format = dtr_format, .f_update_interval = dtr_update_interval },
   /* all else */
   { .tag = "devicetree", .pattern = DTROOT "*", .flags = CLS_DT_FLAGS,
-    .f_verify = NULL, .f_label = NULL, .f_format = dtr_format, .f_flags = dtr_flags, .f_cleanup = class_dt_cleanup },
+    .f_format = dtr_format, .f_flags = dtr_flags, .f_update_interval = dtr_update_interval, .f_cleanup = class_dt_cleanup },
 };
 
 static sysobj_virt vol[] = {
