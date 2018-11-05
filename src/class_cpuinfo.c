@@ -176,7 +176,7 @@ void lcpu_free(lcpu *s) {
 
 gboolean cpuinfo_arm_decoded_name(lcpu *c) {
     if ( c->cpu_architecture ) {
-        char *dn = arm_decoded_name(c->cpu_implementer, c->cpu_part, c->cpu_variant, c->cpu_revision, c->cpu_architecture, c->model_name);
+        char *dn = arm_decoded_name(c->cpu_implementer, c->cpu_part, c->cpu_variant, c->cpu_revision, c->cpu_architecture);
         if (dn) {
             c->linux_name = c->model_name;
             c->model_name = g_strdup(dn);

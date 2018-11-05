@@ -82,47 +82,6 @@ static struct {
 };
 
 static struct {
-    int code; char *name;
-} tab_arm_implementer[] = {
-    { 0x41,	"ARM" },
-    { 0x44,	"Intel (formerly DEC) StrongARM" },
-    { 0x4e,	"nVidia" },
-    { 0x54,	"Texas Instruments" },
-    { 0x56,	"Marvell" },
-    { 0x69,	"Intel XScale" },
-    { 0, NULL},
-};
-
-static struct {
-    /* source: t = tested, d = official docs, f = web */
-    int code; char *part_desc;
-} tab_arm_arm_part[] = { /* only valid for implementer 0x41 ARM */
-    /*d */ { 0x920,	"ARM920" },
-    /*d */ { 0x926,	"ARM926" },
-    /*d */ { 0x946,	"ARM946" },
-    /*d */ { 0x966,	"ARM966" },
-    /*d */ { 0xb02,	"ARM11 MPCore" },
-    /*d */ { 0xb36,	"ARM1136" },
-    /*d */ { 0xb56,	"ARM1156" },
-    /*dt*/ { 0xb76,	"ARM1176" },
-    /*dt*/ { 0xc05,	"Cortex-A5" },
-    /*d */ { 0xc07,	"Cortex-A7 MPCore" },
-    /*dt*/ { 0xc08,	"Cortex-A8" },
-    /*dt*/ { 0xc09,	"Cortex-A9" },
-    /*d */ { 0xc0e,	"Cortex-A17 MPCore" },
-    /*d */ { 0xc0f,	"Cortex-A15" },
-    /*d */ { 0xd01,	"Cortex-A32" },
-    /*dt*/ { 0xd03,	"Cortex-A53" },
-    /*d */ { 0xd04,	"Cortex-A35" },
-    /*d */ { 0xd05,	"Cortex-A55" },
-    /*d */ { 0xd07,	"Cortex-A57 MPCore" },
-    /*d */ { 0xd08,	"Cortex-A72" },
-    /*d */ { 0xd09,	"Cortex-A73" },
-    /*d */ { 0xd0a,	"Cortex-A75" },
-           { 0, NULL},
-};
-
-static struct {
     char *code; char *name; char *more;
 } tab_arm_arch[] = {
     { "7",	"AArch32",	"AArch32 (ARMv7)" },
@@ -161,39 +120,6 @@ const char *arm_flag_meaning(const char *flag) {
     return NULL;
 }
 
-static int code_match(int c0, const char* code1) {
-    int c1;
-    if (code1 == NULL) return 0;
-    c1 = strtol(code1, NULL, 0);
-    return (c0 == c1) ? 1 : 0;
-}
-
-const char *arm_implementer(const char *code) {
-    int i = 0;
-    if (code)
-    while(tab_arm_implementer[i].code) {
-        if (code_match(tab_arm_implementer[i].code, code))
-            return tab_arm_implementer[i].name;
-        i++;
-    }
-    return NULL;
-}
-
-const char *arm_part(const char *imp_code, const char *part_code) {
-    int i = 0;
-    if (imp_code && part_code) {
-        if (code_match(0x41, imp_code)) {
-            /* 0x41=ARM parts */
-            while(tab_arm_arm_part[i].code) {
-                if (code_match(tab_arm_arm_part[i].code, part_code))
-                    return tab_arm_arm_part[i].part_desc;
-                i++;
-            }
-        }
-    }
-    return NULL;
-}
-
 const char *arm_arch(const char *cpuinfo_arch_str) {
     int i = 0;
     if (cpuinfo_arch_str)
@@ -216,50 +142,31 @@ const char *arm_arch_more(const char *cpuinfo_arch_str) {
     return cpuinfo_arch_str;
 }
 
-char *arm_decoded_name(const char *imp, const char *part, const char *var, const char *rev, const char *arch, const char *model_name) {
-    char *dnbuff;
-    char *imp_name = NULL, *part_desc = NULL, *arch_name = NULL;
-    int r = 0, p = 0;
-    dnbuff = malloc(256);
-    if (dnbuff) {
-        memset(dnbuff, 0, 256);
+#include "arm_lscpu.c"
 
-        if (imp && arch && part && rev) {
-            /* http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0395b/CIHCAGHH.html
-             * variant and revision can be rendered r{variant}p{revision} */
-            r = strtol(var, NULL, 0);
-            p = strtol(rev, NULL, 0);
-            imp_name = (char*) arm_implementer(imp);
-            part_desc = (char*) arm_part(imp, part);
-            arch_name = (char*) arm_arch(arch);
-            if (imp_name || part_desc) {
-                if (arch_name != arch)
-                    sprintf(dnbuff, "%s %s r%dp%d (%s)",
-                        (imp_name) ? imp_name : imp,
-                        (part_desc) ? part_desc : part,
-                        r, p, arch_name);
-                else
-                    sprintf(dnbuff, "%s %s r%dp%d (arch:%s)",
-                        (imp_name) ? imp_name : imp,
-                        (part_desc) ? part_desc : part,
-                        r, p, arch);
-            } else {
-                /* fallback for now */
-                sprintf(dnbuff, "%s [imp:%s part:%s r%dp%d arch:%s]",
-                        model_name,
-                        (imp_name) ? imp_name : imp,
-                        (part_desc) ? part_desc : part,
-                        r, p, arch);
-            }
-        } else {
-            /* prolly not ARM arch at all */
-            if (model_name)
-                sprintf(dnbuff, "%s", model_name);
-            else {
-                free(dnbuff);
-                return NULL;
-            }
-        }
+char *arm_decoded_name(const char *imp, const char *part, const char *var, const char *rev, const char *arch) {
+    int i = 0, p = 0, v = 0, r = 0;
+    int n = 0, m = 0;
+    const char *a = arm_arch(arch);
+
+    i = strtol(imp, NULL, 0);
+    p = strtol(part, NULL, 0);
+    v = strtol(var, NULL, 0);
+    r = strtol(rev, NULL, 0);
+
+    while(hw_implementer[n].id != -1) {
+        if (hw_implementer[n].id == i)
+            break;
+        n++;
     }
+    while(hw_implementer[n].parts[m].id != -1) {
+        if (hw_implementer[n].parts[m].id == p)
+            break;
+        m++;
+    }
+
+    char *dnbuff = malloc(256);
+    snprintf(dnbuff, 255, "%s %s r%dp%d (%s)",
+        hw_implementer[n].name, hw_implementer[n].parts[m].name, v, r, a);
     return dnbuff;
 }
