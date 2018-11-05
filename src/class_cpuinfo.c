@@ -5,6 +5,17 @@
 
 #define PROC_CPUINFO "/proc/cpuinfo"
 
+/* guess from what appears in the cpuinfo, because we
+ * could be testing on a different arch. */
+enum {
+    CPU_TYPE_UNK = 0,
+    CPU_TYPE_ARM = 1,
+    CPU_TYPE_X86 = 2,
+    CPU_TYPE_RV  = 3,
+};
+
+static const gchar *cpu_types[] = { "(Unknown)", "arm", "x86", "risc-v" };
+
 gchar* cpuinfo_log = NULL;
 
 static gchar *cpuinfo_feature_format(sysobj *obj, int fmt_opts);
@@ -67,15 +78,37 @@ static gchar *cpuinfo_messages(const gchar *path) {
 }
 
 static gchar *cpuinfo_feature_format(sysobj *obj, int fmt_opts) {
-    const gchar *meaning = x86_flag_meaning(obj->data.str); /* returns translated */
+    const gchar *meaning = NULL;
+    gchar *type_str = sysobj_format_from_fn(obj->path, "../../_type", FMT_OPT_PART);
+    int type = atol(type_str);
+    g_free(type_str);
+
+    PARAM_NOT_UNUSED(fmt_opts);
+
+    switch(type) {
+        case CPU_TYPE_X86:
+            meaning = x86_flag_meaning(obj->data.str); /* returns translated */
+            break;
+        case CPU_TYPE_ARM:
+            meaning = arm_flag_meaning(obj->data.str); /* returns translated */
+            break;
+    }
+
     if (meaning)
         return g_strdup_printf("%s", meaning);
-    else
-        return g_strdup("?");
-    return simple_format(obj, fmt_opts);
+    return g_strdup("");
 }
 
 static gchar *cpuinfo_format(sysobj *obj, int fmt_opts) {
+    if (!strcmp(obj->name, "_type")) {
+        int t = atol(obj->data.str);
+        if (t < (int)G_N_ELEMENTS(cpu_types)) {
+            if (fmt_opts & FMT_OPT_PART)
+                return g_strdup(obj->data.str);
+            else
+                return g_strdup_printf("[%d] %s", t, cpu_types[t]);
+        }
+    }
     return simple_format(obj, fmt_opts);
 }
 
@@ -89,16 +122,9 @@ static double cpuinfo_update_interval(sysobj *obj) {
     return 0.0;
 }
 
-enum {
-    CPU_TYPE_UNK = 0,
-    CPU_TYPE_X86,
-    CPU_TYPE_ARM,
-    CPU_TYPE_RV,
-};
-
-GList *lcpus = NULL;
+static GList *lcpus = NULL;
 typedef struct {
-    int id;
+    int id, type;
     gchar *model_name;
     GSList *flags; /* includes flags, bugs, pm, etc */
     /* arm */
@@ -185,6 +211,13 @@ static void cpuinfo_append_flags(lcpu *p, gchar *prefix, gchar *flags_str) {
 #define CHKSETFOR(p, m) if (CHKFOR(p)) { CHKONEPROC; this_lcpu->m = g_strdup(value); continue; }
 #define CHKSETFOR_INT(p, m) if (CHKFOR(p)) { CHKONEPROC; this_lcpu->m = atol(value); continue; }
 
+/* because g_slist_copy_deep( .. , g_strdup, NULL)
+ * would have been too easy */
+static gchar *dumb_string_copy(gchar *src, gpointer *e) {
+    PARAM_NOT_UNUSED(e);
+    return g_strdup(src);
+}
+
 void cpuinfo_scan_arm_x86(gchar **lines, gsize line_count) {
     gchar rep_pname[256] = "";
     lcpu *this_lcpu = NULL;
@@ -254,6 +287,8 @@ void cpuinfo_scan_arm_x86(gchar **lines, gsize line_count) {
         CHKSETFOR_EZ(apicid);
         CHKSETFOR("initial apicid", apicid_initial);
 
+        //TODO: old cpu bugs, like f00f
+
     }
     /* finish last */
     if (this_lcpu) {
@@ -262,17 +297,48 @@ void cpuinfo_scan_arm_x86(gchar **lines, gsize line_count) {
         lcpus = g_list_append(lcpus, this_lcpu);
     }
 
-    GList *c = lcpus;
-    while(c) {
-        this_lcpu = c->data;
-        /* no name found? must be arm */
-        if (*(this_lcpu->model_name) == 0) {
-            g_free(this_lcpu->model_name);
-            this_lcpu->model_name = g_strdup("ARM Processor");
+    /* re-duplicate missing data for /proc/cpuinfo variant that de-duplicated it */
+#define REDUP(f) if (dlcpu->f && !this_lcpu->f) this_lcpu->f = g_strdup(dlcpu->f);
+    lcpu *dlcpu = NULL;
+    GList *l = g_list_last(lcpus);
+    while (l) {
+        this_lcpu = l->data;
+        if (this_lcpu->flags) {
+            dlcpu = this_lcpu;
+        } else if (dlcpu) {
+            if (dlcpu->flags && !this_lcpu->flags) {
+                this_lcpu->flags = g_slist_copy_deep(dlcpu->flags, (GCopyFunc)dumb_string_copy, NULL);
+            }
+            REDUP(cpu_implementer);
+            REDUP(cpu_architecture);
+            REDUP(cpu_variant);
+            REDUP(cpu_part);
+            REDUP(cpu_revision);
         }
-        cpuinfo_arm_decoded_name(this_lcpu);
-        c = c->next;
+        l = l->prev;
     }
+
+    /* and one more pass */
+    l = lcpus;
+    while(l) {
+        this_lcpu = l->data;
+
+        /* guess what we've got */
+
+        if (this_lcpu->stepping)
+            this_lcpu->type = CPU_TYPE_X86;
+
+        if (this_lcpu->cpu_architecture) {
+            this_lcpu->type = CPU_TYPE_ARM;
+            if (*(this_lcpu->model_name) == 0) {
+                g_free(this_lcpu->model_name);
+                this_lcpu->model_name = g_strdup("ARM Processor");
+            }
+            cpuinfo_arm_decoded_name(this_lcpu);
+        }
+        l = l->next;
+    }
+
 }
 
 #define EASY_VOM(m) if( this_lcpu->m ) cpuinfo_add_dvo(base, #m, this_lcpu->m, VSO_TYPE_STRING );
@@ -291,11 +357,13 @@ void cpuinfo_scan() {
     GList *l = lcpus;
     while(l) {
         lcpu *this_lcpu = l->data;
+        gchar *type = g_strdup_printf("%d", this_lcpu->type);
         gchar *sysfs = g_strdup_printf("/sys/devices/system/cpu/cpu%d", this_lcpu->id);
         gchar *base = g_strdup_printf(":cpuinfo/logical_cpu%d", this_lcpu->id);
         //printf("%s\n", base);
         cpuinfo_add_dvo(base, NULL, "*", VSO_TYPE_DIR);
         cpuinfo_add_dvo(base, "_sysfs", sysfs, VSO_TYPE_SYMLINK | VSO_TYPE_AUTOLINK | VSO_TYPE_DYN );
+        cpuinfo_add_dvo(base, "_type", type, VSO_TYPE_STRING );
         EASY_VOM(model_name);
 
         gchar *base_flags = g_strdup_printf("%s/%s", base, "flags");
