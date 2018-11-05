@@ -292,10 +292,53 @@ gchar *util_normalize_path(const gchar *path, const gchar *relto) {
 #if GLIB_CHECK_VERSION(2, 58, 0)
     resolved = g_canonicalize_filename(path, relto);
 #else
-    //TODO: very very todo.
-    PARAM_NOT_UNUSED(relto);
-    resolved = g_strdup(path);
+    /* burt's hack version */
+    gchar *frt = relto ? g_strdup(relto) : NULL;
+    util_null_trailing_slash(frt);
+    gchar *fpath = frt
+        ? g_strdup_printf("%s%s%s", frt, (*path == '/') ? "" : "/", path)
+        : g_strdup(path);
+    g_free(frt);
+
+    /* note: **parts will own all the part strings throughout */
+    gchar **parts = g_strsplit(fpath, "/", -1);
+    gsize i, pn = g_strv_length(parts);
+    GList *lparts = NULL, *l = NULL, *n = NULL, *p = NULL;
+    for (i = 0; i < pn; i++)
+        lparts = g_list_append(lparts, parts[i]);
+
+    i = 0;
+    gchar *part = NULL;
+    l = lparts;
+    while(l) {
+        n = l->next; p = l->prev;
+        part = l->data;
+
+        if (!g_strcmp0(part, ".") )
+            lparts = g_list_delete_link(lparts, l);
+
+        if (!g_strcmp0(part, "..") ) {
+            if (p)
+                lparts = g_list_delete_link(lparts, p);
+            lparts = g_list_delete_link(lparts, l);
+        }
+
+        l = n;
+    }
+
+    resolved = g_strdup("");
+    l = lparts;
+    while(l) {
+        resolved = g_strdup_printf("%s%s/", resolved, (gchar*)l->data );
+        l = l->next;
+    }
+    g_list_free(lparts);
+    util_null_trailing_slash(resolved);
+    g_free(fpath);
+
+    g_strfreev(parts);
 #endif
+
     return resolved;
 }
 
