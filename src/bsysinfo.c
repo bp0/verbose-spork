@@ -39,13 +39,10 @@ int main(int argc, char **argv) {
         query = argv[2];
     }
 
-    sysobj_init();
+    sysobj_init(altroot);
 
     if (DEBUG_BUILD)
         class_dump_list();
-
-    if (altroot)
-        sysobj_root_set(altroot);
 
     sysobj *ex_obj = sysobj_new_from_fn(query, NULL);
     printf("root: %s/\n", sysobj_root);

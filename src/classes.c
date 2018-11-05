@@ -9,15 +9,16 @@ void class_cpu();
 void class_cpufreq();
 void class_cpucache();
 void class_cputopo();
+void class_cpuinfo();
 void class_any_utf8();
 
 void class_init() {
     vo_computer();
-
     class_cpu();
     class_cpufreq();
     class_cpucache();
     class_cputopo();
+    class_cpuinfo();
 /* consumes every direct child, careful with order */
     class_dmi_id();
     class_dt();

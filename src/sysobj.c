@@ -377,7 +377,7 @@ GSList *sysobj_children_ex(sysobj *s, gchar *include_glob, gchar *exclude_glob, 
             /* virtual */
             const sysobj_virt *vo = sysobj_virt_find(s->path);
             if (vo)
-                return sysobj_virt_children(vo, s->path);
+                ret = sysobj_virt_children(vo, s->path);
         } else {
             /* normal */
             dir = g_dir_open(s->path_fs, 0 , NULL);
@@ -429,6 +429,7 @@ GSList *sysobj_children(sysobj *s) {
     return sysobj_children_ex(s, NULL, NULL, FALSE);
 }
 
+/* returns the link or null if not a link */
 gchar *sysobj_virt_is_symlink(gchar *req) {
     const sysobj_virt *vo = sysobj_virt_find(req);
     if (vo) {
@@ -759,13 +760,16 @@ GSList *sysobj_virt_children_auto(const sysobj_virt *vo, const gchar *req) {
     if (vo && req) {
         gchar *fn = NULL;
         gchar *spath = g_strdup_printf("%s/", req);
+        gsize spl = strlen(spath);
         GSList *l = vo_list;
         while (l) {
             sysobj_virt *vo = l->data;
             /* find all vo paths that are immediate children */
             if ( g_str_has_prefix(vo->path, spath) ) {
-                fn = g_path_get_basename(vo->path);
-                ret = g_slist_append(ret, fn);
+                if (!strchr(vo->path + spl, '/')) {
+                    fn = g_path_get_basename(vo->path);
+                    ret = g_slist_append(ret, fn);
+                }
             }
 
             l = l->next;
@@ -807,7 +811,9 @@ void sysobj_virt_cleanup() {
     g_slist_free_full(vo_list, (GDestroyNotify)sysobj_virt_free);
 }
 
-void sysobj_init() {
+void sysobj_init(const gchar *alt_root) {
+    if (alt_root)
+        sysobj_root_set(alt_root);
     class_init();
 }
 

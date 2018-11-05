@@ -13,7 +13,7 @@ const char about_text[] =
     "\n";
 
 static int app_init(void) {
-    sysobj_init();
+    sysobj_init(NULL);
     return 1;
 }
 

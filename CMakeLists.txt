@@ -41,12 +41,22 @@ add_library(sysobj STATIC
         src/class_cpucache.c
         src/class_cputopo.c
         src/class_any_utf8.c
+        src/class_cpuinfo.c
+        src/arm_data.c
+        src/x86_data.c
+#src/riscv_data.c
         src/vo_computer.c
 )
 target_link_libraries(sysobj
         gettext
 )
 set_target_properties(sysobj PROPERTIES COMPILE_FLAGS "-Wall -Wextra -Werror")
+
+set_source_files_properties(
+        src/x86_data.c
+        PROPERTIES
+        COMPILE_FLAGS "-Wno-unused-function"
+)
 
 add_executable(bsysinfo
         src/bsysinfo.c

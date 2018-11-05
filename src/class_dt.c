@@ -14,6 +14,8 @@
 typedef uint32_t dt_uint; /* big-endian */
 typedef uint64_t dt_uint64; /* big-endian */
 
+gchar* dtr_log = NULL;
+
 static gchar *dtr_format(sysobj *obj, int fmt_opts);
 static guint dtr_flags(sysobj *obj);
 static gchar *dt_messages(const gchar *path);
@@ -61,7 +63,7 @@ static sysobj_virt vol[] = {
     { .path = ":devicetree/base", .str = DTROOT,
       .type = VSO_TYPE_AUTOLINK | VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_CONST,
       .f_get_data = NULL, .f_get_type = NULL },
-    { .path = ":devicetree/messages", .str = "*",
+    { .path = ":devicetree/_messages", .str = "",
       .type = VSO_TYPE_STRING | VSO_TYPE_CONST,
       .f_get_data = dt_messages, .f_get_type = NULL },
 };
@@ -110,8 +112,22 @@ static struct {
 };
 */
 
+void dtr_msg(char *fmt, ...) {
+    gchar *buf, *tmp;
+    va_list args;
+
+    va_start(args, fmt);
+    buf = g_strdup_vprintf(fmt, args);
+    va_end(args);
+
+    tmp = g_strdup_printf("%s%s\n", dtr_log, buf);
+    g_free(dtr_log);
+    dtr_log = tmp;
+}
+
 static gchar *dt_messages(const gchar *path) {
-    return g_strdup(path);
+    PARAM_NOT_UNUSED(path);
+    return g_strdup(dtr_log ? dtr_log : "");
 }
 
 char *dtr_list_byte(uint8_t *bytes, gsize count) {
@@ -270,11 +286,15 @@ static gchar *dtr_format(sysobj *obj, int fmt_opts) {
     switch(type) {
         case DT_NODE:
             return g_strdup("{node}");
-            break;
         case DTP_EMPTY:
+            if (fmt_opts & FMT_OPT_NULL_IF_EMPTY)
+                return NULL;
             return g_strdup("{empty}");
-            break;
         case DTP_STR:
+            if (fmt_opts & FMT_OPT_NULL_IF_EMPTY) {
+                if (obj->data.len == 1 && *obj->data.str == 0)
+                    return NULL;
+            }
             return dtr_list_str0(obj->data.str, obj->data.len);
         case DTP_UINT:
             return dtr_list_uint32(obj->data.uint32, obj->data.len / 4);
@@ -308,10 +328,14 @@ void class_dt_cleanup() {
         if (prop_types[i].pspec)
             g_pattern_spec_free(prop_types[i].pspec);
     }
+    g_free(dtr_log);
 }
 
 void class_dt() {
     int i = 0;
+
+    dtr_log = g_strdup("");
+
     /* add virtual sysobj */
     for (i = 0; i < (int)G_N_ELEMENTS(vol); i++) {
         sysobj_virt_add(&vol[i]);
@@ -327,5 +351,9 @@ void class_dt() {
         if ( strchr(prop_types[i].pattern,'*')
             || strchr(prop_types[i].pattern,'?') )
             prop_types[i].pspec = g_pattern_spec_new(prop_types[i].pattern);
+    }
+
+    if (!sysobj_exists_from_fn(DTROOT, NULL)) {
+        dtr_msg("devicetree not found at %s", DTROOT);
     }
 }

@@ -115,7 +115,9 @@ typedef struct sysobj_virt {
     int (*f_get_type)(const gchar *path);
 } sysobj_virt;
 
-void sysobj_init();
+/* NULL will not change the root
+ * if sysobj_root_set() was already used. */
+void sysobj_init(const gchar *alt_root);
 void sysobj_cleanup();
 
 #define sysobj_virt_new() g_new0(sysobj_virt, 1)
