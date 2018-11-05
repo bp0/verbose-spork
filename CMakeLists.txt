@@ -1,8 +1,6 @@
 project(bsysinfo C)
 cmake_minimum_required(VERSION 2.6)
 
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Werror")
-
 if(${CMAKE_BUILD_TYPE} MATCHES [Dd]ebug)
         message("Debug build")
         add_definitions(-DDEBUG_BUILD=1)
@@ -50,7 +48,7 @@ add_library(sysobj STATIC
 target_link_libraries(sysobj
         gettext
 )
-set_target_properties(sysobj PROPERTIES COMPILE_FLAGS "-Wall -Wextra -Werror")
+#set_target_properties(sysobj PROPERTIES COMPILE_FLAGS "-Wall -Wextra -Werror")
 
 set_source_files_properties(
         src/x86_data.c
