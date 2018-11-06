@@ -57,7 +57,7 @@ pin_inspect *pin_inspect_create() {
 
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
     GtkWidget *scroll = gtk_scrolled_window_new(NULL, NULL);
-    //gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scroll), GTK_SHADOW_IN);
+    gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scroll), GTK_SHADOW_IN);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_ALWAYS);
     gtk_container_add(GTK_CONTAINER(scroll), box);
     gtk_widget_show(box);
@@ -183,16 +183,19 @@ static pins_list_view *pins_list_view_create(gboolean as_tree) {
     plv->view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(plv->store));
 
     GtkWidget *list_scroll = gtk_scrolled_window_new(NULL, NULL);
-    gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(list_scroll), GTK_SHADOW_IN);
+    gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(list_scroll), GTK_SHADOW_ETCHED_IN);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(list_scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_ALWAYS);
     gtk_container_add(GTK_CONTAINER(list_scroll), plv->view);
     gtk_widget_show(plv->view);
 
     plv->pinspect = pin_inspect_create();
 
-    plv->container = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
-    gtk_box_pack_start (GTK_BOX (plv->container), list_scroll, TRUE, TRUE, 0); gtk_widget_show (list_scroll);
-    gtk_box_pack_start (GTK_BOX (plv->container), plv->pinspect->container, TRUE, TRUE, 5); gtk_widget_show (plv->pinspect->container);
+    GtkWidget *paned = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
+    //gtk_paned_set_wide_handle(GTK_PANED(paned), TRUE);
+    gtk_paned_set_position(GTK_PANED(paned), 420);
+    gtk_paned_pack1(GTK_PANED(paned), list_scroll, TRUE, FALSE); gtk_widget_show (list_scroll);
+    gtk_paned_pack2(GTK_PANED(paned), plv->pinspect->container, FALSE, FALSE); gtk_widget_show (plv->pinspect->container);
+    plv->container = paned;
 
     GtkCellRenderer *renderer;
     GtkTreeViewColumn *column;
