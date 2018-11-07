@@ -37,6 +37,20 @@ void pin_free(void *ptr) {
     }
 }
 
+const sysobj_data *pins_history_data_when(pin_list *pl, pin *p, double seconds_ago) {
+    int64_t i = 0;
+    if (!p) return NULL;
+    if (p->history_status > 0) {
+        double elapsed = g_timer_elapsed(pl->timer, NULL);
+        for (i = (int64_t)p->history_len; i >= 0; i--) {
+            double age = elapsed - p->history[i]->stamp;
+            if (age > seconds_ago)
+                return p->history[i];
+        }
+    }
+    return &p->obj->data;
+}
+
 const pin *pins_pin_if_updated_since(pin_list *pl, int pi, double seconds_ago) {
     if (pl) {
         double elapsed = g_timer_elapsed(pl->timer, NULL);
@@ -98,12 +112,15 @@ void pin_update(pin *p, gboolean force) {
                 }
                 uint64_t i = p->history_len-1;
                 p->history[i] = sysobj_data_dup(&p->obj->data);
+                p->history[i]->stamp = p->last_update;
                 if (compare_func) {
                     if (!p->min || compare_func(p->min, p->history[i]) >= 0 )
                         p->min = p->history[p->history_len-1];
                     if ( compare_func(p->max, p->history[i]) <= 0 )
                         p->max = p->history[p->history_len-1];
                 }
+
+                //TODO: trim history to history_max
             }
         }
     }

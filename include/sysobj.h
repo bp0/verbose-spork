@@ -78,6 +78,7 @@ typedef struct sysobj_data {
     };
     gboolean is_utf8;
     int maybe_num; /* looks like it might be a number, value is the base (10 or 16) */
+    double stamp;  /* used by pin */
 } sysobj_data;
 
 struct sysobj {

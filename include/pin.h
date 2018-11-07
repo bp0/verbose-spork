@@ -40,6 +40,7 @@ void pins_refresh(pin_list *pl);
 pin *pins_get_nth(pin_list *pl, int i);
 pin *pins_find_by_path(pin_list *pl, const gchar *path);
 const pin *pins_pin_if_updated_since(pin_list *pl, int pi, double seconds_ago); /* NULL if unchanged, or pin* to avoid another pins_get_nth() */
+const sysobj_data *pins_history_data_when(pin_list *pl, pin *p, double seconds_ago);
 void pins_clear(pin_list *pl);
 void pins_free(pin_list *pl);
 

@@ -90,6 +90,7 @@ target_link_libraries(bsysinfo-gtk
         ${GTK_LIBRARIES}
         gettext
         sysobj
+        m
         uber-graph
 )
 else()
