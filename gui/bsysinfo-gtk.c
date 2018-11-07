@@ -84,6 +84,7 @@ void pin_inspect_do(pin_inspect *pi, const pin *p, int fmt_opts) {
     gchar *label = g_strdup(sysobj_label(p->obj));
     gchar *nice = sysobj_format(p->obj, fmt_opts);
     gchar *tag = g_strdup_printf("{%s}", p->obj->cls ? (p->obj->cls->tag ? p->obj->cls->tag : p->obj->cls->pattern) : "none");
+    gchar *data_info = g_strdup_printf("size = %lu byte(s)%s", p->obj->data.len, p->obj->data.is_utf8 ? ", utf8" : "");
     gchar *update = g_strdup_printf("update_interval = %0.4lfs, last_update = %0.4lfs", p->update_interval, p->last_update);
 
     if (!label)
@@ -93,16 +94,20 @@ void pin_inspect_do(pin_inspect *pi, const pin *p, int fmt_opts) {
     /* name   */ "<big><big>%s</big></big>\n"
     /* label  */ "%s\n"
     /* tag    */ "%s\n"
+                 "\n"
     /* value  */ "%s\n"
+                 "\n"
     /* resolv */ "%s\n"
+    /* data info */ "%s\n"
     /* update */ "%s\n",
         p->obj->name,
-        label, tag, nice, p->obj->path, update);
+        label, tag, nice, p->obj->path, data_info, update);
 
     g_free(label);
     g_free(nice);
     g_free(tag);
     g_free(update);
+    g_free(data_info);
 
     GtkWidget *lbl;
     lbl = gtk_label_new(NULL);
@@ -233,7 +238,7 @@ static void pins_list_view_fill(pins_list_view *plv) {
         pin *p = l->data;
 
         gchar *label = g_strdup(sysobj_label(p->obj));
-        gchar *nice = sysobj_format(p->obj, plv->fmt_opts);
+        gchar *nice = sysobj_format(p->obj, plv->fmt_opts | FMT_OPT_LIST_ITEM);
         gchar *tag = g_strdup_printf("{%s}", p->obj->cls ? (p->obj->cls->tag ? p->obj->cls->tag : p->obj->cls->pattern) : "none");
         gboolean is_live = !(p->update_interval == UPDATE_INTERVAL_NEVER);
 
@@ -295,7 +300,7 @@ gboolean pins_list_view_update_row(GtkTreeModel *model, GtkTreePath *path, GtkTr
         gtk_tree_model_get(model, iter, KV_COL_INDEX, &pi, -1);
         p = pins_pin_if_updated_since(plv->pins, pi, UPDATE_TIMER_SECONDS);
         if (p) {
-            gchar *nice = sysobj_format(p->obj, plv->fmt_opts);
+            gchar *nice = sysobj_format(p->obj, plv->fmt_opts | FMT_OPT_LIST_ITEM);
             gtk_tree_store_set(GTK_TREE_STORE(model), iter, KV_COL_VALUE, nice, -1);
             g_free(nice);
             if (plv->pinspect->p == p)

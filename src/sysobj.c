@@ -125,13 +125,22 @@ gchar *simple_format(sysobj* obj, int fmt_opts) {
                 && ( fmt_opts & FMT_OPT_NULL_IF_MISSING) )
                 nice = NULL;
             else {
-                if (fmt_opts & FMT_OPT_HTML
-                    || fmt_opts & FMT_OPT_PANGO)
-                    nice = util_escape_markup(obj->data.str, FALSE);
+                gchar *text = NULL;
+                if (fmt_opts & FMT_OPT_LIST_ITEM &&
+                    (obj->data.lines > 1 || obj->data.len > 120) )
+                    text = g_strdup_printf("{%lu line(s) text, utf8}", obj->data.lines);
                 else
-                    nice = g_strdup(obj->data.str);
+                    text = g_strdup(obj->data.str);
+
+                g_strchomp(text);
+
+                if (fmt_opts & FMT_OPT_HTML
+                    || fmt_opts & FMT_OPT_PANGO) {
+                    nice = util_escape_markup(text, FALSE);
+                    g_free(text);
+                } else
+                    nice = text;
             }
-            g_strchomp(nice);
         }
         return nice;
     }
