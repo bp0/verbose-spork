@@ -15,6 +15,7 @@ include_directories(
         ${CMAKE_SOURCE_DIR}
         ${CMAKE_SOURCE_DIR}/include
         ${CMAKE_SOURCE_DIR}/gui
+        ${CMAKE_SOURCE_DIR}/uber-graph
         ${GLIB_INCLUDE_DIRS}
         ${GTK_INCLUDE_DIRS}
         ${CMAKE_BINARY_DIR}
@@ -67,6 +68,20 @@ target_link_libraries(bsysinfo
 
 if(GTK_FOUND)
 add_definitions(-DGTK_DISABLE_SINGLE_INCLUDES)
+add_library(uber-graph STATIC
+        uber-graph/g-ring.c
+        uber-graph/uber-frame-source.c
+        uber-graph/uber-graph.c
+        uber-graph/uber-heat-map.c
+        uber-graph/uber-label.c
+        uber-graph/uber-line-graph.c
+        uber-graph/uber-range.c
+        uber-graph/uber-scale.c
+        uber-graph/uber-scatter.c
+        uber-graph/uber-timeout-interval.c
+        uber-graph/uber-window.c
+)
+set_target_properties(uber-graph PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations")
 add_executable(bsysinfo-gtk
         gui/bsysinfo-gtk.c
 )
@@ -75,6 +90,7 @@ target_link_libraries(bsysinfo-gtk
         ${GTK_LIBRARIES}
         gettext
         sysobj
+        uber-graph
 )
 else()
 message(STATUS "GTK3 libs not found, skipping GUI")
