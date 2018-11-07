@@ -1,5 +1,6 @@
 
 #include "bsysinfo-gtk.h"
+#include <inttypes.h> /* for PRIu64 */
 
 GtkWidget *notebook = NULL;
 #define PAGE_BROWSER 0
@@ -84,30 +85,34 @@ void pin_inspect_do(pin_inspect *pi, const pin *p, int fmt_opts) {
     gchar *label = g_strdup(sysobj_label(p->obj));
     gchar *nice = sysobj_format(p->obj, fmt_opts);
     gchar *tag = g_strdup_printf("{%s}", p->obj->cls ? (p->obj->cls->tag ? p->obj->cls->tag : p->obj->cls->pattern) : "none");
-    gchar *data_info = g_strdup_printf("size = %lu byte(s)%s", p->obj->data.len, p->obj->data.is_utf8 ? ", utf8" : "");
+    gchar *data_info = g_strdup_printf("raw_size = %lu byte(s)%s; guess_nbase = %d\ntag = %s",
+        p->obj->data.len, p->obj->data.is_utf8 ? ", utf8" : "", p->obj->data.maybe_num, tag);
     gchar *update = g_strdup_printf("update_interval = %0.4lfs, last_update = %0.4lfs", p->update_interval, p->last_update);
-
+    gchar *pin_info = g_strdup_printf("hist_stat = %d, hist_len = %" PRIu64 "/%" PRIu64 ", hist_mem_size = %" PRIu64 " (%" PRIu64 " bytes)",
+        p->history_status, p->history_len, p->history_max_len, p->history_mem, p->history_mem * sizeof(sysobj_data) );
     if (!label)
         label = g_strdup("");
 
     gchar *mt = g_strdup_printf(
     /* name   */ "<big><big>%s</big></big>\n"
     /* label  */ "%s\n"
-    /* tag    */ "%s\n"
                  "\n"
     /* value  */ "%s\n"
                  "\n"
+                 "debug info:\n"
     /* resolv */ "%s\n"
     /* data info */ "%s\n"
+    /* pin info */ "%s\n"
     /* update */ "%s\n",
         p->obj->name,
-        label, tag, nice, p->obj->path, data_info, update);
+        label, nice, p->obj->path, data_info, pin_info, update);
 
     g_free(label);
     g_free(nice);
     g_free(tag);
     g_free(update);
     g_free(data_info);
+    g_free(pin_info);
 
     GtkWidget *lbl;
     lbl = gtk_label_new(NULL);
@@ -535,7 +540,8 @@ void about_init() {
     gtk_widget_set_margin_start(lbl, 10);
     gtk_widget_show(lbl);
 
-    about = lbl;
+    about = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    gtk_box_pack_start (GTK_BOX(about), lbl, TRUE, TRUE, 0); gtk_widget_show(lbl);
 
     g_free(glib_version_info);
     g_free(gtk_version_info);

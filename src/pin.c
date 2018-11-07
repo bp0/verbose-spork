@@ -2,6 +2,7 @@
 #include "pin.h"
 
 #define PIN_HIST_BLOCK_SIZE 100 /* num of structs to allocate */
+#define PIN_HIST_MAX_DEFAULT 10  /* max num of samples(structs) to keep */
 
 pin *pin_new() {
     pin *p = g_new0(pin, 1);
@@ -47,28 +48,62 @@ const pin *pins_pin_if_updated_since(pin_list *pl, int pi, double seconds_ago) {
 }
 
 void pin_update(pin *p, gboolean force) {
+    f_compare_sysobj_data *compare_func = NULL;
     if (p->obj) {
         if (p->update_interval || force) {
             const sysobj_class *c = p->obj->cls;
             sysobj_read_data(p->obj);
-            if (p->history) {
-                if (p->history_len == p->history_mem) {
-                    p->history_mem += PIN_HIST_BLOCK_SIZE;
-                    p->history = g_renew(sysobj_data*, p->history, p->history_mem);
-                }
-                p->history_len++;
-            } else {
-                p->history_mem = PIN_HIST_BLOCK_SIZE;
-                p->history = g_new0(sysobj_data*, p->history_mem);
-                p->history_len = 1;
+            if (!p->history_status) {
+                if (c && c->f_compare)
+                    p->history_status = 1;
+                else if (p->obj->data.maybe_num) {
+                    p->history_status = p->obj->data.maybe_num;
+                } else
+                    p->history_status = -1;
+                p->history_max_len = PIN_HIST_MAX_DEFAULT;
             }
-            uint64_t i = p->history_len-1;
-            p->history[i] = sysobj_data_dup(&p->obj->data);
-            if (c && c->f_compare) {
-                if (!p->min || c->f_compare(p->min, p->history[i]) >= 0 )
-                    p->min = p->history[p->history_len-1];
-                if ( c->f_compare(p->max, p->history[i]) <= 0 )
-                    p->max = p->history[p->history_len-1];
+
+            if (p->history_status > 0) {
+                if (p->history_status > 1) {
+                    switch(p->obj->data.maybe_num) {
+                        case 0:
+                            p->history_status = -1; /* previously guessed, but apparently wrong */
+                            break;
+                        case 16:
+                            p->history_status = 16; /* upgrade to hex if a hex digit is seen */
+                            break;
+                        case 10:
+                        default:
+                            break;
+                    }
+                }
+
+                if (c && c->f_compare)
+                    compare_func = c->f_compare;
+                else if (p->history_status == 10)
+                    compare_func = compare_str_base10;
+                else if (p->history_status == 16)
+                    compare_func = compare_str_base16;
+
+                if (p->history) {
+                    if (p->history_len == p->history_mem) {
+                        p->history_mem += PIN_HIST_BLOCK_SIZE;
+                        p->history = g_renew(sysobj_data*, p->history, p->history_mem);
+                    }
+                    p->history_len++;
+                } else {
+                    p->history_mem = PIN_HIST_BLOCK_SIZE;
+                    p->history = g_new0(sysobj_data*, p->history_mem);
+                    p->history_len = 1;
+                }
+                uint64_t i = p->history_len-1;
+                p->history[i] = sysobj_data_dup(&p->obj->data);
+                if (compare_func) {
+                    if (!p->min || compare_func(p->min, p->history[i]) >= 0 )
+                        p->min = p->history[p->history_len-1];
+                    if ( compare_func(p->max, p->history[i]) <= 0 )
+                        p->max = p->history[p->history_len-1];
+                }
             }
         }
     }

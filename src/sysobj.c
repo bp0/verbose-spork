@@ -46,6 +46,14 @@ int compare_str_base10(const sysobj_data *a, const sysobj_data *b) {
     return 0;
 }
 
+int compare_str_base16(const sysobj_data *a, const sysobj_data *b) {
+    int64_t A = (a && a->str) ? strtol(a->str, NULL, 16) : 0;
+    int64_t B = (b && b->str) ? strtol(b->str, NULL, 16) : 0;
+    if (A < B) return -1;
+    if (A > B) return 1;
+    return 0;
+}
+
 GSList *class_list = NULL;
 GSList *vo_list = NULL;
 
@@ -359,6 +367,25 @@ gchar *util_canonicalize_path(const gchar *path) {
     return ret;
 }
 
+int util_maybe_num(gchar *str) {
+    int r = 10, i = 0, l = (str) ? strlen(str) : 0;
+    if (!l || l > 32) return 0;
+    gchar *chk = g_strdup(str);
+    g_strstrip(chk);
+    l = strlen(chk);
+    for (i = 0; i < l; i++) {
+        if (isxdigit(chk[i]))  {
+            if (!isdigit(chk[i]))
+                r = 16;
+        } else {
+            r = 0;
+            break;
+        }
+    }
+    g_free(chk);
+    return r;
+}
+
 void sysobj_read_data(sysobj *s) {
     GError *error = NULL;
     if (s && s->path) {
@@ -374,8 +401,6 @@ void sysobj_read_data(sysobj *s) {
                 if (s->data.str) {
                     s->data.was_read = TRUE;
                     s->data.len = strlen(s->data.str); //TODO:
-                    s->data.is_utf8 = g_utf8_validate(s->data.str, s->data.len, NULL);
-                    s->data.lines = util_count_lines(s->data.str);
                 } else {
                     if (sysobj_has_flag(s, OF_REQ_ROOT) && !util_have_root())
                         s->access_fail = TRUE;
@@ -384,10 +409,7 @@ void sysobj_read_data(sysobj *s) {
         } else {
             s->data.was_read =
                 g_file_get_contents(s->path_fs, &s->data.str, &s->data.len, &error);
-                if (s->data.str) {
-                    s->data.is_utf8 = g_utf8_validate(s->data.str, s->data.len, NULL);
-                    s->data.lines = util_count_lines(s->data.str);
-                } else {
+                if (!s->data.str) {
                     if (sysobj_has_flag(s, OF_REQ_ROOT) && !util_have_root())
                         s->access_fail = TRUE;
                     if (error && error->code == G_FILE_ERROR_ACCES)
@@ -395,6 +417,12 @@ void sysobj_read_data(sysobj *s) {
                 }
                 if (error)
                     g_error_free(error);
+        }
+
+        s->data.is_utf8 = g_utf8_validate(s->data.str, s->data.len, NULL);
+        if (s->data.is_utf8) {
+            s->data.lines = util_count_lines(s->data.str);
+            s->data.maybe_num = util_maybe_num(s->data.str);
         }
     }
 }

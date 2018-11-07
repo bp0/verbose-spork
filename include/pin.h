@@ -11,6 +11,12 @@ typedef struct pin {
     sysobj_data **history;
     const sysobj_data *min; /* in history */
     const sysobj_data *max; /* in history */
+    /* -1 = not keeping history */
+    /*  0 = not yet determined */
+    /*  1 = keeping, have f_compare() */
+    /* 10 = keeping, guessing compare base 10 number */
+    /* 16 = keeping, guessing compare base 16 number */
+    int history_status;
     uint64_t history_len;
     uint64_t history_max_len;
     uint64_t history_mem;   /* size of allocated block in num of structs */

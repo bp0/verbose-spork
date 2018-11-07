@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <stdint.h>  /* for *int*_t types */
 #include <unistd.h>  /* for getuid() */
+#include <ctype.h>   /* for isxdigit(), etc. */
 #include "config.h"
 #include "gettext.h"
 #include "term_color.h" /* used in formatting output */
@@ -76,6 +77,7 @@ typedef struct sysobj_data {
         uint64_t *uint64;
     };
     gboolean is_utf8;
+    int maybe_num; /* looks like it might be a number, value is the base (10 or 16) */
 } sysobj_data;
 
 struct sysobj {
@@ -149,7 +151,9 @@ gboolean verify_parent_name(sysobj *obj, const gchar *parent_name);
 gboolean verify_parent(sysobj *obj, const gchar *parent_path_suffix);
 
 /* to be used by sysobj_class::f_compare */
+typedef int (f_compare_sysobj_data)(const sysobj_data *a, const sysobj_data *b);
 int compare_str_base10(const sysobj_data *a, const sysobj_data *b);
+int compare_str_base16(const sysobj_data *a, const sysobj_data *b);
 
 #define PARAM_NOT_UNUSED(p); { p = p; }
 /* can be used in class f_format() functions that
