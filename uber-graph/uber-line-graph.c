@@ -421,7 +421,7 @@ uber_line_graph_stylize_line (UberLineGraph *graph, /* IN */
 	cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
 	cairo_set_line_width(cr, info->width);
 	cairo_set_antialias(cr, priv->antialias);
-	cairo_set_source_rgba(cr, 
+	cairo_set_source_rgba(cr,
                           info->color.red,
                           info->color.green,
                           info->color.blue,
@@ -1012,4 +1012,17 @@ uber_line_graph_init (UberLineGraph *graph) /* IN */
 	priv->lines = g_array_sized_new(FALSE, FALSE, sizeof(LineInfo), 2);
 	priv->scale = uber_scale_linear;
 	priv->autoscale = TRUE;
+}
+
+void
+uber_line_graph_clear (UberLineGraph *graph) /* IN */
+{
+	UberLineGraphPrivate *priv = graph->priv;
+	LineInfo *line;
+	gint i;
+
+	for (i = 0; i < priv->lines->len; i++) {
+		line = &g_array_index(priv->lines, LineInfo, i);
+		uber_line_graph_init_ring(line->raw_data);
+	}
 }

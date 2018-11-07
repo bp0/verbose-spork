@@ -94,7 +94,7 @@ void              uber_line_graph_set_line_dash  (UberLineGraph     *graph,
 void              uber_line_graph_set_line_width (UberLineGraph     *graph,
                                                   gint               line,
                                                   gdouble            width);
-
+void uber_line_graph_clear (UberLineGraph     *graph);
 G_END_DECLS
 
 #endif /* __UBER_LINE_GRAPH_H__ */
