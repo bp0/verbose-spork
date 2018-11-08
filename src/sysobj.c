@@ -12,6 +12,7 @@ gboolean sysobj_root_set(const gchar *alt_root) {
 
 static sysobj_filter path_filters[] = {
     { SO_FILTER_STATIC | SO_FILTER_INCLUDE_IIF, "/sys/*", NULL },
+    { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     ":*", NULL }, /* sysobj_virt */
 
     { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc", NULL },
 
@@ -527,6 +528,8 @@ gchar *sysobj_virt_is_symlink(gchar *req) {
 gboolean sysobj_config_paths(sysobj *s, const gchar *base, const gchar *name) {
     gchar *req = NULL, *norm = NULL, *vlink = NULL, *chkpath = NULL, *fspath = NULL;
     gboolean target_is_real = FALSE, req_is_real = FALSE;
+    gchar *vlink_tmp = NULL;
+    int vlr_count = 0;
 
     if (!s) return FALSE;
 
@@ -547,8 +550,15 @@ gboolean sysobj_config_paths(sysobj *s, const gchar *base, const gchar *name) {
     /* virtual symlink */
     req_is_real = (*req == ':') ? FALSE : TRUE;
 
-    if (!req_is_real)
+    if (!req_is_real) {
         vlink = sysobj_virt_is_symlink(req);
+        while (vlink && *vlink == ':' && vlr_count < 10) {
+            vlink_tmp = sysobj_virt_is_symlink(vlink);
+            g_free(vlink);
+            vlink = vlink_tmp;
+            vlr_count++;
+        }
+    }
 
     if (vlink)
         target_is_real = (*vlink == ':') ? FALSE : TRUE;

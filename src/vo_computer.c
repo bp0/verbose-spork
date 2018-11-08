@@ -213,10 +213,10 @@ static sysobj_virt vol[] = {
       .type = VSO_TYPE_AUTOLINK | VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_CONST,
       .str = "/sys/devices/virtual/dmi/id",
       .f_get_data = NULL },
-/*  { .path = ":computer/board/dt_model",
+  { .path = ":computer/board/dt_model",
       .type = VSO_TYPE_SYMLINK | VSO_TYPE_CONST,
       .str = ":devicetree/base/model",
-      .f_get_data = NULL }, */
+      .f_get_data = NULL },
 };
 
 void vo_computer() {
