@@ -508,7 +508,7 @@ void browser_navigate(const gchar *new_location) {
     pins_add_from_fn(gel.browser->pins, ex_obj->path_req, NULL);
     if (ex_obj->exists) {
         if (ex_obj->is_dir) {
-            GSList *l = NULL, *childs = sysobj_children_ex(ex_obj, NULL, NULL, TRUE);
+            GSList *l = NULL, *childs = sysobj_children(ex_obj, NULL, NULL, TRUE);
             l = childs;
             while(l) {
                 fn = l->data;

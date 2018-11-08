@@ -1,7 +1,7 @@
 
 #include "bsysinfo.h"
 
-int fmt_opts = FMT_OPT_ATERM | FMT_OPT_NO_JUNK;
+int fmt_opts = FMT_OPT_ATERM | FMT_OPT_NO_JUNK | FMT_OPT_LIST_ITEM;
 
 void print_obj(sysobj *s) {
     static const gchar none[] = "--";
@@ -54,7 +54,7 @@ int main(int argc, char **argv) {
     if (ex_obj->exists) {
         print_obj(ex_obj);
         if (ex_obj->is_dir) {
-            GSList *l = NULL, *childs = sysobj_children(ex_obj);
+            GSList *l = NULL, *childs = sysobj_children(ex_obj, NULL, NULL, TRUE);
             int len = g_slist_length(childs);
             printf("---[%d items]------------------------ \n", len);
             l = childs;

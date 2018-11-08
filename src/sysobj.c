@@ -10,6 +10,30 @@ gboolean sysobj_root_set(const gchar *alt_root) {
     return TRUE;
 }
 
+static sysobj_filter path_filters[] = {
+    { SO_FILTER_STATIC | SO_FILTER_INCLUDE_IIF, "/sys/*", NULL },
+
+    { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc", NULL },
+
+    { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc/sys", NULL },
+    { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc/sys/*", NULL },
+
+    { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc/devicetree", NULL },
+    { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc/devicetree/*", NULL },
+
+    { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc/uptime", NULL },
+    { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc/stat", NULL },
+    { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc/meminfo", NULL },
+    { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc/cpuinfo", NULL },
+    { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc/crypto", NULL },
+    { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc/modules", NULL },
+
+    { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/usr/lib/os-release", NULL },
+
+    { SO_FILTER_NONE, "", NULL },
+};
+static GSList *sysobj_global_filters = NULL;
+
 gboolean util_have_root() {
     return (getuid() == 0) ? TRUE : FALSE;
 }
@@ -447,8 +471,8 @@ double sysobj_update_interval(sysobj *s) {
     return UPDATE_INTERVAL_NEVER;
 }
 
-GSList *sysobj_children_ex(sysobj *s, gchar *include_glob, gchar *exclude_glob, gboolean sort) {
-    GSList *ret = NULL, *l, *n;
+GSList *sysobj_children_ex(sysobj *s, GSList *filters, gboolean sort) {
+    GSList *ret = NULL;
     GDir *dir;
     const gchar *fn;
 
@@ -469,35 +493,8 @@ GSList *sysobj_children_ex(sysobj *s, gchar *include_glob, gchar *exclude_glob, 
             }
         }
 
-        if (ret && include_glob) {
-            GPatternSpec *pat = g_pattern_spec_new(include_glob);
-            l = ret;
-            while(l) {
-                n = l->next;
-                gchar *f = l->data;
-                gsize len = strlen(f);
-                gboolean match = g_pattern_match(pat, len, f, NULL);
-                if (!match)
-                    ret = g_slist_delete_link(ret, l);
-                l = n;
-            }
-            g_pattern_spec_free(pat);
-        }
-
-        if (ret && exclude_glob) {
-            GPatternSpec *pat = g_pattern_spec_new(exclude_glob);
-            l = ret;
-            while(l) {
-                n = l->next;
-                gchar *f = l->data;
-                gsize len = strlen(f);
-                gboolean match = g_pattern_match(pat, len, f, NULL);
-                if (match)
-                    ret = g_slist_delete_link(ret, l);
-                l = n;
-            }
-            g_pattern_spec_free(pat);
-        }
+        if (filters)
+            ret = sysobj_filter_list(ret, filters);
 
         if (sort)
             ret = g_slist_sort(ret, (GCompareFunc)g_strcmp0);
@@ -505,8 +502,15 @@ GSList *sysobj_children_ex(sysobj *s, gchar *include_glob, gchar *exclude_glob, 
     return ret;
 }
 
-GSList *sysobj_children(sysobj *s) {
-    return sysobj_children_ex(s, NULL, NULL, FALSE);
+GSList *sysobj_children(sysobj *s, gchar *include_glob, gchar *exclude_glob, gboolean sort) {
+    GSList *filters = NULL, *ret = NULL;
+    if (include_glob)
+        filters = g_slist_append(filters, sysobj_filter_new(SO_FILTER_INCLUDE_IIF, include_glob) );
+    if (exclude_glob)
+        filters = g_slist_append(filters, sysobj_filter_new(SO_FILTER_EXCLUDE, exclude_glob) );
+    ret = sysobj_children_ex(s, filters, sort);
+    g_slist_free_full(filters, (GDestroyNotify)sysobj_filter_free);
+    return ret;
 }
 
 /* returns the link or null if not a link */
@@ -591,11 +595,7 @@ gboolean sysobj_config_paths(sysobj *s, const gchar *base, const gchar *name) {
     //DEBUG("\n{ .path_req_fs = %s\n  .path_req = %s\n  .path_fs = %s\n  .path = %s\n  .req_is_link = %s }",
     //    s->path_req_fs, s->path_req, s->path_fs, s->path, s->req_is_link ? "TRUE" : "FALSE" );
 
-    /* check for desirable paths */
-    if (! (g_str_has_prefix(s->path, ":")
-        || g_str_has_prefix(s->path, "/sys")
-        || g_str_has_prefix(s->path, "/proc")
-        ) ) {
+    if (!sysobj_filter_item_include(s->path, sysobj_global_filters) ) {
         goto config_bad_path;
     }
 
@@ -894,10 +894,127 @@ void sysobj_virt_cleanup() {
 void sysobj_init(const gchar *alt_root) {
     if (alt_root)
         sysobj_root_set(alt_root);
+
+    int i = 0;
+    while(path_filters[i].type != SO_FILTER_NONE) {
+        sysobj_global_filters = g_slist_append(sysobj_global_filters, &path_filters[i]);
+        i++;
+    }
+
     class_init();
 }
 
 void sysobj_cleanup() {
     class_cleanup();
     sysobj_virt_cleanup();
+}
+
+sysobj_filter *sysobj_filter_new(int type, gchar *pattern) {
+    sysobj_filter *f = g_new0(sysobj_filter, 1);
+    f->type = type;
+    f->pspec = g_pattern_spec_new(pattern);
+    return f;
+}
+
+void sysobj_filter_free(sysobj_filter *f) {
+    if (f) {
+        if (f->pspec)
+            g_pattern_spec_free(f->pspec);
+
+        if (!(f->type & SO_FILTER_STATIC) ) {
+            g_free(f->pattern);
+            g_free(f);
+        }
+    }
+}
+
+gboolean sysobj_filter_item_include(gchar *item, GSList *filters) {
+    if (!item) return FALSE;
+
+    sysobj_filter *f = NULL;
+    gboolean marked = FALSE;
+    GSList *fp = filters;
+    gsize len = strlen(item);
+
+    while (fp) {
+        f = fp->data;
+        if (!f->pspec)
+            f->pspec = g_pattern_spec_new(f->pattern);
+        gboolean match = g_pattern_match(f->pspec, len, item, NULL);
+        switch (f->type & SO_FILTER_MASK) {
+            case SO_FILTER_EXCLUDE_IIF:
+                marked = match;
+                break;
+            case SO_FILTER_INCLUDE_IIF:
+                marked = !match;
+                break;
+            case SO_FILTER_EXCLUDE:
+                if (match) marked = TRUE;
+                break;
+            case SO_FILTER_INCLUDE:
+                if (match) marked = FALSE;
+                break;
+        }
+
+        /*
+        DEBUG(" pattern: %s %s%s -> %s -> %s", f->pattern,
+            f->type & SO_FILTER_EXCLUDE ? "ex" : "inc", f->type & SO_FILTER_IIF ? "_iif" : "",
+            match ? "match" : "no-match", marked ? "marked" : "not-marked"); */
+
+        fp = fp->next;
+    }
+
+    return !marked;
+}
+
+GSList *sysobj_filter_list(GSList *items, GSList *filters) {
+    GSList *fp = filters, *l = NULL, *n = NULL;
+    sysobj_filter *f = NULL;
+    gboolean *marked;
+    gsize i = 0, num_items = g_slist_length(items);
+
+    marked = g_new(gboolean, num_items);
+
+    while (fp) {
+        f = fp->data;
+        if (!f->pspec)
+            f->pspec = g_pattern_spec_new(f->pattern);
+        l = items;
+        i = 0;
+        while (l) {
+            gchar *d = l->data;
+            gsize len = strlen(d);
+            gboolean match = g_pattern_match(f->pspec, len, d, NULL);
+            switch (f->type) {
+                case SO_FILTER_EXCLUDE_IIF:
+                    marked[i] = match;
+                    break;
+                case SO_FILTER_INCLUDE_IIF:
+                    marked[i] = !match;
+                    break;
+                case SO_FILTER_EXCLUDE:
+                    if (match) marked[i] = TRUE;
+                    break;
+                case SO_FILTER_INCLUDE:
+                    if (match) marked[i] = FALSE;
+                    break;
+            }
+            l = l->next;
+            i++;
+        }
+        fp = fp->next;
+    }
+
+    l = items;
+    i = 0;
+    while (l) {
+        n = l->next;
+        if (marked[i])
+            items = g_slist_delete_link(items, l);
+        l = n;
+        i++;
+    }
+
+    g_free(marked);
+    return items;
 }

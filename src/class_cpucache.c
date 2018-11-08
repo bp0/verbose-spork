@@ -102,7 +102,7 @@ gchar *cpucache_format_collection(sysobj *obj, int fmt_opts) {
     if (obj) {
         gchar ret[256] = "";
         int count = 0;
-        GSList *index_list = sysobj_children_ex(obj, "index*", NULL, TRUE);
+        GSList *index_list = sysobj_children(obj, "index*", NULL, TRUE);
         GSList *l = index_list;
         while(l) {
             //TODO: check length

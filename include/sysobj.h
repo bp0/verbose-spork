@@ -64,6 +64,31 @@ typedef struct sysobj_class {
     void (*f_cleanup) (void); /* shutdown/cleanup function */
 } sysobj_class;
 
+enum {
+                               /*  match | no-match */
+    SO_FILTER_NONE        = 0, /*     NC | NC       */
+    SO_FILTER_EXCLUDE     = 1, /*      E | NC       */
+    SO_FILTER_INCLUDE     = 2, /*      I | NC       */
+    SO_FILTER_EXCLUDE_IIF = 5, /*      E | I        */
+    SO_FILTER_INCLUDE_IIF = 6, /*      I | E        */
+
+    SO_FILTER_IIF         = 4,
+    SO_FILTER_MASK        = 7,
+    SO_FILTER_STATIC      = 256, /* free the pspec, but not the filter */
+};
+
+typedef struct sysobj_filter {
+    int type;
+    gchar *pattern;
+    GPatternSpec *pspec;
+} sysobj_filter;
+
+sysobj_filter *sysobj_filter_new(int type, gchar *pattern);
+void sysobj_filter_free(sysobj_filter *f);
+gboolean sysobj_filter_item_include(gchar *item, GSList *filters);
+/* returns the new head of now-filtered items */
+GSList *sysobj_filter_list(GSList *items, GSList *filters);
+
 typedef struct sysobj_data {
     gboolean was_read;
     gsize len;    /* bytes */
@@ -192,8 +217,9 @@ double sysobj_update_interval(sysobj *s);
 void sysobj_free(sysobj *s);
 gchar *sysobj_parent_path(sysobj *s);
 gchar *sysobj_parent_name(sysobj *s);
-GSList *sysobj_children(sysobj *s);
-GSList *sysobj_children_ex(sysobj *s, gchar *include_glob, gchar *exclude_glob, gboolean sort);
+GSList *sysobj_children(sysobj *s, gchar *include_glob, gchar *exclude_glob, gboolean sort);
+/* filters is list of sysobj_filter */
+GSList *sysobj_children_ex(sysobj *s, GSList *filters, gboolean sort);
 
 gchar *sysobj_format_from_fn(const gchar *base, const gchar *name, int fmt_opts);
 
