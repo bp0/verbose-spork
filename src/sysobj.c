@@ -12,6 +12,8 @@ gboolean sysobj_root_set(const gchar *alt_root) {
 
 static sysobj_filter path_filters[] = {
     { SO_FILTER_STATIC | SO_FILTER_INCLUDE_IIF, "/sys/*", NULL },
+    { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/sys", NULL },
+
     { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     ":*", NULL }, /* sysobj_virt */
 
     { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc", NULL },

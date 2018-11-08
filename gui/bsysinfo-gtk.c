@@ -121,7 +121,7 @@ void pin_inspect_do(pin_inspect *pi, const pin *p, int fmt_opts, const gchar *cl
         gtk_box_pack_start(GTK_BOX(pi->box), pi->lbl_top, TRUE, TRUE, 0);
     }
 
-    if (!pi->uber) {
+    if (0 && !pi->uber) {
         pi->uber = uber_line_graph_new();
         GdkRGBA color;
         gdk_rgba_parse(&color, pi->color ? pi->color : default_line_colors[0] );
@@ -447,6 +447,19 @@ void browser_back (GtkButton *button, gpointer user_data) {
 }
 
 void browser_init() {
+    static const struct {gchar *label, *path;} places_list[] = {
+        /* label = path if label is null */
+        { NULL, "/sys" },
+        { NULL, ":computer" },
+
+        { NULL, "/sys/devices/system/cpu" },
+        { NULL, "/proc/sys" },
+        { NULL, ":dmidecode" },
+        { NULL, ":devicetree" },
+        { NULL, ":cpuinfo" },
+    };
+    int i = 0;
+
     GtkWidget *btn_back = gtk_button_new_from_icon_name("go-previous", GTK_ICON_SIZE_LARGE_TOOLBAR);
     gtk_widget_set_tooltip_text(btn_back, _("Back"));
     GtkWidget *btn_up = gtk_button_new_from_icon_name("go-up", GTK_ICON_SIZE_LARGE_TOOLBAR);
@@ -455,12 +468,27 @@ void browser_init() {
     gtk_widget_set_tooltip_text(btn_ref, _("Reload"));
     GtkWidget *btn_watch = gtk_button_new_from_icon_name("list-add", GTK_ICON_SIZE_LARGE_TOOLBAR);
     gtk_widget_set_tooltip_text(btn_watch, _("Add to Watchlist"));
+
+    GtkWidget *places_menu = gtk_menu_new();
+    GtkWidget *mitem;
+    for (i = 0; i < (int)G_N_ELEMENTS(places_list); i++) {
+        mitem = gtk_menu_item_new_with_label(places_list[i].label ? places_list[i].label : places_list[i].path);
+        gtk_menu_shell_append (GTK_MENU_SHELL(places_menu), mitem);
+        g_signal_connect_swapped(mitem, "activate", G_CALLBACK(browser_navigate), (gpointer)(places_list[i].path));
+        gtk_widget_show(mitem);
+    }
+
+    GtkWidget *btn_places = gtk_menu_button_new();
+    gtk_widget_set_tooltip_text(btn_places, _("Places"));
+    gtk_menu_button_set_popup(GTK_MENU_BUTTON(btn_places), places_menu);
+
     GtkWidget *btns = gel.container = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
     gel.query = gtk_entry_new();
     gtk_box_pack_start (GTK_BOX (btns), btn_back, FALSE, FALSE, 0); gtk_widget_show (btn_back);
     gtk_box_pack_start (GTK_BOX (btns), btn_up, FALSE, FALSE, 0); gtk_widget_show (btn_up);
     gtk_box_pack_start (GTK_BOX (btns), btn_ref, FALSE, FALSE, 5); gtk_widget_show (btn_ref);
     gtk_box_pack_start (GTK_BOX (btns), gel.query, TRUE, TRUE, 0); gtk_widget_show (gel.query);
+    gtk_box_pack_start (GTK_BOX (btns), btn_places, FALSE, FALSE, 5); gtk_widget_show (btn_places);
     gtk_box_pack_start (GTK_BOX (btns), btn_watch, FALSE, FALSE, 5); gtk_widget_show (btn_watch);
     gel.browser = pins_list_view_create(TRUE);
     gel.browser->fmt_opts = FMT_OPT_PANGO | FMT_OPT_NO_JUNK;
