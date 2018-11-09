@@ -1,4 +1,5 @@
 
+#include <string.h>
 #include "util_usb.h"
 
 void util_usb_id_free(util_usb_id *s) {

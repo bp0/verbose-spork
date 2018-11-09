@@ -1,4 +1,5 @@
 
+#include <string.h>
 #include "util_pci.h"
 
 void util_pci_id_free(util_pci_id *s) {
