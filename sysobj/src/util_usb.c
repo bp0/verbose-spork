@@ -1,5 +1,6 @@
 
-#include <string.h>
+#include <stdlib.h> /* for strtol() */
+#include <string.h> /* for strchr() */
 #include "util_usb.h"
 
 void util_usb_id_free(util_usb_id *s) {

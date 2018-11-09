@@ -1,5 +1,6 @@
 
-#include <string.h>
+#include <stdlib.h> /* for strtol() */
+#include <string.h> /* for strchr() */
 #include "util_pci.h"
 
 void util_pci_id_free(util_pci_id *s) {
