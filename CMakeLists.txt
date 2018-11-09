@@ -42,10 +42,12 @@ add_library(sysobj STATIC
         src/class_any_utf8.c
         src/class_cpuinfo.c
         src/class_pci.c
+        src/class_usb.c
         src/arm_data.c
         src/x86_data.c
-        src/util_pci.c
 #src/riscv_data.c
+        src/util_pci.c
+        src/util_usb.c
         src/vo_computer.c
 )
 target_link_libraries(sysobj
@@ -101,3 +103,4 @@ endif()
 
 configure_file(config.h.cmake ${CMAKE_BINARY_DIR}/config.h @ONLY)
 configure_file("data/pci.ids" ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file("data/usb.ids" ${CMAKE_BINARY_DIR}/ COPYONLY)
