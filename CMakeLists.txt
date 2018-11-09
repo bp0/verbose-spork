@@ -14,6 +14,7 @@ pkg_check_modules(GTK gtk+-3.0>=3.12)
 include_directories(
         ${CMAKE_SOURCE_DIR}
         ${CMAKE_SOURCE_DIR}/include
+        ${CMAKE_SOURCE_DIR}/include/sysobj
         ${CMAKE_SOURCE_DIR}/gui
         ${CMAKE_SOURCE_DIR}/uber-graph
         ${GLIB_INCLUDE_DIRS}
@@ -30,25 +31,25 @@ add_library(gettext STATIC
 )
 
 add_library(sysobj STATIC
-        src/sysobj.c
-        src/pin.c
-        src/classes.c
-        src/class_dmi_id.c
-        src/class_dt.c
-        src/class_cpu.c
-        src/class_cpufreq.c
-        src/class_cpucache.c
-        src/class_cputopo.c
-        src/class_any_utf8.c
-        src/class_cpuinfo.c
-        src/class_pci.c
-        src/class_usb.c
-        src/arm_data.c
-        src/x86_data.c
+        sysobj/src/sysobj.c
+        sysobj/src/pin.c
+        sysobj/src/classes.c
+        sysobj/src/class_dmi_id.c
+        sysobj/src/class_dt.c
+        sysobj/src/class_cpu.c
+        sysobj/src/class_cpufreq.c
+        sysobj/src/class_cpucache.c
+        sysobj/src/class_cputopo.c
+        sysobj/src/class_any_utf8.c
+        sysobj/src/class_cpuinfo.c
+        sysobj/src/class_pci.c
+        sysobj/src/class_usb.c
+        sysobj/src/arm_data.c
+        sysobj/src/x86_data.c
 #src/riscv_data.c
-        src/util_pci.c
-        src/util_usb.c
-        src/vo_computer.c
+        sysobj/src/util_pci.c
+        sysobj/src/util_usb.c
+        sysobj/src/vo_computer.c
 )
 target_link_libraries(sysobj
         gettext
