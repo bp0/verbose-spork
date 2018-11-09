@@ -41,8 +41,10 @@ add_library(sysobj STATIC
         src/class_cputopo.c
         src/class_any_utf8.c
         src/class_cpuinfo.c
+        src/class_pci.c
         src/arm_data.c
         src/x86_data.c
+        src/util_pci.c
 #src/riscv_data.c
         src/vo_computer.c
 )
@@ -98,3 +100,4 @@ message(STATUS "GTK3 libs not found, skipping GUI")
 endif()
 
 configure_file(config.h.cmake ${CMAKE_BINARY_DIR}/config.h @ONLY)
+configure_file("data/pci.ids" ${CMAKE_BINARY_DIR}/ COPYONLY)

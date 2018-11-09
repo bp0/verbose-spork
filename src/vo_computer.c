@@ -217,6 +217,22 @@ static sysobj_virt vol[] = {
       .type = VSO_TYPE_SYMLINK | VSO_TYPE_CONST,
       .str = ":devicetree/base/model",
       .f_get_data = NULL },
+  { .path = ":computer/pci",
+      .type = VSO_TYPE_AUTOLINK | VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_CONST,
+      .str = "/sys/bus/pci/devices",
+      .f_get_data = NULL },
+  { .path = ":computer/usb",
+      .type = VSO_TYPE_AUTOLINK | VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_CONST,
+      .str = "/sys/bus/usb/devices",
+      .f_get_data = NULL },
+  { .path = ":computer/usb",
+      .type = VSO_TYPE_AUTOLINK | VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_CONST,
+      .str = "/sys/bus/usb/devices",
+      .f_get_data = NULL },
+  { .path = ":computer/batteries",
+      .type = VSO_TYPE_AUTOLINK | VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_CONST,
+      .str = "/sys/class/power_supply",
+      .f_get_data = NULL },
 };
 
 void vo_computer() {

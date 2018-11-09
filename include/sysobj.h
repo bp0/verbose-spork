@@ -213,6 +213,9 @@ void sysobj_read_data(sysobj *s);
 void sysobj_unread_data(sysobj *s); /* frees data, but keeps is_utf8, len, lines, etc. */
 const gchar *sysobj_label(sysobj *s);
 gchar *sysobj_format(sysobj *s, int fmt_opts);
+gchar *sysobj_raw_from_fn(const gchar *base, const gchar *name);
+uint32_t sysobj_uint32_from_fn(const gchar *base, const gchar *name, int nbase);
+gchar *sysobj_format_from_fn(const gchar *base, const gchar *name, int fmt_opts);
 double sysobj_update_interval(sysobj *s);
 void sysobj_free(sysobj *s);
 gchar *sysobj_parent_path(sysobj *s);
@@ -220,8 +223,6 @@ gchar *sysobj_parent_name(sysobj *s);
 GSList *sysobj_children(sysobj *s, gchar *include_glob, gchar *exclude_glob, gboolean sort);
 /* filters is list of sysobj_filter */
 GSList *sysobj_children_ex(sysobj *s, GSList *filters, gboolean sort);
-
-gchar *sysobj_format_from_fn(const gchar *base, const gchar *name, int fmt_opts);
 
 sysobj_data *sysobj_data_dup(sysobj_data *d);
 

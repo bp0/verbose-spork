@@ -132,6 +132,22 @@ gchar *sysobj_format_from_fn(const gchar *base, const gchar *name, int fmt_opts)
     return ret;
 }
 
+gchar *sysobj_raw_from_fn(const gchar *base, const gchar *name) {
+    gchar *ret = NULL;
+    sysobj *obj = sysobj_new_from_fn(base, name);
+    sysobj_read_data(obj);
+    ret = g_strdup(obj->data.str);
+    sysobj_free(obj);
+    return ret;
+}
+
+uint32_t sysobj_uint32_from_fn(const gchar *base, const gchar *name, int nbase) {
+    gchar *tmp = sysobj_raw_from_fn(base, name);
+    uint32_t ret = tmp ? strtol(tmp, NULL, nbase) : 0;
+    g_free(tmp);
+    return ret;
+}
+
 #define TERM_COLOR_FMT(CLR) ((fmt_opts & FMT_OPT_ATERM) ? (CLR "%s" ANSI_COLOR_RESET) : "%s")
 
 gchar *simple_format(sysobj* obj, int fmt_opts) {

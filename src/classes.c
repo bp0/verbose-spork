@@ -10,6 +10,7 @@ void class_cpufreq();
 void class_cpucache();
 void class_cputopo();
 void class_cpuinfo();
+void class_pci();
 void class_any_utf8();
 
 void class_init() {
@@ -19,6 +20,7 @@ void class_init() {
     class_cpucache();
     class_cputopo();
     class_cpuinfo();
+    class_pci();
 /* consumes every direct child, careful with order */
     class_dmi_id();
     class_dt();
