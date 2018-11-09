@@ -52,15 +52,16 @@ static int cmp_util_pci_id(const gpointer a, const gpointer b) {
     return g_strcmp0(A->sort_key, B->sort_key);
 }
 
-gboolean util_pci_ids_lookup_list(GSList *items) {
+int util_pci_ids_lookup_list(GSList *items) {
     FILE *pci_dot_ids;
     long last_vendor_fpos = 0, line_fpos = 0, id = 0, id2 = 0;
     char buffer[128] = "";
+    int found_count = 0;
 
     GSList *tmp = NULL, *l = NULL;
 
     pci_dot_ids = fopen("pci.ids", "r");
-    if (!pci_dot_ids) return FALSE;
+    if (!pci_dot_ids) return -1;
 
     tmp = g_slist_copy(items);
     tmp = g_slist_sort(tmp, (GCompareFunc)cmp_util_pci_id);
@@ -72,7 +73,6 @@ gboolean util_pci_ids_lookup_list(GSList *items) {
                 fgets(buffer, 128, pci_dot_ids)   ) {
             if (buffer[0] == '#') continue; /* comment */
             if (buffer[0] == '\n') continue; /* empty line */
-            if (buffer[0] == 'C' && buffer[1] == ' ') continue; /* classes section */
             gboolean not_found = FALSE;
 
             char *next_sp = strchr(buffer, ' ');
@@ -84,6 +84,7 @@ gboolean util_pci_ids_lookup_list(GSList *items) {
             switch (tabs) {
                 case 0:  /* vendor  vendor_name */
                     if (id == d->vendor) {
+                        found_count++;
                         d->vendor_str = g_strdup(g_strstrip(next_sp));
                         last_vendor_fpos = line_fpos;
                         continue;
@@ -127,7 +128,6 @@ gboolean util_pci_ids_lookup_list(GSList *items) {
                 fgets(buffer, 128, pci_dot_ids)   ) {
             if (buffer[0] == '#') continue; /* comment */
             if (buffer[0] == '\n') continue; /* empty line */
-            if (buffer[0] == 'C' && buffer[1] == ' ') continue; /* classes section */
             gboolean not_found = FALSE;
 
             char *next_sp = strchr(buffer, ' ');
@@ -161,5 +161,5 @@ gboolean util_pci_ids_lookup_list(GSList *items) {
     //TODO: class
 
     fclose(pci_dot_ids);
-    return TRUE;
+    return found_count;
 }

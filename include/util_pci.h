@@ -24,6 +24,6 @@ typedef struct {
 
 void util_pci_id_free(util_pci_id *s);
 gboolean util_pci_ids_lookup(util_pci_id *pcid);
-gboolean util_pci_ids_lookup_list(GSList *items);
+int util_pci_ids_lookup_list(GSList *items); /* found count or -1 for error */
 
 #endif

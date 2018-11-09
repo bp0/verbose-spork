@@ -90,7 +90,7 @@ static const gchar *pci_idcomps[] =
 
 static gboolean pci_verify_idcomp(sysobj *obj) {
     int i = 0;
-    for (i = 0; i < G_N_ELEMENTS(pci_idcomps); i++ ) {
+    for (i = 0; i < (int)G_N_ELEMENTS(pci_idcomps); i++ ) {
         if (!g_strcmp0(obj->name, pci_idcomps[i]) )
             return TRUE;
     }
@@ -164,8 +164,14 @@ void pci_scan() {
         g_free(dev_path);
         l = l->next;
     }
-    if (pci_id_list)
-        util_pci_ids_lookup_list(pci_id_list);
+    if (pci_id_list) {
+        int found = util_pci_ids_lookup_list(pci_id_list);
+        int count = g_slist_length(pci_id_list);
+        if (found == -1)
+            pci_msg("pci.ids file could not be read", found);
+        else
+            pci_msg("pci.ids matched for %d of %d devices", found, count);
+    }
 
     sysobj_free(obj);
 }
