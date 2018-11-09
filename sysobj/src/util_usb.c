@@ -67,7 +67,6 @@ gboolean util_usb_ids_lookup_list(GSList *items) {
                     if (id == d->vendor) {
                         found_count++;
                         d->vendor_str = g_strdup(g_strstrip(next_sp));
-                        printf("usb.ids match for %s v:%s\n", d->address, d->vendor_str);
                         last_vendor_fpos = line_fpos;
                         continue;
                     } else if (id > d->vendor) not_found = TRUE;
