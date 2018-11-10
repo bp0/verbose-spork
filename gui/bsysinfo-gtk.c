@@ -22,6 +22,7 @@
 #include <inttypes.h> /* for PRIu64 */
 #include "uber.h"
 
+GtkWidget *app_window = NULL;
 GtkWidget *notebook = NULL;
 #define PAGE_BROWSER 0
 
@@ -40,6 +41,32 @@ static int app_init(void) {
 
 static void app_cleanup(void) {
     sysobj_cleanup();
+}
+
+void browser_navigate(const gchar *new_location);
+void watchlist_add(gchar *path);
+
+gboolean activate_link (GtkLabel *label, gchar *uri, gpointer  user_data) {
+    DEBUG("activate link: %s", uri);
+    if (g_str_has_prefix(uri, "sysobj:")) {
+        browser_navigate(g_utf8_strchr(uri, 7, ':') + 1);
+        return TRUE;
+    }
+
+/* TODO: gtk_show_uri_on_window() causes a busy cursor? disable for now */
+#if (0 && GTK_CHECK_VERSION(3, 22, 0) )
+    gtk_show_uri_on_window(GTK_WINDOW(app_window), uri, GDK_CURRENT_TIME, NULL);
+#else
+    gchar *argv[] = { "/usr/bin/xdg-open", uri, NULL };
+    GError *err = NULL;
+    gboolean r = g_spawn_async(NULL, argv, NULL, G_SPAWN_DEFAULT, NULL, NULL, NULL, &err );
+    if (err) {
+        fprintf(stderr, "Error opening URI %s: %s\n", uri, err->message);
+        g_error_free(err);
+    }
+#endif
+
+    return TRUE;
 }
 
 struct {
@@ -72,9 +99,12 @@ char *kv_col_names[] = {
 typedef struct {
     const pin *p;
     GtkWidget *container;
-    GtkWidget *box;
+    GtkWidget *box_sections;
     GtkWidget *lbl_top;
+    GtkWidget *lbl_value;
     GtkWidget *lbl_debug;
+    GtkWidget *lbl_help;
+
     GtkWidget *uber;
     gchar *color;
 } pin_inspect;
@@ -82,19 +112,73 @@ typedef struct {
 pin_inspect *pin_inspect_create() {
     pin_inspect *pi = g_new0(pin_inspect, 1);
 
-    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
-    GtkWidget *scroll = gtk_scrolled_window_new(NULL, NULL);
-    gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scroll), GTK_SHADOW_IN);
-    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_ALWAYS);
-    gtk_container_add(GTK_CONTAINER(scroll), box);
-    gtk_widget_show(box);
+    GtkWidget *lbl_top = gtk_label_new("");
+    gtk_label_set_line_wrap(GTK_LABEL(lbl_top), TRUE);
+    gtk_label_set_justify(GTK_LABEL(lbl_top), GTK_JUSTIFY_LEFT);
+    gtk_widget_set_halign(lbl_top, GTK_ALIGN_START);
+    gtk_widget_set_valign(lbl_top, GTK_ALIGN_START);
+    gtk_widget_set_margin_start(lbl_top, 10);
+    g_signal_connect(lbl_top, "activate-link", G_CALLBACK(activate_link), NULL);
+    gtk_widget_show(lbl_top);
 
-    pi->box = box;
-    pi->container = scroll;
+    GtkWidget *lbl_value = gtk_label_new("");
+    gtk_label_set_line_wrap(GTK_LABEL(lbl_value), TRUE);
+    gtk_label_set_justify(GTK_LABEL(lbl_value), GTK_JUSTIFY_LEFT);
+    gtk_widget_set_halign(lbl_value, GTK_ALIGN_START);
+    gtk_widget_set_valign(lbl_value, GTK_ALIGN_START);
+    gtk_widget_set_margin_start(lbl_value, 10);
+    g_signal_connect (lbl_value, "activate-link", G_CALLBACK(activate_link), NULL);
+    gtk_widget_show(lbl_value);
+
+    GtkWidget *lbl_debug = gtk_label_new("");
+    gtk_label_set_line_wrap(GTK_LABEL(lbl_debug), TRUE);
+    gtk_label_set_justify(GTK_LABEL(lbl_debug), GTK_JUSTIFY_LEFT);
+    gtk_widget_set_halign(lbl_debug, GTK_ALIGN_START);
+    gtk_widget_set_valign(lbl_debug, GTK_ALIGN_START);
+    gtk_widget_set_margin_start(lbl_debug, 10);
+    g_signal_connect (lbl_debug, "activate-link", G_CALLBACK(activate_link), NULL);
+    gtk_widget_show(lbl_debug);
+
+    GtkWidget *box_sections = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+    gtk_box_pack_start(GTK_BOX(box_sections), lbl_top, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(box_sections), lbl_value, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(box_sections), lbl_debug, FALSE, FALSE, 0);
+
+    GtkWidget *top_scroll = gtk_scrolled_window_new(NULL, NULL);
+    gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(top_scroll), GTK_SHADOW_IN);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(top_scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_ALWAYS);
+    gtk_container_add(GTK_CONTAINER(top_scroll), box_sections);
+    gtk_widget_show(box_sections);
+
+    GtkWidget *lbl_help = gtk_label_new("");
+    gtk_label_set_line_wrap(GTK_LABEL(lbl_help), TRUE);
+    gtk_label_set_justify(GTK_LABEL(lbl_help), GTK_JUSTIFY_LEFT);
+    gtk_widget_set_halign(lbl_help, GTK_ALIGN_START);
+    gtk_widget_set_valign(lbl_help, GTK_ALIGN_START);
+    gtk_widget_set_margin_start(lbl_help, 10);
+    g_signal_connect(lbl_help, "activate-link", G_CALLBACK(activate_link), NULL);
+    gtk_widget_show(lbl_help);
+
+    GtkWidget *help_scroll = gtk_scrolled_window_new(NULL, NULL);
+    gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(help_scroll), GTK_SHADOW_IN);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(help_scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_ALWAYS);
+    gtk_container_add(GTK_CONTAINER(help_scroll), lbl_help);
+    gtk_widget_show(help_scroll);
+
+    GtkWidget *paned = gtk_paned_new(GTK_ORIENTATION_VERTICAL);
+    gtk_paned_set_position(GTK_PANED(paned), 420);
+    gtk_paned_pack1(GTK_PANED(paned), top_scroll, TRUE, FALSE); gtk_widget_show (top_scroll);
+    gtk_paned_pack2(GTK_PANED(paned), help_scroll, FALSE, FALSE); gtk_widget_show (help_scroll);
+
+    pi->container = paned;
+    pi->box_sections = box_sections;
+    pi->lbl_top = lbl_top;
+    pi->lbl_value = lbl_value;
+    pi->lbl_debug = lbl_debug;
+    pi->lbl_help = lbl_help;
 
     return pi;
 }
-
 
 static const gchar *default_line_colors[] = {
     "#73d216", "#f57900", "#3465a4", "#ef2929", "#75507b",
@@ -110,85 +194,49 @@ gdouble pin_sample_function (UberLineGraph *graph, guint line, gpointer user_dat
 }
 
 void pin_inspect_do(pin_inspect *pi, const pin *p, int fmt_opts, const gchar *clr) {
-
-    /* clear */
-    if (p != pi->p) {
-        GList *children, *iter;
-        children = gtk_container_get_children(GTK_CONTAINER(pi->box));
-        for(iter = children; iter != NULL; iter = g_list_next(iter))
-            gtk_widget_destroy(GTK_WIDGET(iter->data));
-        g_list_free(children);
-        pi->lbl_top = NULL;
-        pi->lbl_debug = NULL;
-        pi->uber = NULL;
-        g_free(pi->color);
-        pi->color = NULL;
-    }
-
+    gboolean is_new = FALSE;
     if (!p) return;
+    if (pi->p != p)
+        is_new = TRUE;
 
-    /* new */
     pi->p = p;
-    if (!pi->color && clr)
-        pi->color = g_strdup(clr);
 
-    if(!pi->lbl_top) {
-        pi->lbl_top = gtk_label_new("");
-        gtk_label_set_line_wrap(GTK_LABEL(pi->lbl_top), TRUE);
-        gtk_widget_show(pi->lbl_top);
-        gtk_widget_set_halign(pi->lbl_top, GTK_ALIGN_START);
-        gtk_widget_set_valign(pi->lbl_top, GTK_ALIGN_START);
-        gtk_widget_set_margin_start(pi->lbl_top, 10);
-        gtk_box_pack_start(GTK_BOX(pi->box), pi->lbl_top, TRUE, TRUE, 0);
-    }
-
-    if (0 && !pi->uber) {
-        pi->uber = uber_line_graph_new();
-        GdkRGBA color;
-        gdk_rgba_parse(&color, pi->color ? pi->color : default_line_colors[0] );
-        uber_line_graph_add_line(UBER_LINE_GRAPH(pi->uber), &color, NULL);
-        uber_line_graph_set_autoscale(UBER_LINE_GRAPH(pi->uber), TRUE);
-        uber_line_graph_set_data_func(UBER_LINE_GRAPH(pi->uber),
-                    (UberLineGraphFunc)pin_sample_function, (gpointer *)p, NULL);
-        gtk_box_pack_start(GTK_BOX(pi->box), pi->uber, TRUE, TRUE, 0); gtk_widget_show(pi->uber);
-    }
-
-    if (!pi->lbl_debug) {
-        pi->lbl_debug = gtk_label_new("");
-        gtk_label_set_line_wrap(GTK_LABEL(pi->lbl_debug), TRUE);
-        gtk_widget_show(pi->lbl_debug);
-        gtk_widget_set_halign(pi->lbl_debug, GTK_ALIGN_START);
-        gtk_widget_set_valign(pi->lbl_debug, GTK_ALIGN_START);
-        gtk_widget_set_margin_start(pi->lbl_debug, 10);
-        gtk_box_pack_start(GTK_BOX(pi->box), pi->lbl_debug, TRUE, TRUE, 0);
-    }
-
-    /* update */
+    /* item */
     gchar *label = g_strdup(sysobj_label(p->obj));
     gchar *nice = sysobj_format(p->obj, fmt_opts);
     gchar *tag = g_strdup_printf("{%s}", p->obj->cls ? (p->obj->cls->tag ? p->obj->cls->tag : p->obj->cls->pattern) : "none");
+
+    /* debug stuff */
     gchar *data_info = g_strdup_printf("raw_size = %lu byte(s)%s; guess_nbase = %d\ntag = %s",
         p->obj->data.len, p->obj->data.is_utf8 ? ", utf8" : "", p->obj->data.maybe_num, tag);
     gchar *update = g_strdup_printf("update_interval = %0.4lfs, last_update = %0.4lfs", p->update_interval, p->last_update);
     gchar *pin_info = g_strdup_printf("hist_stat = %d, hist_len = %" PRIu64 "/%" PRIu64 ", hist_mem_size = %" PRIu64 " (%" PRIu64 " bytes)",
         p->history_status, p->history_len, p->history_max_len, p->history_mem, p->history_mem * sizeof(sysobj_data) );
+
     if (!label)
         label = g_strdup("");
 
-    gchar *mt = g_strdup_printf(
-    /* name   */ "<big><big>%s</big></big>\n"
-    /* label  */ "%s\n"
-                 "\n"
-    /* value  */ "%s\n",
-        p->obj->name,
-        label, nice);
+    gchar *mt = NULL;
+    if (is_new) {
+        mt = g_strdup_printf(
+            /* name   */ "<big><big>%s</big></big>\n"
+            /* resolv */ "<a href=\"sysobj:%s\">%s</a>\n"
+            /* label  */ "%s\n",
+                p->obj->name,
+                p->obj->path, p->obj->path,
+                label );
+        gtk_label_set_markup(GTK_LABEL(pi->lbl_top), mt);
+    }
 
-    gchar *mt_debug = g_strdup_printf("debug info:\n"
-    /* resolv */ "%s\n"
-    /* data info */ "%s\n"
-    /* pin info */ "%s\n"
-    /* update */ "%s\n",
-        p->obj->path, data_info, pin_info, update);
+    mt = g_strdup_printf(/* value  */ "%s\n", nice);
+    gtk_label_set_markup(GTK_LABEL(pi->lbl_value), mt);
+
+    mt = g_strdup_printf("debug info:\n"
+        /* data info */ "%s\n"
+        /* pin info */ "%s\n"
+        /* update */ "%s",
+        data_info, pin_info, update);
+    gtk_label_set_markup(GTK_LABEL(pi->lbl_debug), mt);
 
     g_free(label);
     g_free(nice);
@@ -196,9 +244,6 @@ void pin_inspect_do(pin_inspect *pi, const pin *p, int fmt_opts, const gchar *cl
     g_free(update);
     g_free(data_info);
     g_free(pin_info);
-
-    gtk_label_set_markup(GTK_LABEL(pi->lbl_top), mt);
-    gtk_label_set_markup(GTK_LABEL(pi->lbl_debug), mt_debug);
 }
 
 typedef struct {
@@ -211,9 +256,6 @@ typedef struct {
     pin_inspect *pinspect;
     GtkWidget *btn_watch; /* */
 } pins_list_view;
-
-void browser_navigate(const gchar *new_location);
-void watchlist_add(gchar *path);
 
 void pins_list_view_select(GtkTreeView *tree_view, gpointer user_data) {
     GtkTreeIter iter;
@@ -328,6 +370,10 @@ static void pins_list_view_fill(pins_list_view *plv) {
         gchar *tag = g_strdup_printf("{%s}", p->obj->cls ? (p->obj->cls->tag ? p->obj->cls->tag : p->obj->cls->pattern) : "none");
         gboolean is_live = !(p->update_interval == UPDATE_INTERVAL_NEVER);
 
+        gchar *nice_key = (0 && label)
+            ? g_strdup_printf("%s <small>(%s)</small>", label, p->obj->name_req)
+            : g_strdup(p->obj->name_req);
+
         if (plv->as_tree) {
             if (i == 0)
                 gtk_tree_store_append(plv->store, &parent, NULL);
@@ -336,7 +382,7 @@ static void pins_list_view_fill(pins_list_view *plv) {
 
             gtk_tree_store_set(plv->store, i ? &iter : &parent,
                         KV_COL_ICON, (p->obj->is_dir) ? "folder" : "text-x-generic",
-                        KV_COL_KEY, (p->obj->name_req),
+                        KV_COL_KEY, nice_key,
                         KV_COL_LABEL, (label),
                         KV_COL_VALUE, (nice),
                         KV_COL_TAG, (tag),
@@ -347,7 +393,7 @@ static void pins_list_view_fill(pins_list_view *plv) {
             gtk_tree_store_append(plv->store, &iter, NULL);
             gtk_tree_store_set(plv->store, &iter,
                         KV_COL_ICON, (p->obj->is_dir) ? "folder" : "text-x-generic",
-                        KV_COL_KEY, (p->obj->name_req),
+                        KV_COL_KEY, nice_key,
                         KV_COL_LABEL, (label),
                         KV_COL_VALUE, (nice),
                         KV_COL_TAG, (tag),
@@ -356,6 +402,7 @@ static void pins_list_view_fill(pins_list_view *plv) {
                         -1);
         }
         g_free(nice);
+        g_free(nice_key);
 
         i++; l = l->next;
     }
@@ -548,9 +595,8 @@ void browser_cleanup() {
     g_slist_free_full(gel.history, g_free);
 }
 
-void browser_navigate(const gchar *new_location) {
+gboolean browser_navigate_actual(gchar *safe) {
     const gchar *fn;
-    gchar *safe = g_strdup(new_location);
     gchar *landed = NULL; /* becomes owned by history */
 
     DEBUG("browser_navigate( %s )...", safe);
@@ -606,6 +652,13 @@ void browser_navigate(const gchar *new_location) {
 
     if (notebook)
         gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), PAGE_BROWSER);
+
+    return G_SOURCE_REMOVE; /* remove from the main loop */
+}
+
+void browser_navigate(const gchar *new_location) {
+    gchar *safe = g_strdup(new_location);
+    g_idle_add((GSourceFunc)browser_navigate_actual, safe);
 }
 
 static gboolean delete_event( GtkWidget *widget,
@@ -695,18 +748,15 @@ int main(int argc, char **argv) {
     refresh_timer.timeout_id = g_timeout_add(refresh_timer.interval_ms, refresh_data, NULL);
 
     /* Set up main window */
-    GtkWidget *window;
-    GtkWidget *mbox;
+    app_window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 
-    window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-
-    g_signal_connect (window, "delete-event",
+    g_signal_connect (app_window, "delete-event",
           G_CALLBACK (delete_event), NULL);
-    g_signal_connect (window, "destroy",
+    g_signal_connect (app_window, "destroy",
           G_CALLBACK (destroy), NULL);
 
     /* Sets the border width of the window. */
-    gtk_container_set_border_width (GTK_CONTAINER (window), 10);
+    gtk_container_set_border_width (GTK_CONTAINER (app_window), 10);
 
     /* notebook pages */
     notebook = gtk_notebook_new();
@@ -728,11 +778,11 @@ int main(int argc, char **argv) {
     watchlist_add("/sys/devices/system/cpu/cpu3");
 
     /* This packs the notebook into the window (a gtk container). */
-    gtk_container_add (GTK_CONTAINER (window), notebook);
+    gtk_container_add (GTK_CONTAINER (app_window), notebook);
     gtk_widget_show (notebook);
 
-    gtk_window_resize (GTK_WINDOW (window), 740, 400);
-    gtk_widget_show (window);
+    gtk_window_resize (GTK_WINDOW (app_window), 740, 400);
+    gtk_widget_show (app_window);
 
     gtk_main ();
 
