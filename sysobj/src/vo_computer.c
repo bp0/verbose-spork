@@ -85,8 +85,10 @@ gchar *mobo_get_name(const gchar *path) {
 
     /* use device tree "model" */
     ret = dt_get_model();
-    if (ret)
+    if (ret) {
+        util_strstrip_double_quotes_dumb(ret);
         goto got_mobo_ok;
+    }
 
     /* use DMI */
     board_name = dmi_get_str("baseboard-product-name");
