@@ -709,12 +709,12 @@ static gchar *dtr_format(sysobj *obj, int fmt_opts) {
             sym = dtr_symbol_lookup_by_path(obj->path);
             al = dtr_alias_lookup_by_path(obj->path);
             if (sym || al)  {
-                gchar *tlist = g_strdup("{node}");
+                gchar *tlist = g_strdup("{dt node}");
                 if (sym) tlist = appf(tlist, "symbol:%s", sym);
                 if (al) tlist = appf(tlist, "alias:%s", al);
                 return tlist;
             }
-            return g_strdup("{node}");
+            return g_strdup("{dt node}");
         case DTP_EMPTY:
             if (fmt_opts & FMT_OPT_NULL_IF_EMPTY)
                 return NULL;

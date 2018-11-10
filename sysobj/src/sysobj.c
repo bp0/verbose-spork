@@ -160,20 +160,20 @@ gchar *simple_format(sysobj* obj, int fmt_opts) {
 
     if (obj) {
         gchar *nice = NULL;
-        if ( !obj->exists || !obj->data.str ) {
-            if (fmt_opts & FMT_OPT_NULL_IF_MISSING)
-                nice = NULL;
-            else
-                nice = g_strdup_printf( TERM_COLOR_FMT(ANSI_COLOR_RED), special[3] );
-        } else if ( obj->access_fail )
+        if ( obj->access_fail )
             nice = g_strdup_printf( TERM_COLOR_FMT(ANSI_COLOR_RED), special[0] );
         else if ( obj->is_dir )
             nice = g_strdup_printf( TERM_COLOR_FMT(ANSI_COLOR_BLUE), special[1] );
         else if ( !obj->data.is_utf8 )
             nice = g_strdup_printf( TERM_COLOR_FMT(ANSI_COLOR_YELLOW), special[2] );
-        else {
+        else if ( !obj->exists || !obj->data.str ) {
+            if (fmt_opts & FMT_OPT_NULL_IF_MISSING)
+                nice = NULL;
+            else
+                nice = g_strdup_printf( TERM_COLOR_FMT(ANSI_COLOR_RED), special[3] );
+        } else {
             if ( *(obj->data.str) == 0
-                && ( fmt_opts & FMT_OPT_NULL_IF_MISSING) )
+                && ( fmt_opts & FMT_OPT_NULL_IF_EMPTY) )
                 nice = NULL;
             else {
                 gchar *text = NULL;
