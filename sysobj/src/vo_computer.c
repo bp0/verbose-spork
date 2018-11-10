@@ -19,6 +19,7 @@
  */
 
 #include "sysobj.h"
+#include "rpi_data.c"
 
 static sysobj_class *cls_mobo;
 
@@ -261,6 +262,12 @@ void vo_computer() {
     int i;
     for (i = 0; i < (int)G_N_ELEMENTS(vol); i++) {
         sysobj_virt_add(&vol[i]);
+    }
+
+    gchar *rpi = rpi_board_details();
+    if (rpi) {
+        sysobj_virt_from_kv(":computer", rpi);
+        g_free(rpi);
     }
 
     cls_mobo = class_new();

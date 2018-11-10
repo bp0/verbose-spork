@@ -63,6 +63,10 @@ enum {
 #define FMT_OPT_OR_NULL      FMT_OPT_NULL_IF_EMPTY | FMT_OPT_NULL_IF_MISSING
 #define FMT_OPT_RAW_OR_NULL  FMT_OPT_NO_TRANSLATE | FMT_OPT_PART | FMT_OPT_NO_UNIT | FMT_OPT_OR_NULL
 
+/* can be used in class f_format() functions that
+ * don't use fmt_ops to quiet -Wunused-parameter nagging.  */
+#define FMT_OPTS_IGNORE() { PARAM_NOT_UNUSED(fmt_opts); }
+
 typedef struct sysobj sysobj;
 typedef struct sysobj_data sysobj_data;
 

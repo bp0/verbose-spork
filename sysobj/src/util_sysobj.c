@@ -188,6 +188,27 @@ int util_maybe_num(gchar *str) {
     return r;
 }
 
+gchar *util_find_line_value(gchar *data, gchar *key, gchar *delim) {
+    gchar *ret = NULL;
+    gchar **lines = g_strsplit(data, "\n", -1);
+    gsize line_count = g_strv_length(lines);
+    int i = 0;
+    for (i = 0; i < line_count; i++) {
+        gchar *line = lines[i];
+        gchar *value = g_utf8_strchr(line, -1, ':');
+        if (!value) continue;
+        *value = 0;
+        value = g_strstrip(value+1);
+        gchar *lkey = g_strstrip(line);
+
+        if (!g_strcmp0(lkey, key) ) {
+            ret = g_strdup(value);
+        }
+    }
+    g_strfreev(lines);
+    return ret;
+}
+
 gchar *appf(gchar *src, gchar *fmt, ...) {
     gchar *buf, *ret;
     va_list args;

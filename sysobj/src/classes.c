@@ -35,7 +35,6 @@ void class_os_release();
 void class_any_utf8();
 
 void class_init() {
-    vo_computer();
     class_cpu();
     class_cpufreq();
     class_cpucache();
@@ -49,4 +48,6 @@ void class_init() {
     class_dt();
 /* anything left that is human-readable */
     class_any_utf8();
+
+    vo_computer();
 }
