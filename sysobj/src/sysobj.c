@@ -798,6 +798,46 @@ void sysobj_virt_add(sysobj_virt *vo) {
     }
 }
 
+void sysobj_virt_from_kv(gchar *base, const gchar *kv_data_in) {
+    const gchar before_first_group[] = "THE_NO-GROUP________GRUOP";
+    GKeyFile *key_file = NULL;
+    gchar **groups = NULL, **keys = NULL;
+    int i = 0, j = 0;
+
+    gchar *kv_data = g_strdup_printf("[%s]\n%s", before_first_group, kv_data_in);
+
+    key_file = g_key_file_new();
+    g_key_file_load_from_data(key_file, kv_data, strlen(kv_data), 0, NULL);
+    groups = g_key_file_get_groups(key_file, NULL);
+    for (i = 0; groups[i]; i++) {
+        gboolean is_bs_group = (!strcmp(groups[i], before_first_group)) ? TRUE : FALSE;
+
+        keys = g_key_file_get_keys(key_file, groups[i], NULL, NULL);
+
+        if (!is_bs_group) {
+            sysobj_virt *vo = g_new0(sysobj_virt, 1);
+            vo->type = VSO_TYPE_DIR;
+            vo->path = g_strdup_printf("%s/%s", base, groups[i]);
+            vo->str = g_strdup("*");
+            sysobj_virt_add(vo);
+        }
+
+        for (j = 0; keys[j]; j++) {
+            sysobj_virt *vo = g_new0(sysobj_virt, 1);
+            vo->type = VSO_TYPE_STRING;
+            if (is_bs_group)
+                vo->path = g_strdup_printf("%s/%s", base, keys[j]);
+            else
+                vo->path = g_strdup_printf("%s/%s/%s", base, groups[i], keys[j]);
+            vo->str = g_key_file_get_value(key_file, groups[i], keys[j], NULL);
+            sysobj_virt_add(vo);
+        }
+        g_strfreev(keys);
+    }
+    g_strfreev(groups);
+    g_free(kv_data);
+}
+
 sysobj_virt *sysobj_virt_find(const gchar *path) {
     DEBUG("find path %s", path);
     sysobj_virt *ret = NULL;
@@ -821,14 +861,25 @@ sysobj_virt *sysobj_virt_find(const gchar *path) {
     return ret;
 }
 
+void util_strstrip_double_quotes_dumb(gchar *str) {
+    if (!str) return;
+    g_strstrip(str);
+    gchar *front = str, *back = str + strlen(str) - 1;
+    while(*front == '"') { *front = 'X'; front++; }
+    while(*back == '"') { *back = 0; back--; }
+    int nl = strlen(front);
+    memmove(str, front, nl);
+    str[nl] = 0;
+}
+
 gchar *sysobj_virt_symlink_entry(const sysobj_virt *vo, const gchar *target, const gchar *req) {
     gchar *ret = NULL;
     if (vo) {
         if (target && req) {
             const gchar *extry = req + strlen(vo->path);
-            gchar *new = g_strdup_printf("%s/%s", target, extry);
-            g_free(ret);
-            ret = new;
+            ret = g_strdup_printf("%s%s%s", target, (*extry == '/') ? "" : "/", extry);
+            util_null_trailing_slash(ret);
+            //DEBUG("---\ntarget=%s\nreq=%s\nextry=%s\nret=%s", target, req, extry, ret);
         }
     }
     return ret;

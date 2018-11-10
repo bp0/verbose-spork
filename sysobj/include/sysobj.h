@@ -159,11 +159,17 @@ GSList *sysobj_virt_children_auto(const sysobj_virt *vo, const gchar *req);
 GSList *sysobj_virt_children(const sysobj_virt *vo, const gchar *req);
 void sysobj_virt_cleanup();
 
+/* using the glib key-value file parser, create a tree of
+ * base/group/name=value virtual sysobj's. Items before a first
+ * group are put in base/name=value. */
+void sysobj_virt_from_kv(gchar *base, const gchar *kv_data_in);
+
 extern gchar sysobj_root[];
 gboolean sysobj_root_set(const gchar *alt_root);
 
 gboolean util_have_root();
-void util_null_trailing_slash(gchar *str);
+void util_null_trailing_slash(gchar *str); /* in-place */
+void util_strstrip_double_quotes_dumb(gchar *str); /* in-place, strips any double-quotes from the start and end of str */
 gchar *util_canonicalize_path(const gchar *path);
 gchar *util_normalize_path(const gchar *path, const gchar *relto);
 gsize util_count_lines(const gchar *str);
