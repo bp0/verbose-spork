@@ -1,20 +1,27 @@
 /*
- *    rpiz - https://github.com/bp0/rpiz
- *    Copyright (C) 2017  Burt P. <pburt0@gmail.com>
+ * sysobj - https://github.com/bp0/verbose-spork
+ * Copyright (C) 2018  Burt P. <pburt0@gmail.com>
  *
- *    This program is free software; you can redistribute it and/or modify
- *    it under the terms of the GNU General Public License as published by
- *    the Free Software Foundation, version 2.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
  *
- *    This program is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *    GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- *    You should have received a copy of the GNU General Public License
- *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
  */
+
+/* Generator for Raspberry Pi information tree
+ *  :/raspberry_pi
+ */
+#include "sysobj.h"
 
 static char unk[] = "(Unknown)";
 
@@ -97,14 +104,6 @@ static int rpi_find_board(const char *r_code) {
     return 0;
 }
 
-/*
-static gchar *mk_r_code(uint32_t r) {
-    return g_strdup_printf("%04x", r);
-}
-*/
-
-#define DTROOT "/sys/firmware/devicetree/base"
-
 static gchar *rpi_board_details(void) {
     int i = 0;
     gchar *ret = NULL;
@@ -112,21 +111,22 @@ static gchar *rpi_board_details(void) {
     gchar *serial = NULL;
     gchar *revision = NULL;
     int ov = 0;
-    FILE *cpuinfo;
-    gchar buffer[128];
 
-    /* TODO: ask nicely? */
-    /* DTROOT, "system/linux,revision" */
-    /* DTROOT, "system/linux,serial" */
+    /* TODO: ask nicely?
+     *
+     * DTROOT = "/sys/firmware/devicetree/base"
+     *
+     * DTROOT, "system/linux,revision"
+     * DTROOT, "system/linux,serial" */
 
     /* try cpuinfo */
     if (!revision) {
         sysobj *obj = sysobj_new_from_fn("/proc/cpuinfo", NULL);
         if (obj && obj->exists) {
             sysobj_read_data(obj);
-            revision = util_find_line_value(obj->data.str, "Revision", ":");
-            serial = util_find_line_value(obj->data.str, "Serial", ":");
-            soc = util_find_line_value(obj->data.str, "Hardware", ":");
+            revision = util_find_line_value(obj->data.str, "Revision", ':');
+            serial = util_find_line_value(obj->data.str, "Serial", ':');
+            soc = util_find_line_value(obj->data.str, "Hardware", ':');
         }
         sysobj_free(obj);
     }
@@ -161,4 +161,12 @@ rpi_board_details_done:
     g_free(revision);
     g_free(serial);
     return ret;
+}
+
+void gen_rpi() {
+    gchar *rpi = rpi_board_details();
+    if (rpi) {
+        sysobj_virt_from_kv(":", rpi);
+        g_free(rpi);
+    }
 }

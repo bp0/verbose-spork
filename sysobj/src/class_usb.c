@@ -61,19 +61,19 @@ static sysobj_class cls_usb[] = {
   { .tag = "usb/bus", .pattern = "/sys/devices*/usb*", .flags = CLS_USB_FLAGS,
     .f_verify = usb_verify_bus,
     .f_format = usb_format_bus, .f_flags = usb_flags, .f_update_interval = usb_update_interval },
-  /* all under :usb */
-  { .tag = "usb", .pattern = ":usb/*", .flags = CLS_USB_FLAGS,
+  /* all under :/usb */
+  { .tag = "usb", .pattern = ":/usb/*", .flags = CLS_USB_FLAGS,
     .f_format = usb_format, .f_flags = usb_flags, .f_update_interval = usb_update_interval, .f_cleanup = class_usb_cleanup },
 };
 
 static sysobj_virt vol[] = {
-    { .path = ":usb/bus", .str = SYSFS_USB,
+    { .path = ":/usb/bus", .str = SYSFS_USB,
       .type = VSO_TYPE_AUTOLINK | VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_CONST,
       .f_get_data = NULL, .f_get_type = NULL },
-    { .path = ":usb/_messages", .str = "",
+    { .path = ":/usb/_messages", .str = "",
       .type = VSO_TYPE_STRING | VSO_TYPE_CONST,
       .f_get_data = usb_messages, .f_get_type = NULL },
-    { .path = ":usb", .str = "*",
+    { .path = ":/usb", .str = "*",
       .type = VSO_TYPE_DIR | VSO_TYPE_CONST,
       .f_get_data = NULL, .f_get_type = NULL },
 };
@@ -209,6 +209,7 @@ void class_usb_cleanup() {
     if (usb_id_list) {
         g_slist_free_full(usb_id_list, (GDestroyNotify)util_usb_id_free);
     }
+    g_free(usb_log);
 }
 
 void usb_scan() {

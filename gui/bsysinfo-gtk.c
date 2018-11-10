@@ -34,6 +34,19 @@ const char about_text[] =
     "https://github.com/bp0/verbose-spork\n"
     "\n";
 
+static const struct {gchar *label, *path;} places_list[] = {
+    /* label = path if label is null */
+    { NULL, "/sys" },
+    { NULL, ":/computer" },
+
+    { NULL, "/sys/devices/system/cpu" },
+    { NULL, "/proc/sys" },
+    { NULL, ":/dmidecode" },
+    { NULL, ":/devicetree" },
+    { NULL, ":/cpuinfo" },
+    { NULL, ":/os_release" },
+};
+
 static int app_init(void) {
     sysobj_init(NULL);
     return 1;
@@ -523,18 +536,6 @@ void browser_back (GtkButton *button, gpointer user_data) {
 }
 
 void browser_init() {
-    static const struct {gchar *label, *path;} places_list[] = {
-        /* label = path if label is null */
-        { NULL, "/sys" },
-        { NULL, ":computer" },
-
-        { NULL, "/sys/devices/system/cpu" },
-        { NULL, "/proc/sys" },
-        { NULL, ":dmidecode" },
-        { NULL, ":devicetree" },
-        { NULL, ":cpuinfo" },
-        { NULL, ":os_release" },
-    };
     int i = 0;
 
     GtkWidget *btn_back = gtk_button_new_from_icon_name("go-previous", GTK_ICON_SIZE_LARGE_TOOLBAR);

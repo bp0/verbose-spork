@@ -19,8 +19,34 @@
  */
 
 #include "sysobj.h"
+/*
+ * - generators create virtual sysobj's,
+ * - classes provide interpretation and formatting of sysobj's
+ */
 
-void vo_computer();
+void gen_os_release();
+void gen_dmidecode();
+void gen_mobo(); /* requires :dmidecode */
+void gen_rpi();
+void gen_cpuinfo();
+
+void gen_computer(); /* formerly vo_computer */
+
+void generators_init() {
+    sysobj_virt_add_simple(":", NULL, "*", VSO_TYPE_DIR);
+    gen_os_release();
+    gen_dmidecode();
+    gen_mobo();
+    gen_rpi();
+    gen_cpuinfo();
+
+    gen_computer();
+}
+
+void class_os_release();
+void class_mobo();
+void class_rpi();
+void class_cpuinfo();
 
 void class_dmi_id();
 void class_dt();
@@ -28,26 +54,30 @@ void class_cpu();
 void class_cpufreq();
 void class_cpucache();
 void class_cputopo();
-void class_cpuinfo();
 void class_pci();
 void class_usb();
 void class_os_release();
 void class_any_utf8();
 
 void class_init() {
+    generators_init();
+
+    class_os_release();
+    class_mobo();
+    class_rpi();
+    class_cpuinfo();
+
     class_cpu();
     class_cpufreq();
     class_cpucache();
     class_cputopo();
-    class_cpuinfo();
     class_pci();
     class_usb();
     class_os_release();
 /* consumes every direct child, careful with order */
     class_dmi_id();
     class_dt();
+
 /* anything left that is human-readable */
     class_any_utf8();
-
-    vo_computer();
 }

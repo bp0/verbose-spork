@@ -18,37 +18,37 @@
  *
  */
 
-/* This is a remnant that will eventually go away. */
-
 #include "sysobj.h"
 
+#define PATH_TO_OS_RELEASE "/usr/lib/os-release"
+
+static int os_release_was_found = 0;
+gchar *os_release_found(const gchar *path) {
+    PARAM_NOT_UNUSED(path);
+    return g_strdup_printf("%d", os_release_was_found);
+}
+
 static sysobj_virt vol[] = {
-    { .path = ":/computer",
+    { .path = ":/os_release/_found", .str = "",
+      .type = VSO_TYPE_STRING | VSO_TYPE_CONST,
+      .f_get_data = os_release_found, .f_get_type = NULL },
+    { .path = ":/os_release", .str = "*",
       .type = VSO_TYPE_DIR | VSO_TYPE_CONST,
-      .str = "*",
-      .f_get_data = NULL },
-  { .path = ":/computer/pci",
-      .type = VSO_TYPE_AUTOLINK | VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_CONST,
-      .str = "/sys/bus/pci/devices",
-      .f_get_data = NULL },
-  { .path = ":/computer/usb",
-      .type = VSO_TYPE_AUTOLINK | VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_CONST,
-      .str = "/sys/bus/usb/devices",
-      .f_get_data = NULL },
-  { .path = ":/computer/usb",
-      .type = VSO_TYPE_AUTOLINK | VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_CONST,
-      .str = "/sys/bus/usb/devices",
-      .f_get_data = NULL },
-  { .path = ":/computer/batteries",
-      .type = VSO_TYPE_AUTOLINK | VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_CONST,
-      .str = "/sys/class/power_supply",
-      .f_get_data = NULL },
+      .f_get_data = NULL, .f_get_type = NULL },
 };
 
-void gen_computer() {
+void gen_os_release() {
+    int i = 0;
     /* add virtual sysobj */
-    int i;
     for (i = 0; i < (int)G_N_ELEMENTS(vol); i++) {
         sysobj_virt_add(&vol[i]);
     }
+
+    sysobj *obj = sysobj_new_from_fn(PATH_TO_OS_RELEASE, NULL);
+    if (obj->exists) {
+        os_release_was_found = 1;
+        sysobj_read_data(obj);
+        sysobj_virt_from_kv(":/os_release", obj->data.str);
+    }
+    sysobj_free(obj);
 }

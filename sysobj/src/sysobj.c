@@ -656,8 +656,20 @@ gboolean verify_lblnum_child(sysobj *obj, const gchar *lbl) {
 
 void sysobj_virt_add(sysobj_virt *vo) {
     if (vo) {
+        DEBUG("add virtual object: %s", vo->path);
         vo_list = g_slist_append(vo_list, vo);
     }
+}
+
+void sysobj_virt_add_simple(const gchar *base, const gchar *name, const gchar *data, int type) {
+    sysobj_virt *vo = g_new0(sysobj_virt, 1);
+    if (name)
+        vo->path = g_strdup_printf("%s/%s", base, name);
+    else
+        vo->path = g_strdup(base);
+    vo->type = type;
+    vo->str = g_strdup(data);
+    sysobj_virt_add(vo);
 }
 
 void sysobj_virt_from_kv(gchar *base, const gchar *kv_data_in) {

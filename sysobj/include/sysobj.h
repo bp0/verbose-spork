@@ -175,6 +175,7 @@ void sysobj_cleanup();
 #define sysobj_virt_new() g_new0(sysobj_virt, 1)
 void sysobj_virt_free(sysobj_virt *s);
 void sysobj_virt_add(sysobj_virt *vo);
+void sysobj_virt_add_simple(const gchar *base, const gchar *name, const gchar *data, int type);
 sysobj_virt *sysobj_virt_find(const gchar *path);
 gchar *sysobj_virt_get_data(const sysobj_virt *vo, const gchar *req);
 int sysobj_virt_get_type(const sysobj_virt *vo, const gchar *req);

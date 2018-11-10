@@ -188,14 +188,14 @@ int util_maybe_num(gchar *str) {
     return r;
 }
 
-gchar *util_find_line_value(gchar *data, gchar *key, gchar *delim) {
+gchar *util_find_line_value(gchar *data, gchar *key, gchar delim) {
     gchar *ret = NULL;
     gchar **lines = g_strsplit(data, "\n", -1);
     gsize line_count = g_strv_length(lines);
-    int i = 0;
+    gsize i = 0;
     for (i = 0; i < line_count; i++) {
         gchar *line = lines[i];
-        gchar *value = g_utf8_strchr(line, -1, ':');
+        gchar *value = g_utf8_strchr(line, -1, delim);
         if (!value) continue;
         *value = 0;
         value = g_strstrip(value+1);

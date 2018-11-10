@@ -44,19 +44,19 @@ static sysobj_class cls_pci[] = {
     .f_format = pci_format_idcomp, .f_flags = pci_flags, .f_update_interval = pci_update_interval },
   { .tag = "pci/device", .pattern = "/sys/devices*/????:??:??.?", .flags = CLS_PCI_FLAGS,
     .f_format = pci_format_device, .f_flags = pci_flags, .f_update_interval = pci_update_interval },
-  /* all under :pci */
-  { .tag = "pci", .pattern = ":pci/*", .flags = CLS_PCI_FLAGS,
+  /* all under :/pci */
+  { .tag = "pci", .pattern = ":/pci/*", .flags = CLS_PCI_FLAGS,
     .f_format = pci_format, .f_flags = pci_flags, .f_update_interval = pci_update_interval, .f_cleanup = class_pci_cleanup },
 };
 
 static sysobj_virt vol[] = {
-    { .path = ":pci/bus", .str = SYSFS_PCI,
+    { .path = ":/pci/bus", .str = SYSFS_PCI,
       .type = VSO_TYPE_AUTOLINK | VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_CONST,
       .f_get_data = NULL, .f_get_type = NULL },
-    { .path = ":pci/_messages", .str = "",
+    { .path = ":/pci/_messages", .str = "",
       .type = VSO_TYPE_STRING | VSO_TYPE_CONST,
       .f_get_data = pci_messages, .f_get_type = NULL },
-    { .path = ":pci", .str = "*",
+    { .path = ":/pci", .str = "*",
       .type = VSO_TYPE_DIR | VSO_TYPE_CONST,
       .f_get_data = NULL, .f_get_type = NULL },
 };
@@ -155,6 +155,7 @@ void class_pci_cleanup() {
     if (pci_id_list) {
         g_slist_free_full(pci_id_list, (GDestroyNotify)util_pci_id_free);
     }
+    g_free(pci_log);
 }
 
 void pci_scan() {

@@ -104,36 +104,25 @@ static sysobj_class cls_dtr[] = {
 };
 
 static sysobj_virt vol[] = {
-    { .path = ":devicetree", .str = "*",
+    { .path = ":/devicetree", .str = "*",
       .type = VSO_TYPE_DIR | VSO_TYPE_CONST,
       .f_get_data = NULL, .f_get_type = NULL },
-    { .path = ":devicetree/base", .str = DTROOT,
+    { .path = ":/devicetree/base", .str = DTROOT,
       .type = VSO_TYPE_AUTOLINK | VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_CONST,
       .f_get_data = NULL, .f_get_type = NULL },
-    { .path = ":devicetree/_messages", .str = "",
+    { .path = ":/devicetree/_messages", .str = "",
       .type = VSO_TYPE_STRING | VSO_TYPE_CONST,
       .f_get_data = dt_messages, .f_get_type = NULL },
-    { .path = ":devicetree/_phandle_map", .str = "*",
+    { .path = ":/devicetree/_phandle_map", .str = "*",
       .type = VSO_TYPE_DIR | VSO_TYPE_CONST,
       .f_get_data = NULL, .f_get_type = NULL },
-    { .path = ":devicetree/_alias_map", .str = "*",
+    { .path = ":/devicetree/_alias_map", .str = "*",
       .type = VSO_TYPE_DIR | VSO_TYPE_CONST,
       .f_get_data = NULL, .f_get_type = NULL },
-    { .path = ":devicetree/_symbol_map", .str = "*",
+    { .path = ":/devicetree/_symbol_map", .str = "*",
       .type = VSO_TYPE_DIR | VSO_TYPE_CONST,
       .f_get_data = NULL, .f_get_type = NULL },
 };
-
-void dt_add_dvo(const gchar *base, const gchar *name, const gchar *data, int type) {
-    sysobj_virt *vo = g_new0(sysobj_virt, 1);
-    if (name)
-        vo->path = g_strdup_printf("%s/%s", base, name);
-    else
-        vo->path = g_strdup(base);
-    vo->type = type;
-    vo->str = g_strdup(data);
-    sysobj_virt_add(vo);
-}
 
 static struct {
     gchar *pattern;
@@ -859,7 +848,7 @@ static void dtr_alias_scan() {
             nmi->label = fn;
             nmi->path = g_strdup(target->path);
             aliases = g_slist_append(aliases, nmi);
-            dt_add_dvo(":devicetree/_alias_map", fn, nmi->path, VSO_TYPE_SYMLINK | VSO_TYPE_AUTOLINK | VSO_TYPE_DYN );
+            sysobj_virt_add_simple(":/devicetree/_alias_map", fn, nmi->path, VSO_TYPE_SYMLINK | VSO_TYPE_AUTOLINK | VSO_TYPE_DYN );
         }
         sysobj_free(target);
         g_free(apath);
@@ -894,7 +883,7 @@ static void dtr_symbol_scan() {
             nmi->label = fn;
             nmi->path = g_strdup(target->path);
             symbols = g_slist_append(symbols, nmi);
-            dt_add_dvo(":devicetree/_symbol_map", fn, nmi->path, VSO_TYPE_SYMLINK | VSO_TYPE_AUTOLINK | VSO_TYPE_DYN );
+            sysobj_virt_add_simple(":/devicetree/_symbol_map", fn, nmi->path, VSO_TYPE_SYMLINK | VSO_TYPE_AUTOLINK | VSO_TYPE_DYN );
         }
         sysobj_free(target);
         g_free(apath);
@@ -918,7 +907,7 @@ static void dtr_phandle_scan(gchar *nb, gchar *nn) {
             nmi->path = g_strdup(obj->path);
             phandles = g_slist_append(phandles, nmi);
             sprintf(phstr, "0x%08x", nmi->v);
-            dt_add_dvo(":devicetree/_phandle_map", phstr, nmi->path, VSO_TYPE_SYMLINK | VSO_TYPE_AUTOLINK | VSO_TYPE_DYN );
+            sysobj_virt_add_simple(":/devicetree/_phandle_map", phstr, nmi->path, VSO_TYPE_SYMLINK | VSO_TYPE_AUTOLINK | VSO_TYPE_DYN );
         }
         sysobj_free(phobj);
 
@@ -942,14 +931,13 @@ void class_dt_cleanup() {
         if (prop_types[i].pspec)
             g_pattern_spec_free(prop_types[i].pspec);
     }
-    g_free(dtr_log);
     if (phandles)
         g_slist_free_full(phandles, (GDestroyNotify)dtr_map_free);
     if (aliases)
         g_slist_free_full(aliases, (GDestroyNotify)dtr_map_free);
     if (symbols)
         g_slist_free_full(symbols, (GDestroyNotify)dtr_map_free);
-
+    g_free(dtr_log);
 }
 
 void class_dt() {

@@ -35,23 +35,38 @@ add_library(sysobj STATIC
         sysobj/src/util_sysobj.c
         sysobj/src/pin.c
         sysobj/src/classes.c
-        sysobj/src/class_dmi_id.c
-        sysobj/src/class_dt.c
+
         sysobj/src/class_cpu.c
         sysobj/src/class_cpufreq.c
         sysobj/src/class_cpucache.c
         sysobj/src/class_cputopo.c
         sysobj/src/class_any_utf8.c
-        sysobj/src/class_cpuinfo.c
+
+# still mixed
+        sysobj/src/class_dt.c
         sysobj/src/class_pci.c
         sysobj/src/class_usb.c
+
+# class only
         sysobj/src/class_os_release.c
+        sysobj/src/class_mobo.c
+        sysobj/src/class_rpi.c
+        sysobj/src/class_cpuinfo.c
+        sysobj/src/class_dmi_id.c
+# gen only
+        sysobj/src/gen_os_release.c
+        sysobj/src/gen_mobo.c
+        sysobj/src/gen_rpi.c
+        sysobj/src/gen_cpuinfo.c
+        sysobj/src/gen_dmidecode.c
+        sysobj/src/vo_computer.c
+
         sysobj/src/arm_data.c
         sysobj/src/x86_data.c
 #src/riscv_data.c
+
         sysobj/src/util_pci.c
         sysobj/src/util_usb.c
-        sysobj/src/vo_computer.c
 )
 target_link_libraries(sysobj
         gettext
