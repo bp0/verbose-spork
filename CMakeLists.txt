@@ -44,6 +44,7 @@ add_library(sysobj STATIC
         sysobj/src/class_cpuinfo.c
         sysobj/src/class_pci.c
         sysobj/src/class_usb.c
+        sysobj/src/class_os_release.c
         sysobj/src/arm_data.c
         sysobj/src/x86_data.c
 #src/riscv_data.c

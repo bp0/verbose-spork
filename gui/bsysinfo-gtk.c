@@ -457,6 +457,7 @@ void browser_init() {
         { NULL, ":dmidecode" },
         { NULL, ":devicetree" },
         { NULL, ":cpuinfo" },
+        { NULL, ":os_release" },
     };
     int i = 0;
 

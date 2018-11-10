@@ -12,6 +12,7 @@ void class_cputopo();
 void class_cpuinfo();
 void class_pci();
 void class_usb();
+void class_os_release();
 void class_any_utf8();
 
 void class_init() {
@@ -23,6 +24,7 @@ void class_init() {
     class_cpuinfo();
     class_pci();
     class_usb();
+    class_os_release();
 /* consumes every direct child, careful with order */
     class_dmi_id();
     class_dt();
