@@ -9,25 +9,6 @@
 #include <inttypes.h> /* for PRIu64 */
 #include <endian.h>
 
-#define sp_sep(STR) (strlen(STR) ? " " : "")
-/* appends an element to a string, adding a space if
- * the string is not empty.
- * ex: ret = appf(ret, "%s=%s\n", name, value); */
-gchar *appf(gchar *src, gchar *fmt, ...) {
-    gchar *buf, *ret;
-    va_list args;
-    va_start(args, fmt);
-    buf = g_strdup_vprintf(fmt, args);
-    va_end(args);
-    if (src != NULL) {
-        ret = g_strdup_printf("%s%s%s", src, sp_sep(src), buf);
-        g_free(buf);
-        g_free(src);
-    } else
-        ret = buf;
-    return ret;
-}
-
 /* operating-points v0,v1,v2 */
 typedef struct {
     uint32_t version; /* opp version, 0 = clock-frequency only */

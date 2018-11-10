@@ -6,11 +6,11 @@
 #include <glib/gstdio.h>
 #include <stdlib.h>
 #include <stdint.h>  /* for *int*_t types */
-#include <unistd.h>  /* for getuid() */
 #include <ctype.h>   /* for isxdigit(), etc. */
 #include "config.h"
 #include "gettext.h"
 #include "term_color.h" /* used in formatting output */
+#include "util_sysobj.h"
 
 #define UPDATE_INTERVAL_DEFAULT 10.0   /* in seconds */
 #define UPDATE_INTERVAL_NEVER    0.0   /* in seconds */

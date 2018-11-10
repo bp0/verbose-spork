@@ -32,6 +32,7 @@ add_library(gettext STATIC
 
 add_library(sysobj STATIC
         sysobj/src/sysobj.c
+        sysobj/src/util_sysobj.c
         sysobj/src/pin.c
         sysobj/src/classes.c
         sysobj/src/class_dmi_id.c

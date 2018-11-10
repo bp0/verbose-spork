@@ -37,34 +37,6 @@ static sysobj_filter path_filters[] = {
 };
 static GSList *sysobj_global_filters = NULL;
 
-gboolean util_have_root() {
-    return (getuid() == 0) ? TRUE : FALSE;
-}
-
-void util_null_trailing_slash(gchar *str) {
-    if (str && *str) {
-        if (str[strlen(str)-1] == '/' )
-            str[strlen(str)-1] = 0;
-    }
-}
-
-gsize util_count_lines(const gchar *str) {
-    gchar **lines = NULL;
-    gsize count = 0;
-
-    if (str) {
-        lines = g_strsplit(str, "\n", 0);
-        count = g_strv_length(lines);
-        if (count && *lines[count-1] == 0) {
-            /* if the last line is empty, don't count it */
-            count--;
-        }
-        g_strfreev(lines);
-    }
-
-    return count;
-}
-
 int compare_str_base10(const sysobj_data *a, const sysobj_data *b) {
     int64_t A = (a && a->str) ? strtol(a->str, NULL, 10) : 0;
     int64_t B = (b && b->str) ? strtol(b->str, NULL, 10) : 0;
@@ -344,89 +316,6 @@ void sysobj_fscheck(sysobj *s) {
             }
         }
     }
-}
-
-/* resolve . and .., but not symlinks */
-gchar *util_normalize_path(const gchar *path, const gchar *relto) {
-    gchar *resolved = NULL;
-#if GLIB_CHECK_VERSION(2, 58, 0)
-    resolved = g_canonicalize_filename(path, relto);
-#else
-    /* burt's hack version */
-    gchar *frt = relto ? g_strdup(relto) : NULL;
-    util_null_trailing_slash(frt);
-    gchar *fpath = frt
-        ? g_strdup_printf("%s%s%s", frt, (*path == '/') ? "" : "/", path)
-        : g_strdup(path);
-    g_free(frt);
-
-    /* note: **parts will own all the part strings throughout */
-    gchar **parts = g_strsplit(fpath, "/", -1);
-    gsize i, pn = g_strv_length(parts);
-    GList *lparts = NULL, *l = NULL, *n = NULL, *p = NULL;
-    for (i = 0; i < pn; i++)
-        lparts = g_list_append(lparts, parts[i]);
-
-    i = 0;
-    gchar *part = NULL;
-    l = lparts;
-    while(l) {
-        n = l->next; p = l->prev;
-        part = l->data;
-
-        if (!g_strcmp0(part, ".") )
-            lparts = g_list_delete_link(lparts, l);
-
-        if (!g_strcmp0(part, "..") ) {
-            if (p)
-                lparts = g_list_delete_link(lparts, p);
-            lparts = g_list_delete_link(lparts, l);
-        }
-
-        l = n;
-    }
-
-    resolved = g_strdup("");
-    l = lparts;
-    while(l) {
-        resolved = g_strdup_printf("%s%s/", resolved, (gchar*)l->data );
-        l = l->next;
-    }
-    g_list_free(lparts);
-    util_null_trailing_slash(resolved);
-    g_free(fpath);
-
-    g_strfreev(parts);
-#endif
-
-    return resolved;
-}
-
-/* resolve . and .. and symlinks */
-gchar *util_canonicalize_path(const gchar *path) {
-    char *resolved = realpath(path, NULL);
-    gchar *ret = g_strdup(resolved); /* free with g_free() instead of free() */
-    free(resolved);
-    return ret;
-}
-
-int util_maybe_num(gchar *str) {
-    int r = 10, i = 0, l = (str) ? strlen(str) : 0;
-    if (!l || l > 32) return 0;
-    gchar *chk = g_strdup(str);
-    g_strstrip(chk);
-    l = strlen(chk);
-    for (i = 0; i < l; i++) {
-        if (isxdigit(chk[i]))  {
-            if (!isdigit(chk[i]))
-                r = 16;
-        } else {
-            r = 0;
-            break;
-        }
-    }
-    g_free(chk);
-    return r;
 }
 
 void sysobj_read_data(sysobj *s) {
@@ -727,19 +616,6 @@ gboolean verify_parent_name(sysobj *obj, const gchar *parent_name) {
     return verified;
 }
 
-int32_t util_get_did(gchar *str, const gchar *lbl) {
-    int32_t id = -2;
-    gchar tmpfmt[128] = "";
-    gchar tmpchk[128] = "";
-    sprintf(tmpfmt, "%s%s", lbl, "%d");
-    if ( sscanf(str, tmpfmt, &id) ) {
-        sprintf(tmpchk, tmpfmt, id);
-        if ( strcmp(str, tmpchk) == 0 )
-            return id;
-    }
-    return -1;
-}
-
 gboolean verify_lblnum(sysobj *obj, const gchar *lbl) {
     if (lbl && obj && obj->name) {
         if ( util_get_did(obj->name, lbl) >= 0 )
@@ -757,39 +633,6 @@ gboolean verify_lblnum_child(sysobj *obj, const gchar *lbl) {
         g_free(parent_name);
     }
     return verified;
-}
-
-gchar *util_escape_markup(gchar *v, gboolean replacing) {
-    gchar *clean, *tmp;
-    gchar **vl;
-    if (v == NULL) return NULL;
-
-    vl = g_strsplit(v, "&", -1);
-    if (g_strv_length(vl) > 1)
-        clean = g_strjoinv("&amp;", vl);
-    else
-        clean = g_strdup(v);
-    g_strfreev(vl);
-
-    vl = g_strsplit(clean, "<", -1);
-    if (g_strv_length(vl) > 1) {
-        tmp = g_strjoinv("&lt;", vl);
-        g_free(clean);
-        clean = tmp;
-    }
-    g_strfreev(vl);
-
-    vl = g_strsplit(clean, ">", -1);
-    if (g_strv_length(vl) > 1) {
-        tmp = g_strjoinv("&gt;", vl);
-        g_free(clean);
-        clean = tmp;
-    }
-    g_strfreev(vl);
-
-    if (replacing)
-        g_free((gpointer)v);
-    return clean;
 }
 
 void sysobj_virt_add(sysobj_virt *vo) {
@@ -859,17 +702,6 @@ sysobj_virt *sysobj_virt_find(const gchar *path) {
     g_free(spath);
     DEBUG("... %s", (ret) ? ret->path : "(NOT FOUND)");
     return ret;
-}
-
-void util_strstrip_double_quotes_dumb(gchar *str) {
-    if (!str) return;
-    g_strstrip(str);
-    gchar *front = str, *back = str + strlen(str) - 1;
-    while(*front == '"') { *front = 'X'; front++; }
-    while(*back == '"') { *back = 0; back--; }
-    int nl = strlen(front);
-    memmove(str, front, nl);
-    str[nl] = 0;
 }
 
 gchar *sysobj_virt_symlink_entry(const sysobj_virt *vo, const gchar *target, const gchar *req) {
