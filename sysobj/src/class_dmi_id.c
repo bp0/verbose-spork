@@ -27,6 +27,47 @@ static const struct { gchar *rp; gchar *lbl; int extra_flags; } dmi_id_items[] =
     { NULL, NULL, 0 }
 };
 
+static const gchar *chassis_types[] = {
+    N_("Invalid chassis type (0)"),
+    N_("Other"),
+    N_("Unknown chassis type"),
+    N_("Desktop"),
+    N_("Low-profile Desktop"),
+    N_("Pizza Box"),
+    N_("Mini Tower"),
+    N_("Tower"),
+    N_("Portable"),
+    N_("Laptop"),
+    N_("Notebook"),
+    N_("Handheld"),
+    N_("Docking Station"),
+    N_("All-in-one"),
+    N_("Subnotebook"),
+    N_("Space-saving"),
+    N_("Lunch Box"),
+    N_("Main Server Chassis"),
+    N_("Expansion Chassis"),
+    N_("Sub Chassis"),
+    N_("Bus Expansion Chassis"),
+    N_("Peripheral Chassis"),
+    N_("RAID Chassis"),
+    N_("Rack Mount Chassis"),
+    N_("Sealed-case PC"),
+    N_("Multi-system"),
+    N_("CompactPCI"),
+    N_("AdvancedTCA"),
+    N_("Blade"),
+    N_("Blade Enclosing"),
+    N_("Tablet"),
+    N_("Convertible"),
+    N_("Detachable"),
+    N_("IoT Gateway"),
+    N_("Embedded PC"),
+    N_("Mini PC"),
+    N_("Stick PC"),
+    NULL,
+};
+
 int dmi_id_lookup(const gchar *key) {
     int i = 0;
     while(dmi_id_items[i].rp) {
@@ -95,58 +136,6 @@ dmi_ignore_no:
     return ret;
 }
 
-gchar *chassis_type_str(sysobj *obj, int fmt_opts) {
-    static const char *types[] = {
-        N_("Invalid chassis type (0)"),
-        N_("Other"),
-        N_("Unknown chassis type"),
-        N_("Desktop"),
-        N_("Low-profile Desktop"),
-        N_("Pizza Box"),
-        N_("Mini Tower"),
-        N_("Tower"),
-        N_("Portable"),
-        N_("Laptop"),
-        N_("Notebook"),
-        N_("Handheld"),
-        N_("Docking Station"),
-        N_("All-in-one"),
-        N_("Subnotebook"),
-        N_("Space-saving"),
-        N_("Lunch Box"),
-        N_("Main Server Chassis"),
-        N_("Expansion Chassis"),
-        N_("Sub Chassis"),
-        N_("Bus Expansion Chassis"),
-        N_("Peripheral Chassis"),
-        N_("RAID Chassis"),
-        N_("Rack Mount Chassis"),
-        N_("Sealed-case PC"),
-        N_("Multi-system"),
-        N_("CompactPCI"),
-        N_("AdvancedTCA"),
-        N_("Blade"),
-        N_("Blade Enclosing"),
-        N_("Tablet"),
-        N_("Convertible"),
-        N_("Detachable"),
-        N_("IoT Gateway"),
-        N_("Embedded PC"),
-        N_("Mini PC"),
-        N_("Stick PC"),
-    };
-
-    FMT_OPTS_IGNORE();
-
-    if (obj && obj->data.str) {
-        int chassis_type = strtol(obj->data.str, NULL, 10);
-        if (chassis_type >= 0 && chassis_type < (int)G_N_ELEMENTS(types))
-            return g_strdup_printf("[%d] %s", chassis_type, _(types[chassis_type]));
-        return g_strdup_printf("[%d]", chassis_type);
-    }
-    return NULL;
-}
-
 gboolean dmi_id_verify(sysobj *obj) {
 /*
     int i = dmi_id_lookup(obj->name);
@@ -170,7 +159,7 @@ const gchar *dmi_id_label(sysobj *obj) {
 
 gchar *dmi_id_format(sysobj *obj, int fmt_opts) {
     if (!strcmp(obj->name, "chassis_type"))
-        return chassis_type_str(obj, fmt_opts);
+        return sysobj_format_table(obj, (gchar**)&chassis_types, (int)G_N_ELEMENTS(chassis_types), 10, fmt_opts);
 
     if ((fmt_opts & FMT_OPT_NO_JUNK) && dmi_value_is_placeholder(obj) ) {
         if (fmt_opts & FMT_OPT_NULL_IF_EMPTY) {

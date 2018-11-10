@@ -232,6 +232,12 @@ GSList *sysobj_children_ex(sysobj *s, GSList *filters, gboolean sort);
 
 sysobj_data *sysobj_data_dup(sysobj_data *d);
 
+/* table is null-terminated string list of null-terminated UNTRANSLATED strings
+ * table_len, optional, improves speed
+ * nbase is the base of the number stored in obj->data.str
+ * fmt_opts, as usual */
+gchar *sysobj_format_table(sysobj *obj, gchar **table, int table_len, int nbase, int fmt_opts);
+
 /* debugging stuff */
 void class_dump_list();
 

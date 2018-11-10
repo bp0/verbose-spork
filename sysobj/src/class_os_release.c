@@ -104,7 +104,5 @@ void class_os_release() {
         os_release_msg("os_release not found at %s", PATH_TO_OS_RELEASE);
     }
 
-    //TODO: should wait until first access to setup
-    //other classes may not be ready
     os_release_scan();
 }

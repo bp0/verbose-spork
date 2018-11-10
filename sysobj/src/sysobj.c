@@ -160,7 +160,7 @@ gchar *simple_format(sysobj* obj, int fmt_opts) {
 
     if (obj) {
         gchar *nice = NULL;
-        if ( !obj->exists ) {
+        if ( !obj->exists || !obj->data.str ) {
             if (fmt_opts & FMT_OPT_NULL_IF_MISSING)
                 nice = NULL;
             else
@@ -1096,4 +1096,37 @@ GSList *sysobj_filter_list(GSList *items, GSList *filters) {
 
     g_free(marked);
     return items;
+}
+
+/* table is null-terminated string list of null-terminated UNTRANSLATED strings
+ * table_len, optional, improves speed
+ * nbase is the base of the number stored in obj->data.str
+ * fmt_opts, as usual */
+gchar *sysobj_format_table(sysobj *obj, gchar **table, int table_len, int nbase, int fmt_opts) {
+    gchar *val = NULL;
+    int index = 0, count = 0;
+
+    FMT_OPTS_IGNORE();
+
+    if (obj && obj->data.str && isxdigit(*(obj->data.str)) ) {
+        index = strtol(obj->data.str, NULL, nbase);
+        if (table_len) {
+            if (index < table_len)
+                val = table[index];
+        } else {
+            gchar **p = table;
+            while(p) {
+                if (count == index) {
+                    val = *p;
+                    break;
+                }
+                count++;
+                p++;
+            }
+        }
+        if (val)
+            return g_strdup_printf("[%d] %s", index, _(val));
+        return g_strdup_printf("[%d]", index);
+    }
+    return simple_format(obj, fmt_opts);
 }
