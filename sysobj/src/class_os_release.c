@@ -5,7 +5,6 @@
 
 gchar* os_release_log = NULL;
 
-static gchar *os_release_feature_format(sysobj *obj, int fmt_opts);
 static gchar *os_release_format(sysobj *obj, int fmt_opts);
 static guint os_release_flags(sysobj *obj);
 static gchar *os_release_messages(const gchar *path);

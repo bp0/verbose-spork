@@ -173,7 +173,7 @@ static gchar *dt_messages(const gchar *path) {
 
 /* find the value of a path-inherited property by climbing the path */
 int dtr_inh_find(sysobj *obj, char *qprop, int limit) {
-    sysobj *tobj, *pobj, *qobj;
+    sysobj *tobj = NULL, *pobj = NULL, *qobj = NULL;
     uint32_t ret = 0;
     int i, found = 0;
 
@@ -188,7 +188,7 @@ int dtr_inh_find(sysobj *obj, char *qprop, int limit) {
         qobj = sysobj_child_of_parent(pobj, qprop);
         if (qobj != NULL && qobj->exists) {
             sysobj_read_data(qobj);
-            ret = be32toh(*qobj->data.int32);
+            ret = be32toh(*qobj->data.uint32);
             found = 1;
             sysobj_free(qobj);
             break;
@@ -304,10 +304,10 @@ char *dtr_list_reg(sysobj *obj) {
         /* error: length is not a multiple of tuples */
         dtr_msg("Data length (%u) is not a multiple of (#address-cells:%u + #size-cells:%u) for %s\n",
             obj->data.len, acells, scells, obj->path);
-        return dtr_list_hex(obj->data.int32, obj->data.len / 4);
+        return dtr_list_hex(obj->data.uint32, obj->data.len / 4);
     }
 
-    next = obj->data.int32;
+    next = obj->data.uint32;
     consumed = 0;
     while (consumed + (tup_len * 4) <= obj->data.len) {
         tup_str = dtr_list_hex(next, tup_len);
@@ -326,7 +326,7 @@ uint32_t dtr_get_phref_prop(uint32_t phandle, gchar *prop) {
     sysobj *obj = sysobj_new_from_fn(dtr_phandle_lookup(phandle), prop);
     if (obj && obj->exists) {
         sysobj_read_data(obj);
-        ret = be32toh(*obj->data.int32);
+        ret = be32toh(*obj->data.uint32);
     }
     sysobj_free(obj);
     return ret;
@@ -371,10 +371,10 @@ char *dtr_list_phref(sysobj *obj, gchar *ext_cell_prop) {
         if (ext_cell_prop == NULL)
             ext_cells = 0;
         else
-            ext_cells = dtr_get_phref_prop(be32toh(obj->data.int32[i]), ext_cell_prop);
-        ph = dtr_elem_phref(obj->data.int32[i], 0, NULL); i++;
+            ext_cells = dtr_get_phref_prop(be32toh(obj->data.uint32[i]), ext_cell_prop);
+        ph = dtr_elem_phref(obj->data.uint32[i], 0, NULL); i++;
         if (ext_cells > count - i) ext_cells = count - i;
-        ext = dtr_list_hex((obj->data.int32 + i), ext_cells); i+=ext_cells;
+        ext = dtr_list_hex((obj->data.uint32 + i), ext_cells); i+=ext_cells;
         ret = appf(ret, "<%s%s%s>",
             ph, (ext_cells) ? " " : "", ext);
         g_free(ph);
@@ -402,14 +402,14 @@ gchar *dtr_list_interrupts(sysobj *obj) {
     count = obj->data.len / 4;
     while (i < count) {
         icells = UMIN(icells, count - i);
-        ext = dtr_list_hex((obj->data.int32 + i), icells); i+=icells;
+        ext = dtr_list_hex((obj->data.uint32 + i), icells); i+=icells;
         ret = appf(ret, "<%s>", ext);
         g_free(ext);
     }
     return ret;
 
 intr_err:
-    return dtr_list_hex(obj->data.int32, obj->data.len / 4);
+    return dtr_list_hex(obj->data.uint32, obj->data.len / 4);
 
 }
 
@@ -444,8 +444,8 @@ uint32_t dtr_get_prop_u32(sysobj *node, const char *name) {
     sysobj *obj = sysobj_new_from_fn(node->path, name);
     if (obj && obj->exists) {
         sysobj_read_data(obj);
-        if (obj->data.int32 != NULL)
-            ret = be32toh(*obj->data.int32);
+        if (obj->data.uint32 != NULL)
+            ret = be32toh(*obj->data.uint32);
     }
     sysobj_free(obj);
     return ret;
@@ -503,7 +503,7 @@ dt_opp_range *dtr_get_opp_range(const char *path) {
 
             /* pairs of (kHz,uV) */
             for (i = 0; i < table_obj->data.len; i += 2) {
-                khz = table_obj->data.int32[i];
+                khz = table_obj->data.uint32[i];
                 if (khz > ret->khz_max)
                     ret->khz_max = khz;
                 if (khz < ret->khz_min || ret->khz_min == 0)
@@ -595,7 +595,7 @@ char *dtr_elem_oppv2(sysobj* obj) {
         }
         g_free(pp);
     }
-    return dtr_elem_phref(*obj->data.int32, 1, opp_str);
+    return dtr_elem_phref(*obj->data.uint32, 1, opp_str);
 }
 
 int dtr_guess_type_by_name(const gchar *name) {
@@ -748,7 +748,7 @@ static gchar *dtr_format(sysobj *obj, int fmt_opts) {
                 ret = dtr_list_hex(obj->data.any, obj->data.len / 4);
             break;
         case DTP_PH_REF:
-            ret = dtr_elem_phref(*obj->data.int32, 1, NULL);
+            ret = dtr_elem_phref(*obj->data.uint32, 1, NULL);
             break;
         case DTP_PH_REF_OPP2:
             ret = dtr_elem_oppv2(obj);
@@ -889,7 +889,7 @@ static void dtr_phandle_scan(gchar *nb, gchar *nn) {
         if (phobj && phobj->exists) {
             sysobj_read_data(phobj);
             dtr_map_item *nmi = g_new0(dtr_map_item, 1);
-            nmi->v = be32toh(*phobj->data.int32);
+            nmi->v = be32toh(*phobj->data.uint32);
             nmi->path = g_strdup(obj->path);
             phandles = g_slist_append(phandles, nmi);
             sprintf(phstr, "0x%08x", nmi->v);
