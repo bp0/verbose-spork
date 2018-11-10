@@ -49,6 +49,7 @@ struct {
 
 enum
 {
+   KV_COL_ICON,
    KV_COL_KEY,
    KV_COL_LABEL,
    KV_COL_VALUE,
@@ -59,6 +60,7 @@ enum
 };
 
 char *kv_col_names[] = {
+    "", /* icon */
     "Item",
     "Label",
     "Value",
@@ -263,7 +265,7 @@ static pins_list_view *pins_list_view_create(gboolean as_tree) {
     plv->pins = pins_new();
     plv->as_tree = as_tree;
 
-    plv->store = gtk_tree_store_new(KV_N_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, G_TYPE_INT);
+    plv->store = gtk_tree_store_new(KV_N_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, G_TYPE_INT);
     plv->view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(plv->store));
 
     GtkWidget *list_scroll = gtk_scrolled_window_new(NULL, NULL);
@@ -284,7 +286,12 @@ static pins_list_view *pins_list_view_create(gboolean as_tree) {
     GtkCellRenderer *renderer;
     GtkTreeViewColumn *column;
 
-    /* only name and value */
+    /* only icon, name, and value */
+    renderer = gtk_cell_renderer_pixbuf_new();
+    column = gtk_tree_view_column_new_with_attributes
+        (kv_col_names[KV_COL_ICON], renderer, "icon-name", KV_COL_ICON, NULL);
+    gtk_tree_view_append_column (GTK_TREE_VIEW (plv->view), column);
+
     renderer = gtk_cell_renderer_text_new();
     column = gtk_tree_view_column_new_with_attributes
         (kv_col_names[KV_COL_KEY], renderer, "text", KV_COL_KEY, NULL);
@@ -328,6 +335,7 @@ static void pins_list_view_fill(pins_list_view *plv) {
                 gtk_tree_store_append(plv->store, &iter, &parent);
 
             gtk_tree_store_set(plv->store, i ? &iter : &parent,
+                        KV_COL_ICON, (p->obj->is_dir) ? "folder" : "text-x-generic",
                         KV_COL_KEY, (p->obj->name_req),
                         KV_COL_LABEL, (label),
                         KV_COL_VALUE, (nice),
@@ -338,6 +346,7 @@ static void pins_list_view_fill(pins_list_view *plv) {
         } else {
             gtk_tree_store_append(plv->store, &iter, NULL);
             gtk_tree_store_set(plv->store, &iter,
+                        KV_COL_ICON, (p->obj->is_dir) ? "folder" : "text-x-generic",
                         KV_COL_KEY, (p->obj->name_req),
                         KV_COL_LABEL, (label),
                         KV_COL_VALUE, (nice),
@@ -362,6 +371,7 @@ void pins_list_view_append(pins_list_view *plv, const gchar *path) {
         gchar *nice = sysobj_format(p->obj, plv->fmt_opts);
         gtk_tree_store_append(plv->store, &iter, NULL);
         gtk_tree_store_set(plv->store, &iter,
+                    KV_COL_ICON, (p->obj->is_dir) ? "folder" : "text-x-generic",
                     KV_COL_KEY, (p->obj->name_req),
                     KV_COL_VALUE, (nice),
                     KV_COL_INDEX, (i),
