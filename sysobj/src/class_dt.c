@@ -848,7 +848,7 @@ const char *dtr_alias_lookup_by_path(const gchar* path) {
 
 static void dtr_alias_scan() {
     sysobj *alo = sysobj_new_from_fn(DTROOT, "aliases");
-    GSList *childs = sysobj_children(alo, NULL, NULL, FALSE);
+    GSList *childs = sysobj_children(alo, NULL, "name", FALSE);
     GSList *l = childs;
     while(l) {
         gchar *fn = (gchar *)l->data;
@@ -883,7 +883,7 @@ const char *dtr_symbol_lookup_by_path(const gchar* path) {
 
 static void dtr_symbol_scan() {
     sysobj *alo = sysobj_new_from_fn(DTROOT, "__symbols__");
-    GSList *childs = sysobj_children(alo, NULL, NULL, FALSE);
+    GSList *childs = sysobj_children(alo, NULL, "name", FALSE);
     GSList *l = childs;
     while(l) {
         gchar *fn = (gchar *)l->data;

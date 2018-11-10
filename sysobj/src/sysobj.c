@@ -434,7 +434,7 @@ GSList *sysobj_children(sysobj *s, gchar *include_glob, gchar *exclude_glob, gbo
     if (include_glob)
         filters = g_slist_append(filters, sysobj_filter_new(SO_FILTER_INCLUDE_IIF, include_glob) );
     if (exclude_glob)
-        filters = g_slist_append(filters, sysobj_filter_new(SO_FILTER_EXCLUDE, exclude_glob) );
+        filters = g_slist_append(filters, sysobj_filter_new(SO_FILTER_EXCLUDE_IIF, exclude_glob) );
     ret = sysobj_children_ex(s, filters, sort);
     g_slist_free_full(filters, (GDestroyNotify)sysobj_filter_free);
     return ret;
