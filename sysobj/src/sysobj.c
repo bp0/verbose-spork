@@ -1130,3 +1130,27 @@ gchar *sysobj_format_table(sysobj *obj, gchar **table, int table_len, int nbase,
     }
     return simple_format(obj, fmt_opts);
 }
+
+sysobj *sysobj_parent(sysobj *s) {
+    if (s) {
+        gchar *rpp = g_path_get_dirname(s->path_req);
+        sysobj *ret = sysobj_new_from_fn(rpp, NULL);
+        g_free(rpp);
+        return ret;
+    }
+    return NULL;
+}
+
+sysobj *sysobj_child(sysobj *s, gchar *child) {
+    return sysobj_new_from_fn(s->path_req, child);
+}
+
+sysobj *sysobj_child_of_parent(sysobj *s, gchar *child_path) {
+    if (s) {
+        gchar *rpp = g_path_get_dirname(s->path_req);
+        sysobj *ret = sysobj_new_from_fn(rpp, child_path);
+        g_free(rpp);
+        return ret;
+    }
+    return NULL;
+}

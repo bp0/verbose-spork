@@ -12,5 +12,7 @@
 #   define DEBUG(msg,...)
 #endif  /* DEBUG_BUILD */
 
+#define DBPING printf("*** %s:%d (%s) PING ***\n", __FILE__, __LINE__, __FUNCTION__);
+
 #endif  /* __CONFIG_H__ */
 
