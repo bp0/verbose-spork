@@ -257,7 +257,7 @@ gboolean class_has_flag(const sysobj_class *c, guint flag) {
 sysobj_data *sysobj_data_dup(sysobj_data *d) {
     if (d) {
         sysobj_data *nd = g_memdup(d, sizeof(sysobj_data));
-        /* +1 because g_file_get_contents() always adds \n */
+        /* +1 because g_file_get_contents() always adds \0 */
         nd->any = g_memdup(d->any, d->len + 1);
         return nd;
     }
@@ -398,6 +398,37 @@ double sysobj_update_interval(sysobj *s) {
     return UPDATE_INTERVAL_NEVER;
 }
 
+/* sysobj dev names are commonly nameN. Sort so that
+ * name9 comes before name10 and name4part6 before
+ * name4part14. */
+int sysfs_fn_cmp(gchar *a, gchar *b) {
+    /* one or both are null */
+    if (!a) return b ? -1 : 0; if (!b) return 1;
+    gchar *pa = a, *pb = b;
+    while(pa && pb) {
+        int mc = 0, na = 0, nb = 0, l = 0, cmp = 0;
+        char buff[64] = "";
+        mc = sscanf(pa, "%[^0-9]%d", buff, &na);
+        if (mc == 2) {
+            l = strlen(buff);
+            if (!l) return strcmp(pa, pb);
+            cmp = strncmp(pb, buff, l);
+            if (cmp != 0) return strcmp(pa, pb);
+            pa += l; pb += l;
+            mc = sscanf(pb, "%d", &nb);
+            if (mc != 1) return strcmp(pa, pb);
+            cmp = na - nb;
+            if (cmp != 0) return cmp;
+            /* skip past the numbers */
+            while(isdigit(*pa)) pa++;
+            while(isdigit(*pb)) pb++;
+
+        } else
+            return strcmp(pa, pb);
+    }
+    return 0;
+}
+
 GSList *sysobj_children_ex(sysobj *s, GSList *filters, gboolean sort) {
     GSList *ret = NULL;
     GDir *dir;
@@ -424,7 +455,7 @@ GSList *sysobj_children_ex(sysobj *s, GSList *filters, gboolean sort) {
             ret = sysobj_filter_list(ret, filters);
 
         if (sort)
-            ret = g_slist_sort(ret, (GCompareFunc)g_strcmp0);
+            ret = g_slist_sort(ret, (GCompareFunc)sysfs_fn_cmp);
     }
     return ret;
 }
