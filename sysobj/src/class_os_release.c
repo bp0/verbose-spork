@@ -33,13 +33,18 @@ static sysobj_class cls_os_release[] = {
 
 static gchar *os_release_format(sysobj *obj, int fmt_opts) {
     if (!strcmp("os_release", obj->name)) {
-        gchar *name = sysobj_raw_from_fn(":/os_release", "NAME");
-        gchar *version = sysobj_raw_from_fn(":/os_release", "VERSION");
-        util_strstrip_double_quotes_dumb(name);
-        util_strstrip_double_quotes_dumb(version);
-        gchar *full_name = g_strdup_printf("%s %s", name, version);
-        g_free(name);
-        g_free(version);
+        gchar *full_name = sysobj_raw_from_fn(":/os_release", "PRETTY_NAME");
+        if (!full_name) {
+            gchar *name = sysobj_raw_from_fn(":/os_release", "NAME");
+            gchar *version = sysobj_raw_from_fn(":/os_release", "VERSION");
+            util_strstrip_double_quotes_dumb(name);
+            util_strstrip_double_quotes_dumb(version);
+            full_name = g_strdup_printf("%s %s", name, version ? version : "");
+            g_free(name);
+            g_free(version);
+        } else {
+            util_strstrip_double_quotes_dumb(full_name);
+        }
         return full_name;
     }
     return simple_format(obj, fmt_opts);
