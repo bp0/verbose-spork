@@ -18,6 +18,9 @@
  *
  */
 
+/* Generator to convert /usr/lib/os-release into a tree
+ *  :/os_release
+ */
 #include "sysobj.h"
 
 #define PATH_TO_OS_RELEASE "/usr/lib/os-release"

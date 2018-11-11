@@ -20,15 +20,17 @@
 
 #include "sysobj.h"
 /*
- * - generators create virtual sysobj's,
+ * - generators create virtual sysobj's
+ *    - can't use sysobj_format, only sysobj_raw as there are no classes yet.
  * - classes provide interpretation and formatting of sysobj's
  */
 
 void gen_os_release();
 void gen_dmidecode();
-void gen_mobo(); /* requires :dmidecode */
+void gen_mobo(); /* requires :/dmidecode */
 void gen_rpi();
 void gen_cpuinfo();
+void gen_procs(); /* requires :/cpuinfo */
 
 void gen_computer(); /* formerly vo_computer */
 
@@ -39,6 +41,7 @@ void generators_init() {
     gen_mobo();
     gen_rpi();
     gen_cpuinfo();
+    gen_procs();
 
     gen_computer();
 }
@@ -47,6 +50,7 @@ void class_os_release();
 void class_mobo();
 void class_rpi();
 void class_cpuinfo();
+void class_procs();
 
 void class_dmi_id();
 void class_dt();
@@ -61,11 +65,13 @@ void class_any_utf8();
 
 void class_init() {
     generators_init();
+    class_add_simple(":", _("Virtual sysfs root"), "vsfs", OF_NONE);
 
     class_os_release();
     class_mobo();
     class_rpi();
     class_cpuinfo();
+    class_procs();
 
     class_cpu();
     class_cpufreq();

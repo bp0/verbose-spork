@@ -54,6 +54,9 @@ static gchar *cpuinfo_feature_format(sysobj *obj, int fmt_opts) {
 }
 
 static gchar *cpuinfo_format(sysobj *obj, int fmt_opts) {
+    if (verify_lblnum(obj, "logical_cpu") ) {
+        return sysobj_raw_from_fn(obj->path, "model_name");
+    }
     return simple_format(obj, fmt_opts);
 }
 

@@ -34,14 +34,14 @@ gchar *cpu_format(sysobj *obj, int fmt_opts) {
     if (obj) {
         /* TODO: more description */
         int logical = util_get_did(obj->name, "cpu");
-        gchar *lstr = g_strdup_printf("%d", logical);
+        gchar *lstr = g_strdup_printf("{L:%d}", logical);
 
         gchar *topo_str =
             sysobj_format_from_fn(obj->path, "topology", fmt_opts | FMT_OPT_SHORT | FMT_OPT_OR_NULL );
         gchar *freq_str =
             sysobj_format_from_fn(obj->path, "cpufreq", fmt_opts | FMT_OPT_SHORT | FMT_OPT_OR_NULL );
 
-        gchar *ret = g_strdup_printf(_("Logical CPU %s %s"),
+        gchar *ret = g_strdup_printf(_("CPU %s %s"),
             topo_str ? topo_str : lstr,
             freq_str ? freq_str : "");
 

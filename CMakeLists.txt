@@ -35,6 +35,7 @@ add_library(sysobj STATIC
         sysobj/src/util_sysobj.c
         sysobj/src/pin.c
         sysobj/src/classes.c
+        sysobj/src/cpubits.c
 
         sysobj/src/class_cpu.c
         sysobj/src/class_cpufreq.c
@@ -52,13 +53,15 @@ add_library(sysobj STATIC
         sysobj/src/class_mobo.c
         sysobj/src/class_rpi.c
         sysobj/src/class_cpuinfo.c
+        sysobj/src/class_procs.c
         sysobj/src/class_dmi_id.c
 # gen only
         sysobj/src/gen_os_release.c
+        sysobj/src/gen_dmidecode.c
         sysobj/src/gen_mobo.c
         sysobj/src/gen_rpi.c
         sysobj/src/gen_cpuinfo.c
-        sysobj/src/gen_dmidecode.c
+        sysobj/src/gen_procs.c
         sysobj/src/vo_computer.c
 
         sysobj/src/arm_data.c

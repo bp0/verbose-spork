@@ -37,14 +37,10 @@ const char about_text[] =
 static const struct {gchar *label, *path;} places_list[] = {
     /* label = path if label is null */
     { NULL, "/sys" },
-    { NULL, ":/computer" },
+    { "vsysfs", ":" },
 
     { NULL, "/sys/devices/system/cpu" },
     { NULL, "/proc/sys" },
-    { NULL, ":/dmidecode" },
-    { NULL, ":/devicetree" },
-    { NULL, ":/cpuinfo" },
-    { NULL, ":/os_release" },
 };
 
 static int app_init(void) {

@@ -511,9 +511,11 @@ gboolean sysobj_config_paths(sysobj *s, const gchar *base, const gchar *name) {
         vlink = sysobj_virt_is_symlink(req);
         while (vlink && *vlink == ':' && vlr_count < 10) {
             vlink_tmp = sysobj_virt_is_symlink(vlink);
-            g_free(vlink);
-            vlink = vlink_tmp;
-            vlr_count++;
+            if (vlink_tmp) {
+                g_free(vlink);
+                vlink = vlink_tmp;
+                vlr_count++;
+            } else break;
         }
     }
 
@@ -532,7 +534,7 @@ gboolean sysobj_config_paths(sysobj *s, const gchar *base, const gchar *name) {
 
         fspath = util_canonicalize_path(chkpath);
     } else {
-        fspath = g_strdup(req);
+        fspath = g_strdup(vlink ? vlink : req);
     }
 
     if (!fspath)
@@ -685,14 +687,55 @@ gboolean verify_lblnum_child(sysobj *obj, const gchar *lbl) {
     return verified;
 }
 
-void sysobj_virt_add(sysobj_virt *vo) {
-    if (vo) {
-        DEBUG("add virtual object: %s", vo->path);
-        vo_list = g_slist_append(vo_list, vo);
-    }
+static int virt_path_cmp(sysobj_virt *a, sysobj_virt *b) {
+    /* one or both are null */
+    if (!a) return b ? -1 : 0; if (!b) return 1;
+    return g_strcmp0(a->path, b->path);
 }
 
-void sysobj_virt_add_simple(const gchar *base, const gchar *name, const gchar *data, int type) {
+void sysobj_virt_remove(gchar *glob) {
+    sysobj_filter *f = sysobj_filter_new(SO_FILTER_INCLUDE_IIF, glob);
+    GSList *torm = sysobj_virt_all_paths();
+    GSList *fl = g_slist_append(NULL, f);
+    torm = sysobj_filter_list(torm, fl);
+    GSList *l = torm, *t = NULL;
+    while(l) {
+        sysobj_virt svo = { .path = (gchar *)l->data };
+        t = g_slist_find_custom(vo_list, &svo, (GCompareFunc)virt_path_cmp);
+        if (t) {
+            sysobj_virt *tv = t->data;
+            //printf("rm virtual object %s\n", tv->path);
+            sysobj_virt_free(tv);
+            vo_list = g_slist_delete_link(vo_list, t);
+        }
+        g_free(l->data); /* won't need again */
+        l = l->next;
+    }
+    g_slist_free(torm);
+    g_slist_free_full(fl, (GDestroyNotify)sysobj_filter_free);
+}
+
+gboolean sysobj_virt_add(sysobj_virt *vo) {
+    if (vo) {
+        GSList *l = vo_list;
+        while(l) {
+            sysobj_virt *lv = l->data;
+            if (g_strcmp0(lv->path, vo->path) == 0) {
+                /* already exists, overwrite */
+                sysobj_virt_free(lv);
+                l->data = (gpointer*)vo;
+                return FALSE;
+            }
+            l = l->next;
+        }
+        //printf("add virtual object: %s [%s]\n", vo->path, vo->str);
+        vo_list = g_slist_append(vo_list, vo);
+        return TRUE;
+    }
+    return FALSE;
+}
+
+gboolean sysobj_virt_add_simple(const gchar *base, const gchar *name, const gchar *data, int type) {
     sysobj_virt *vo = g_new0(sysobj_virt, 1);
     if (name)
         vo->path = g_strdup_printf("%s/%s", base, name);
@@ -700,7 +743,7 @@ void sysobj_virt_add_simple(const gchar *base, const gchar *name, const gchar *d
         vo->path = g_strdup(base);
     vo->type = type;
     vo->str = g_strdup(data);
-    sysobj_virt_add(vo);
+    return sysobj_virt_add(vo);
 }
 
 void sysobj_virt_from_kv(gchar *base, const gchar *kv_data_in) {
@@ -808,6 +851,17 @@ int sysobj_virt_get_type(const sysobj_virt *vo, const gchar *req) {
     return ret;
 }
 
+GSList *sysobj_virt_all_paths() {
+    GSList *ret = NULL;
+    GSList *l = vo_list;
+    while (l) {
+        sysobj_virt *vo = l->data;
+        ret = g_slist_append(ret, g_strdup(vo->path));
+        l = l->next;
+    }
+    return ret;
+}
+
 GSList *sysobj_virt_children_auto(const sysobj_virt *vo, const gchar *req) {
     GSList *ret = NULL;
     if (vo && req) {
@@ -816,11 +870,11 @@ GSList *sysobj_virt_children_auto(const sysobj_virt *vo, const gchar *req) {
         gsize spl = strlen(spath);
         GSList *l = vo_list;
         while (l) {
-            sysobj_virt *vo = l->data;
+            sysobj_virt *tvo = l->data;
             /* find all vo paths that are immediate children */
-            if ( g_str_has_prefix(vo->path, spath) ) {
-                if (!strchr(vo->path + spl, '/')) {
-                    fn = g_path_get_basename(vo->path);
+            if ( g_str_has_prefix(tvo->path, spath) ) {
+                if (!strchr(tvo->path + spl, '/')) {
+                    fn = g_path_get_basename(tvo->path);
                     ret = g_slist_append(ret, fn);
                 }
             }

@@ -174,13 +174,15 @@ void sysobj_cleanup();
 
 #define sysobj_virt_new() g_new0(sysobj_virt, 1)
 void sysobj_virt_free(sysobj_virt *s);
-void sysobj_virt_add(sysobj_virt *vo);
-void sysobj_virt_add_simple(const gchar *base, const gchar *name, const gchar *data, int type);
+gboolean sysobj_virt_add(sysobj_virt *vo); /* TRUE if added, FALSE if exists (was overwritten) or error */
+gboolean sysobj_virt_add_simple(const gchar *base, const gchar *name, const gchar *data, int type);
+void sysobj_virt_remove(gchar *glob);
 sysobj_virt *sysobj_virt_find(const gchar *path);
 gchar *sysobj_virt_get_data(const sysobj_virt *vo, const gchar *req);
 int sysobj_virt_get_type(const sysobj_virt *vo, const gchar *req);
 GSList *sysobj_virt_children_auto(const sysobj_virt *vo, const gchar *req);
 GSList *sysobj_virt_children(const sysobj_virt *vo, const gchar *req);
+GSList *sysobj_virt_all_paths();
 void sysobj_virt_cleanup();
 
 /* using the glib key-value file parser, create a tree of

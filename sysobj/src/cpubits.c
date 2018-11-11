@@ -18,17 +18,10 @@
  *
  */
 
-#include <stdint.h>
-
-typedef uint32_t cpubits;
-uint32_t cpubits_count(cpubits *b);
-cpubits *cpubits_from_str(char *str);
-char *cpubits_to_str(cpubits *bits, char *str, int max_len);
-
-#define CPUBITS_SIZE 4096 /* bytes, multiple of sizeof(uint32_t) */
-#define CPUBIT_SET(BITS, BIT) (BITS[(BIT)/32] |= (1 << (BIT)%32))
-#define CPUBIT_GET(BITS, BIT) ((BITS[(BIT)/32] & (1 << (BIT)%32)) >> (BIT)%32)
-#define CPUBITS_CLEAR(BITS) memset(BITS, 0, CPUBITS_SIZE)
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include "cpubits.h"
 
 uint32_t cpubits_count(cpubits *b) {
     static const uint32_t max = CPUBITS_SIZE * 8;
