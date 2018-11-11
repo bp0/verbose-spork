@@ -20,10 +20,17 @@
 
 #include "sysobj.h"
 
+#define BULLET "\u2022"
+#define REFLINK(URI) "<a href=\"" URI "\">" URI "</a>"
+const gchar cpufreq_reference_markup_text[] =
+    "Reference:\n"
+    BULLET REFLINK("https://www.kernel.org/doc/Documentation/cpu-freq/")
+    "\n";
+
 typedef struct {
     gchar *tag;
     gchar *label; /* not yet translated */
-    gchar *info;  /* not yet translated */
+    gchar *desc;  /* not yet translated */
 } cpufreq_item;
 
 static const cpufreq_item cpufreq_items[] = {
@@ -101,11 +108,11 @@ const gchar *cpufreq_label(sysobj *obj) {
     }
     return NULL;
 }
-
-const gchar *cpufreq_info(sysobj *obj) {
+//TODO:
+const gchar *cpufreq_desc(sysobj *obj) {
     if (obj) {
         int i = cpufreq_item_find(obj->name);
-        return _(cpufreq_items[i].info);
+        return _(cpufreq_items[i].desc);
     }
     return NULL;
 }
@@ -124,7 +131,6 @@ static void cpufreq_class_for_hz(sysobj_class *c) {
     c->f_verify = cpufreq_verify;
     c->f_format = cpufreq_format_khz;
     c->f_label = cpufreq_label;
-    c->f_info = cpufreq_info;
     c->f_update_interval = cpufreq_update_interval_for_khz;
     c->f_compare = compare_str_base10;
 }
@@ -133,7 +139,6 @@ static void cpufreq_class_for_ns(sysobj_class *c) {
     c->f_verify = cpufreq_verify;
     c->f_format = cpufreq_format_ns;
     c->f_label = cpufreq_label;
-    c->f_info = cpufreq_info;
     c->f_update_interval = NULL;
     c->f_compare = compare_str_base10;
 }
@@ -182,6 +187,7 @@ void class_cpufreq() {
     c->flags = OF_GLOB_PATTERN;
     c->f_verify = cpufreq_verify_policy;
     c->s_label = _("Frequency Scaling Policy");
+    c->s_halp = cpufreq_reference_markup_text;
     c->f_format = cpufreq_format_policy;
     c->f_update_interval = cpufreq_update_interval_for_khz;
     class_add(c);
@@ -191,6 +197,7 @@ void class_cpufreq() {
     c->tag = "cpufreq";          \
     c->pattern = pat;            \
     c->flags = OF_GLOB_PATTERN;  \
+    c->s_halp = cpufreq_reference_markup_text; \
     cpufreq_class_for_##unit (c); \
     class_add(c);
 
@@ -198,5 +205,4 @@ void class_cpufreq() {
     CLS_PLZ("*/cpufreq/policy*/cpuinfo_???_freq", hz);
     CLS_PLZ("*/cpufreq/policy*/cpuinfo_transition_latency", ns);
     CLS_PLZ("*/cpufreq/policy*/bios_limit", hz);
-
 }

@@ -70,21 +70,26 @@ enum {
 typedef struct sysobj sysobj;
 typedef struct sysobj_data sysobj_data;
 
+/* "halp" is like help. Reference text or
+ * explaination for an object.
+ * It is always markup text: the Pango-safe subset
+ * of HTML, plus links. */
+
 typedef struct sysobj_class {
     const gchar *tag;
     const gchar *pattern;
     guint flags;
-    const gchar *s_label; /* label for "simple" classes */
-    const gchar *s_info;  /* info for "simple" classes */
+    const gchar *s_label; /* label for "simple" classes, not translated */
+    const gchar *s_halp;  /* markup text. halp for "simple" classes */
 
     gboolean (*f_verify) (sysobj *obj);      /* verify the object is of this class */
     const gchar *(*f_label)  (sysobj *obj);  /* translated label */
-    const gchar *(*f_info)   (sysobj *obj);  /* translated description */
     gchar *(*f_format) (sysobj *obj, int fmt_opts);  /* translated human-readable value */
     double (*f_update_interval) (sysobj *obj); /* time until the value might change, in seconds */
     int (*f_compare) (const sysobj_data *a, const sysobj_data *b);
     guint (*f_flags) (sysobj *obj); /* provide flags, result replaces flags */
     void (*f_cleanup) (void); /* shutdown/cleanup function */
+    const gchar *(*f_halp) (sysobj *obj); /* markup text */
 } sysobj_class;
 
 enum {
@@ -224,14 +229,15 @@ GSList *class_get_list();
 void class_free(sysobj_class *c);
 const sysobj_class *class_add(sysobj_class *c);
 const sysobj_class *class_add_full(sysobj_class *base,
-    const gchar *tag, const gchar *pattern, const gchar *s_label, const gchar *s_info, guint flags,
-    void *f_verify, void *f_label, void *f_info,
+    const gchar *tag, const gchar *pattern, const gchar *s_label, const gchar *s_halp, guint flags,
+    void *f_verify, void *f_label, void *f_halp,
     void *f_format, void *f_update_interval, void *f_compare, void *f_flags );
 const sysobj_class *class_add_simple(const gchar *pattern, const gchar *label, const gchar *tag, guint flags);
 gboolean class_has_flag(const sysobj_class *c, guint flag);
 void class_cleanup();
 
 const gchar *simple_label(sysobj* obj);
+const gchar *simple_halp(sysobj* obj);
 gchar *simple_format(sysobj* obj, int fmt_opts);
 
 sysobj *sysobj_new();
@@ -244,6 +250,7 @@ gboolean sysobj_has_flag(sysobj *s, guint flag);
 void sysobj_read_data(sysobj *s);
 void sysobj_unread_data(sysobj *s); /* frees data, but keeps is_utf8, len, lines, etc. */
 const gchar *sysobj_label(sysobj *s);
+const gchar *sysobj_halp(sysobj *s);
 gchar *sysobj_format(sysobj *s, int fmt_opts);
 gchar *sysobj_raw_from_fn(const gchar *base, const gchar *name);
 uint32_t sysobj_uint32_from_fn(const gchar *base, const gchar *name, int nbase);

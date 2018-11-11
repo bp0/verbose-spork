@@ -20,6 +20,14 @@
 
 #include "sysobj.h"
 
+#define BULLET "\u2022"
+#define REFLINK(URI) "<a href=\"" URI "\">" URI "</a>"
+const gchar cpu_reference_markup_text[] =
+    "Reference:\n"
+    BULLET REFLINK("https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-devices-system-cpu") "\n"
+    BULLET REFLINK("https://www.kernel.org/doc/Documentation/ABI/stable/sysfs-devices-system-cpu") "\n"
+    "\n";
+
 #define VSPK_CLASS_TAG "cpu"
 
 gboolean cpu_verify(sysobj *obj) {
@@ -66,29 +74,23 @@ gchar *cpu_format_1yes0no(sysobj *obj, int fmt_opts) {
     return simple_format(obj, fmt_opts);
 }
 
+static sysobj_class cls_cpu[] = {
+  { .tag = "cpu/microcode_version", .pattern = "microcode/version", OF_CONST | OF_REQ_ROOT,
+    .s_label = N_("Version"), .s_halp = cpu_reference_markup_text },
+
+  { .tag = "cpu/isonline", .pattern = "/sys/*/cpu*/online", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .s_label = N_("Is Online"), .s_halp = cpu_reference_markup_text,
+    .f_verify = cpu_verify_child, .f_format = cpu_format_1yes0no, .f_update_interval = cpu_update_interval },
+
+  { .tag = "cpu", .pattern = "/sys/*/cpu*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .s_label = N_("Logical CPU"), .s_halp = cpu_reference_markup_text,
+    .f_verify = cpu_verify, .f_format = cpu_format, .f_update_interval = cpu_update_interval },
+};
+
 void class_cpu() {
-    sysobj_class *c = NULL;
-
-    c = g_new0(sysobj_class, 1);
-    c->tag = VSPK_CLASS_TAG;
-    c->pattern = "/sys/*/cpu*";
-    c->flags = OF_GLOB_PATTERN;
-    c->f_verify = cpu_verify;
-    c->f_format = cpu_format;
-    c->f_update_interval = cpu_update_interval;
-    c->s_label = _("Logical CPU");
-    c->s_info = NULL; //TODO:
-    class_add(c);
-
-    c = g_new0(sysobj_class, 1);
-    c->tag = VSPK_CLASS_TAG;
-    c->pattern = "/sys/*/cpu*/online";
-    c->flags = OF_GLOB_PATTERN;
-    c->f_verify = cpu_verify_child;
-    c->f_format = cpu_format_1yes0no;
-    c->s_label = _("Is Online");
-    c->s_info = NULL; //TODO:
-    class_add(c);
-
-    class_add_simple("microcode/version", _("Version"), VSPK_CLASS_TAG, OF_REQ_ROOT);
+    int i = 0;
+    /* add classes */
+    for (i = 0; i < (int)G_N_ELEMENTS(cls_cpu); i++) {
+        class_add(&cls_cpu[i]);
+    }
 }

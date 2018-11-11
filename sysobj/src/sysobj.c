@@ -94,7 +94,14 @@ void class_cleanup() {
 
 const gchar *simple_label(sysobj* obj) {
     if (obj && obj->cls) {
-        return obj->cls->s_label;
+        return _(obj->cls->s_label);
+    }
+    return NULL;
+}
+
+const gchar *simple_halp(sysobj* obj) {
+    if (obj && obj->cls) {
+        return obj->cls->s_halp;
     }
     return NULL;
 }
@@ -197,8 +204,8 @@ const sysobj_class *class_add(sysobj_class *c) {
 
 const sysobj_class *class_add_full(sysobj_class *base,
     const gchar *tag, const gchar *pattern,
-    const gchar *s_label, const gchar *s_info, guint flags,
-    void *f_verify, void *f_label, void *f_info,
+    const gchar *s_label, const gchar *s_halp, guint flags,
+    void *f_verify, void *f_label, void *f_halp,
     void *f_format, void *f_update_interval, void *f_compare,
     void *f_flags ) {
 
@@ -207,11 +214,11 @@ const sysobj_class *class_add_full(sysobj_class *base,
     CLASS_PROVIDE_OR_INHERIT(tag);
     CLASS_PROVIDE_OR_INHERIT(pattern);
     CLASS_PROVIDE_OR_INHERIT(s_label);
-    CLASS_PROVIDE_OR_INHERIT(s_info);
+    CLASS_PROVIDE_OR_INHERIT(s_halp);
     CLASS_PROVIDE_OR_INHERIT(flags);
     CLASS_PROVIDE_OR_INHERIT(f_verify);
     CLASS_PROVIDE_OR_INHERIT(f_label);
-    CLASS_PROVIDE_OR_INHERIT(f_info);
+    CLASS_PROVIDE_OR_INHERIT(f_halp);
     CLASS_PROVIDE_OR_INHERIT(f_format);
     CLASS_PROVIDE_OR_INHERIT(f_update_interval);
     CLASS_PROVIDE_OR_INHERIT(f_compare);
@@ -617,6 +624,13 @@ const gchar *sysobj_label(sysobj *s) {
             return s->cls->f_label(s);
         }
         return simple_label(s);
+}
+
+const gchar *sysobj_halp(sysobj *s) {
+        if (s && s->cls && s->cls->f_halp) {
+            return s->cls->f_halp(s);
+        }
+        return simple_halp(s);
 }
 
 gchar *sysobj_format(sysobj *s, int fmt_opts) {

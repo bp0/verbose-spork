@@ -36,6 +36,9 @@ void gen_computer(); /* formerly vo_computer */
 
 void generators_init() {
     sysobj_virt_add_simple(":", NULL, "*", VSO_TYPE_DIR);
+    sysobj_virt_add_simple(":/sysfs", NULL, "/sys", VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_AUTOLINK );
+    sysobj_virt_add_simple(":/procfs", NULL, "/proc", VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_AUTOLINK );
+
     gen_os_release();
     gen_dmidecode();
     gen_mobo();
@@ -43,7 +46,7 @@ void generators_init() {
     gen_cpuinfo();
     gen_procs();
 
-    gen_computer();
+    //gen_computer();
 }
 
 void class_os_release();

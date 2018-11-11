@@ -21,7 +21,13 @@
 #include <stdio.h> /* for sscanf() */
 #include "sysobj.h"
 
-#define VSPK_CLASS_TAG "cpu/cache"
+#define BULLET "\u2022"
+#define REFLINK(URI) "<a href=\"" URI "\">" URI "</a>"
+const gchar cpucache_reference_markup_text[] =
+    "Reference:\n"
+    BULLET REFLINK("https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-devices-system-cpu") "\n"
+    BULLET REFLINK("https://www.kernel.org/doc/Documentation/ABI/stable/sysfs-devices-system-cpu") "\n"
+    "\n";
 
 /* in class_cpu.c */
 gboolean cpu_verify_child(sysobj *obj);
@@ -35,7 +41,6 @@ gboolean cpucache_verify_index_child(sysobj *obj) {
 }
 
 gchar *cpucache_format_type(sysobj *obj, int fmt_opts) {
-
     static const struct {
         const char *nshort;
         const char *nlong;
@@ -141,47 +146,28 @@ gchar *cpucache_format_collection(sysobj *obj, int fmt_opts) {
     return simple_format(obj, fmt_opts);
 }
 
+static sysobj_class cls_cpucache[] = {
+  { .tag = "cpucache/size", .pattern = "/sys/*/cache/index*/size", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .s_label = N_("Cache Size"), .s_halp = cpucache_reference_markup_text,
+    .f_verify = cpucache_verify_index_child, .f_format = cpucache_format_size },
+
+  { .tag = "cpucache/part", .pattern = "/sys/*/cache/index*/type", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .s_label = N_("Cache Type"), .s_halp = cpucache_reference_markup_text,
+    .f_verify = cpucache_verify_index_child, .f_format = cpucache_format_type },
+
+  { .tag = "cpucache/part", .pattern = "/sys/*/cache/index*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .s_label = N_("CPU Cache"), .s_halp = cpucache_reference_markup_text,
+    .f_verify = cpucache_verify_index, .f_format = cpucache_format_index },
+
+  { .tag = "cpucache", .pattern = "/sys/*/cpu*/cache", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .s_label = N_("CPU Cache(s)"), .s_halp = cpucache_reference_markup_text,
+    .f_verify = cpu_verify_child, .f_format = cpucache_format_collection },
+};
+
 void class_cpucache() {
-    sysobj_class *c = NULL;
-
-    c = g_new0(sysobj_class, 1);
-    c->tag = VSPK_CLASS_TAG;
-    c->pattern = "/sys/*/cpu*/cache";
-    c->flags = OF_GLOB_PATTERN;
-    c->f_verify = cpu_verify_child;
-    c->f_format = cpucache_format_collection;
-    c->s_label = _("CPU Cache(s)");
-    c->s_info = NULL; //TODO:
-    class_add(c);
-
-    c = g_new0(sysobj_class, 1);
-    c->tag = VSPK_CLASS_TAG;
-    c->pattern = "/sys/*/cache/index*";
-    c->flags = OF_GLOB_PATTERN;
-    c->f_verify = cpucache_verify_index;
-    c->f_format = cpucache_format_index;
-    c->s_label = _("CPU Cache");
-    c->s_info = NULL; //TODO:
-    class_add(c);
-
-    c = g_new0(sysobj_class, 1);
-    c->tag = VSPK_CLASS_TAG;
-    c->pattern = "/sys/*/cache/index*/type";
-    c->flags = OF_GLOB_PATTERN;
-    c->f_verify = cpucache_verify_index_child;
-    c->f_format = cpucache_format_type;
-    c->s_label = _("Cache Type");
-    c->s_info = NULL; //TODO:
-    class_add(c);
-
-    c = g_new0(sysobj_class, 1);
-    c->tag = VSPK_CLASS_TAG;
-    c->pattern = "/sys/*/cache/index*/size";
-    c->flags = OF_GLOB_PATTERN;
-    c->f_verify = cpucache_verify_index_child;
-    c->f_format = cpucache_format_size;
-    c->s_label = _("Cache Size");
-    c->s_info = NULL; //TODO:
-    class_add(c);
-
+    int i = 0;
+    /* add classes */
+    for (i = 0; i < (int)G_N_ELEMENTS(cls_cpucache); i++) {
+        class_add(&cls_cpucache[i]);
+    }
 }

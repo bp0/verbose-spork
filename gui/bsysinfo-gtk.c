@@ -112,6 +112,8 @@ typedef struct {
     GtkWidget *lbl_top;
     GtkWidget *lbl_value;
     GtkWidget *lbl_debug;
+
+    GtkWidget *help_container;
     GtkWidget *lbl_help;
 
     GtkWidget *uber;
@@ -175,7 +177,7 @@ pin_inspect *pin_inspect_create() {
     gtk_widget_show(help_scroll);
 
     GtkWidget *paned = gtk_paned_new(GTK_ORIENTATION_VERTICAL);
-    gtk_paned_set_position(GTK_PANED(paned), 420);
+    gtk_paned_set_position(GTK_PANED(paned), 200);
     gtk_paned_pack1(GTK_PANED(paned), top_scroll, TRUE, FALSE); gtk_widget_show (top_scroll);
     gtk_paned_pack2(GTK_PANED(paned), help_scroll, FALSE, FALSE); gtk_widget_show (help_scroll);
 
@@ -184,6 +186,7 @@ pin_inspect *pin_inspect_create() {
     pi->lbl_top = lbl_top;
     pi->lbl_value = lbl_value;
     pi->lbl_debug = lbl_debug;
+    pi->help_container = help_scroll;
     pi->lbl_help = lbl_help;
 
     return pi;
@@ -212,6 +215,7 @@ void pin_inspect_do(pin_inspect *pi, const pin *p, int fmt_opts, const gchar *cl
 
     /* item */
     gchar *label = g_strdup(sysobj_label(p->obj));
+    gchar *halp = g_strdup(sysobj_halp(p->obj));
     gchar *nice = sysobj_format(p->obj, fmt_opts);
     gchar *tag = g_strdup_printf("{%s}", p->obj->cls ? (p->obj->cls->tag ? p->obj->cls->tag : p->obj->cls->pattern) : "none");
 
@@ -246,6 +250,15 @@ void pin_inspect_do(pin_inspect *pi, const pin *p, int fmt_opts, const gchar *cl
         /* update */ "%s",
         data_info, pin_info, update);
     gtk_label_set_markup(GTK_LABEL(pi->lbl_debug), mt);
+
+    if (is_new) {
+        if (halp) {
+            gtk_label_set_markup(GTK_LABEL(pi->lbl_help), halp );
+            gtk_widget_show(pi->help_container);
+        } else {
+            gtk_widget_hide(pi->help_container);
+        }
+    }
 
     g_free(label);
     g_free(nice);

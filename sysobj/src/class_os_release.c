@@ -20,16 +20,48 @@
 
 #include "sysobj.h"
 
+static const gchar *os_release_label(sysobj *obj);
 static gchar *os_release_format(sysobj *obj, int fmt_opts);
 static double os_release_update_interval(sysobj *obj);
+
+#define BULLET "\u2022"
+#define REFLINK(URI) "<a href=\"" URI "\">" URI "</a>"
+const gchar os_release_reference_markup_text[] =
+    "Reference:\n"
+    BULLET REFLINK("https://www.freedesktop.org/software/systemd/man/os-release.html")
+    "\n";
 
 static sysobj_class cls_os_release[] = {
   /* all else */
   { .tag = "os_release", .pattern = ":/os_release", .flags = OF_CONST,
+    .s_halp = os_release_reference_markup_text, .f_label = os_release_label,
     .f_format = os_release_format, .f_update_interval = os_release_update_interval },
-  { .tag = "os_release", .pattern = ":/os_release/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+  { .tag = "os_release/item", .pattern = ":/os_release/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .s_halp = os_release_reference_markup_text, .f_label = os_release_label,
     .f_format = os_release_format, .f_update_interval = os_release_update_interval },
 };
+
+static const struct { gchar *rp; gchar *lbl; int extra_flags; } os_release_items[] = {
+    { "os_release",  N_("Operating system identification (/usr/lib/os-release)"), OF_NONE },
+    { NULL, NULL, 0 }
+};
+
+int os_release_lookup(const gchar *key) {
+    int i = 0;
+    while(os_release_items[i].rp) {
+        if (strcmp(key, os_release_items[i].rp) == 0)
+            return i;
+        i++;
+    }
+    return -1;
+}
+
+const gchar *os_release_label(sysobj *obj) {
+    int i = os_release_lookup(obj->name);
+    if (i != -1)
+        return _(os_release_items[i].lbl);
+    return NULL;
+}
 
 static gchar *os_release_format(sysobj *obj, int fmt_opts) {
     if (!strcmp("os_release", obj->name)) {
@@ -39,13 +71,17 @@ static gchar *os_release_format(sysobj *obj, int fmt_opts) {
             gchar *version = sysobj_raw_from_fn(":/os_release", "VERSION");
             util_strstrip_double_quotes_dumb(name);
             util_strstrip_double_quotes_dumb(version);
-            full_name = g_strdup_printf("%s %s", name, version ? version : "");
+            if (name)
+                full_name = g_strdup_printf("%s %s", name, version ? version : "");
             g_free(name);
             g_free(version);
         } else {
             util_strstrip_double_quotes_dumb(full_name);
         }
-        return full_name;
+        if (full_name)
+            return full_name;
+        else
+            return g_strdup(_("(Unknown)")); /* TODO: check fmt_opts */
     }
     return simple_format(obj, fmt_opts);
 }
