@@ -32,7 +32,7 @@ static sysobj_class cls_cpuinfo[] = {
   { .tag = "cpuinfo/featurelist", .pattern = ":/cpuinfo/*/flags", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_format = cpuinfo_format, .f_update_interval = cpuinfo_update_interval },
   /* all else */
-  { .tag = "cpuinfo", .pattern = ":/cpuinfo/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+  { .tag = "cpuinfo", .pattern = ":/cpuinfo*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_format = cpuinfo_format, .f_update_interval = cpuinfo_update_interval },
 };
 
@@ -53,9 +53,45 @@ static gchar *cpuinfo_feature_format(sysobj *obj, int fmt_opts) {
     return g_strdup("");
 }
 
+static gchar *cpuinfo_describe_models() {
+    sysobj *obj = sysobj_new_from_fn(":/cpuinfo", NULL);
+    gchar *ret = NULL;
+    GSList *models = NULL, *l = NULL;
+    GSList *childs = sysobj_children(obj, "logical_cpu*", NULL, FALSE);
+    for (l = childs; l; l = l->next) {
+        sysobj *co = sysobj_new_from_fn(obj->path, (gchar *)l->data);
+        models = g_slist_append(models, sysobj_raw_from_fn(co->path, "model_name") );
+        sysobj_free(co);
+    }
+    g_slist_free_full(childs, g_free);
+    models = g_slist_sort(models, (GCompareFunc)g_strcmp0);
+    gchar *cur_str = NULL;
+    gint cur_count = 0;
+    for (l = models; l; l = l->next) {
+        gchar *model = (gchar*)l->data;
+        if (cur_str == NULL) {
+            cur_str = model;
+            cur_count = 1;
+        } else {
+            if(g_strcmp0(cur_str, model) ) {
+                ret = appfs(ret, " + ", "%dx %s", cur_count, cur_str);
+                cur_str = model;
+                cur_count = 1;
+            } else
+                cur_count++;
+        }
+    }
+    ret = appfs(ret, " + ", "%dx %s", cur_count, cur_str);
+    g_slist_free_full(models, g_free);
+    sysobj_free(obj);
+    return ret;
+}
+
 static gchar *cpuinfo_format(sysobj *obj, int fmt_opts) {
-    if (verify_lblnum(obj, "logical_cpu") ) {
+    if (verify_lblnum(obj, "logical_cpu") )
         return sysobj_raw_from_fn(obj->path, "model_name");
+    if (!strcmp(obj->name, "cpuinfo") ) {
+        return cpuinfo_describe_models();
     }
     return simple_format(obj, fmt_opts);
 }

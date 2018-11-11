@@ -41,10 +41,10 @@ gchar *util_find_line_value(gchar *data, gchar *key, gchar delim);
 
 #define PARAM_NOT_UNUSED(p); { p = p; }
 
-#define sp_sep(STR) (strlen(STR) ? " " : "")
 /* appends an element to a string, adding a space if
  * the string is not empty.
  * ex: ret = appf(ret, "%s=%s\n", name, value); */
 gchar *appf(gchar *src, gchar *fmt, ...);
+gchar *appfs(gchar *src, const gchar *sep, gchar *fmt, ...);
 
 #endif
