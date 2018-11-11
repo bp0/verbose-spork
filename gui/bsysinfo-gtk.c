@@ -762,12 +762,10 @@ int main(int argc, char **argv) {
     add_notebook_page(_("Watchlist"), notebook, gwl.container, 5);
     add_notebook_page(_("About"), notebook, about, 5);
 
-    if (query) {
+    if (query)
         browser_navigate(query);
-    } else {
-        //browser_navigate("/sys/class/dmi/id");
-        browser_navigate("/sys/devices/system/cpu");
-    }
+    else
+        browser_navigate(":");
 
     watchlist_add("/sys/devices/system/cpu/cpu0");
     watchlist_add("/sys/devices/system/cpu/cpu1");
@@ -779,6 +777,11 @@ int main(int argc, char **argv) {
     gtk_widget_show (notebook);
 
     gtk_window_resize (GTK_WINDOW (app_window), 740, 400);
+    GdkPixbuf *icon = gtk_icon_theme_load_icon(gtk_icon_theme_get_default(), "face-monkey", 128, 0, NULL);
+    if (icon) {
+        gtk_window_set_icon(GTK_WINDOW(app_window), icon);
+        g_object_unref(icon);
+    }
     gtk_widget_show (app_window);
 
     gtk_main ();
