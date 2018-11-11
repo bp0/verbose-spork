@@ -926,8 +926,11 @@ GSList *sysobj_virt_children(const sysobj_virt *vo, const gchar *req) {
 }
 
 void sysobj_virt_free(sysobj_virt *s) {
-    if (s && !(s->type & VSO_TYPE_CONST))
+    if (s && !(s->type & VSO_TYPE_CONST)) {
+        g_free(s->path);
+        g_free(s->str);
         g_free(s);
+    }
 }
 
 void sysobj_virt_cleanup() {

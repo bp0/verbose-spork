@@ -165,9 +165,9 @@ enum {
 };
 
 typedef struct sysobj_virt {
-    const gchar *path;
+    gchar *path;
     int type;
-    const gchar *str; /* default f_get_data() uses str; */
+    gchar *str; /* default f_get_data() uses str; */
     gchar *(*f_get_data)(const gchar *path);
     int (*f_get_type)(const gchar *path);
 } sysobj_virt;
