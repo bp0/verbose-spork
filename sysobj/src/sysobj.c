@@ -410,7 +410,8 @@ double sysobj_update_interval(sysobj *s) {
  * name4part14. */
 int sysfs_fn_cmp(gchar *a, gchar *b) {
     /* one or both are null */
-    if (!a) return b ? -1 : 0; if (!b) return 1;
+    if (!a) return b ? -1 : 0;
+    if (!b) return 1;
     gchar *pa = a, *pb = b;
     while(pa && pb) {
         int mc = 0, na = 0, nb = 0, l = 0, cmp = 0;
@@ -703,7 +704,8 @@ gboolean verify_lblnum_child(sysobj *obj, const gchar *lbl) {
 
 static int virt_path_cmp(sysobj_virt *a, sysobj_virt *b) {
     /* one or both are null */
-    if (!a) return b ? -1 : 0; if (!b) return 1;
+    if (!a) return b ? -1 : 0;
+    if (!b) return 1;
     return g_strcmp0(a->path, b->path);
 }
 
