@@ -56,6 +56,9 @@ static gchar *procs_format(sysobj *obj, int fmt_opts) {
         g_free(t_str);
         return ret;
     }
+    if (verify_lblnum(obj, "package") ) {
+        return sysobj_raw_from_fn(obj->path, "model_name");
+    }
     return simple_format(obj, fmt_opts);
 }
 
