@@ -62,7 +62,7 @@ static sysobj_class cls_usb[] = {
     .f_verify = usb_verify_bus,
     .f_format = usb_format_bus, .f_flags = usb_flags, .f_update_interval = usb_update_interval },
   /* all under :/usb */
-  { .tag = "usb", .pattern = ":/usb/*", .flags = CLS_USB_FLAGS,
+  { .tag = "usb", .pattern = ":/usb*", .flags = CLS_USB_FLAGS,
     .f_format = usb_format, .f_flags = usb_flags, .f_update_interval = usb_update_interval, .f_cleanup = class_usb_cleanup },
 };
 
@@ -96,7 +96,39 @@ static gchar *usb_messages(const gchar *path) {
     return g_strdup(usb_log ? usb_log : "");
 }
 
+static int usb_device_count() {
+    int ret = 0;
+    sysobj *obj = sysobj_new_from_fn("/sys/bus/usb/devices", NULL);
+    GSList *childs = sysobj_children(obj, NULL, NULL, FALSE);
+    GSList *l = childs;
+    while(l) {
+        sysobj *udc = sysobj_new_from_fn(obj->path, (gchar*)l->data);
+        /* if (usb_verify_device(udc) || usb_verify_bus(udc) ) ret++; */
+        /* should already have been verified */
+        if (udc->cls) {
+            if (!strcmp(udc->cls->tag, "usb/device")
+                || !strcmp(udc->cls->tag, "usb/bus") ) {
+                    ret++;
+            }
+        }
+        sysobj_free(udc);
+        l = l->next;
+    }
+    g_slist_free_full(childs, g_free);
+    sysobj_free(obj);
+    return ret;
+}
+
 static gchar *usb_format(sysobj *obj, int fmt_opts) {
+    if (!strcmp(obj->path, ":/usb")
+        || !strcmp(obj->path, "/sys/bus/usb/devices") ) {
+        //TODO: handle fmt_opts
+        gchar *ret = NULL;
+        int c = usb_device_count();
+        const char *fmt = ngettext("%d device", "%d devices", c);
+        ret = g_strdup_printf(fmt, c);
+        return ret;
+    }
     return simple_format(obj, fmt_opts);
 }
 
@@ -124,6 +156,7 @@ static util_usb_id *usb_find_id(gchar *address) {
 /* [N-][P.P.P...][:C.I] */
 static gboolean usb_verify_interface(sysobj *obj) {
     gchar *p = obj->name;
+    if (!isdigit(*p)) return FALSE;
     int state = 0;
     while (*p != 0) {
         if ( isdigit(*p) ) { p++; continue; }
@@ -148,6 +181,7 @@ static gboolean usb_verify_bus(sysobj *obj) {
 /* [N-][P.P.P...] */
 static gboolean usb_verify_device(sysobj *obj) {
     gchar *p = obj->name;
+    if (!isdigit(*p)) return FALSE;
     int state = 0;
     while (*p != 0) {
         if ( isdigit(*p) ) { p++; continue; }
@@ -240,8 +274,8 @@ void usb_scan() {
         l = l->next;
     }
     if (usb_id_list) {
-        int found = util_usb_ids_lookup_list(usb_id_list);
         int count = g_slist_length(usb_id_list);
+        int found = util_usb_ids_lookup_list(usb_id_list);
         if (found == -1)
             usb_msg("usb.ids file could not be read", found);
         else

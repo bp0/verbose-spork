@@ -44,8 +44,12 @@ static sysobj_class cls_pci[] = {
     .f_format = pci_format_idcomp, .f_flags = pci_flags, .f_update_interval = pci_update_interval },
   { .tag = "pci/device", .pattern = "/sys/devices*/????:??:??.?", .flags = CLS_PCI_FLAGS,
     .f_format = pci_format_device, .f_flags = pci_flags, .f_update_interval = pci_update_interval },
+  { .tag = "pci/device_list", .pattern = "/sys/bus/pci/devices", .flags = CLS_PCI_FLAGS,
+    .f_format = pci_format, .f_flags = pci_flags, .f_update_interval = pci_update_interval },
+  { .tag = "pci/bus", .pattern = "/sys/bus/pci", .flags = CLS_PCI_FLAGS,
+    .f_format = pci_format, .f_flags = pci_flags, .f_update_interval = pci_update_interval },
   /* all under :/pci */
-  { .tag = "pci", .pattern = ":/pci/*", .flags = CLS_PCI_FLAGS,
+  { .tag = "pci", .pattern = ":/pci*", .flags = CLS_PCI_FLAGS,
     .f_format = pci_format, .f_flags = pci_flags, .f_update_interval = pci_update_interval, .f_cleanup = class_pci_cleanup },
 };
 
@@ -79,7 +83,26 @@ static gchar *pci_messages(const gchar *path) {
     return g_strdup(pci_log ? pci_log : "");
 }
 
+static int pci_device_count() {
+    int ret = 0;
+    sysobj *obj = sysobj_new_from_fn("/sys/bus/pci/devices", NULL);
+    GSList *childs = sysobj_children(obj, NULL, NULL, FALSE);
+    ret = g_slist_length(childs);
+    g_slist_free_full(childs, g_free);
+    sysobj_free(obj);
+    return ret;
+}
+
 static gchar *pci_format(sysobj *obj, int fmt_opts) {
+    if (!strcmp(obj->path, ":/pci")
+        || !strcmp(obj->path, "/sys/bus/pci/devices") ) {
+        //TODO: handle fmt_opts
+        gchar *ret = NULL;
+        int c = pci_device_count();
+        const char *fmt = ngettext("%d device", "%d devices", c);
+        ret = g_strdup_printf(fmt, c);
+        return ret;
+    }
     return simple_format(obj, fmt_opts);
 }
 
@@ -168,6 +191,7 @@ void pci_scan() {
         sysobj_free(obj);
         return;
     }
+
     GSList *devs = sysobj_children(obj, NULL, NULL, TRUE);
     GSList *l = devs;
     while(l) {
@@ -185,14 +209,13 @@ void pci_scan() {
         l = l->next;
     }
     if (pci_id_list) {
-        int found = util_pci_ids_lookup_list(pci_id_list);
         int count = g_slist_length(pci_id_list);
+        int found = util_pci_ids_lookup_list(pci_id_list);
         if (found == -1)
             pci_msg("pci.ids file could not be read", found);
         else
             pci_msg("pci.ids matched for %d of %d devices", found, count);
     }
-
     sysobj_free(obj);
 }
 
