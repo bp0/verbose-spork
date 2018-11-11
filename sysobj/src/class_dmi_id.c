@@ -135,7 +135,6 @@ gboolean dmi_value_is_placeholder(sysobj *obj) {
     if (v) {
         v = strdup(v);
         g_strchomp(v);
-        chk = g_strdup(v);
 
         i = 0;
         while(common[i]) {
@@ -144,14 +143,16 @@ gboolean dmi_value_is_placeholder(sysobj *obj) {
             i++;
         }
 
+        chk = g_strdup(v);
+
         /* Zotac version nonsense */
         p = chk;
         while (*p != 0) { *p = 'x'; p++; } /* all X */
-        if (!strcmp(chk, v))
+        if (!strcasecmp(chk, v))
             goto dmi_ignore_yes;
         p = chk;
         while (*p != 0) { *p = '0'; p++; } /* all 0 */
-        if (!strcmp(chk, v))
+        if (!strcasecmp(chk, v))
             goto dmi_ignore_yes;
 
         /*... more, I'm sure. */
