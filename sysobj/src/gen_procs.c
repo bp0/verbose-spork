@@ -117,25 +117,27 @@ static void procs_scan() {
             if (!freqdomain_cpus)
                 freqdomain_cpus = sysobj_raw_from_fn(freq_obj->path, "affected_cpus");
 
-            g_strchomp(freqdomain_cpus); /* remove \n */
+            if (freqdomain_cpus) {
+                g_strchomp(freqdomain_cpus); /* remove \n */
 
-            int clk_id = 0;
-            GSList *l = g_slist_find_custom(uniq_clocks, freqdomain_cpus, (GCompareFunc)g_strcmp0);
-            if (l) {
-                clk_id = g_slist_position(uniq_clocks, l);
-            } else {
-                clk_id = g_slist_length(uniq_clocks);
-                uniq_clocks = g_slist_append(uniq_clocks, g_strdup(freqdomain_cpus) );
+                int clk_id = 0;
+                GSList *l = g_slist_find_custom(uniq_clocks, freqdomain_cpus, (GCompareFunc)g_strcmp0);
+                if (l) {
+                    clk_id = g_slist_position(uniq_clocks, l);
+                } else {
+                    clk_id = g_slist_length(uniq_clocks);
+                    uniq_clocks = g_slist_append(uniq_clocks, g_strdup(freqdomain_cpus) );
+                }
+
+                gchar *clk_path = g_strdup_printf(PROCS_ROOT "/%s%d", s_clock, clk_id);
+                if ( sysobj_virt_add_simple(clk_path, NULL, "*", VSO_TYPE_DIR ) ) clocks++;
+                sysobj_virt_add_simple(clk_path, "cpu_list", freqdomain_cpus, VSO_TYPE_STRING);
+                sysobj_virt_add_simple(clk_path, freq_obj->name, freq_obj->path, VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_AUTOLINK );
+                g_free(clk_path);
+
+                g_free(freqdomain_cpus);
+                sysobj_free(freq_obj);
             }
-
-            gchar *clk_path = g_strdup_printf(PROCS_ROOT "/%s%d", s_clock, clk_id);
-            if ( sysobj_virt_add_simple(clk_path, NULL, "*", VSO_TYPE_DIR ) ) clocks++;
-            sysobj_virt_add_simple(clk_path, "cpu_list", freqdomain_cpus, VSO_TYPE_STRING);
-            sysobj_virt_add_simple(clk_path, freq_obj->name, freq_obj->path, VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_AUTOLINK );
-            g_free(clk_path);
-
-            g_free(freqdomain_cpus);
-            sysobj_free(freq_obj);
         }
         sysobj_free(cpu_obj);
         g_free(l->data); /* won't need again */

@@ -45,8 +45,8 @@ gchar *meminfo_read(const gchar *path) {
     gchar *ret = NULL;
     gchar *data = sysobj_raw_from_fn(PROC_MEMINFO, NULL);
     gchar *name = g_path_get_basename(path);
-    g_strchomp(name);
     if (data && name) {
+        g_strchomp(name);
         ret = util_find_line_value(data, name, ':');
     }
     g_free(data);
