@@ -39,6 +39,7 @@ typedef struct pin {
     uint64_t history_len;
     uint64_t history_max_len;
     uint64_t history_mem;   /* size of allocated block in num of structs */
+    int group; /* -1 no group, or index into pin_list groups */
 } pin;
 
 typedef struct pin_list {
@@ -46,6 +47,7 @@ typedef struct pin_list {
     GTimer *timer;
     double shortest_interval;
     double longest_interval;
+    GSList *groups;
 } pin_list;
 
 pin *pin_new();
@@ -62,5 +64,8 @@ const pin *pins_pin_if_updated_since(pin_list *pl, int pi, double seconds_ago); 
 const sysobj_data *pins_history_data_when(pin_list *pl, pin *p, double seconds_ago);
 void pins_clear(pin_list *pl);
 void pins_free(pin_list *pl);
+
+pin_list *pins_new_from_kv(const gchar *kv_data);
+gchar *pins_to_kv(pin_list *pl);
 
 #endif

@@ -43,14 +43,13 @@ static const struct {gchar *label, *path;} places_list[] = {
     { NULL, "/proc/sys" },
 };
 
-static const gchar *default_watchlist[] = {
-    ":/meminfo/MemTotal",
-    ":/meminfo/MemFree",
-    "/sys/devices/system/cpu/cpu0",
-    "/sys/devices/system/cpu/cpu1",
-    "/sys/devices/system/cpu/cpu2",
-    "/sys/devices/system/cpu/cpu3",
-};
+static const gchar default_watchlist[] =
+    ":/meminfo/MemTotal=\n"
+    ":/meminfo/MemFree=\n"
+    "/sys/devices/system/cpu/cpu0=\n"
+    "/sys/devices/system/cpu/cpu1=\n"
+    "/sys/devices/system/cpu/cpu2=\n"
+    "/sys/devices/system/cpu/cpu3=\n";
 
 static int app_init(void) {
     sysobj_init(NULL);
@@ -681,9 +680,14 @@ void browser_navigate(const gchar *new_location) {
 }
 
 void watchlist_load() {
-    for (int i = 0; i < (int)G_N_ELEMENTS(default_watchlist); i++) {
-        watchlist_add(default_watchlist[i]);
-    }
+    /* for (int i = 0; i < (int)G_N_ELEMENTS(default_watchlist); i++)
+        watchlist_add(default_watchlist[i]); */
+
+    pin_list *pl = pins_new_from_kv(default_watchlist);
+    if (gwl.plv->pins)
+        pins_free(gwl.plv->pins);
+    gwl.plv->pins = pl;
+    pins_list_view_fill(gwl.plv);
 }
 
 static gboolean delete_event( GtkWidget *widget,
