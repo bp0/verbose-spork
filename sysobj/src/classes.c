@@ -30,6 +30,7 @@ void gen_dmidecode();
 void gen_mobo(); /* requires :/dmidecode */
 void gen_rpi();
 void gen_cpuinfo();
+void gen_meminfo();
 void gen_procs(); /* requires :/cpuinfo */
 
 void gen_computer(); /* formerly vo_computer */
@@ -44,6 +45,7 @@ void generators_init() {
     gen_mobo();
     gen_rpi();
     gen_cpuinfo();
+    gen_meminfo();
     gen_procs();
 
     //gen_computer();
@@ -53,6 +55,7 @@ void class_os_release();
 void class_mobo();
 void class_rpi();
 void class_cpuinfo();
+void class_meminfo();
 void class_procs();
 
 void class_dmi_id();
@@ -74,6 +77,7 @@ void class_init() {
     class_mobo();
     class_rpi();
     class_cpuinfo();
+    class_meminfo();
     class_procs();
 
     class_cpu();
