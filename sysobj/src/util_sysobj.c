@@ -175,7 +175,10 @@ int util_maybe_num(gchar *str) {
     gchar *chk = g_strdup(str);
     g_strstrip(chk);
     l = strlen(chk);
-    for (i = 0; i < l; i++) {
+    if (l > 2 && !strncmp(chk, "0x", 2)) {
+        i = 2; r = 16;
+    }
+    for (; i < l; i++) {
         if (isxdigit(chk[i]))  {
             if (!isdigit(chk[i]))
                 r = 16;
