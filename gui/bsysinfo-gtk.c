@@ -43,6 +43,15 @@ static const struct {gchar *label, *path;} places_list[] = {
     { NULL, "/proc/sys" },
 };
 
+static const gchar *default_watchlist[] = {
+    ":/meminfo/MemTotal",
+    ":/meminfo/MemFree",
+    "/sys/devices/system/cpu/cpu0",
+    "/sys/devices/system/cpu/cpu1",
+    "/sys/devices/system/cpu/cpu2",
+    "/sys/devices/system/cpu/cpu3",
+};
+
 static int app_init(void) {
     sysobj_init(NULL);
     return 1;
@@ -53,7 +62,7 @@ static void app_cleanup(void) {
 }
 
 void browser_navigate(const gchar *new_location);
-void watchlist_add(gchar *path);
+void watchlist_add(const gchar *path);
 
 gboolean activate_link (GtkLabel *label, gchar *uri, gpointer  user_data) {
     DEBUG("activate link: %s", uri);
@@ -491,7 +500,7 @@ void watchlist_init() {
     gwl.container = gwl.plv->container;
 }
 
-void watchlist_add(gchar *path) {
+void watchlist_add(const gchar *path) {
     pins_list_view_append(gwl.plv, path);
 }
 
@@ -671,6 +680,12 @@ void browser_navigate(const gchar *new_location) {
     g_idle_add((GSourceFunc)browser_navigate_actual, safe);
 }
 
+void watchlist_load() {
+    for (int i = 0; i < (int)G_N_ELEMENTS(default_watchlist); i++) {
+        watchlist_add(default_watchlist[i]);
+    }
+}
+
 static gboolean delete_event( GtkWidget *widget,
                               GdkEvent  *event,
                               gpointer   data )
@@ -780,10 +795,7 @@ int main(int argc, char **argv) {
     else
         browser_navigate(":");
 
-    watchlist_add("/sys/devices/system/cpu/cpu0");
-    watchlist_add("/sys/devices/system/cpu/cpu1");
-    watchlist_add("/sys/devices/system/cpu/cpu2");
-    watchlist_add("/sys/devices/system/cpu/cpu3");
+    watchlist_load();
 
     /* This packs the notebook into the window (a gtk container). */
     gtk_container_add (GTK_CONTAINER (app_window), notebook);
