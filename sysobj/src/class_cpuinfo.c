@@ -58,6 +58,7 @@ static gchar *cpuinfo_describe_models() {
     gchar *ret = NULL;
     GSList *models = NULL, *l = NULL;
     GSList *childs = sysobj_children(obj, "logical_cpu*", NULL, FALSE);
+    if (!childs) return NULL;
     for (l = childs; l; l = l->next) {
         sysobj *co = sysobj_new_from_fn(obj->path, (gchar *)l->data);
         models = g_slist_append(models, sysobj_raw_from_fn(co->path, "model_name") );
@@ -91,7 +92,9 @@ static gchar *cpuinfo_format(sysobj *obj, int fmt_opts) {
     if (verify_lblnum(obj, "logical_cpu") )
         return sysobj_raw_from_fn(obj->path, "model_name");
     if (!strcmp(obj->name, "cpuinfo") ) {
-        return cpuinfo_describe_models();
+        gchar *ret = cpuinfo_describe_models();
+        if (ret) return ret;
+        return g_strdup(_("(Unknown)"));
     }
     return simple_format(obj, fmt_opts);
 }

@@ -57,7 +57,7 @@ int64_t convert_kb_mem_str(gchar *v_str) {
 }
 
 static gchar *meminfo_format(sysobj *obj, int fmt_opts) {
-    uint64_t mkb = 0;
+    int64_t mkb = 0;
     if (!strcmp(obj->name, "meminfo") ) {
         gchar *mkb_str = sysobj_raw_from_fn(obj->path, "MemTotal");
         mkb = convert_kb_mem_str(mkb_str);
