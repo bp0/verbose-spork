@@ -25,6 +25,7 @@
  * - classes provide interpretation and formatting of sysobj's
  */
 
+void gen_pci_ids();
 void gen_os_release();
 void gen_dmidecode();
 void gen_mobo(); /* requires :/dmidecode */
@@ -40,6 +41,7 @@ void generators_init() {
     sysobj_virt_add_simple(":/sysfs", NULL, "/sys", VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_AUTOLINK );
     sysobj_virt_add_simple(":/procfs", NULL, "/proc", VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_AUTOLINK );
 
+    gen_pci_ids();
     gen_os_release();
     gen_dmidecode();
     gen_mobo();

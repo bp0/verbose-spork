@@ -35,10 +35,10 @@ void util_pci_id_free(util_pci_id *s) {
     }
 }
 
-gboolean util_pci_ids_lookup(util_pci_id *pcid) {
+int util_pci_ids_lookup(util_pci_id *pcid) {
     GSList *tmp = NULL;
     tmp = g_slist_append(tmp, pcid);
-    gboolean ret = util_pci_ids_lookup_list(tmp);
+    int ret = util_pci_ids_lookup_list(tmp);
     g_slist_free(tmp);
     return ret;
 }

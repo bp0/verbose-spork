@@ -812,7 +812,7 @@ sysobj_virt *sysobj_virt_find(const gchar *path) {
         sysobj_virt *vo = l->data;
         if (vo->type & VSO_TYPE_DYN && g_str_has_prefix(path, vo->path) ) {
             ret = vo;
-            break;
+            /* break; -- No, don't break, maybe a non-dynamic item matches */
         }
         if (strcmp(vo->path, path) == 0) {
             ret = vo;
