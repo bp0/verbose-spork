@@ -684,10 +684,9 @@ gboolean verify_parent_name(sysobj *obj, const gchar *parent_name) {
 }
 
 gboolean verify_lblnum(sysobj *obj, const gchar *lbl) {
-    if (lbl && obj && obj->name) {
-        if ( util_get_did(obj->name, lbl) >= 0 )
-            return TRUE;
-    }
+    if (obj && obj->name
+        && lbl && util_get_did(obj->name, lbl) >= 0)
+        return TRUE;
     return FALSE;
 }
 

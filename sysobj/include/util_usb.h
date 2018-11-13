@@ -24,6 +24,7 @@
 #include <glib.h>
 #include <stdio.h>
 #include <stdint.h>  /* for *int*_t types */
+#include <ctype.h> /* for isdigit() */
 
 typedef struct {
     uint32_t vendor;
@@ -36,7 +37,12 @@ typedef struct {
 } util_usb_id;
 
 void util_usb_id_free(util_usb_id *s);
-gboolean util_usb_ids_lookup(util_usb_id *usbd);
-int util_usb_ids_lookup_list(GSList *items); /* found count or -1 for error */
+/* found count or -1 for error */
+int util_usb_ids_lookup(util_usb_id *usbd);
+int util_usb_ids_lookup_list(GSList *items);
+
+gboolean verify_usb_bus(gchar *str); /* usbN */
+gboolean verify_usb_device(gchar *str); /* [N-][P.P.P...] */
+gboolean verify_usb_interface(gchar *str); /* [N-][P.P.P...][:C.I] */
 
 #endif

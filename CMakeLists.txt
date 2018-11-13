@@ -57,6 +57,7 @@ add_library(sysobj STATIC
         sysobj/src/class_procs.c
         sysobj/src/class_dmi_id.c
 # gen only
+        sysobj/src/gen_usb_ids.c
         sysobj/src/gen_pci_ids.c
         sysobj/src/gen_os_release.c
         sysobj/src/gen_dmidecode.c

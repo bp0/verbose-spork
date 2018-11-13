@@ -26,6 +26,12 @@
 #define BULLET "\u2022"
 #define REFLINK(TEXT, URI) "<a href=\"" URI "\">" TEXT "</a>"
 const gchar pci_ids_reference_markup_text[] =
+    " Items are generated on-demand and cached.\n"
+    "\n"
+    " :/pci/pci.ids/{vendor}/name\n"
+    " :/pci/pci.ids/{vendor}/{device}/name\n"
+    " :/pci/pci.ids/{vendor}/{device}/{subvendor}/name\n"
+    " :/pci/pci.ids/{vendor}/{device}/{subvendor}/{subdevice}/name\n\n"
     "Reference:\n"
     BULLET REFLINK("<i>The PCI ID Repository</i>'s pci.ids", "https://pci-ids.ucw.cz")
     "\n";

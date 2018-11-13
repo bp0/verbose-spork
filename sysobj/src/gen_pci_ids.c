@@ -22,7 +22,7 @@
  *  :/pci/pci.ids
  *
  *
- * Item's are generated on-demand and cached.
+ * Items are generated on-demand and cached.
  *
  * :/pci/pci.ids/<vendor>/name
  * :/pci/pci.ids/<vendor>/<device>/name
@@ -91,17 +91,19 @@ static void pci_scan() {
 
     GSList *devs = sysobj_children(obj, NULL, NULL, TRUE);
     for(l = devs; l; l = l->next) {
-        util_pci_id *pid = g_new0(util_pci_id, 1);
         gchar *dev = (gchar*)l->data;
-        gchar *dev_path = g_strdup_printf("%s/%s", obj->path, dev);
-        pid->address = g_strdup(dev);
-        pid->vendor = sysobj_uint32_from_fn(dev_path, "vendor", 16);
-        pid->device = sysobj_uint32_from_fn(dev_path, "device", 16);
-        pid->sub_vendor = sysobj_uint32_from_fn(dev_path, "subsystem_vendor", 16);
-        pid->sub_device = sysobj_uint32_from_fn(dev_path, "subsystem_device", 16);
-        pid->dev_class = sysobj_uint32_from_fn(dev_path, "class", 16);
-        pci_id_list = g_slist_append(pci_id_list, pid);
-        g_free(dev_path);
+        if (verify_pci_device(dev) ) {
+            util_pci_id *pid = g_new0(util_pci_id, 1);
+            gchar *dev_path = g_strdup_printf("%s/%s", obj->path, dev);
+            pid->address = g_strdup(dev);
+            pid->vendor = sysobj_uint32_from_fn(dev_path, "vendor", 16);
+            pid->device = sysobj_uint32_from_fn(dev_path, "device", 16);
+            pid->sub_vendor = sysobj_uint32_from_fn(dev_path, "subsystem_vendor", 16);
+            pid->sub_device = sysobj_uint32_from_fn(dev_path, "subsystem_device", 16);
+            pid->dev_class = sysobj_uint32_from_fn(dev_path, "class", 16);
+            pci_id_list = g_slist_append(pci_id_list, pid);
+            g_free(dev_path);
+        }
     }
     g_slist_free_full(devs, (GDestroyNotify)g_free);
 

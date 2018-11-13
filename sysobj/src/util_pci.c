@@ -22,6 +22,12 @@
 #include <string.h> /* for strchr() */
 #include "util_pci.h"
 
+/* ????:??:??.? */
+gboolean verify_pci_device(gchar *str) {
+    /* TODO:!! */
+    return TRUE;
+}
+
 void util_pci_id_free(util_pci_id *s) {
     if (s) {
         g_free(s->address);

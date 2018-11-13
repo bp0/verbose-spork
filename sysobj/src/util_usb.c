@@ -20,7 +20,51 @@
 
 #include <stdlib.h> /* for strtol() */
 #include <string.h> /* for strchr() */
+#include "util_sysobj.h" /* for util_get_did() */
 #include "util_usb.h"
+
+/* [N-][P.P.P...][:C.I] */
+gboolean verify_usb_interface(gchar *str) {
+    gchar *p = str;
+    if (!isdigit(*p)) return FALSE;
+    int state = 0;
+    while (*p != 0) {
+        if ( isdigit(*p) ) { p++; continue; }
+        switch(state) {
+            case 0: if (*p == '-') { state = 1; } break;
+            case 1:
+                if (*p == ':') { state = 2; break; }
+                if (*p != '.') { return FALSE; }
+            case 2:
+                if (*p != '.') { return FALSE; }
+        }
+        p++;
+    }
+    return TRUE;
+}
+
+/* usbN */
+gboolean verify_usb_bus(gchar *str) {
+    if (util_get_did(str, "usb") >= 0)
+        return TRUE;
+    return FALSE;
+}
+
+/* [N-][P.P.P...] */
+gboolean verify_usb_device(gchar *str) {
+    gchar *p = str;
+    if (!isdigit(*p)) return FALSE;
+    int state = 0;
+    while (*p != 0) {
+        if ( isdigit(*p) ) { p++; continue; }
+        switch(state) {
+            case 0: if (*p == '-') { state = 1; } break;
+            case 1: if (*p != '.') { return FALSE; }
+        }
+        p++;
+    }
+    return TRUE;
+}
 
 void util_usb_id_free(util_usb_id *s) {
     if (s) {
@@ -32,10 +76,10 @@ void util_usb_id_free(util_usb_id *s) {
     }
 }
 
-gboolean util_usb_ids_lookup(util_usb_id *usbd) {
+int util_usb_ids_lookup(util_usb_id *usbd) {
     GSList *tmp = NULL;
     tmp = g_slist_append(tmp, usbd);
-    gboolean ret = util_usb_ids_lookup_list(tmp);
+    int ret = util_usb_ids_lookup_list(tmp);
     g_slist_free(tmp);
     return ret;
 }

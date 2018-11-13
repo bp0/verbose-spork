@@ -46,4 +46,6 @@ void util_pci_id_free(util_pci_id *s);
 int util_pci_ids_lookup(util_pci_id *pcid);
 int util_pci_ids_lookup_list(GSList *items);
 
+gboolean verify_pci_device(gchar *str); /* ????:??:??.? */
+
 #endif

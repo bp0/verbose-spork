@@ -23,21 +23,27 @@
 
 #define SYSFS_USB "/sys/bus/usb"
 
-gchar* usb_log = NULL;
-GSList *usb_id_list = NULL;
+#define BULLET "\u2022"
+#define REFLINK(TEXT, URI) "<a href=\"" URI "\">" TEXT "</a>"
+const gchar usb_ids_reference_markup_text[] =
+    " Items are generated on-demand and cached.\n"
+    "\n"
+    " :/usb/usb.ids/{vendor}/name\n"
+    " :/usb/usb.ids/{vendor}/{device}/name\n\n"
+    "Reference:\n"
+    BULLET REFLINK("<i>The Linux USB Project</i>'s usb.ids", "http://www.linux-usb.org/")
+    "\n";
 
 static gchar *usb_format(sysobj *obj, int fmt_opts);
 static guint usb_flags(sysobj *obj);
-static gchar *usb_messages(const gchar *path);
 static double usb_update_interval(sysobj *obj);
+static double usb_ids_update_interval(sysobj *obj);
 static gboolean usb_verify_idcomp(sysobj *obj);
 static gchar *usb_format_idcomp(sysobj *obj, int fmt_opts);
-static gboolean usb_verify_device(sysobj *obj);
+static gboolean usb_verify_device(sysobj *obj) { return (obj) ? verify_usb_device(obj->name) : FALSE; }
 static gchar *usb_format_device(sysobj *obj, int fmt_opts);
-static gboolean usb_verify_bus(sysobj *obj);
+static gboolean usb_verify_bus(sysobj *obj) { return (obj) ? verify_usb_bus(obj->name) : FALSE; }
 static gchar *usb_format_bus(sysobj *obj, int fmt_opts);
-
-void class_usb_cleanup();
 
 #define CLS_USB_FLAGS OF_GLOB_PATTERN | OF_CONST
 
@@ -61,40 +67,26 @@ static sysobj_class cls_usb[] = {
   { .tag = "usb/bus", .pattern = "/sys/devices*/usb*", .flags = CLS_USB_FLAGS,
     .f_verify = usb_verify_bus,
     .f_format = usb_format_bus, .f_flags = usb_flags, .f_update_interval = usb_update_interval },
+
+  { .tag = "usb.ids/id", .pattern = ":/usb/usb.ids/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .s_halp = usb_ids_reference_markup_text, .s_label = "usb.ids lookup result" },
+  { .tag = "usb.ids", .pattern = ":/usb/usb.ids", .flags = OF_CONST,
+    .s_halp = usb_ids_reference_markup_text, .s_label = "usb.ids lookup virtual tree",
+    .f_update_interval = usb_ids_update_interval },
+
   /* all under :/usb */
   { .tag = "usb", .pattern = ":/usb*", .flags = CLS_USB_FLAGS,
-    .f_format = usb_format, .f_flags = usb_flags, .f_update_interval = usb_update_interval, .f_cleanup = class_usb_cleanup },
+    .f_format = usb_format, .f_flags = usb_flags, .f_update_interval = usb_update_interval },
 };
 
 static sysobj_virt vol[] = {
     { .path = ":/usb/bus", .str = SYSFS_USB,
       .type = VSO_TYPE_AUTOLINK | VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_CONST,
       .f_get_data = NULL, .f_get_type = NULL },
-    { .path = ":/usb/_messages", .str = "",
-      .type = VSO_TYPE_STRING | VSO_TYPE_CONST,
-      .f_get_data = usb_messages, .f_get_type = NULL },
     { .path = ":/usb", .str = "*",
       .type = VSO_TYPE_DIR | VSO_TYPE_CONST,
       .f_get_data = NULL, .f_get_type = NULL },
 };
-
-void usb_msg(char *fmt, ...) {
-    gchar *buf, *tmp;
-    va_list args;
-
-    va_start(args, fmt);
-    buf = g_strdup_vprintf(fmt, args);
-    va_end(args);
-
-    tmp = g_strdup_printf("%s%s\n", usb_log, buf);
-    g_free(usb_log);
-    usb_log = tmp;
-}
-
-static gchar *usb_messages(const gchar *path) {
-    PARAM_NOT_UNUSED(path);
-    return g_strdup(usb_log ? usb_log : "");
-}
 
 static int usb_device_count() {
     int ret = 0;
@@ -142,56 +134,9 @@ static double usb_update_interval(sysobj *obj) {
     return 10.0;
 }
 
-static util_usb_id *usb_find_id(gchar *address) {
-    GSList *l = usb_id_list;
-    while(l) {
-        util_usb_id *d = (util_usb_id*)l->data;
-        if (!g_strcmp0(address, d->address))
-            return d;
-        l = l->next;
-    }
-    return NULL;
-}
-
-/* [N-][P.P.P...][:C.I] */
-static gboolean usb_verify_interface(sysobj *obj) {
-    gchar *p = obj->name;
-    if (!isdigit(*p)) return FALSE;
-    int state = 0;
-    while (*p != 0) {
-        if ( isdigit(*p) ) { p++; continue; }
-        switch(state) {
-            case 0: if (*p == '-') { state = 1; } break;
-            case 1:
-                if (*p == ':') { state = 2; break; }
-                if (*p != '.') { return FALSE; }
-            case 2:
-                if (*p != '.') { return FALSE; }
-        }
-        p++;
-    }
-    return TRUE;
-}
-
-/* usbN */
-static gboolean usb_verify_bus(sysobj *obj) {
-    return verify_lblnum(obj, "usb");
-}
-
-/* [N-][P.P.P...] */
-static gboolean usb_verify_device(sysobj *obj) {
-    gchar *p = obj->name;
-    if (!isdigit(*p)) return FALSE;
-    int state = 0;
-    while (*p != 0) {
-        if ( isdigit(*p) ) { p++; continue; }
-        switch(state) {
-            case 0: if (*p == '-') { state = 1; } break;
-            case 1: if (*p != '.') { return FALSE; }
-        }
-        p++;
-    }
-    return TRUE;
+static double usb_ids_update_interval(sysobj *obj) {
+    PARAM_NOT_UNUSED(obj);
+    return 10.0;
 }
 
 static const gchar *usb_idcomps[] =
@@ -206,13 +151,28 @@ static gboolean usb_verify_idcomp(sysobj *obj) {
     return FALSE;
 }
 
-static util_usb_id dev_not_found = { 0 };
+util_usb_id *get_usb_id(gchar *dev_path) {
+    util_usb_id *pid = g_new0(util_usb_id, 1);
+    gchar path[64] = "";
+
+    pid->vendor = sysobj_uint32_from_fn(dev_path, "idVendor", 16);
+    pid->device = sysobj_uint32_from_fn(dev_path, "idProduct", 16);
+
+    /* full first should cause all to be looked-up */
+    sprintf(path, ":/usb/usb.ids/%04x/%04x", pid->vendor, pid->device);
+    pid->device_str = sysobj_raw_from_fn(path, "name");
+    sprintf(path, ":/usb/usb.ids/%04x", pid->vendor);
+    pid->vendor_str = sysobj_raw_from_fn(path, "name");
+
+    return pid;
+}
 
 static gchar *usb_format_idcomp(sysobj *obj, int fmt_opts) {
-    gchar *pn = sysobj_parent_name(obj);
-    util_usb_id *d = usb_find_id(pn);
-    g_free(pn);
-    if (!d) d = &dev_not_found;
+    gchar *pp = sysobj_parent_path(obj);
+    util_usb_id *d = get_usb_id(pp);
+    g_free(pp);
+
+    gchar *ret = NULL;
     gchar *value_str = NULL;
     if (!g_strcmp0(obj->name, "idVendor") )
         value_str = d->vendor_str ? d->vendor_str : "Unknown";
@@ -220,18 +180,23 @@ static gchar *usb_format_idcomp(sysobj *obj, int fmt_opts) {
         value_str = d->device_str ? d->device_str : "Device";
     if (value_str) {
         uint32_t value = strtol(obj->data.str, NULL, 16);
-        return g_strdup_printf("[%04x] %s", value, value_str);
+        ret = g_strdup_printf("[%04x] %s", value, value_str);
     }
+    util_usb_id_free(d);
+    if (ret) return ret;
     return simple_format(obj, fmt_opts);
 }
 
 static gchar *usb_format_device(sysobj *obj, int fmt_opts) {
-    util_usb_id *d = usb_find_id(obj->name);
+    util_usb_id *d = get_usb_id(obj->path);
+    gchar *ret = NULL;
     if (d) {
-        return g_strdup_printf("%s %s",
+        ret = g_strdup_printf("%s %s",
             d->vendor_str ? d->vendor_str : "Unknown",
             d->device_str ? d->device_str : "Device");
     }
+    util_usb_id_free(d);
+    if (ret) return ret;
     return simple_format(obj, fmt_opts);
 }
 
@@ -239,55 +204,8 @@ static gchar *usb_format_bus(sysobj *obj, int fmt_opts) {
     return usb_format_device(obj, fmt_opts);
 }
 
-void class_usb_cleanup() {
-    if (usb_id_list) {
-        g_slist_free_full(usb_id_list, (GDestroyNotify)util_usb_id_free);
-    }
-    g_free(usb_log);
-}
-
-void usb_scan() {
-    if (usb_id_list) return; /* already done */
-
-    sysobj *obj = sysobj_new_from_fn(SYSFS_USB, "devices");
-
-    if (!obj->exists) {
-        usb_msg("usb device list not found at %s/devices", SYSFS_USB);
-        sysobj_free(obj);
-        return;
-    }
-    GSList *devs = sysobj_children(obj, NULL, NULL, TRUE);
-    GSList *l = devs;
-    while(l) {
-        gchar *dev = (gchar*)l->data;
-        sysobj *dobj = sysobj_new_from_fn(obj->path, dev);
-        if (usb_verify_device(dobj) || usb_verify_bus(dobj) ) {
-            util_usb_id *pid = g_new0(util_usb_id, 1);
-            gchar *dev_path = g_strdup_printf("%s/%s", obj->path, dev);
-            pid->address = g_strdup(dev);
-            pid->vendor = sysobj_uint32_from_fn(dev_path, "idVendor", 16);
-            pid->device = sysobj_uint32_from_fn(dev_path, "idProduct", 16);
-            usb_id_list = g_slist_append(usb_id_list, pid);
-            g_free(dev_path);
-        }
-        sysobj_free(dobj);
-        l = l->next;
-    }
-    if (usb_id_list) {
-        int count = g_slist_length(usb_id_list);
-        int found = util_usb_ids_lookup_list(usb_id_list);
-        if (found == -1)
-            usb_msg("usb.ids file could not be read", found);
-        else
-            usb_msg("usb.ids matched for %d of %d devices", found, count);
-    }
-    sysobj_free(obj);
-}
-
 void class_usb() {
     int i = 0;
-
-    usb_log = g_strdup("");
 
     /* add virtual sysobj */
     for (i = 0; i < (int)G_N_ELEMENTS(vol); i++) {
@@ -299,7 +217,4 @@ void class_usb() {
         class_add(&cls_usb[i]);
     }
 
-    //TODO: should wait until first access to setup
-    //other classes may not be ready
-    usb_scan();
 }
