@@ -18,6 +18,7 @@
  *
  */
 
+#include <string.h>
 #include "util_sysobj.h"
 
 gboolean util_have_root() {
