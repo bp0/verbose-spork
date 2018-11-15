@@ -25,6 +25,7 @@
  * - classes provide interpretation and formatting of sysobj's
  */
 
+void gen_sysobj();
 void gen_pci_ids();
 void gen_usb_ids();
 void gen_os_release();
@@ -38,9 +39,7 @@ void gen_procs(); /* requires :/cpuinfo */
 void gen_computer(); /* formerly vo_computer */
 
 void generators_init() {
-    sysobj_virt_add_simple(":", NULL, "*", VSO_TYPE_DIR);
-    sysobj_virt_add_simple(":/sysfs", NULL, "/sys", VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_AUTOLINK );
-    sysobj_virt_add_simple(":/procfs", NULL, "/proc", VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_AUTOLINK );
+    gen_sysobj(); /* internals, like vsysfs root (":"), and ":/watchlist" */
 
     gen_pci_ids();
     gen_usb_ids();

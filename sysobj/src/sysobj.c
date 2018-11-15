@@ -1120,3 +1120,18 @@ sysobj *sysobj_child_of_parent(sysobj *s, gchar *child_path) {
     }
     return NULL;
 }
+
+void sysobj_watchlist_add(const gchar *group, const gchar *target_base, const gchar *target_name) {
+    sysobj *obj = sysobj_new_from_fn(target_base, target_name);
+    if (obj && obj->exists) {
+        PARAM_NOT_UNUSED(group); //TODO:
+        sysobj_virt_add_simple(":/watchlist", obj->name_req, obj->path_req,
+            VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_AUTOLINK );
+    }
+    sysobj_free(obj);
+}
+
+void sysobj_watchlist_clear(const gchar *group) {
+    PARAM_NOT_UNUSED(group); //TODO:
+    sysobj_virt_remove(":/watchlist/*");
+}

@@ -278,6 +278,10 @@ sysobj_data *sysobj_data_dup(sysobj_data *d);
  * fmt_opts, as usual */
 gchar *sysobj_format_table(sysobj *obj, gchar **table, int table_len, int nbase, int fmt_opts);
 
+/* adds a symlink to the :/watchlist path */
+void sysobj_watchlist_add(const gchar *group, const gchar *target_base, const gchar *target_name);
+void sysobj_watchlist_clear(const gchar *group);
+
 /* debugging stuff */
 void class_dump_list();
 
