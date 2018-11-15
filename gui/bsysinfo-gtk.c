@@ -20,6 +20,8 @@
 
 #include "bsysinfo-gtk.h"
 #include <inttypes.h> /* for PRIu64 */
+#include "bp_sysobj_view.h"
+
 #include "uber.h"
 
 /* use notebook or stack/switcher (gtk3.10+) */
@@ -29,6 +31,7 @@
 GtkWidget *app_window = NULL;
 GtkWidget *notebook = NULL;
 GtkWidget *stack = NULL;
+GtkWidget *testing = NULL;
 
 #define UPDATE_TIMER_SECONDS 0.2
 
@@ -67,7 +70,7 @@ static void app_cleanup(void) {
 void browser_navigate(const gchar *new_location);
 void watchlist_add(const gchar *path);
 
-gboolean activate_link (GtkLabel *label, gchar *uri, gpointer  user_data) {
+gboolean activate_link (GtkLabel *label, gchar *uri, gpointer user_data) {
     DEBUG("activate link: %s", uri);
     if (g_str_has_prefix(uri, "sysobj:")) {
         browser_navigate(g_utf8_strchr(uri, 7, ':') + 1);
@@ -517,6 +520,7 @@ void watchlist_init() {
 
 void watchlist_add(const gchar *path) {
     pins_list_view_append(gwl.plv, path);
+    sysobj_watchlist_add(NULL, path, NULL);
 }
 
 void watchlist_cleanup() {
@@ -691,6 +695,9 @@ gboolean browser_navigate_actual(gchar *safe) {
 }
 
 void browser_navigate(const gchar *new_location) {
+
+    bp_sysobj_view_set_path(BP_SYSOBJ_VIEW(testing), new_location);
+
     gchar *safe = g_strdup(new_location);
     g_idle_add((GSourceFunc)browser_navigate_actual, safe);
 }
@@ -767,6 +774,10 @@ static gboolean refresh_data(gpointer data) {
     return G_SOURCE_CONTINUE;
 }
 
+void testing_activated (gpointer user_data, const gchar *sysobj_path) {
+    bp_sysobj_view_set_path(user_data, sysobj_path);
+}
+
 int main(int argc, char **argv) {
     const gchar *altroot = NULL;
     const gchar *query = NULL;
@@ -811,6 +822,14 @@ int main(int argc, char **argv) {
     notebook_add_page("browser", _("Browser"), notebook, gel.container, 5);
     notebook_add_page("watchlist", _("Watchlist"), notebook, gwl.container, 5);
     notebook_add_page("about", _("About"), notebook, about, 5);
+
+    testing = bp_sysobj_view_new();
+
+    g_signal_connect(testing, "item-activated",
+          G_CALLBACK(testing_activated), testing);
+
+    gtk_widget_show(testing);
+    notebook_add_page("testing", _("Testing"), notebook, testing, 5);
 
     /* set up main window */
     app_window = gtk_window_new (GTK_WINDOW_TOPLEVEL);

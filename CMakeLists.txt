@@ -114,7 +114,10 @@ add_library(uber-graph STATIC
 set_target_properties(uber-graph PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations")
 add_executable(bsysinfo-gtk
         gui/bsysinfo-gtk.c
+        gui/bp_sysobj_view.c
+        gui/bp_pin_inspect.c
 )
+set_target_properties(bsysinfo-gtk PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations")
 target_link_libraries(bsysinfo-gtk
         ${GLIB_LIBRARIES}
         ${GTK_LIBRARIES}
