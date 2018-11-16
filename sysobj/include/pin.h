@@ -52,6 +52,7 @@ typedef struct pin_list {
 
 pin *pin_new();
 pin *pin_new_sysobj(sysobj *obj); /* takes ownership of obj */
+pin *pin_dup(const pin *src);
 void pin_update(pin *p, gboolean force);
 void pin_free(void *p); /* void for glib */
 

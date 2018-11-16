@@ -42,6 +42,23 @@ pin *pin_new_sysobj(sysobj *obj) {
     return NULL;
 }
 
+pin *pin_dup(const pin *src) {
+    int i = 0;
+    pin *ret = pin_new();
+    memcpy(ret, src, sizeof(pin) );
+    ret->obj = sysobj_dup(ret->obj);
+    ret->min = sysobj_data_dup(ret->min);
+    ret->max = sysobj_data_dup(ret->max);
+    if (ret->history_mem) {
+        sysobj_data **new_history = g_new0(sysobj_data*, ret->history_mem);
+        memcpy(new_history, ret->history, sizeof(sysobj_data*) * ret->history_len);
+        for(i = 0; i < ret->history_len; i++)
+            new_history[i] = sysobj_data_dup(ret->history[i]);
+        ret->history = new_history;
+    }
+    return ret;
+}
+
 void pin_free(void *ptr) {
     uint64_t i = 0;
     pin *p = (pin *)ptr;

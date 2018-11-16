@@ -242,6 +242,7 @@ gchar *simple_format(sysobj* obj, int fmt_opts);
 
 sysobj *sysobj_new();
 sysobj *sysobj_new_from_fn(const gchar *base, const gchar *name);
+sysobj *sysobj_dup(const sysobj *src);
 void sysobj_fscheck(sysobj *s);
 void sysobj_classify(sysobj *s);
 gboolean sysobj_exists(sysobj *s);
@@ -270,7 +271,7 @@ GSList *sysobj_children(sysobj *s, gchar *include_glob, gchar *exclude_glob, gbo
 /* filters is list of sysobj_filter */
 GSList *sysobj_children_ex(sysobj *s, GSList *filters, gboolean sort);
 
-sysobj_data *sysobj_data_dup(sysobj_data *d);
+sysobj_data *sysobj_data_dup(const sysobj_data *src);
 
 /* table is null-terminated string list of null-terminated UNTRANSLATED strings
  * table_len, optional, improves speed

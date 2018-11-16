@@ -261,12 +261,12 @@ gboolean class_has_flag(const sysobj_class *c, guint flag) {
     return FALSE;
 }
 
-sysobj_data *sysobj_data_dup(sysobj_data *d) {
-    if (d) {
-        sysobj_data *nd = g_memdup(d, sizeof(sysobj_data));
+sysobj_data *sysobj_data_dup(const sysobj_data *src) {
+    if (src) {
+        sysobj_data *dest = g_memdup(src, sizeof(sysobj_data));
         /* +1 because g_file_get_contents() always adds \0 */
-        nd->any = g_memdup(d->any, d->len + 1);
-        return nd;
+        dest->any = g_memdup(src->any, src->len + 1);
+        return dest;
     }
     return NULL;
 }
@@ -274,6 +274,24 @@ sysobj_data *sysobj_data_dup(sysobj_data *d) {
 sysobj *sysobj_new() {
     sysobj *s = g_new0(sysobj, 1);
     return s;
+}
+
+sysobj *sysobj_dup(const sysobj *src) {
+    sysobj *ret = g_memdup(src, sizeof(sysobj_data));
+    /* strings */
+    ret->path_req_fs = g_strdup(src->path_req_fs);
+    ret->name_req = g_strdup(src->name_req);
+    ret->path_fs = g_strdup(src->path_fs);
+    ret->name = g_strdup(src->name);
+
+    /* pointers into strings */
+    ret->path = ret->path_fs + (src->path - src->path_fs);
+    ret->path_req = ret->path_req_fs + (src->path_req - src->path_req_fs);
+
+    /* data */
+    ret->data.any = g_memdup(ret->data.any, ret->data.len + 1);
+
+    return ret;
 }
 
 /* keep the pointer, but make it like the result of sysobj_new() */
