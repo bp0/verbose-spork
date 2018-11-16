@@ -12,6 +12,7 @@ zip -y -r "SS_$ZNAME.zip" \
 	"/proc/cpuinfo" \
 	"/proc/meminfo" \
 	"/proc/stat" \
+	"/proc/uptime" \
 	"/proc/crpyto" \
 	"/proc/modules" \
 	"/usr/lib/os-release"
