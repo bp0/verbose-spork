@@ -61,6 +61,7 @@ void class_cpuinfo();
 void class_meminfo();
 void class_procs();
 
+void class_uptime();
 void class_dmi_id();
 void class_dt();
 void class_cpu();
@@ -70,11 +71,14 @@ void class_cputopo();
 void class_pci();
 void class_usb();
 void class_os_release();
+void class_proc_alts();
 void class_any_utf8();
 
 void class_init() {
     generators_init();
     class_add_simple(":", _("Virtual sysfs root"), "vsfs", OF_NONE);
+
+    class_proc_alts();
 
     class_os_release();
     class_mobo();
@@ -90,6 +94,7 @@ void class_init() {
     class_pci();
     class_usb();
     class_os_release();
+    class_uptime();
 /* consumes every direct child, careful with order */
     class_dmi_id();
     class_dt();

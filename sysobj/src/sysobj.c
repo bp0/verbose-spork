@@ -1139,6 +1139,13 @@ sysobj *sysobj_child_of_parent(sysobj *s, gchar *child_path) {
     return NULL;
 }
 
+const gchar *sysobj_suggest(sysobj *s) {
+    if (s && s->cls && s->cls->s_suggest) {
+        return s->cls->s_suggest;
+    }
+    return NULL;
+}
+
 void sysobj_watchlist_add(const gchar *group, const gchar *target_base, const gchar *target_name) {
     sysobj *obj = sysobj_new_from_fn(target_base, target_name);
     if (obj && obj->exists) {

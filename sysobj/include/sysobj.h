@@ -81,6 +81,7 @@ typedef struct sysobj_class {
     guint flags;
     const gchar *s_label; /* label for "simple" classes, not translated */
     const gchar *s_halp;  /* markup text. halp for "simple" classes */
+    const gchar *s_suggest; /* suggest an alternate path */
 
     gboolean (*f_verify) (sysobj *obj);      /* verify the object is of this class */
     const gchar *(*f_label)  (sysobj *obj);  /* translated label */
@@ -198,14 +199,16 @@ void sysobj_virt_from_kv(gchar *base, const gchar *kv_data_in);
 extern gchar sysobj_root[];
 gboolean sysobj_root_set(const gchar *alt_root);
 
+/*
 gboolean util_have_root();
-void util_null_trailing_slash(gchar *str); /* in-place */
-void util_strstrip_double_quotes_dumb(gchar *str); /* in-place, strips any double-quotes from the start and end of str */
+void util_null_trailing_slash(gchar *str); / * in-place * /
+void util_strstrip_double_quotes_dumb(gchar *str); / * in-place, strips any double-quotes from the start and end of str * /
 gchar *util_canonicalize_path(const gchar *path);
 gchar *util_normalize_path(const gchar *path, const gchar *relto);
 gsize util_count_lines(const gchar *str);
 gchar *util_escape_markup(gchar *v, gboolean replacing);
-int32_t util_get_did(gchar *str, const gchar *lbl); /* ("cpu6", "cpu") -> 6 */
+int32_t util_get_did(gchar *str, const gchar *lbl); / * ("cpu6", "cpu") -> 6 * /
+*/
 
 /* to be called by sysobj_class::f_verify */
 gboolean verify_lblnum(sysobj *obj, const gchar *lbl);
@@ -252,6 +255,7 @@ void sysobj_read_data(sysobj *s);
 void sysobj_unread_data(sysobj *s); /* frees data, but keeps is_utf8, len, lines, etc. */
 const gchar *sysobj_label(sysobj *s);
 const gchar *sysobj_halp(sysobj *s);
+const gchar *sysobj_suggest(sysobj *s);
 gchar *sysobj_format(sysobj *s, int fmt_opts);
 gchar *sysobj_raw_from_fn(const gchar *base, const gchar *name);
 uint32_t sysobj_uint32_from_fn(const gchar *base, const gchar *name, int nbase);

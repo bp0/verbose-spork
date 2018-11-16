@@ -154,6 +154,10 @@ void bp_pin_inspect_do(bpPinInspect *s, const pin *p, int fmt_opts) {
     gchar *halp = g_strdup(sysobj_halp(p->obj));
     gchar *nice = sysobj_format(p->obj, fmt_opts);
     gchar *tag = g_strdup_printf("{%s}", p->obj->cls ? (p->obj->cls->tag ? p->obj->cls->tag : p->obj->cls->pattern) : "none");
+    const gchar *suggest_path = sysobj_suggest(p->obj);
+    gchar *suggest = NULL;
+    if (suggest_path)
+        suggest = g_strdup_printf(_("Consider using <a href=\"sysobj:%s\">%s</a>"), suggest_path, suggest_path);
 
     /* debug stuff */
     gchar *data_info = g_strdup_printf("raw_size = %lu byte(s)%s; guess_nbase = %d\ntag = %s",
@@ -170,9 +174,12 @@ void bp_pin_inspect_do(bpPinInspect *s, const pin *p, int fmt_opts) {
         mt = g_strdup_printf(
             /* name   */ "<big><big>%s</big></big>\n"
             /* resolv */ "<a href=\"sysobj:%s\">%s</a>\n"
+            /* suggest */ "%s%s"
             /* label  */ "%s\n",
                 p->obj->name,
                 p->obj->path, p->obj->path,
+                suggest ? suggest : "",
+                suggest ? "\n" : "",
                 label );
         gtk_label_set_markup(GTK_LABEL(priv->lbl_top), mt);
     }
@@ -196,6 +203,7 @@ void bp_pin_inspect_do(bpPinInspect *s, const pin *p, int fmt_opts) {
         }
     }
 
+    g_free(suggest);
     g_free(label);
     g_free(nice);
     g_free(tag);
