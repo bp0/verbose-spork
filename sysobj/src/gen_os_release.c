@@ -50,7 +50,7 @@ void gen_os_release() {
     sysobj *obj = sysobj_new_from_fn(PATH_TO_OS_RELEASE, NULL);
     if (obj->exists) {
         os_release_was_found = 1;
-        sysobj_read_data(obj);
+        sysobj_read_data(obj, FALSE);
         sysobj_virt_from_kv(":/os_release", obj->data.str);
     }
     sysobj_free(obj);

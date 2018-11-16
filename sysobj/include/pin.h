@@ -43,7 +43,6 @@ typedef struct pin {
 
 typedef struct pin_list {
     GSList *list;
-    GTimer *timer;
     double shortest_interval;
     double longest_interval;
 } pin_list;

@@ -279,7 +279,7 @@ void cpuinfo_scan_arm_x86(gchar **lines, gsize line_count) {
         g_free(str##m); }
 void cpuinfo_scan() {
     sysobj *obj = sysobj_new_from_fn("/proc/cpuinfo", NULL);
-    sysobj_read_data(obj);
+    sysobj_read_data(obj, FALSE);
     gchar **cpuinfo = g_strsplit(obj->data.str, "\n", -1);
     gsize line_count = g_strv_length(cpuinfo);
     cpuinfo_scan_arm_x86(cpuinfo, line_count);

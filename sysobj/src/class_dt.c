@@ -201,7 +201,7 @@ int dtr_inh_find(sysobj *obj, char *qprop, int limit) {
         if (!limit || pobj == NULL) break;
         qobj = sysobj_child_of_parent(pobj, qprop);
         if (qobj != NULL && qobj->exists) {
-            sysobj_read_data(qobj);
+            sysobj_read_data(qobj, FALSE);
             ret = be32toh(*qobj->data.uint32);
             found = 1;
             sysobj_free(qobj);
@@ -339,7 +339,7 @@ uint32_t dtr_get_phref_prop(uint32_t phandle, gchar *prop) {
     uint32_t ret = 0;
     sysobj *obj = sysobj_new_from_fn(dtr_phandle_lookup(phandle), prop);
     if (obj && obj->exists) {
-        sysobj_read_data(obj);
+        sysobj_read_data(obj, FALSE);
         ret = be32toh(*obj->data.uint32);
     }
     sysobj_free(obj);
@@ -457,7 +457,7 @@ uint32_t dtr_get_prop_u32(sysobj *node, const char *name) {
     uint32_t ret = 0;
     sysobj *obj = sysobj_new_from_fn(node->path, name);
     if (obj && obj->exists) {
-        sysobj_read_data(obj);
+        sysobj_read_data(obj, FALSE);
         if (obj->data.uint32 != NULL)
             ret = be32toh(*obj->data.uint32);
     }
@@ -469,7 +469,7 @@ uint64_t dtr_get_prop_u64(sysobj *node, const char *name) {
     uint64_t ret = 0;
     sysobj *obj = sysobj_new_from_fn(node->path, name);
     if (obj && obj->exists) {
-        sysobj_read_data(obj);
+        sysobj_read_data(obj, FALSE);
         if (obj->data.int64 != NULL)
             ret = be64toh(*obj->data.int64);
     }
@@ -481,7 +481,7 @@ char *dtr_get_prop_str(sysobj *node, const char *name) {
     char *ret = NULL;
     sysobj *obj = sysobj_new_from_fn(node->path, name);
     if (obj && obj->exists) {
-        sysobj_read_data(obj);
+        sysobj_read_data(obj, FALSE);
         if (obj->data.str != NULL)
             ret = g_strdup(obj->data.str);
     }
@@ -901,7 +901,7 @@ static void dtr_phandle_scan(gchar *nb, gchar *nn) {
         /* this object */
         sysobj *phobj = sysobj_child(obj, "phandle");
         if (phobj && phobj->exists) {
-            sysobj_read_data(phobj);
+            sysobj_read_data(phobj, FALSE);
             dtr_map_item *nmi = g_new0(dtr_map_item, 1);
             nmi->v = be32toh(*phobj->data.uint32);
             nmi->path = g_strdup(obj->path);

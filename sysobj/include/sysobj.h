@@ -178,6 +178,8 @@ typedef struct sysobj_virt {
 void sysobj_init(const gchar *alt_root);
 void sysobj_cleanup();
 
+double sysobj_elapsed(); /* time since sysobj_init(), in seconds */
+
 #define sysobj_virt_new() g_new0(sysobj_virt, 1)
 void sysobj_virt_free(sysobj_virt *s);
 gboolean sysobj_virt_add(sysobj_virt *vo); /* TRUE if added, FALSE if exists (was overwritten) or error */
@@ -251,7 +253,8 @@ void sysobj_classify(sysobj *s);
 gboolean sysobj_exists(sysobj *s);
 gboolean sysobj_exists_from_fn(const gchar *base, const gchar *name);
 gboolean sysobj_has_flag(sysobj *s, guint flag);
-void sysobj_read_data(sysobj *s);
+gboolean sysobj_read_data(sysobj *s, gboolean force); /* TRUE = data state updated, FALSE = data state not updated. Use data.was_read to see check for read error. */
+gboolean sysobj_data_expired(sysobj *s);
 void sysobj_unread_data(sysobj *s); /* frees data, but keeps is_utf8, len, lines, etc. */
 const gchar *sysobj_label(sysobj *s);
 const gchar *sysobj_halp(sysobj *s);

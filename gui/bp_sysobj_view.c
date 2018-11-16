@@ -280,7 +280,7 @@ static gboolean _update_store(bpSysObjView *s) {
     /* load/update store */
     //TODO: what if a symlink target changes?
     sysobj_fscheck(priv->obj);
-    sysobj_read_data(priv->obj);
+    sysobj_read_data(priv->obj, TRUE);
 
     if (priv->include_target)
         pins_add_from_fn(priv->pins, priv->obj->path_req, NULL);

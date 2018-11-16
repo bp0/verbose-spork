@@ -77,7 +77,7 @@ const sysobj_data *pins_history_data_when(pin_list *pl, pin *p, double seconds_a
     int64_t i = 0;
     if (!p) return NULL;
     if (p->history_status > 0) {
-        double elapsed = g_timer_elapsed(pl->timer, NULL);
+        double elapsed = sysobj_elapsed();
         for (i = (int64_t)p->history_len; i >= 0; i--) {
             double age = elapsed - p->history[i]->stamp;
             if (age > seconds_ago)
@@ -89,7 +89,7 @@ const sysobj_data *pins_history_data_when(pin_list *pl, pin *p, double seconds_a
 
 const pin *pins_pin_if_updated_since(pin_list *pl, int pi, double seconds_ago) {
     if (pl) {
-        double elapsed = g_timer_elapsed(pl->timer, NULL);
+        double elapsed = sysobj_elapsed();
         pin *p = pins_get_nth(pl, pi);
         if (p && (elapsed - p->last_update < seconds_ago) )
                 return p;
@@ -102,7 +102,7 @@ void pin_update(pin *p, gboolean force) {
     if (p->obj) {
         if (p->update_interval || force) {
             const sysobj_class *c = p->obj->cls;
-            sysobj_read_data(p->obj);
+            sysobj_read_data(p->obj, TRUE);
             if (!p->history_status) {
                 if (c && c->f_compare)
                     p->history_status = 1;
@@ -164,8 +164,6 @@ void pin_update(pin *p, gboolean force) {
 
 pin_list *pins_new() {
     pin_list *pl = g_new0(pin_list, 1);
-    pl->timer = g_timer_new();
-    g_timer_start(pl->timer);
     return pl;
 }
 
@@ -211,7 +209,7 @@ int pins_add_from_fn(pin_list *pl, const gchar *base, const gchar *name) {
 void pins_refresh(pin_list *pl) {
     //DEBUG("Refreshing list %llx", (long long int)pl);
     int updated = 0;
-    double elapsed = g_timer_elapsed(pl->timer, NULL);
+    double elapsed = sysobj_elapsed();
     GSList *l = pl->list;
     while (l) {
         pin *p = l->data;
@@ -242,14 +240,12 @@ pin *pins_get_nth(pin_list *pl, int i) {
 void pins_clear(pin_list *pl) {
     g_slist_free_full(pl->list, pin_free);
     pl->list = NULL;
-    g_timer_start(pl->timer);
     pl->shortest_interval = 0;
     pl->longest_interval = 0;
 }
 
 void pins_free(pin_list *pl) {
     if (pl) {
-        g_timer_destroy(pl->timer);
         g_slist_free_full(pl->list, pin_free);
         g_free(pl);
     }

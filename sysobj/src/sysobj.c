@@ -55,6 +55,7 @@ static sysobj_filter path_filters[] = {
     { SO_FILTER_NONE, "", NULL },
 };
 static GSList *sysobj_global_filters = NULL;
+static GTimer *sysobj_global_timer = NULL;
 
 int compare_str_base10(const sysobj_data *a, const sysobj_data *b) {
     int64_t A = (a && a->str) ? strtol(a->str, NULL, 10) : 0;
@@ -133,7 +134,7 @@ gchar *sysobj_format_from_fn(const gchar *base, const gchar *name, int fmt_opts)
 gchar *sysobj_raw_from_fn(const gchar *base, const gchar *name) {
     gchar *ret = NULL;
     sysobj *obj = sysobj_new_from_fn(base, name);
-    sysobj_read_data(obj);
+    sysobj_read_data(obj, FALSE);
     ret = g_strdup(obj->data.str);
     sysobj_free(obj);
     return ret;
@@ -362,9 +363,13 @@ void sysobj_fscheck(sysobj *s) {
     }
 }
 
-void sysobj_read_data(sysobj *s) {
+gboolean sysobj_read_data(sysobj *s, gboolean force) {
     GError *error = NULL;
     if (s && s->path) {
+        if (!force && s->data.was_read) {
+            if (!sysobj_data_expired(s) )
+                return FALSE;
+        }
         DEBUG("[0x%llx] %s", (long long unsigned)s, s->path);
         if (s->is_dir)
             s->data.was_read = TRUE;
@@ -395,12 +400,17 @@ void sysobj_read_data(sysobj *s) {
                     g_error_free(error);
         }
 
+        if (s->data.was_read)
+            s->data.stamp = sysobj_elapsed();
+
         s->data.is_utf8 = g_utf8_validate(s->data.str, s->data.len, NULL);
         if (s->data.is_utf8) {
             s->data.lines = util_count_lines(s->data.str);
             s->data.maybe_num = util_maybe_num(s->data.str);
         }
+        return TRUE;
     }
+    return FALSE;
 }
 
 void sysobj_unread_data(sysobj *s) {
@@ -654,12 +664,7 @@ const gchar *sysobj_halp(sysobj *s) {
 
 gchar *sysobj_format(sysobj *s, int fmt_opts) {
     if (s) {
-        if (!s->data.was_read) {
-            DEBUG("reading %s", s->path);
-            sysobj_read_data(s);
-        } else {
-            DEBUG("already read %s", s->path);
-        }
+        sysobj_read_data(s, FALSE);
         if (s->cls && s->cls->f_format)
             return s->cls->f_format(s, fmt_opts);
         else
@@ -964,12 +969,20 @@ void sysobj_init(const gchar *alt_root) {
         i++;
     }
 
+    sysobj_global_timer = g_timer_new();
+    g_timer_start(sysobj_global_timer);
+
     class_init();
+}
+
+double sysobj_elapsed() {
+    return g_timer_elapsed(sysobj_global_timer, NULL);
 }
 
 void sysobj_cleanup() {
     class_cleanup();
     sysobj_virt_cleanup();
+    g_timer_destroy(sysobj_global_timer);
 }
 
 sysobj_filter *sysobj_filter_new(int type, gchar *pattern) {
@@ -1144,6 +1157,15 @@ const gchar *sysobj_suggest(sysobj *s) {
         return s->cls->s_suggest;
     }
     return NULL;
+}
+
+gboolean sysobj_data_expired(sysobj *s) {
+    if (s) {
+        if ( (sysobj_elapsed() - s->data.stamp) >= sysobj_update_interval(s) ) {
+            return TRUE;
+        }
+    }
+    return FALSE;
 }
 
 void sysobj_watchlist_add(const gchar *group, const gchar *target_base, const gchar *target_name) {
