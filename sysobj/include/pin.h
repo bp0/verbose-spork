@@ -39,7 +39,6 @@ typedef struct pin {
     uint64_t history_len;
     uint64_t history_max_len;
     uint64_t history_mem;   /* size of allocated block in num of structs */
-    int group; /* -1 no group, or index into pin_list groups */
 } pin;
 
 typedef struct pin_list {
@@ -47,7 +46,6 @@ typedef struct pin_list {
     GTimer *timer;
     double shortest_interval;
     double longest_interval;
-    GSList *groups;
 } pin_list;
 
 pin *pin_new();
