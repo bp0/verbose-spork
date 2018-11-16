@@ -39,17 +39,7 @@ void bp_sysobj_view_set_max_depth(bpSysObjView *s, int fmt_opts);  /* default: 1
 void bp_sysobj_view_show_inspector(bpSysObjView *s);
 void bp_sysobj_view_hide_inspector(bpSysObjView *s);
 gboolean bp_sysobj_view_inspector_is_visible(bpSysObjView *s);
-
-/* cleanup?
-
-/* plan:
- *
- * _refresh()
- *
- * signals:
- *     link-activate?
- *
- */
+gboolean bp_sysobj_view_refresh(bpSysObjView *s);
 
 G_END_DECLS
 

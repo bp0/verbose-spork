@@ -36,8 +36,6 @@ GtkWidget *browser = NULL;
 GtkWidget *watchlist = NULL;
 GtkWidget *about = NULL;
 
-#define UPDATE_TIMER_SECONDS 0.2
-
 const char about_text[] =
     "Another system info thing\n"
     "(c) 2018 Burt P. <pburt0@gmail.com>\n"
@@ -104,37 +102,6 @@ static void app_cleanup(void) {
     sysobj_cleanup();
 }
 
-struct {
-    gint timeout_id;
-    gint interval_ms;
-} refresh_timer;
-
-/*
-gboolean pins_list_view_update_row(GtkTreeModel *model, GtkTreePath *path, GtkTreeIter *iter, gpointer data) {
-    int pi, live;
-    const pin *p = NULL;
-    pins_list_view *plv = data;
-    gtk_tree_model_get(model, iter, KV_COL_LIVE, &live, -1);
-    if (live) {
-        gtk_tree_model_get(model, iter, KV_COL_INDEX, &pi, -1);
-        p = pins_pin_if_updated_since(plv->pins, pi, UPDATE_TIMER_SECONDS);
-        if (p) {
-            gchar *nice = sysobj_format(p->obj, plv->fmt_opts | FMT_OPT_LIST_ITEM);
-            gtk_tree_store_set(GTK_TREE_STORE(model), iter, KV_COL_VALUE, nice, -1);
-            g_free(nice);
-            if (plv->pinspect->p == p)
-                pin_inspect_do(plv->pinspect, p, plv->fmt_opts, NULL);
-        }
-    }
-    return FALSE;
-}
-
-static void pins_list_view_update(pins_list_view *plv) {
-    pins_refresh(plv->pins);
-    gtk_tree_model_foreach(GTK_TREE_MODEL(plv->store), pins_list_view_update_row, plv);
-}
-*/
-
 static void notebook_goto_page(const gchar *name, int page_num) {
     if (notebook)
         gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), PAGE_BROWSER);
@@ -178,18 +145,8 @@ static void destroy( GtkWidget *widget,
 {
     widget = widget; /* to avoid a warning */
     data = data; /* to avoid a warning */
-    g_source_remove(refresh_timer.timeout_id);
     app_cleanup();
     gtk_main_quit();
-}
-
-static gboolean refresh_data(gpointer data) {
-    data = data; /* to avoid a warning */
-
-    //bp_sysobj_view_refresh(gel.browser);
-    //bp_sysobj_view_refresh(watchlist);
-
-    return G_SOURCE_CONTINUE;
 }
 
 void watchlist_activated (gpointer user_data, const gchar *sysobj_path) {
@@ -215,9 +172,6 @@ int main(int argc, char **argv) {
 
     if (DEBUG_BUILD)
         class_dump_list();
-
-    refresh_timer.interval_ms = (UPDATE_TIMER_SECONDS * 1000.0);
-    refresh_timer.timeout_id = g_timeout_add(refresh_timer.interval_ms, refresh_data, NULL);
 
     browser = bp_sysobj_browser_new();
     watchlist = bp_sysobj_view_new();

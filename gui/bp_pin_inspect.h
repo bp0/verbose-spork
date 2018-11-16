@@ -29,6 +29,7 @@ struct _bpPinInspectClass {
 GType bp_pin_inspect_get_type(void) G_GNUC_CONST;
 GtkWidget *bp_pin_inspect_new(void);
 void bp_pin_inspect_do(bpPinInspect *s, const pin *p, int fmt_opts);
+const pin *bp_pin_inspect_get_pin(bpPinInspect *s);
 
 G_END_DECLS
 

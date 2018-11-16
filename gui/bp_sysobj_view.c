@@ -4,6 +4,9 @@
 #include "sysobj.h"
 #include "pin.h"
 
+#define UPDATE_TIMER_SECONDS 0.2
+#define UPDATE_LIST_TIMER_SECONDS 4
+
 enum {
     SIG_LANDED,
     SIG_ITEM_SELECTED,
@@ -43,6 +46,11 @@ struct _bpSysObjViewPrivate {
     int max_depth;
     gboolean show_inspector;
     GtkWidget *pi;
+
+    gint refresh_timer_timeout_id;
+    gint refresh_timer_interval_ms;
+    gint listing_timer_timeout_id;
+    gint listing_timer_interval_ms;
 };
 
 G_DEFINE_TYPE(bpSysObjView, bp_sysobj_view, GTK_TYPE_PANED);
@@ -110,6 +118,12 @@ bp_sysobj_view_init(bpSysObjView *s)
     priv->include_target = TRUE;
     priv->max_depth = 1;
 
+    priv->refresh_timer_interval_ms = (UPDATE_TIMER_SECONDS * 1000.0);
+    priv->refresh_timer_timeout_id = g_timeout_add(priv->refresh_timer_interval_ms, (GSourceFunc)bp_sysobj_view_refresh, s);
+
+    //priv->listing_timer_interval_ms = (UPDATE_LIST_TIMER_SECONDS * 1000.0);
+    //priv->listing_timer_timeout_id = g_timeout_add(priv->listing_timer_interval_ms, (GSourceFunc)_update_store, s);
+
     _create(s);
 
     g_signal_connect(s, "destroy", G_CALLBACK(_cleanup), NULL);
@@ -149,6 +163,8 @@ static const char *kv_col_names[] = {
 
 static void _cleanup(bpSysObjView *s) {
     bpSysObjViewPrivate *priv = BP_SYSOBJ_VIEW_PRIVATE(s);
+    g_source_remove(priv->refresh_timer_timeout_id);
+    //g_source_remove(priv->listing_timer_timeout_id);
     pins_free(priv->pins);
     sysobj_free(priv->obj);
     g_free(priv->new_target);
@@ -286,8 +302,36 @@ static gboolean _update_store(bpSysObjView *s) {
         g_signal_emit(s, _signals[SIG_LANDED], 0);
     }
 
+    /* will be refreshed in 0.2 seconds */
+
 _update_store_finish:
     return G_SOURCE_REMOVE; /* remove from the main loop */
+}
+
+gboolean __pins_list_view_update_row(GtkTreeModel *model, GtkTreePath *path, GtkTreeIter *iter, bpSysObjViewPrivate *priv) {
+    int pi, live;
+    const pin *p = NULL;
+    gtk_tree_model_get(model, iter, KV_COL_LIVE, &live, -1);
+    if (live) {
+        gtk_tree_model_get(model, iter, KV_COL_INDEX, &pi, -1);
+        p = pins_pin_if_updated_since(priv->pins, pi, UPDATE_TIMER_SECONDS);
+        if (p) {
+            gchar *nice = sysobj_format(p->obj, priv->fmt_opts | FMT_OPT_LIST_ITEM);
+            gtk_tree_store_set(GTK_TREE_STORE(model), iter, KV_COL_VALUE, nice, -1);
+            g_free(nice);
+            if (p == bp_pin_inspect_get_pin(BP_PIN_INSPECT(priv->pi)) ) {
+                bp_pin_inspect_do(BP_PIN_INSPECT(priv->pi), p, priv->fmt_opts);
+            }
+        }
+    }
+    return FALSE;
+}
+
+gboolean bp_sysobj_view_refresh(bpSysObjView *s) {
+    bpSysObjViewPrivate *priv = BP_SYSOBJ_VIEW_PRIVATE(s);
+    pins_refresh(priv->pins);
+    gtk_tree_model_foreach(GTK_TREE_MODEL(priv->store), (GtkTreeModelForeachFunc)__pins_list_view_update_row, priv);
+    return G_SOURCE_CONTINUE;
 }
 
 void _expand_all(bpSysObjView *s) {

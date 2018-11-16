@@ -218,3 +218,8 @@ void bp_pin_inspect_do(bpPinInspect *s, const pin *p, int fmt_opts) {
     g_free(data_info);
     g_free(pin_info);
 }
+
+const pin *bp_pin_inspect_get_pin(bpPinInspect *s) {
+    bpPinInspectPrivate *priv = BP_PIN_INSPECT_PRIVATE(s);
+    return priv->p;
+}
