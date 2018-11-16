@@ -28,6 +28,9 @@ gboolean sysobj_root_set(const gchar *alt_root) {
     util_null_trailing_slash(sysobj_root);
     return TRUE;
 }
+const gchar *sysobj_get_root() {
+    return sysobj_root;
+}
 
 static sysobj_filter path_filters[] = {
     { SO_FILTER_STATIC | SO_FILTER_INCLUDE_IIF, "/sys/*", NULL },

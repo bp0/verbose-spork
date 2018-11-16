@@ -20,6 +20,14 @@
 
 #include "sysobj.h"
 
+static gchar *get_root(const gchar *path) {
+    return g_strdup_printf("%s", sysobj_get_root());
+}
+
+static gchar *get_elapsed(const gchar *path) {
+    return g_strdup_printf("%lf", sysobj_elapsed());
+}
+
 static sysobj_virt vol[] = {
     /* the vsysfs  root */
     { .path = ":", .str = "*",
@@ -38,6 +46,17 @@ static sysobj_virt vol[] = {
     { .path = ":/watchlist", .str = "*",
       .type = VSO_TYPE_DIR | VSO_TYPE_CONST,
       .f_get_data = NULL, .f_get_type = NULL },
+
+    /* internal stuff */
+    { .path = ":sysobj", .str = "*",
+      .type = VSO_TYPE_DIR | VSO_TYPE_CONST,
+      .f_get_data = NULL, .f_get_type = NULL },
+    { .path = ":sysobj/elapsed", .str = "",
+      .type = VSO_TYPE_STRING | VSO_TYPE_CONST,
+      .f_get_data = get_elapsed, .f_get_type = NULL },
+    { .path = ":sysobj/root", .str = "",
+      .type = VSO_TYPE_STRING | VSO_TYPE_CONST,
+      .f_get_data = get_root, .f_get_type = NULL },
 };
 
 void gen_sysobj() {

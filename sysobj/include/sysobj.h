@@ -177,6 +177,7 @@ typedef struct sysobj_virt {
  * if sysobj_root_set() was already used. */
 void sysobj_init(const gchar *alt_root);
 void sysobj_cleanup();
+const gchar *sysobj_get_root();
 
 double sysobj_elapsed(); /* time since sysobj_init(), in seconds */
 

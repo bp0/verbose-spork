@@ -148,7 +148,6 @@ void pin_update(pin *p, gboolean force) {
                 }
                 uint64_t i = p->history_len-1;
                 p->history[i] = sysobj_data_dup(&p->obj->data);
-                p->history[i]->stamp = p->last_update;
                 if (compare_func) {
                     if (!p->min || compare_func(p->min, p->history[i]) >= 0 )
                         p->min = p->history[p->history_len-1];
