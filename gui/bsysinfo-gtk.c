@@ -36,11 +36,12 @@ GtkWidget *browser = NULL;
 GtkWidget *watchlist = NULL;
 GtkWidget *about = NULL;
 
-const char about_text[] =
+const char about_markup_text[] =
     "Another system info thing\n"
-    "(c) 2018 Burt P. <pburt0@gmail.com>\n"
-    "https://github.com/bp0/verbose-spork\n"
-    "\n";
+    "(c) 2018 Burt P. &lt;pburt0@gmail.com&gt;\n"
+    "<a href=\"https://github.com/bp0/verbose-spork\">https://github.com/bp0/verbose-spork</a>\n"
+    "\n"
+    "<a href=\"sysobj::sysobj\">sysobj</a>\n";
 
 /*
 static const gchar default_watchlist[] =
@@ -51,34 +52,6 @@ static const gchar default_watchlist[] =
     "/sys/devices/system/cpu/cpu2=\n"
     "/sys/devices/system/cpu/cpu3=\n";
 */
-
-void about_init() {
-    gchar *glib_version_info =
-        g_strdup_printf("GLib %d.%d.%d (built against: %d.%d.%d)",
-            glib_major_version, glib_minor_version, glib_micro_version,
-            GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION, GLIB_MICRO_VERSION );
-    gchar *gtk_version_info =
-        g_strdup_printf("GTK %d.%d.%d (built against: %d.%d.%d)",
-            gtk_major_version, gtk_minor_version, gtk_micro_version,
-            GTK_MAJOR_VERSION, GTK_MINOR_VERSION, GTK_MICRO_VERSION );
-
-    gchar *text = g_strdup_printf("\n%s%s\n%s\n", about_text, glib_version_info, gtk_version_info);
-
-    GtkWidget *lbl;
-    lbl = gtk_label_new(NULL);
-    gtk_label_set_text(GTK_LABEL(lbl), text);
-    gtk_label_set_line_wrap(GTK_LABEL(lbl), TRUE);
-    gtk_widget_set_halign(lbl, GTK_ALIGN_START);
-    gtk_widget_set_valign(lbl, GTK_ALIGN_START);
-    gtk_widget_set_margin_start(lbl, 10);
-    gtk_widget_show(lbl);
-
-    about = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-    gtk_box_pack_start (GTK_BOX(about), lbl, TRUE, TRUE, 0); gtk_widget_show(lbl);
-
-    g_free(glib_version_info);
-    g_free(gtk_version_info);
-}
 
 void browser_navigate(const gchar *new_location);
 void watchlist_add(const gchar *path);
@@ -92,9 +65,43 @@ gboolean uri_sysobj(gchar *uri) {
     return FALSE; /* didn't handle it */
 }
 
+static gboolean about_activate_link (GtkLabel *label, gchar *uri, gpointer user_data) {
+    return uri_open(uri);
+}
+
+void about_init() {
+    gchar *glib_version_info =
+        g_strdup_printf("GLib %d.%d.%d (built against: %d.%d.%d)",
+            glib_major_version, glib_minor_version, glib_micro_version,
+            GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION, GLIB_MICRO_VERSION );
+    gchar *gtk_version_info =
+        g_strdup_printf("GTK %d.%d.%d (built against: %d.%d.%d)",
+            gtk_major_version, gtk_minor_version, gtk_micro_version,
+            GTK_MAJOR_VERSION, GTK_MINOR_VERSION, GTK_MICRO_VERSION );
+
+    gchar *text = g_strdup_printf("\n%s%s\n%s\n", about_markup_text, glib_version_info, gtk_version_info);
+
+    GtkWidget *lbl;
+    lbl = gtk_label_new(NULL);
+    gtk_label_set_markup(GTK_LABEL(lbl), text);
+    gtk_label_set_line_wrap(GTK_LABEL(lbl), TRUE);
+    gtk_widget_set_halign(lbl, GTK_ALIGN_START);
+    gtk_widget_set_valign(lbl, GTK_ALIGN_START);
+    gtk_widget_set_margin_start(lbl, 10);
+    g_signal_connect(lbl, "activate-link", G_CALLBACK(about_activate_link), NULL);
+    gtk_widget_show(lbl);
+
+    about = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    gtk_box_pack_start (GTK_BOX(about), lbl, TRUE, TRUE, 0); gtk_widget_show(lbl);
+
+    g_free(glib_version_info);
+    g_free(gtk_version_info);
+}
+
 static int app_init(void) {
     sysobj_init(NULL);
     uri_set_function((uri_handler)uri_sysobj);
+    about_init();
     return 1;
 }
 
@@ -128,6 +135,7 @@ void watchlist_add(const gchar *path) {
 
 void browser_navigate(const gchar *new_location) {
     bp_sysobj_browser_navigate(BP_SYSOBJ_BROWSER(browser), new_location);
+    notebook_goto_page("browser", PAGE_BROWSER);
 }
 
 static gboolean delete_event( GtkWidget *widget,
@@ -168,7 +176,6 @@ int main(int argc, char **argv) {
 
     gtk_init (&argc, &argv);
     app_init();
-    about_init();
 
     if (DEBUG_BUILD)
         class_dump_list();
