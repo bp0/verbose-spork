@@ -4,6 +4,7 @@
 
 /* Forward declarations */
 static void _create(bpPinInspect *s);
+static void _cleanup(bpPinInspect *s);
 
 /* ... captured signals */
 static gboolean _activate_link (GtkLabel *label, gchar *uri, gpointer user_data);
@@ -54,6 +55,8 @@ bp_pin_inspect_init(bpPinInspect *s)
     memset(priv, sizeof(bpPinInspectPrivate), 0);
 
     _create(s);
+
+    g_signal_connect(s, "destroy", G_CALLBACK(_cleanup), NULL);
 }
 
 /* Return a new bpPinInspect cast to a GtkWidget */
@@ -65,6 +68,10 @@ bp_pin_inspect_new()
 
 static gboolean _activate_link (GtkLabel *label, gchar *uri, gpointer user_data) {
     return uri_open(uri);
+}
+
+static void _cleanup(bpPinInspect *s) {
+    bpPinInspectPrivate *priv = BP_PIN_INSPECT_PRIVATE(s);
 }
 
 static void _create(bpPinInspect *s) {

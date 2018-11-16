@@ -13,11 +13,8 @@ static const struct {gchar *label, *path;} places_list[] = {
 };
 
 /* Forward declarations */
-void _create(bpSysObjBrowser *s);
-
-/* ... captured signals */
-
-
+static void _create(bpSysObjBrowser *s);
+static void _cleanup(bpSysObjBrowser *s);
 
 /* Private class member */
 #define BP_SYSOBJ_BROWSER_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE((obj), \
@@ -62,6 +59,8 @@ bp_sysobj_browser_init(bpSysObjBrowser *s)
     memset(priv, sizeof(bpSysObjBrowserPrivate), 0);
 
     _create(s);
+
+    g_signal_connect(s, "destroy", G_CALLBACK(_cleanup), NULL);
 }
 
 /* Return a new bpSysObjBrowser cast to a GtkWidget */

@@ -14,6 +14,7 @@ static guint _signals[SIG_LAST] = { 0 };
 
 /* Forward declarations */
 static void _create(bpSysObjView *s);
+static void _cleanup(bpSysObjView *s);
 static gboolean _update_store(bpSysObjView *s);
 
 static void _expand_all(bpSysObjView *s);
@@ -42,8 +43,6 @@ struct _bpSysObjViewPrivate {
     int max_depth;
     gboolean show_inspector;
     GtkWidget *pi;
-
-    guint signals[SIG_LAST];
 };
 
 G_DEFINE_TYPE(bpSysObjView, bp_sysobj_view, GTK_TYPE_PANED);
@@ -112,6 +111,8 @@ bp_sysobj_view_init(bpSysObjView *s)
     priv->max_depth = 1;
 
     _create(s);
+
+    g_signal_connect(s, "destroy", G_CALLBACK(_cleanup), NULL);
 }
 
 /* Return a new bpSysObjView cast to a GtkWidget */
@@ -145,6 +146,13 @@ static const char *kv_col_names[] = {
     "Index",
     "Is Live",
 };
+
+static void _cleanup(bpSysObjView *s) {
+    bpSysObjViewPrivate *priv = BP_SYSOBJ_VIEW_PRIVATE(s);
+    pins_free(priv->pins);
+    sysobj_free(priv->obj);
+    g_free(priv->new_target);
+}
 
 static void _create(bpSysObjView *s) {
     bpSysObjViewPrivate *priv = BP_SYSOBJ_VIEW_PRIVATE(s);
