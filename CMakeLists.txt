@@ -98,6 +98,7 @@ target_link_libraries(bsysinfo
 
 if(GTK_FOUND)
 add_definitions(-DGTK_DISABLE_SINGLE_INCLUDES)
+if(0)
 add_library(uber-graph STATIC
         uber-graph/g-ring.c
         uber-graph/uber-frame-source.c
@@ -112,10 +113,13 @@ add_library(uber-graph STATIC
         uber-graph/uber-window.c
 )
 set_target_properties(uber-graph PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations")
+endif()
 add_executable(bsysinfo-gtk
         gui/bsysinfo-gtk.c
+        gui/bp_sysobj_browser.c
         gui/bp_sysobj_view.c
         gui/bp_pin_inspect.c
+        gui/uri_handler.c
 )
 set_target_properties(bsysinfo-gtk PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations")
 target_link_libraries(bsysinfo-gtk
@@ -124,7 +128,6 @@ target_link_libraries(bsysinfo-gtk
         gettext
         sysobj
         m
-        uber-graph
 )
 else()
 message(STATUS "GTK3 libs not found, skipping GUI")

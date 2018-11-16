@@ -3,6 +3,7 @@
 
 #include <glib-object.h>
 #include <gtk/gtk.h>
+#include "uri_handler.h"
 #include "sysobj.h"
 #include "pin.h"
 

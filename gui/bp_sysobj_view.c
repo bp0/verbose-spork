@@ -10,10 +10,11 @@ enum {
     SIG_ITEM_ACTIVATED,
     SIG_LAST,
 };
+static guint _signals[SIG_LAST] = { 0 };
 
 /* Forward declarations */
 static void _create(bpSysObjView *s);
-static void _update_store(bpSysObjView *s);
+static gboolean _update_store(bpSysObjView *s);
 
 static void _expand_all(bpSysObjView *s);
 static void _select_first_item(bpSysObjView *s);
@@ -55,6 +56,41 @@ bp_sysobj_view_class_init(bpSysObjViewClass *klass)
 
     /* Add private indirection member */
     g_type_class_add_private(klass, sizeof(bpSysObjViewPrivate));
+
+    /* Signals */
+    _signals[SIG_LANDED] = g_signal_newv ("landed",
+                 G_TYPE_OBJECT,
+                 G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS,
+                 NULL /* closure */,
+                 NULL /* accumulator */,
+                 NULL /* accumulator data */,
+                 NULL /* C marshaller */,
+                 G_TYPE_NONE /* return_type */,
+                 0     /* n_params */,
+                 NULL  /* param_types */);
+
+    _signals[SIG_ITEM_ACTIVATED] = g_signal_new ("item-activated",
+                 G_TYPE_OBJECT,
+                 G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS,
+                 0 /* class_offset */,
+                 NULL /* accumulator */,
+                 NULL /* accumulator data */,
+                 NULL /* C marshaller */,
+                 G_TYPE_NONE /* return_type */,
+                 1     /* n_params */,
+                 G_TYPE_POINTER);
+
+    _signals[SIG_ITEM_SELECTED] = g_signal_new ("item-selected",
+                 G_TYPE_OBJECT,
+                 G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS,
+                 0 /* class_offset */,
+                 NULL /* accumulator */,
+                 NULL /* accumulator data */,
+                 NULL /* C marshaller */,
+                 G_TYPE_NONE /* return_type */,
+                 1     /* n_params */,
+                 G_TYPE_UINT);
+
 }
 
 /* Initialize a new bpSysObjView instance */
@@ -76,41 +112,6 @@ bp_sysobj_view_init(bpSysObjView *s)
     priv->max_depth = 1;
 
     _create(s);
-
-    /* Signals */
-
-    priv->signals[SIG_LANDED] = g_signal_newv ("landed",
-                 G_TYPE_OBJECT,
-                 G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS,
-                 NULL /* closure */,
-                 NULL /* accumulator */,
-                 NULL /* accumulator data */,
-                 NULL /* C marshaller */,
-                 G_TYPE_NONE /* return_type */,
-                 0     /* n_params */,
-                 NULL  /* param_types */);
-
-    priv->signals[SIG_ITEM_ACTIVATED] = g_signal_new ("item-activated",
-                 G_TYPE_OBJECT,
-                 G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS,
-                 0 /* class_offset */,
-                 NULL /* accumulator */,
-                 NULL /* accumulator data */,
-                 NULL /* C marshaller */,
-                 G_TYPE_NONE /* return_type */,
-                 1     /* n_params */,
-                 G_TYPE_POINTER);
-
-    priv->signals[SIG_ITEM_SELECTED] = g_signal_new ("item-selected",
-                 G_TYPE_OBJECT,
-                 G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS,
-                 0 /* class_offset */,
-                 NULL /* accumulator */,
-                 NULL /* accumulator data */,
-                 NULL /* C marshaller */,
-                 G_TYPE_NONE /* return_type */,
-                 1     /* n_params */,
-                 G_TYPE_UINT);
 }
 
 /* Return a new bpSysObjView cast to a GtkWidget */
@@ -216,7 +217,7 @@ void _row_changed(GtkTreeView *tree_view, gpointer user_data) {
         } else
             bp_pin_inspect_do(BP_PIN_INSPECT(priv->pi), NULL, 0);
     }
-    g_signal_emit(s, priv->signals[SIG_ITEM_SELECTED], 0, pi);
+    g_signal_emit(s, _signals[SIG_ITEM_SELECTED], 0, pi);
 }
 
 void _row_activate(GtkTreeView *tree_view, GtkTreePath *path, GtkTreeViewColumn *column, gpointer user_data) {
@@ -229,11 +230,11 @@ void _row_activate(GtkTreeView *tree_view, GtkTreePath *path, GtkTreeViewColumn 
     gtk_tree_model_get(GTK_TREE_MODEL(priv->store), &iter, KV_COL_INDEX, &pi, -1);
     if (pi >= 0) {
         pin *p = pins_get_nth(priv->pins, pi);
-        g_signal_emit(s, priv->signals[SIG_ITEM_ACTIVATED], 0, g_strdup(p->obj->path_req));
+        g_signal_emit(s, _signals[SIG_ITEM_ACTIVATED], 0, g_strdup(p->obj->path_req));
     }
 }
 
-static void _update_store(bpSysObjView *s) {
+static gboolean _update_store(bpSysObjView *s) {
     bpSysObjViewPrivate *priv = BP_SYSOBJ_VIEW_PRIVATE(s);
     gboolean is_new = FALSE;
 
@@ -250,7 +251,7 @@ static void _update_store(bpSysObjView *s) {
         priv->new_target = NULL;
     }
 
-    if (!priv->obj) return;
+    if (!priv->obj) goto _update_store_finish;
 
     /* load/update store */
     //TODO: what if a symlink target changes?
@@ -274,8 +275,11 @@ static void _update_store(bpSysObjView *s) {
         __pins_list_view_fill(s);
         _expand_all(s);
         _select_first_item(s);
-        g_signal_emit(s, priv->signals[SIG_LANDED], 0);
+        g_signal_emit(s, _signals[SIG_LANDED], 0);
     }
+
+_update_store_finish:
+    return G_SOURCE_REMOVE; /* remove from the main loop */
 }
 
 void _expand_all(bpSysObjView *s) {

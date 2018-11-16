@@ -64,7 +64,7 @@ bp_pin_inspect_new()
 }
 
 static gboolean _activate_link (GtkLabel *label, gchar *uri, gpointer user_data) {
-    return FALSE;
+    return uri_open(uri);
 }
 
 static void _create(bpPinInspect *s) {
@@ -125,7 +125,7 @@ static void _create(bpPinInspect *s) {
     gtk_container_add(GTK_CONTAINER(help_scroll), lbl_help);
     gtk_widget_show(help_scroll);
 
-    //GtkWidget *paned = gtk_paned_new(GTK_ORIENTATION_VERTICAL);
+    GtkWidget *paned = gtk_paned_new(GTK_ORIENTATION_VERTICAL);
     gtk_paned_set_position(GTK_PANED(s), 200);
     gtk_paned_pack1(GTK_PANED(s), top_scroll, TRUE, FALSE); gtk_widget_show (top_scroll);
     gtk_paned_pack2(GTK_PANED(s), help_scroll, FALSE, FALSE); gtk_widget_show (help_scroll);
