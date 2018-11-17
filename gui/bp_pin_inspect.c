@@ -160,7 +160,16 @@ void bp_pin_inspect_do(bpPinInspect *s, const pin *p, int fmt_opts) {
     gchar *label = g_strdup(sysobj_label(p->obj));
     gchar *halp = g_strdup(sysobj_halp(p->obj));
     gchar *nice = sysobj_format(p->obj, fmt_opts);
-    gchar *tag = g_strdup_printf("{%s}", p->obj->cls ? (p->obj->cls->tag ? p->obj->cls->tag : p->obj->cls->pattern) : "none");
+
+    gchar *tag = NULL;
+    if (p->obj->cls) {
+        if (p->obj->cls->tag)
+            tag = g_strdup_printf("{<a href=\"sysobj::sysobj/classes/%s\">%s</a>}", p->obj->cls->tag, p->obj->cls->tag);
+        else
+            tag = g_strdup_printf("{%s}", p->obj->cls->pattern);
+    } else
+        tag = g_strdup("{none}");
+
     const gchar *suggest_path = sysobj_suggest(p->obj);
     gchar *suggest = NULL;
     if (suggest_path)

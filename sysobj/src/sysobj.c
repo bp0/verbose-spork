@@ -934,7 +934,7 @@ GSList *sysobj_virt_children(const sysobj_virt *vo, const gchar *req) {
     if (type & VSO_TYPE_DIR) {
         int i = 0, len = 0;
         gchar *data = sysobj_virt_get_data(vo, req);
-        if (*data == '*') {
+        if (!data || *data == '*') {
             return sysobj_virt_children_auto(vo, req);
         } else {
             childs = g_strsplit(data, "\n", 0);

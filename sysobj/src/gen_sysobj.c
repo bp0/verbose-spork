@@ -20,12 +20,121 @@
 
 #include "sysobj.h"
 
+static void buff_basename(const gchar *path, gchar *buff, gsize n) {
+    gchar *fname = g_path_get_basename(path);
+    strncpy(buff, fname, n);
+    g_free(fname);
+}
+
 static gchar *get_root(const gchar *path) {
+    PARAM_NOT_UNUSED(path);
     return g_strdup_printf("%s", sysobj_root_get());
 }
 
 static gchar *get_elapsed(const gchar *path) {
+    PARAM_NOT_UNUSED(path);
     return g_strdup_printf("%lf", sysobj_elapsed());
+}
+
+static const gchar class_item_list[] =
+  "_pattern\n"
+  "_flags\n"
+  "_s_label\n"
+  "_s_halp\n"
+  "_s_suggest\n"
+  "_f_verify\n"
+  "_f_label\n"
+  "_f_format\n"
+  "_f_update_interval\n"
+  "_f_compare\n"
+  "_f_flags\n"
+  "_f_cleanup\n"
+  "_f_halp\n";
+
+static gchar *get_class_info(const gchar *path) {
+    gchar name[128] = "";
+    buff_basename(path, name, 127);
+    GSList *cl = class_get_list();
+    GSList *l = NULL;
+
+    const gchar cls_root[] = ":sysobj/classes";
+    gsize crsz = strlen(cls_root);
+
+    /* get list of class tags */
+    if (!strcmp(path, cls_root) ) {
+        gchar *ret = NULL;
+        for(l = cl; l; l = l->next) {
+            sysobj_class *c = (sysobj_class *)l->data;
+            ret = appfs(ret, "\n", "%s", c->tag);
+        }
+        return ret;
+    }
+
+    /* lookup */
+    sysobj_class *match = NULL;
+    int ml = 0;
+    for(l = cl; l; l = l->next) {
+        sysobj_class *c = (sysobj_class *)l->data;
+        if (g_str_has_prefix(path + crsz + 1, c->tag) ) {
+            if (strlen(c->tag) > ml) {
+                match = c;
+                ml = strlen(c->tag);
+            }
+        }
+    }
+
+    if (match) {
+        if (!strcmp(name, "_pattern") )
+            return g_strdup(match->pattern);
+        if (!strcmp(name, "_flags") )
+            return g_strdup_printf("0x%lx", (long unsigned)match->flags);
+        if (!strcmp(name, "_s_label") )
+            return g_strdup(match->s_label);
+        if (!strcmp(name, "_s_halp") )
+            return g_strdup(match->s_halp);
+        if (!strcmp(name, "_s_suggest") )
+            return g_strdup(match->s_suggest);
+        if (!strcmp(name, "_f_verify") )
+            return g_strdup_printf("0x%llx", (long long unsigned)match->f_verify);
+        if (!strcmp(name, "_f_label") )
+            return g_strdup_printf("0x%llx", (long long unsigned)match->f_label);
+        if (!strcmp(name, "_f_format") )
+            return g_strdup_printf("0x%llx", (long long unsigned)match->f_format);
+        if (!strcmp(name, "_f_update_interval") )
+            return g_strdup_printf("0x%llx", (long long unsigned)match->f_update_interval);
+        if (!strcmp(name, "_f_compare") )
+            return g_strdup_printf("0x%llx", (long long unsigned)match->f_compare);
+        if (!strcmp(name, "_f_flags") )
+            return g_strdup_printf("0x%llx", (long long unsigned)match->f_flags);
+        if (!strcmp(name, "_f_cleanup") )
+            return g_strdup_printf("0x%llx", (long long unsigned)match->f_cleanup);
+        if (!strcmp(name, "_f_halp") )
+            return g_strdup_printf("0x%llx", (long long unsigned)match->f_halp);
+
+        /* assume it is a class tag */
+        return g_strdup(class_item_list);
+    }
+
+    return NULL;
+}
+
+static int get_class_info_type(const gchar *path) {
+    gchar name[128] = "";
+    buff_basename(path, name, 127);
+
+    if (!strcmp(path, ":sysobj/classes") )
+        return VSO_TYPE_DIR | VSO_TYPE_DYN;
+
+    int ret = VSO_TYPE_DIR; //assume
+    gchar **il = g_strsplit(class_item_list, "\n", -1);
+    gsize l = g_strv_length(il);
+    for(int i = 0; i < l; i++)
+        if (!strcmp(name, il[i]) ) {
+            ret = VSO_TYPE_STRING;
+            break;
+        }
+    g_strfreev(il);
+    return ret;
 }
 
 static sysobj_virt vol[] = {
@@ -57,6 +166,9 @@ static sysobj_virt vol[] = {
     { .path = ":sysobj/root", .str = "",
       .type = VSO_TYPE_STRING | VSO_TYPE_CONST,
       .f_get_data = get_root, .f_get_type = NULL },
+    { .path = ":sysobj/classes", .str = "*",
+      .type = VSO_TYPE_DIR | VSO_TYPE_DYN | VSO_TYPE_CONST,
+      .f_get_data = get_class_info, .f_get_type = get_class_info_type },
 };
 
 void gen_sysobj() {
