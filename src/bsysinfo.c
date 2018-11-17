@@ -64,7 +64,7 @@ int main(int argc, char **argv) {
         class_dump_list();
 
     sysobj *ex_obj = sysobj_new_from_fn(query, NULL);
-    printf("root: %s/\n", sysobj_root);
+    printf("root: %s/\n", sysobj_root_get() );
     printf("requested: %s\n", ex_obj->path_req);
     printf("resolved: %s\n", ex_obj->path);
     printf("exists: %s\n", ex_obj->exists ? "yes" : "no");

@@ -28,7 +28,7 @@ gboolean sysobj_root_set(const gchar *alt_root) {
     util_null_trailing_slash(sysobj_root);
     return TRUE;
 }
-const gchar *sysobj_get_root() {
+const gchar *sysobj_root_get() {
     return sysobj_root;
 }
 

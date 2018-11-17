@@ -173,11 +173,12 @@ typedef struct sysobj_virt {
     int (*f_get_type)(const gchar *path);
 } sysobj_virt;
 
+gboolean sysobj_root_set(const gchar *alt_root);
+const gchar *sysobj_root_get();
 /* NULL will not change the root
  * if sysobj_root_set() was already used. */
 void sysobj_init(const gchar *alt_root);
 void sysobj_cleanup();
-const gchar *sysobj_get_root();
 
 double sysobj_elapsed(); /* time since sysobj_init(), in seconds */
 
@@ -198,20 +199,6 @@ void sysobj_virt_cleanup();
  * base/group/name=value virtual sysobj's. Items before a first
  * group are put in base/name=value. */
 void sysobj_virt_from_kv(gchar *base, const gchar *kv_data_in);
-
-extern gchar sysobj_root[];
-gboolean sysobj_root_set(const gchar *alt_root);
-
-/*
-gboolean util_have_root();
-void util_null_trailing_slash(gchar *str); / * in-place * /
-void util_strstrip_double_quotes_dumb(gchar *str); / * in-place, strips any double-quotes from the start and end of str * /
-gchar *util_canonicalize_path(const gchar *path);
-gchar *util_normalize_path(const gchar *path, const gchar *relto);
-gsize util_count_lines(const gchar *str);
-gchar *util_escape_markup(gchar *v, gboolean replacing);
-int32_t util_get_did(gchar *str, const gchar *lbl); / * ("cpu6", "cpu") -> 6 * /
-*/
 
 /* to be called by sysobj_class::f_verify */
 gboolean verify_lblnum(sysobj *obj, const gchar *lbl);

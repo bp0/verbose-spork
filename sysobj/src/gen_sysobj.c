@@ -21,7 +21,7 @@
 #include "sysobj.h"
 
 static gchar *get_root(const gchar *path) {
-    return g_strdup_printf("%s", sysobj_get_root());
+    return g_strdup_printf("%s", sysobj_root_get());
 }
 
 static gchar *get_elapsed(const gchar *path) {
