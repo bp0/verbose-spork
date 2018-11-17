@@ -28,8 +28,6 @@ const gchar cpu_reference_markup_text[] =
     BULLET REFLINK("https://www.kernel.org/doc/Documentation/ABI/stable/sysfs-devices-system-cpu") "\n"
     "\n";
 
-#define VSPK_CLASS_TAG "cpu"
-
 gboolean cpu_verify(sysobj *obj) {
     return verify_lblnum(obj, "cpu");
 }
@@ -75,14 +73,14 @@ gchar *cpu_format_1yes0no(sysobj *obj, int fmt_opts) {
 }
 
 static sysobj_class cls_cpu[] = {
-  { .tag = "cpu/microcode_version", .pattern = "microcode/version", OF_CONST | OF_REQ_ROOT,
+  { .tag = "cpu:microcode_version", .pattern = "/sys/devices/system/cpu/cpu*/microcode/version", OF_GLOB_PATTERN | OF_CONST | OF_REQ_ROOT,
     .s_label = N_("Version"), .s_halp = cpu_reference_markup_text },
 
-  { .tag = "cpu/isonline", .pattern = "/sys/*/cpu*/online", .flags = OF_GLOB_PATTERN | OF_CONST,
+  { .tag = "cpu:isonline", .pattern = "/sys/devices/system/cpu/cpu*/online", .flags = OF_GLOB_PATTERN | OF_CONST,
     .s_label = N_("Is Online"), .s_halp = cpu_reference_markup_text,
     .f_verify = cpu_verify_child, .f_format = cpu_format_1yes0no, .f_update_interval = cpu_update_interval },
 
-  { .tag = "cpu", .pattern = "/sys/*/cpu*", .flags = OF_GLOB_PATTERN | OF_CONST,
+  { .tag = "cpu", .pattern = "/sys/devices/system/cpu/cpu*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .s_label = N_("Logical CPU"), .s_halp = cpu_reference_markup_text,
     .f_verify = cpu_verify, .f_format = cpu_format, .f_update_interval = cpu_update_interval },
 };

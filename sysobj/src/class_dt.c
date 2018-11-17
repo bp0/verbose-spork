@@ -96,7 +96,7 @@ enum {
 #define CLS_DT_FLAGS OF_GLOB_PATTERN | OF_CONST
 
 static sysobj_class cls_dtr[] = {
-  { .tag = "devicetree/compat", .pattern = DTROOT "*/compatible", .flags = CLS_DT_FLAGS,
+  { .tag = "devicetree:compat", .pattern = DTROOT "*/compatible", .flags = CLS_DT_FLAGS,
     .f_format = dtr_format, .f_update_interval = dtr_update_interval },
   /* all else */
   { .tag = "devicetree", .pattern = DTROOT "*", .flags = CLS_DT_FLAGS,

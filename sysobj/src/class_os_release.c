@@ -36,7 +36,7 @@ static sysobj_class cls_os_release[] = {
   { .tag = "os_release", .pattern = ":/os_release", .flags = OF_CONST,
     .s_halp = os_release_reference_markup_text, .f_label = os_release_label,
     .f_format = os_release_format, .f_update_interval = os_release_update_interval },
-  { .tag = "os_release/item", .pattern = ":/os_release/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+  { .tag = "os_release:item", .pattern = ":/os_release/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .s_halp = os_release_reference_markup_text, .f_label = os_release_label,
     .f_format = os_release_format, .f_update_interval = os_release_update_interval },
 };
@@ -88,7 +88,7 @@ static gchar *os_release_format(sysobj *obj, int fmt_opts) {
 
 static double os_release_update_interval(sysobj *obj) {
     PARAM_NOT_UNUSED(obj);
-    return 60.0; /* there could be an upgrade */
+    return 60.0; /* there could be an upgrade? */
 }
 
 void class_os_release() {

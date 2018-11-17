@@ -25,10 +25,10 @@ static gchar *proc_alts_format(sysobj *obj, int fmt_opts);
 static double proc_alts_update_interval(sysobj *obj);
 
 static sysobj_class cls_proc_alts[] = {
-  { .tag = "proc_use_alt", .pattern = "/proc/meminfo", .flags = OF_CONST,
+  { .tag = "proc_use_alt:meminfo", .pattern = "/proc/meminfo", .flags = OF_CONST,
     .s_label = N_("Raw meminfo"), .s_suggest = ":/meminfo",
     .f_format = proc_alts_format, .f_update_interval = proc_alts_update_interval },
-  { .tag = "proc_use_alt", .pattern = "/proc/cpuinfo", .flags = OF_CONST,
+  { .tag = "proc_use_alt:cpuinfo", .pattern = "/proc/cpuinfo", .flags = OF_CONST,
     .s_label = N_("Raw cpuinfo"), .s_suggest = ":/cpuinfo",
     .f_format = proc_alts_format, .f_update_interval = proc_alts_update_interval },
 };

@@ -48,17 +48,17 @@ static double pci_ids_update_interval(sysobj *obj);
 #define CLS_PCI_FLAGS OF_GLOB_PATTERN | OF_CONST
 
 static sysobj_class cls_pci[] = {
-  { .tag = "pci/device_id", .pattern = "/sys/devices*/????:??:??.?/*", .flags = CLS_PCI_FLAGS,
+  { .tag = "pci:device_id", .pattern = "/sys/devices*/????:??:??.?/*", .flags = CLS_PCI_FLAGS,
     .f_verify = pci_verify_idcomp,
     .f_format = pci_format_idcomp, .f_flags = pci_flags, .f_update_interval = pci_update_interval },
-  { .tag = "pci/device", .pattern = "/sys/devices*/????:??:??.?", .flags = CLS_PCI_FLAGS,
+  { .tag = "pci:device", .pattern = "/sys/devices*/????:??:??.?", .flags = CLS_PCI_FLAGS,
     .f_format = pci_format_device, .f_flags = pci_flags, .f_update_interval = pci_update_interval },
-  { .tag = "pci/device_list", .pattern = "/sys/bus/pci/devices", .flags = CLS_PCI_FLAGS,
+  { .tag = "pci:device_list", .pattern = "/sys/bus/pci/devices", .flags = CLS_PCI_FLAGS,
     .f_format = pci_format, .f_flags = pci_flags, .f_update_interval = pci_update_interval },
-  { .tag = "pci/bus", .pattern = "/sys/bus/pci", .flags = CLS_PCI_FLAGS,
+  { .tag = "pci:bus", .pattern = "/sys/bus/pci", .flags = CLS_PCI_FLAGS,
     .f_format = pci_format, .f_flags = pci_flags, .f_update_interval = pci_update_interval },
 
-  { .tag = "pci.ids/id", .pattern = ":/pci/pci.ids/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+  { .tag = "pci.ids:id", .pattern = ":/pci/pci.ids/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .s_halp = pci_ids_reference_markup_text, .s_label = "pci.ids lookup result" },
   { .tag = "pci.ids", .pattern = ":/pci/pci.ids", .flags = OF_CONST,
     .s_halp = pci_ids_reference_markup_text, .s_label = "pci.ids lookup virtual tree",

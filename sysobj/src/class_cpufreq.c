@@ -182,8 +182,8 @@ void class_cpufreq() {
     sysobj_class *c = NULL;
 
     c = g_new0(sysobj_class, 1);
-    c->pattern = "*/cpufreq/policy*";
-    c->tag = "cpufreq/policy";
+    c->pattern = "/sys/devices/system/cpu/cpufreq/policy*";
+    c->tag = "cpufreq:policy";
     c->flags = OF_GLOB_PATTERN;
     c->f_verify = cpufreq_verify_policy;
     c->s_label = _("Frequency Scaling Policy");
@@ -192,17 +192,18 @@ void class_cpufreq() {
     c->f_update_interval = cpufreq_update_interval_for_khz;
     class_add(c);
 
-#define CLS_PLZ(pat, unit)       \
+//TODO: re-work into one class
+#define CLS_PLZ(t, pat, unit)       \
     c = g_new0(sysobj_class, 1); \
-    c->tag = "cpufreq";          \
+    c->tag = "cpufreq:" t;          \
     c->pattern = pat;            \
     c->flags = OF_GLOB_PATTERN;  \
     c->s_halp = cpufreq_reference_markup_text; \
     cpufreq_class_for_##unit (c); \
     class_add(c);
 
-    CLS_PLZ("*/cpufreq/policy*/scaling_???_freq", hz);
-    CLS_PLZ("*/cpufreq/policy*/cpuinfo_???_freq", hz);
-    CLS_PLZ("*/cpufreq/policy*/cpuinfo_transition_latency", ns);
-    CLS_PLZ("*/cpufreq/policy*/bios_limit", hz);
+    CLS_PLZ("sfreq", "*/cpufreq/policy*/scaling_???_freq", hz);
+    CLS_PLZ("cfreq", "*/cpufreq/policy*/cpuinfo_???_freq", hz);
+    CLS_PLZ("ctl", "*/cpufreq/policy*/cpuinfo_transition_latency", ns);
+    CLS_PLZ("bios-limit", "*/cpufreq/policy*/bios_limit", hz);
 }

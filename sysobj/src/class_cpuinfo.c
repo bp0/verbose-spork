@@ -27,9 +27,9 @@ static gchar *cpuinfo_format(sysobj *obj, int fmt_opts);
 static double cpuinfo_update_interval(sysobj *obj);
 
 static sysobj_class cls_cpuinfo[] = {
-  { .tag = "cpuinfo/feature", .pattern = ":/cpuinfo/*/flags/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+  { .tag = "cpuinfo:feature", .pattern = ":/cpuinfo/*/flags/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_format = cpuinfo_feature_format, .f_update_interval = cpuinfo_update_interval },
-  { .tag = "cpuinfo/featurelist", .pattern = ":/cpuinfo/*/flags", .flags = OF_GLOB_PATTERN | OF_CONST,
+  { .tag = "cpuinfo:featurelist", .pattern = ":/cpuinfo/*/flags", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_format = cpuinfo_format, .f_update_interval = cpuinfo_update_interval },
   /* all else */
   { .tag = "cpuinfo", .pattern = ":/cpuinfo*", .flags = OF_GLOB_PATTERN | OF_CONST,

@@ -65,7 +65,7 @@ static gchar *uptime_format(sysobj *obj, int fmt_opts) {
     int mc = sscanf(obj->data.str, "%lf %lf", &up, &idle);
     if (mc > 0) {
         gchar *up_str = formatted_time_span(up);
-        if (0 && idle) {
+        if (0 && idle) { //TODO: what to do with idle?
             gchar *idle_str = formatted_time_span(idle);
             gchar *ret = g_strdup_printf("%s (idle: %s)", up_str, idle_str);
             g_free(up_str);
@@ -79,7 +79,7 @@ static gchar *uptime_format(sysobj *obj, int fmt_opts) {
 
 static double uptime_update_interval(sysobj *obj) {
     PARAM_NOT_UNUSED(obj);
-    return 0.7;
+    return 1.0; /* although, display is in minutes */
 }
 
 void class_uptime() {
