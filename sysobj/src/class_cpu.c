@@ -83,6 +83,10 @@ static sysobj_class cls_cpu[] = {
   { .tag = "cpu", .pattern = "/sys/devices/system/cpu/cpu*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .s_label = N_("Logical CPU"), .s_halp = cpu_reference_markup_text,
     .f_verify = cpu_verify, .f_format = cpu_format, .f_update_interval = cpu_update_interval },
+
+  { .tag = "cpu_list", .pattern = "/sys/devices/system/cpu", .flags = OF_CONST,
+    .s_suggest = ":/procs", .s_halp = cpu_reference_markup_text,
+    .f_update_interval = cpu_update_interval },
 };
 
 void class_cpu() {

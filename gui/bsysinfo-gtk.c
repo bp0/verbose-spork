@@ -129,8 +129,14 @@ static void notebook_add_page(const gchar *name, const gchar *label, GtkWidget *
     }
 }
 
+void watchlist_clear() {
+    sysobj_virt_remove(":app/watchlist/*");
+}
+
 void watchlist_add(const gchar *path) {
-    sysobj_watchlist_add(NULL, path, NULL);
+    gchar *name = g_path_get_basename(path);
+    sysobj_virt_add_simple(":app/watchlist", name, path,
+        VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_AUTOLINK );
 }
 
 void browser_navigate(const gchar *new_location) {
