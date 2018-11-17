@@ -123,6 +123,11 @@ gboolean dmi_value_is_placeholder(sysobj *obj) {
         "x.x",      /* Gigabyte board version nonsense */
         "NA",
         "SKU",
+
+        /* noticed on an HP x360 */
+        "Type2 - Board Asset Tag",
+        "Type1ProductConfigId",
+
         NULL
     };
 
