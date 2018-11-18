@@ -65,7 +65,7 @@ void pin_free(void *ptr) {
     if (p) {
         if (p->history) {
             for (i = 0; i < p->history_len; i++)
-                g_free(p->history[i]);
+                sysobj_data_free(p->history[i], TRUE);
             g_free(p->history);
         }
         sysobj_free(p->obj);
@@ -102,7 +102,7 @@ void pin_update(pin *p, gboolean force) {
     if (p->obj) {
         if (p->update_interval || force) {
             const sysobj_class *c = p->obj->cls;
-            sysobj_read_data(p->obj, TRUE);
+            sysobj_read(p->obj, TRUE);
             if (!p->history_status) {
                 if (c && c->f_compare)
                     p->history_status = 1;

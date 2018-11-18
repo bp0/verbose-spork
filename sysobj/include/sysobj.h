@@ -31,7 +31,7 @@
 #include "term_color.h" /* used in formatting output */
 #include "util_sysobj.h"
 
-#define UPDATE_INTERVAL_DEFAULT 10.0   /* in seconds */
+#define UPDATE_INTERVAL_DEFAULT  1.0   /* in seconds */
 #define UPDATE_INTERVAL_NEVER    0.0   /* in seconds */
 
 enum {
@@ -120,6 +120,7 @@ GSList *sysobj_filter_list(GSList *items, GSList *filters);
 
 typedef struct sysobj_data {
     gboolean was_read;
+
     gsize len;    /* bytes */
     gsize lines;  /* 1 + newlines (-1 if the last line empty) */
     union {
@@ -133,6 +134,9 @@ typedef struct sysobj_data {
     gboolean is_utf8;
     int maybe_num; /* looks like it might be a number, value is the base (10 or 16) */
     double stamp;  /* used by pin */
+
+    gboolean is_dir;
+    GSList *childs;
 } sysobj_data;
 
 struct sysobj {
@@ -148,7 +152,6 @@ struct sysobj {
     gboolean req_was_redirected;
 
     gboolean exists;
-    gboolean is_dir;
     gboolean access_fail; /* needed root, but didn't have it */
     sysobj_data data;
     const sysobj_class *cls;
@@ -190,8 +193,6 @@ void sysobj_virt_remove(gchar *glob);
 sysobj_virt *sysobj_virt_find(const gchar *path);
 gchar *sysobj_virt_get_data(const sysobj_virt *vo, const gchar *req);
 int sysobj_virt_get_type(const sysobj_virt *vo, const gchar *req);
-GSList *sysobj_virt_children_auto(const sysobj_virt *vo, const gchar *req);
-GSList *sysobj_virt_children(const sysobj_virt *vo, const gchar *req);
 GSList *sysobj_virt_all_paths();
 void sysobj_virt_cleanup();
 
@@ -241,7 +242,7 @@ void sysobj_classify(sysobj *s);
 gboolean sysobj_exists(sysobj *s);
 gboolean sysobj_exists_from_fn(const gchar *base, const gchar *name);
 gboolean sysobj_has_flag(sysobj *s, guint flag);
-gboolean sysobj_read_data(sysobj *s, gboolean force); /* TRUE = data state updated, FALSE = data state not updated. Use data.was_read to see check for read error. */
+gboolean sysobj_read(sysobj *s, gboolean force); /* TRUE = data state updated, FALSE = data state not updated. Use data.was_read to see check for read error. */
 gboolean sysobj_data_expired(sysobj *s);
 void sysobj_unread_data(sysobj *s); /* frees data, but keeps is_utf8, len, lines, etc. */
 const gchar *sysobj_label(sysobj *s);
@@ -253,6 +254,8 @@ uint32_t sysobj_uint32_from_fn(const gchar *base, const gchar *name, int nbase);
 gchar *sysobj_format_from_fn(const gchar *base, const gchar *name, int fmt_opts);
 double sysobj_update_interval(sysobj *s);
 void sysobj_free(sysobj *s);
+
+void sysobj_data_free(sysobj_data *d, gboolean and_self);
 
 /* using the request parent */
 sysobj *sysobj_parent(sysobj *s);

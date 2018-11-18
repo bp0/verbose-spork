@@ -26,7 +26,7 @@ gboolean any_utf8_verify(sysobj *obj) {
     gboolean was_read = obj->data.was_read;
     gboolean verified = FALSE;
     if (!was_read)
-        sysobj_read_data(obj, TRUE);
+        sysobj_read(obj, TRUE);
     if (obj->data.is_utf8 && obj->data.len)
         verified = TRUE;
     if (!was_read)

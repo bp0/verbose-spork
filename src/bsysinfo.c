@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
 
     if (ex_obj->exists) {
         print_obj(ex_obj);
-        if (ex_obj->is_dir) {
+        if (ex_obj->data.is_dir) {
             GSList *l = NULL, *childs = sysobj_children(ex_obj, NULL, NULL, TRUE);
             int len = g_slist_length(childs);
             printf("---[%d items]------------------------ \n", len);

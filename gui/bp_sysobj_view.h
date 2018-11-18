@@ -36,7 +36,7 @@ GtkWidget *bp_sysobj_view_new(void);
 void bp_sysobj_view_set_path(bpSysObjView *s, const gchar *new_path);
 void bp_sysobj_view_set_fmt_opts(bpSysObjView *s, int fmt_opts);  /* default: OF_NONE */
 void bp_sysobj_view_set_max_depth(bpSysObjView *s, int fmt_opts);  /* default: 1 */
-
+void bp_sysobj_view_set_include_target(bpSysObjView *s, gboolean include_target);
 void bp_sysobj_view_show_inspector(bpSysObjView *s);
 void bp_sysobj_view_hide_inspector(bpSysObjView *s);
 gboolean bp_sysobj_view_inspector_is_visible(bpSysObjView *s);

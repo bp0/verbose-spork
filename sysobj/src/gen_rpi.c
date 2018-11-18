@@ -123,7 +123,7 @@ static gchar *rpi_board_details(void) {
     if (!revision) {
         sysobj *obj = sysobj_new_from_fn("/proc/cpuinfo", NULL);
         if (obj && obj->exists) {
-            sysobj_read_data(obj, FALSE);
+            sysobj_read(obj, FALSE);
             revision = util_find_line_value(obj->data.str, "Revision", ':');
             serial = util_find_line_value(obj->data.str, "Serial", ':');
             soc = util_find_line_value(obj->data.str, "Hardware", ':');

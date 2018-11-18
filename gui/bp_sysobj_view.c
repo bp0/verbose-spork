@@ -258,18 +258,25 @@ void _row_activate(GtkTreeView *tree_view, GtkTreePath *path, GtkTreeViewColumn 
     }
 }
 
+static void _reset(bpSysObjView *s) {
+    bpSysObjViewPrivate *priv = BP_SYSOBJ_VIEW_PRIVATE(s);
+    bp_pin_inspect_do(BP_PIN_INSPECT(priv->pi), NULL, 0);
+    /* clear the old */
+    gtk_tree_store_clear(priv->store);
+    pins_clear(priv->pins);
+    if (priv->obj)
+        sysobj_free(priv->obj);
+    priv->obj = NULL;
+}
+
 static gboolean _update_store(bpSysObjView *s) {
     bpSysObjViewPrivate *priv = BP_SYSOBJ_VIEW_PRIVATE(s);
     gboolean is_new = FALSE;
 
     if (priv->new_target) {
         is_new = TRUE;
-        bp_pin_inspect_do(BP_PIN_INSPECT(priv->pi), NULL, 0);
-        /* clear the old */
-        gtk_tree_store_clear(priv->store);
-        pins_clear(priv->pins);
-        if (priv->obj)
-            sysobj_free(priv->obj);
+        _reset(s);
+
         /* load the new */
         priv->obj = sysobj_new_from_fn(priv->new_target, NULL);
         g_free(priv->new_target);
@@ -281,7 +288,7 @@ static gboolean _update_store(bpSysObjView *s) {
     /* load/update store */
     //TODO: what if a symlink target changes?
     sysobj_fscheck(priv->obj);
-    sysobj_read_data(priv->obj, TRUE);
+    sysobj_read(priv->obj, TRUE);
 
     if (priv->include_target)
         pins_add_from_fn(priv->pins, priv->obj->path_req, NULL);
@@ -331,6 +338,7 @@ gboolean __pins_list_view_update_row(GtkTreeModel *model, GtkTreePath *path, Gtk
 gboolean bp_sysobj_view_refresh(bpSysObjView *s) {
     bpSysObjViewPrivate *priv = BP_SYSOBJ_VIEW_PRIVATE(s);
     pins_refresh(priv->pins);
+    _update_store(s);
     gtk_tree_model_foreach(GTK_TREE_MODEL(priv->store), (GtkTreeModelForeachFunc)__pins_list_view_update_row, priv);
     return G_SOURCE_CONTINUE;
 }
@@ -345,6 +353,11 @@ void _select_first_item(bpSysObjView *s) {
     GtkTreePath *path = gtk_tree_path_new_from_string("0");
     gtk_tree_view_set_cursor (GTK_TREE_VIEW(priv->view),
                 path, NULL, FALSE);
+}
+
+void bp_sysobj_view_set_include_target(bpSysObjView *s, gboolean include_target) {
+    bpSysObjViewPrivate *priv = BP_SYSOBJ_VIEW_PRIVATE(s);
+    priv->include_target = include_target;
 }
 
 void bp_sysobj_view_set_max_depth(bpSysObjView *s, int max_depth) {
@@ -391,7 +404,7 @@ static void __pins_list_view_fill(bpSysObjView *s) {
             gtk_tree_store_append(priv->store, &iter, &parent);
 
         gtk_tree_store_set(priv->store, i ? &iter : &parent,
-                    KV_COL_ICON, (p->obj->is_dir) ? "folder" : "text-x-generic",
+                    KV_COL_ICON, (p->obj->data.is_dir) ? "folder" : "text-x-generic",
                     KV_COL_KEY, nice_key,
                     KV_COL_LABEL, (label),
                     KV_COL_VALUE, (nice),

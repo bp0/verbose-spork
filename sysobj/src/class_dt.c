@@ -201,7 +201,7 @@ int dtr_inh_find(sysobj *obj, char *qprop, int limit) {
         if (!limit || pobj == NULL) break;
         qobj = sysobj_child_of_parent(pobj, qprop);
         if (qobj != NULL && qobj->exists) {
-            sysobj_read_data(qobj, FALSE);
+            sysobj_read(qobj, FALSE);
             ret = be32toh(*qobj->data.uint32);
             found = 1;
             sysobj_free(qobj);
@@ -339,7 +339,7 @@ uint32_t dtr_get_phref_prop(uint32_t phandle, gchar *prop) {
     uint32_t ret = 0;
     sysobj *obj = sysobj_new_from_fn(dtr_phandle_lookup(phandle), prop);
     if (obj && obj->exists) {
-        sysobj_read_data(obj, FALSE);
+        sysobj_read(obj, FALSE);
         ret = be32toh(*obj->data.uint32);
     }
     sysobj_free(obj);
@@ -457,7 +457,7 @@ uint32_t dtr_get_prop_u32(sysobj *node, const char *name) {
     uint32_t ret = 0;
     sysobj *obj = sysobj_new_from_fn(node->path, name);
     if (obj && obj->exists) {
-        sysobj_read_data(obj, FALSE);
+        sysobj_read(obj, FALSE);
         if (obj->data.uint32 != NULL)
             ret = be32toh(*obj->data.uint32);
     }
@@ -469,7 +469,7 @@ uint64_t dtr_get_prop_u64(sysobj *node, const char *name) {
     uint64_t ret = 0;
     sysobj *obj = sysobj_new_from_fn(node->path, name);
     if (obj && obj->exists) {
-        sysobj_read_data(obj, FALSE);
+        sysobj_read(obj, FALSE);
         if (obj->data.int64 != NULL)
             ret = be64toh(*obj->data.int64);
     }
@@ -481,7 +481,7 @@ char *dtr_get_prop_str(sysobj *node, const char *name) {
     char *ret = NULL;
     sysobj *obj = sysobj_new_from_fn(node->path, name);
     if (obj && obj->exists) {
-        sysobj_read_data(obj, FALSE);
+        sysobj_read(obj, FALSE);
         if (obj->data.str != NULL)
             ret = g_strdup(obj->data.str);
     }
@@ -566,7 +566,7 @@ dt_opp_range *dtr_get_opp_range(const char *path) {
     while(l) {
         fn = (gchar*)l->data;
         row_obj = sysobj_child(table_obj, fn);
-        if ( row_obj->is_dir ) {
+        if ( row_obj->data.is_dir ) {
             row_status = dtr_get_prop_str(row_obj, "status");
             if (!row_status || strcmp(row_status, "disabled") != 0) {
                 khz = dtr_get_prop_u64(row_obj, "opp-hz");
@@ -632,7 +632,7 @@ int dtr_guess_type(sysobj *obj) {
     gsize i = 0, anc = 0;
     gboolean might_be_str = TRUE;
 
-    if (obj->is_dir)
+    if (obj->data.is_dir)
         return DT_NODE;
 
     if (obj->data.len == 0)
@@ -897,11 +897,11 @@ static void dtr_symbol_scan() {
 static void dtr_phandle_scan(gchar *nb, gchar *nn) {
     gchar phstr[20] = "";
     sysobj *obj = sysobj_new_from_fn(nb, nn);
-    if (obj && obj->exists && obj->is_dir) {
+    if (obj && obj->exists && obj->data.is_dir) {
         /* this object */
         sysobj *phobj = sysobj_child(obj, "phandle");
         if (phobj && phobj->exists) {
-            sysobj_read_data(phobj, FALSE);
+            sysobj_read(phobj, FALSE);
             dtr_map_item *nmi = g_new0(dtr_map_item, 1);
             nmi->v = be32toh(*phobj->data.uint32);
             nmi->path = g_strdup(obj->path);

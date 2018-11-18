@@ -137,7 +137,7 @@ gchar *sysobj_format_from_fn(const gchar *base, const gchar *name, int fmt_opts)
 gchar *sysobj_raw_from_fn(const gchar *base, const gchar *name) {
     gchar *ret = NULL;
     sysobj *obj = sysobj_new_from_fn(base, name);
-    sysobj_read_data(obj, FALSE);
+    sysobj_read(obj, FALSE);
     ret = g_strdup(obj->data.str);
     sysobj_free(obj);
     return ret;
@@ -164,7 +164,7 @@ gchar *simple_format(sysobj* obj, int fmt_opts) {
         gchar *nice = NULL;
         if ( obj->access_fail )
             nice = g_strdup_printf( TERM_COLOR_FMT(ANSI_COLOR_RED), special[0] );
-        else if ( obj->is_dir )
+        else if ( obj->data.is_dir )
             nice = g_strdup_printf( TERM_COLOR_FMT(ANSI_COLOR_BLUE), special[1] );
         else if ( !obj->data.is_utf8 )
             nice = g_strdup_printf( TERM_COLOR_FMT(ANSI_COLOR_YELLOW), special[2] );
@@ -298,6 +298,15 @@ sysobj *sysobj_dup(const sysobj *src) {
     return ret;
 }
 
+void sysobj_data_free(sysobj_data *d, gboolean and_self) {
+    if (d) {
+        g_free(d->any);
+        g_slist_free_full(d->childs, (GDestroyNotify)g_free);
+        if (and_self)
+            g_free(d);
+    }
+}
+
 /* keep the pointer, but make it like the result of sysobj_new() */
 static void sysobj_free_and_clean(sysobj *s) {
     if (s) {
@@ -305,7 +314,7 @@ static void sysobj_free_and_clean(sysobj *s) {
         g_free(s->name_req);
         g_free(s->path_fs);
         g_free(s->name);
-        g_free(s->data.any);
+        sysobj_data_free(&s->data, FALSE);
         memset(s, 0, sizeof(sysobj) );
     }
 }
@@ -349,68 +358,108 @@ void sysobj_fscheck(sysobj *s) {
         if (*(s->path) == ':') {
             /* virtual */
             s->exists = FALSE;
-            s->is_dir = FALSE;
+            s->data.is_dir = FALSE;
             const sysobj_virt *vo = sysobj_virt_find(s->path);
             if (vo) {
                 s->exists = TRUE;
                 int t = sysobj_virt_get_type(vo, s->path);
                 if (t & VSO_TYPE_DIR)
-                    s->is_dir = TRUE;
+                    s->data.is_dir = TRUE;
             }
         } else {
             s->exists = g_file_test(s->path_fs, G_FILE_TEST_EXISTS);
             if (s->exists) {
-                s->is_dir = g_file_test(s->path_fs, G_FILE_TEST_IS_DIR);
+                s->data.is_dir = g_file_test(s->path_fs, G_FILE_TEST_IS_DIR);
             }
         }
     }
 }
 
-gboolean sysobj_read_data(sysobj *s, gboolean force) {
-    GError *error = NULL;
-    if (s && s->path) {
-        if (!force && s->data.was_read) {
-            if (!sysobj_data_expired(s) )
-                return FALSE;
-        }
-        DEBUG("[0x%llx] %s", (long long unsigned)s, s->path);
-        if (s->is_dir)
+static GSList *sysobj_virt_children(const sysobj_virt *vo, const gchar *req);
+static void sysobj_read_dir(sysobj *s) {
+    GSList *nl = NULL;
+    GDir *dir;
+    const gchar *fn;
+
+    if (!s) return;
+
+    if (*(s->path) == ':') {
+        /* virtual */
+        const sysobj_virt *vo = sysobj_virt_find(s->path);
+        if (vo) {
+            nl = sysobj_virt_children(vo, s->path);
             s->data.was_read = TRUE;
-        else if (*(s->path) == ':') {
-            /* virtual */
-            s->data.was_read = FALSE;
-            const sysobj_virt *vo = sysobj_virt_find(s->path);
-            if (vo) {
-                s->data.str = sysobj_virt_get_data(vo, s->path);
-                if (s->data.str) {
-                    s->data.was_read = TRUE;
-                    s->data.len = strlen(s->data.str); //TODO:
-                } else {
-                    if (sysobj_has_flag(s, OF_REQ_ROOT) && !util_have_root())
-                        s->access_fail = TRUE;
-                }
-            }
-        } else {
-            s->data.was_read =
-                g_file_get_contents(s->path_fs, &s->data.str, &s->data.len, &error);
-                if (!s->data.str) {
-                    if (sysobj_has_flag(s, OF_REQ_ROOT) && !util_have_root())
-                        s->access_fail = TRUE;
-                    if (error && error->code == G_FILE_ERROR_ACCES)
-                        s->access_fail = TRUE;
-                }
-                if (error)
-                    g_error_free(error);
         }
+    } else {
+        /* normal */
+        dir = g_dir_open(s->path_fs, 0 , NULL);
+        if (dir) {
+            while((fn = g_dir_read_name(dir)) != NULL) {
+                nl = g_slist_append(nl, g_strdup(fn));
+            }
+            g_dir_close(dir);
+            s->data.was_read = TRUE;
+        }
+    }
+    s->data.childs = nl;
+}
 
-        if (s->data.was_read)
-            s->data.stamp = sysobj_elapsed();
+static void sysobj_read_data(sysobj *s) {
+    GError *error = NULL;
 
+    if (!s) return;
+
+    if (*(s->path) == ':') {
+        /* virtual */
+        s->data.was_read = FALSE;
+        const sysobj_virt *vo = sysobj_virt_find(s->path);
+        if (vo) {
+            s->data.str = sysobj_virt_get_data(vo, s->path);
+            if (s->data.str) {
+                s->data.was_read = TRUE;
+                s->data.len = strlen(s->data.str); //TODO: what if not c-string?
+            } else {
+                if (sysobj_has_flag(s, OF_REQ_ROOT) && !util_have_root())
+                    s->access_fail = TRUE;
+            }
+        }
+    } else {
+        /* normal */
+        s->data.was_read =
+            g_file_get_contents(s->path_fs, &s->data.str, &s->data.len, &error);
+            if (!s->data.str) {
+                if (sysobj_has_flag(s, OF_REQ_ROOT) && !util_have_root())
+                    s->access_fail = TRUE;
+                if (error && error->code == G_FILE_ERROR_ACCES)
+                    s->access_fail = TRUE;
+            }
+            if (error)
+                g_error_free(error);
+    }
+
+    if (s->data.was_read) {
         s->data.is_utf8 = g_utf8_validate(s->data.str, s->data.len, NULL);
         if (s->data.is_utf8) {
             s->data.lines = util_count_lines(s->data.str);
             s->data.maybe_num = util_maybe_num(s->data.str);
         }
+    }
+}
+
+gboolean sysobj_read(sysobj *s, gboolean force) {
+    if (s && s->path) {
+        if (!force && s->data.was_read) {
+            if (!sysobj_data_expired(s) )
+                return FALSE;
+        }
+        if (s->data.is_dir)
+            sysobj_read_dir(s);
+        else
+            sysobj_read_data(s);
+
+        if (s->data.was_read)
+            s->data.stamp = sysobj_elapsed();
+
         return TRUE;
     }
     return FALSE;
@@ -468,27 +517,19 @@ int sysfs_fn_cmp(gchar *a, gchar *b) {
     return 0;
 }
 
+/* because g_slist_copy_deep( .. , g_strdup, NULL)
+ * would have been too easy */
+static gchar *dumb_string_copy(gchar *src, gpointer *e) {
+    PARAM_NOT_UNUSED(e);
+    return g_strdup(src);
+}
+
 GSList *sysobj_children_ex(sysobj *s, GSList *filters, gboolean sort) {
     GSList *ret = NULL;
-    GDir *dir;
-    const gchar *fn;
 
     if (s) {
-        if (*(s->path) == ':') {
-            /* virtual */
-            const sysobj_virt *vo = sysobj_virt_find(s->path);
-            if (vo)
-                ret = sysobj_virt_children(vo, s->path);
-        } else {
-            /* normal */
-            dir = g_dir_open(s->path_fs, 0 , NULL);
-            if (dir) {
-                while((fn = g_dir_read_name(dir)) != NULL) {
-                    ret = g_slist_append(ret, g_strdup(fn));
-                }
-                g_dir_close(dir);
-            }
-        }
+        sysobj_read(s, FALSE);
+        ret = g_slist_copy_deep(s->data.childs, (GCopyFunc)dumb_string_copy, NULL);
 
         if (filters)
             ret = sysobj_filter_list(ret, filters);
@@ -667,7 +708,7 @@ const gchar *sysobj_halp(sysobj *s) {
 
 gchar *sysobj_format(sysobj *s, int fmt_opts) {
     if (s) {
-        sysobj_read_data(s, FALSE);
+        sysobj_read(s, FALSE);
         if (s->cls && s->cls->f_format)
             return s->cls->f_format(s, fmt_opts);
         else
@@ -903,7 +944,7 @@ GSList *sysobj_virt_all_paths() {
     return ret;
 }
 
-GSList *sysobj_virt_children_auto(const sysobj_virt *vo, const gchar *req) {
+static GSList *sysobj_virt_children_auto(const sysobj_virt *vo, const gchar *req) {
     GSList *ret = NULL;
     if (vo && req) {
         gchar *fn = NULL;
@@ -927,7 +968,7 @@ GSList *sysobj_virt_children_auto(const sysobj_virt *vo, const gchar *req) {
     return ret;
 }
 
-GSList *sysobj_virt_children(const sysobj_virt *vo, const gchar *req) {
+static GSList *sysobj_virt_children(const sysobj_virt *vo, const gchar *req) {
     GSList *ret = NULL;
     gchar **childs = NULL;
     int type = sysobj_virt_get_type(vo, req);
