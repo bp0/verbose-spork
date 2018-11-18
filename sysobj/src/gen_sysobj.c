@@ -151,11 +151,6 @@ static sysobj_virt vol[] = {
       .type = VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_AUTOLINK | VSO_TYPE_CONST,
       .f_get_data = NULL, .f_get_type = NULL },
 
-    /* for the sysobj_watchlist*() functions */
-    { .path = ":/watchlist", .str = "*",
-      .type = VSO_TYPE_DIR | VSO_TYPE_CONST,
-      .f_get_data = NULL, .f_get_type = NULL },
-
     /* internal stuff */
     { .path = ":sysobj", .str = "*",
       .type = VSO_TYPE_DIR | VSO_TYPE_CONST,
