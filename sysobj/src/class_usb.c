@@ -98,8 +98,8 @@ static int usb_device_count() {
         /* if (usb_verify_device(udc) || usb_verify_bus(udc) ) ret++; */
         /* should already have been verified */
         if (udc->cls) {
-            if (!strcmp(udc->cls->tag, "usb/device")
-                || !strcmp(udc->cls->tag, "usb/bus") ) {
+            if (!strcmp(udc->cls->tag, "usb:device")
+                || !strcmp(udc->cls->tag, "usb:bus") ) {
                     ret++;
             }
         }
