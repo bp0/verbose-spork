@@ -9,6 +9,7 @@
 
 #include <glib-object.h>
 #include <gtk/gtk.h>
+#include "pin.h"
 
 G_BEGIN_DECLS
 
@@ -40,6 +41,8 @@ void bp_sysobj_view_show_inspector(bpSysObjView *s);
 void bp_sysobj_view_hide_inspector(bpSysObjView *s);
 gboolean bp_sysobj_view_inspector_is_visible(bpSysObjView *s);
 gboolean bp_sysobj_view_refresh(bpSysObjView *s);
+
+const pin *bp_sysobj_view_get_selected_pin(bpSysObjView *s);
 
 G_END_DECLS
 

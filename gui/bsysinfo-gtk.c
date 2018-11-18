@@ -102,6 +102,8 @@ static int app_init(void) {
     sysobj_init(NULL);
     uri_set_function((uri_handler)uri_sysobj);
     about_init();
+    sysobj_virt_add_simple(":app", NULL, "*", VSO_TYPE_DIR );
+    sysobj_virt_add_simple(":app", "watchlist", "*", VSO_TYPE_DIR );
     return 1;
 }
 

@@ -149,12 +149,18 @@ void bp_pin_inspect_do(bpPinInspect *s, const pin *p, int fmt_opts) {
     bpPinInspectPrivate *priv = BP_PIN_INSPECT_PRIVATE(s);
 
     gboolean is_new = FALSE;
-    if (!p) return;
     if (priv->p != p)
         is_new = TRUE;
 
     priv->p = p;
     priv->fmt_opts = fmt_opts;
+	if (!p) {
+        gtk_label_set_markup(GTK_LABEL(priv->lbl_top), "");
+		gtk_label_set_markup(GTK_LABEL(priv->lbl_debug), "");
+        gtk_label_set_markup(GTK_LABEL(priv->lbl_value), "");
+		gtk_widget_hide(priv->help_container);
+		return;
+	}
 
     /* item */
     gchar *label = g_strdup(sysobj_label(p->obj));

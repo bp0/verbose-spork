@@ -264,6 +264,7 @@ static gboolean _update_store(bpSysObjView *s) {
 
     if (priv->new_target) {
         is_new = TRUE;
+        bp_pin_inspect_do(BP_PIN_INSPECT(priv->pi), NULL, 0);
         /* clear the old */
         gtk_tree_store_clear(priv->store);
         pins_clear(priv->pins);
@@ -421,4 +422,9 @@ void bp_sysobj_view_hide_inspector(bpSysObjView *s) {
 gboolean bp_sysobj_view_inspector_is_visible(bpSysObjView *s) {
     bpSysObjViewPrivate *priv = BP_SYSOBJ_VIEW_PRIVATE(s);
     return priv->show_inspector;
+}
+
+const pin *bp_sysobj_view_get_selected_pin(bpSysObjView *s) {
+    bpSysObjViewPrivate *priv = BP_SYSOBJ_VIEW_PRIVATE(s);
+    return bp_pin_inspect_get_pin(BP_PIN_INSPECT(priv->pi));
 }

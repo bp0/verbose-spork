@@ -2,6 +2,7 @@
 #include "bp_sysobj_browser.h"
 #include "bp_sysobj_view.h"
 #include "sysobj.h"
+#include "pin.h"
 
 static const struct {gchar *label, *path;} places_list[] = {
     /* label = path if label is null */
@@ -102,9 +103,13 @@ static void _browser_entry_activate(GtkEntry *entry, gpointer user_data) {
 }
 
 static void _browser_watch(GtkButton *button, gpointer user_data) {
-    /*
-    watchlist_add(gel.browser->pinspect->p->obj->path);
-    */
+    bpSysObjBrowser *s = user_data;
+    bpSysObjBrowserPrivate *priv = BP_SYSOBJ_BROWSER_PRIVATE(s);
+	const pin *p = bp_sysobj_view_get_selected_pin(BP_SYSOBJ_VIEW(priv->sv));
+	if (!p) return;
+    gchar *name = g_path_get_basename(p->obj->path);
+    sysobj_virt_add_simple(":app/watchlist", name, p->obj->path,
+        VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_AUTOLINK );
 }
 
 static void _browser_refresh (GtkButton *button, gpointer user_data) {
