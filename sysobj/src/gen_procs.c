@@ -136,8 +136,9 @@ static void procs_scan() {
                 g_free(clk_path);
 
                 g_free(freqdomain_cpus);
-                sysobj_free(freq_obj);
             }
+            sysobj_free(freq_obj);
+
         }
         sysobj_free(cpu_obj);
         g_free(l->data); /* won't need again */
