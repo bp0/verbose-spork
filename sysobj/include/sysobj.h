@@ -134,7 +134,7 @@ typedef struct sysobj_data {
     };
     gboolean is_utf8;
     int maybe_num; /* looks like it might be a number, value is the base (10 or 16) */
-    double stamp;  /* used by pin */
+    double stamp;  /* time last read, relative to sysobj_init() */
 
     gboolean is_dir;
     GSList *childs;
@@ -163,7 +163,7 @@ enum {
     VSO_TYPE_DIR      = 1,
     VSO_TYPE_STRING   = 1<<1,
 
-    VSO_TYPE_SYMLINK  = 1<<16, /* note: sysobj_virt symlink to sysobj_virt symlink is not supported */
+    VSO_TYPE_SYMLINK  = 1<<16,
     VSO_TYPE_DYN      = 1<<17, /* any path beyond */
     VSO_TYPE_AUTOLINK = 1<<18,
     VSO_TYPE_CONST    = 1<<30, /* don't free */
