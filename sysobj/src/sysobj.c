@@ -344,8 +344,6 @@ void sysobj_classify(sysobj *s) {
             if (match && c->f_verify)
                 match = c->f_verify(s);
 
-            //DEBUG("try [%s] %s for %s ... %s \n", class_has_flag(c, OF_GLOB_PATTERN) ? "glob" : "no-glob", c->pattern, s->path, match ? "match" : "no-match");
-
             if (match) {
                 s->cls = c;
                 return;
@@ -818,6 +816,21 @@ gboolean sysobj_virt_add(sysobj_virt *vo) {
         return TRUE;
     }
     return FALSE;
+}
+
+gboolean sysobj_virt_add_simple_mkpath(const gchar *base, const gchar *name, const gchar *data, int type) {
+    gchar *tp = NULL, *tpp = NULL;
+    if (name)
+        tp = g_strdup_printf("%s/%s", base, name);
+    else
+        tp = g_strdup(base);
+
+    tpp = g_path_get_dirname(tp);
+    if (strlen(tpp) > 1)
+        sysobj_virt_add_simple_mkpath(tpp, NULL, "*", VSO_TYPE_DIR);
+    g_free(tp);
+    g_free(tpp);
+    return sysobj_virt_add_simple(base, name, data, type);
 }
 
 gboolean sysobj_virt_add_simple(const gchar *base, const gchar *name, const gchar *data, int type) {

@@ -102,9 +102,7 @@ static int app_init(void) {
     sysobj_init(NULL);
     uri_set_function((uri_handler)uri_sysobj);
     about_init();
-    sysobj_virt_add_simple(":app", NULL, "*", VSO_TYPE_DIR );
-    sysobj_virt_add_simple(":app/watchlist", NULL, "*", VSO_TYPE_DIR );
-    sysobj_virt_add_simple(":app/watchlist/no-group", NULL, "*", VSO_TYPE_DIR );
+    sysobj_virt_add_simple_mkpath(":app/watchlist/no-group", NULL, "*", VSO_TYPE_DIR);
     class_add_simple(":app/watchlist*", "Watchlist item", "watchlist", OF_GLOB_PATTERN, 1.0);
     return 1;
 }

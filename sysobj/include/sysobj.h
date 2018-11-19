@@ -31,7 +31,7 @@
 #include "term_color.h" /* used in formatting output */
 #include "util_sysobj.h"
 
-#define UPDATE_INTERVAL_DEFAULT  11.0   /* in seconds */
+#define UPDATE_INTERVAL_DEFAULT  10.0   /* in seconds */
 #define UPDATE_INTERVAL_NEVER     0.0   /* in seconds */
 
 enum {
@@ -183,20 +183,19 @@ const gchar *sysobj_root_get();
  * if sysobj_root_set() was already used. */
 void sysobj_init(const gchar *alt_root);
 void sysobj_cleanup();
-
 double sysobj_elapsed(); /* time since sysobj_init(), in seconds */
 
 #define sysobj_virt_new() g_new0(sysobj_virt, 1)
 void sysobj_virt_free(sysobj_virt *s);
 gboolean sysobj_virt_add(sysobj_virt *vo); /* TRUE if added, FALSE if exists (was overwritten) or error */
 gboolean sysobj_virt_add_simple(const gchar *base, const gchar *name, const gchar *data, int type);
+gboolean sysobj_virt_add_simple_mkpath(const gchar *base, const gchar *name, const gchar *data, int type);
 void sysobj_virt_remove(gchar *glob);
 sysobj_virt *sysobj_virt_find(const gchar *path);
 gchar *sysobj_virt_get_data(const sysobj_virt *vo, const gchar *req);
 int sysobj_virt_get_type(const sysobj_virt *vo, const gchar *req);
 GSList *sysobj_virt_all_paths();
 void sysobj_virt_cleanup();
-
 /* using the glib key-value file parser, create a tree of
  * base/group/name=value virtual sysobj's. Items before a first
  * group are put in base/name=value. */
@@ -212,11 +211,6 @@ gboolean verify_parent(sysobj *obj, const gchar *parent_path_suffix);
 typedef int (f_compare_sysobj_data)(const sysobj_data *a, const sysobj_data *b);
 int compare_str_base10(const sysobj_data *a, const sysobj_data *b);
 int compare_str_base16(const sysobj_data *a, const sysobj_data *b);
-
-#define PARAM_NOT_UNUSED(p); { p = p; }
-/* can be used in class f_format() functions that
- * don't use fmt_ops to quiet -Wunused-parameter nagging.  */
-#define FMT_OPTS_IGNORE() { PARAM_NOT_UNUSED(fmt_opts); }
 
 void class_init();
 GSList *class_get_list();
@@ -256,8 +250,6 @@ gchar *sysobj_format_from_fn(const gchar *base, const gchar *name, int fmt_opts)
 double sysobj_update_interval(sysobj *s);
 void sysobj_free(sysobj *s);
 
-void sysobj_data_free(sysobj_data *d, gboolean and_self);
-
 /* using the request parent */
 sysobj *sysobj_parent(sysobj *s);
 sysobj *sysobj_child(sysobj *s, gchar *child);
@@ -271,6 +263,7 @@ GSList *sysobj_children(sysobj *s, gchar *include_glob, gchar *exclude_glob, gbo
 GSList *sysobj_children_ex(sysobj *s, GSList *filters, gboolean sort);
 
 sysobj_data *sysobj_data_dup(const sysobj_data *src);
+void sysobj_data_free(sysobj_data *d, gboolean and_self);
 
 /* table is null-terminated string list of null-terminated UNTRANSLATED strings
  * table_len, optional, improves speed
