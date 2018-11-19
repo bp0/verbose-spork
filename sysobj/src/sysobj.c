@@ -209,6 +209,7 @@ const sysobj_class *class_add(sysobj_class *c) {
 const sysobj_class *class_add_full(sysobj_class *base,
     const gchar *tag, const gchar *pattern,
     const gchar *s_label, const gchar *s_halp, guint flags,
+    double s_update_interval,
     void *f_verify, void *f_label, void *f_halp,
     void *f_format, void *f_update_interval, void *f_compare,
     void *f_flags ) {
@@ -219,6 +220,7 @@ const sysobj_class *class_add_full(sysobj_class *base,
     CLASS_PROVIDE_OR_INHERIT(pattern);
     CLASS_PROVIDE_OR_INHERIT(s_label);
     CLASS_PROVIDE_OR_INHERIT(s_halp);
+    CLASS_PROVIDE_OR_INHERIT(s_update_interval);
     CLASS_PROVIDE_OR_INHERIT(flags);
     CLASS_PROVIDE_OR_INHERIT(f_verify);
     CLASS_PROVIDE_OR_INHERIT(f_label);
@@ -236,8 +238,8 @@ const sysobj_class *class_add_full(sysobj_class *base,
     return NULL;
 }
 
-const sysobj_class *class_add_simple(const gchar *pattern, const gchar *label, const gchar *tag, guint flags) {
-    return class_add_full(NULL, tag, pattern, label, NULL, flags, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+const sysobj_class *class_add_simple(const gchar *pattern, const gchar *label, const gchar *tag, guint flags, double update_interval) {
+    return class_add_full(NULL, tag, pattern, label, NULL, flags, update_interval, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 }
 
 gboolean sysobj_has_flag(sysobj *s, guint flag) {
@@ -477,9 +479,10 @@ void sysobj_unread_data(sysobj *s) {
 
 double sysobj_update_interval(sysobj *s) {
     if (s) {
-        if (s->cls && s->cls->f_update_interval) {
+        if (s->cls && s->cls->f_update_interval)
             return s->cls->f_update_interval(s);
-        }
+        if (s->cls && s->cls->s_update_interval)
+            return s->cls->s_update_interval;
         return UPDATE_INTERVAL_DEFAULT;
     }
     return UPDATE_INTERVAL_NEVER;
@@ -1205,7 +1208,11 @@ const gchar *sysobj_suggest(sysobj *s) {
 
 gboolean sysobj_data_expired(sysobj *s) {
     if (s) {
-        if ( (sysobj_elapsed() - s->data.stamp) >= sysobj_update_interval(s) ) {
+        double ui = sysobj_update_interval(s);
+        if (ui == UPDATE_INTERVAL_NEVER)
+            return !s->data.was_read; /* once read, never expires */
+
+        if ( (sysobj_elapsed() - s->data.stamp) >=  ui ) {
             return TRUE;
         }
     }

@@ -49,8 +49,6 @@ struct _bpSysObjViewPrivate {
 
     gint refresh_timer_timeout_id;
     gint refresh_timer_interval_ms;
-    gint listing_timer_timeout_id;
-    gint listing_timer_interval_ms;
 };
 
 G_DEFINE_TYPE(bpSysObjView, bp_sysobj_view, GTK_TYPE_PANED);
@@ -121,9 +119,6 @@ bp_sysobj_view_init(bpSysObjView *s)
     priv->refresh_timer_interval_ms = (UPDATE_TIMER_SECONDS * 1000.0);
     priv->refresh_timer_timeout_id = g_timeout_add(priv->refresh_timer_interval_ms, (GSourceFunc)bp_sysobj_view_refresh, s);
 
-    //priv->listing_timer_interval_ms = (UPDATE_LIST_TIMER_SECONDS * 1000.0);
-    //priv->listing_timer_timeout_id = g_timeout_add(priv->listing_timer_interval_ms, (GSourceFunc)_update_store, s);
-
     _create(s);
 
     g_signal_connect(s, "destroy", G_CALLBACK(_cleanup), NULL);
@@ -143,9 +138,7 @@ enum
 {
    KV_COL_ICON,
    KV_COL_KEY,
-   KV_COL_LABEL,
    KV_COL_VALUE,
-   KV_COL_TAG,
    KV_COL_INDEX,
    KV_COL_LIVE,
    KV_N_COLUMNS
@@ -154,17 +147,14 @@ enum
 static const char *kv_col_names[] = {
     "", /* icon */
     "Item",
-    "Label",
     "Value",
-    "Tag",
-    "Index",
-    "Is Live",
+    "", /* pins index */
+    "" /* needs full update */,
 };
 
 static void _cleanup(bpSysObjView *s) {
     bpSysObjViewPrivate *priv = BP_SYSOBJ_VIEW_PRIVATE(s);
     g_source_remove(priv->refresh_timer_timeout_id);
-    //g_source_remove(priv->listing_timer_timeout_id);
     pins_free(priv->pins);
     sysobj_free(priv->obj);
     g_free(priv->new_target);
@@ -174,7 +164,7 @@ static void _create(bpSysObjView *s) {
     bpSysObjViewPrivate *priv = BP_SYSOBJ_VIEW_PRIVATE(s);
 
     /* tree store and tree view */
-    priv->store = gtk_tree_store_new(KV_N_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, G_TYPE_INT);
+    priv->store = gtk_tree_store_new(KV_N_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, G_TYPE_INT);
     priv->view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(priv->store));
 
     GtkWidget *list_scroll = gtk_scrolled_window_new(NULL, NULL);
@@ -258,6 +248,51 @@ void _row_activate(GtkTreeView *tree_view, GtkTreePath *path, GtkTreeViewColumn 
     }
 }
 
+static void _check_row(GtkTreeModel *model, GtkTreePath *path, GtkTreeIter *iter, bpSysObjViewPrivate *priv) {
+    int pi = 0, full = 0, depth = gtk_tree_path_get_depth(path);
+    gtk_tree_model_get(model, iter, KV_COL_INDEX, &pi, KV_COL_LIVE, &full, -1);
+    const pin *p = pins_get_nth(priv->pins, pi);
+    gboolean up = sysobj_read(p->obj, FALSE);
+    if (up || full) {
+        /* update value */
+        gchar *nice = sysobj_format(p->obj, priv->fmt_opts | FMT_OPT_LIST_ITEM);
+        gtk_tree_store_set(GTK_TREE_STORE(model), iter,
+            KV_COL_ICON, (p->obj->data.is_dir) ? "folder" : "text-x-generic",
+            KV_COL_KEY, p->obj->name_req,
+            KV_COL_VALUE, nice,
+            KV_COL_LIVE, 0, -1);
+        g_free(nice);
+        if (p == bp_pin_inspect_get_pin(BP_PIN_INSPECT(priv->pi)) ) {
+            bp_pin_inspect_do(BP_PIN_INSPECT(priv->pi), p, priv->fmt_opts);
+        }
+        /* check children */
+        if (p->obj->data.is_dir && depth <= priv->max_depth) {
+            GSList *l = NULL, *childs = sysobj_children(p->obj, NULL, NULL, TRUE);
+            for (l = childs; l; l = l->next) {
+                GtkTreeIter iter_new;
+                int npi = pins_add_from_fn(priv->pins, p->obj->path_req, (gchar*)l->data);
+                if (npi >= 0) {
+                    /* needs to be added */
+                    gtk_tree_store_append(priv->store, &iter_new, iter);
+                    gtk_tree_store_set(priv->store, &iter_new,
+                                KV_COL_INDEX, npi,
+                                KV_COL_LIVE, 1,
+                                -1);
+                } /* new row added */
+            } /* for each child */
+            g_slist_free_full(childs, g_free);
+            if (depth == 1)
+                gtk_tree_view_expand_row(GTK_TREE_VIEW(priv->view), path, FALSE);
+        } /* if is_dir */
+    } /* if up(date) */
+};
+
+static void _check_tree(bpSysObjView *s) {
+    bpSysObjViewPrivate *priv = BP_SYSOBJ_VIEW_PRIVATE(s );
+    if (!priv->obj) return;
+    gtk_tree_model_foreach(GTK_TREE_MODEL(priv->store), (GtkTreeModelForeachFunc)_check_row, priv);
+}
+
 static void _reset(bpSysObjView *s) {
     bpSysObjViewPrivate *priv = BP_SYSOBJ_VIEW_PRIVATE(s);
     bp_pin_inspect_do(BP_PIN_INSPECT(priv->pi), NULL, 0);
@@ -269,77 +304,56 @@ static void _reset(bpSysObjView *s) {
     priv->obj = NULL;
 }
 
-static gboolean _update_store(bpSysObjView *s) {
+static gboolean _new_target(bpSysObjView *s) {
     bpSysObjViewPrivate *priv = BP_SYSOBJ_VIEW_PRIVATE(s);
     gboolean is_new = FALSE;
 
     if (priv->new_target) {
         is_new = TRUE;
         _reset(s);
-
         /* load the new */
         priv->obj = sysobj_new_from_fn(priv->new_target, NULL);
         g_free(priv->new_target);
         priv->new_target = NULL;
     }
 
-    if (!priv->obj) goto _update_store_finish;
+    if (!priv->obj) goto _new_target_finish;
+    int npi = pins_add_from_fn(priv->pins, priv->obj->path_req, NULL);
 
-    /* load/update store */
-    //TODO: what if a symlink target changes?
-    sysobj_fscheck(priv->obj);
-    sysobj_read(priv->obj, TRUE);
-
-    if (priv->include_target)
-        pins_add_from_fn(priv->pins, priv->obj->path_req, NULL);
-
-    if (priv->obj->exists) {
-        gchar *fn = NULL;
-        GSList *childs = sysobj_children(priv->obj, NULL, NULL, TRUE);
-        for(GSList *l = childs; l; l = l->next) {
-            fn = (gchar*)l->data;
-            pins_add_from_fn(priv->pins, priv->obj->path_req, fn);
+    GtkTreeIter iter;
+    if (priv->include_target) {
+        GtkTreeIter iter;
+        gtk_tree_store_append(priv->store, &iter, NULL);
+        gtk_tree_store_set(priv->store, &iter,
+                    KV_COL_INDEX, npi,
+                    KV_COL_LIVE, 1,
+                    -1);
+    } else {
+        GSList *l = NULL, *childs = sysobj_children(priv->obj, NULL, NULL, TRUE);
+        for(l = childs; l; l = l->next) {
+            int npi = pins_add_from_fn(priv->pins, priv->obj->path_req, (gchar*)l->data);
+            gtk_tree_store_append(priv->store, &iter, NULL);
+            gtk_tree_store_set(priv->store, &iter,
+                        KV_COL_INDEX, npi,
+                        KV_COL_LIVE, 1,
+                        -1);
         }
         g_slist_free_full(childs, g_free);
     }
 
-    if (is_new) {
-        __pins_list_view_fill(s);
-        _expand_all(s);
-        _select_first_item(s);
-        g_signal_emit(s, _signals[SIG_LANDED], 0);
-    }
+    /* will be refreshed in ~0.2 seconds */
+    _check_tree(s); /* or just do it now */
 
-    /* will be refreshed in 0.2 seconds */
+    _select_first_item(s);
+    g_signal_emit(s, _signals[SIG_LANDED], 0);
 
-_update_store_finish:
+_new_target_finish:
     return G_SOURCE_REMOVE; /* remove from the main loop */
-}
-
-gboolean __pins_list_view_update_row(GtkTreeModel *model, GtkTreePath *path, GtkTreeIter *iter, bpSysObjViewPrivate *priv) {
-    int pi, live;
-    const pin *p = NULL;
-    gtk_tree_model_get(model, iter, KV_COL_LIVE, &live, -1);
-    if (live) {
-        gtk_tree_model_get(model, iter, KV_COL_INDEX, &pi, -1);
-        p = pins_pin_if_updated_since(priv->pins, pi, UPDATE_TIMER_SECONDS);
-        if (p) {
-            gchar *nice = sysobj_format(p->obj, priv->fmt_opts | FMT_OPT_LIST_ITEM);
-            gtk_tree_store_set(GTK_TREE_STORE(model), iter, KV_COL_VALUE, nice, -1);
-            g_free(nice);
-            if (p == bp_pin_inspect_get_pin(BP_PIN_INSPECT(priv->pi)) ) {
-                bp_pin_inspect_do(BP_PIN_INSPECT(priv->pi), p, priv->fmt_opts);
-            }
-        }
-    }
-    return FALSE;
 }
 
 gboolean bp_sysobj_view_refresh(bpSysObjView *s) {
     bpSysObjViewPrivate *priv = BP_SYSOBJ_VIEW_PRIVATE(s);
-    pins_refresh(priv->pins);
-    _update_store(s);
-    gtk_tree_model_foreach(GTK_TREE_MODEL(priv->store), (GtkTreeModelForeachFunc)__pins_list_view_update_row, priv);
+    _check_tree(s);
     return G_SOURCE_CONTINUE;
 }
 
@@ -375,49 +389,7 @@ void bp_sysobj_view_set_path(bpSysObjView *s, const gchar *new_path) {
     if (priv->new_target)
         g_free(priv->new_target); /* I guess it's new new target */
     priv->new_target = g_strdup(new_path);
-    g_idle_add((GSourceFunc)_update_store, s);
-}
-
-static void __pins_list_view_fill(bpSysObjView *s) {
-    bpSysObjViewPrivate *priv = BP_SYSOBJ_VIEW_PRIVATE(s);
-    GtkTreeIter iter, parent;
-
-    gtk_tree_store_clear(priv->store);
-
-    int i = 0;
-    GSList *l = priv->pins->list;
-    while (l) {
-        pin *p = l->data;
-
-        gchar *label = g_strdup(sysobj_label(p->obj));
-        gchar *nice = sysobj_format(p->obj, priv->fmt_opts | FMT_OPT_LIST_ITEM);
-        gchar *tag = g_strdup_printf("{%s}", p->obj->cls ? (p->obj->cls->tag ? p->obj->cls->tag : p->obj->cls->pattern) : "none");
-        gboolean is_live = !(p->update_interval == UPDATE_INTERVAL_NEVER);
-
-        gchar *nice_key = (0 && label)
-            ? g_strdup_printf("%s <small>(%s)</small>", label, p->obj->name_req)
-            : g_strdup(p->obj->name_req);
-
-        if (i == 0)
-            gtk_tree_store_append(priv->store, &parent, NULL);
-        else
-            gtk_tree_store_append(priv->store, &iter, &parent);
-
-        gtk_tree_store_set(priv->store, i ? &iter : &parent,
-                    KV_COL_ICON, (p->obj->data.is_dir) ? "folder" : "text-x-generic",
-                    KV_COL_KEY, nice_key,
-                    KV_COL_LABEL, (label),
-                    KV_COL_VALUE, (nice),
-                    KV_COL_TAG, (tag),
-                    KV_COL_INDEX, (i),
-                    KV_COL_LIVE, (is_live),
-                    -1);
-
-        g_free(nice);
-        g_free(nice_key);
-
-        i++; l = l->next;
-    }
+    g_idle_add((GSourceFunc)_new_target, s);
 }
 
 void bp_sysobj_view_show_inspector(bpSysObjView *s) {

@@ -104,7 +104,8 @@ static int app_init(void) {
     about_init();
     sysobj_virt_add_simple(":app", NULL, "*", VSO_TYPE_DIR );
     sysobj_virt_add_simple(":app/watchlist", NULL, "*", VSO_TYPE_DIR );
-    sysobj_virt_add_simple(":app/watchlist/ungrouped", NULL, "*", VSO_TYPE_DIR );
+    sysobj_virt_add_simple(":app/watchlist/no-group", NULL, "*", VSO_TYPE_DIR );
+    class_add_simple(":app/watchlist*", "Watchlist item", "watchlist", OF_GLOB_PATTERN, 1.0);
     return 1;
 }
 
@@ -192,6 +193,7 @@ int main(int argc, char **argv) {
     browser = bp_sysobj_browser_new();
     watchlist = bp_sysobj_view_new();
     bp_sysobj_view_set_include_target(BP_SYSOBJ_VIEW(watchlist), FALSE);
+    bp_sysobj_view_set_max_depth(BP_SYSOBJ_VIEW(watchlist), 1);
     bp_sysobj_view_set_path(BP_SYSOBJ_VIEW(watchlist), ":app/watchlist");
     g_signal_connect(watchlist, "item-activated",
           G_CALLBACK(watchlist_activated), watchlist);

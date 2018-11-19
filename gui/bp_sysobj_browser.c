@@ -108,7 +108,7 @@ static void _browser_watch(GtkButton *button, gpointer user_data) {
     const pin *p = bp_sysobj_view_get_selected_pin(BP_SYSOBJ_VIEW(priv->sv));
     if (!p) return;
     gchar *name = g_path_get_basename(p->obj->path);
-    sysobj_virt_add_simple(":app/watchlist/ungrouped", name, p->obj->path,
+    sysobj_virt_add_simple(":app/watchlist/no-group", name, p->obj->path,
         VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_AUTOLINK );
 }
 

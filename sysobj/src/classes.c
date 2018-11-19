@@ -76,7 +76,7 @@ void class_any_utf8();
 
 void class_init() {
     generators_init();
-    class_add_simple(":", _("Virtual sysfs root"), "vsfs", OF_NONE);
+    class_add_simple(":", _("Virtual sysfs root"), "vsfs", OF_NONE, 60);
 
     class_proc_alts();
 

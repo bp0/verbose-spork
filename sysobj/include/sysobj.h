@@ -31,8 +31,8 @@
 #include "term_color.h" /* used in formatting output */
 #include "util_sysobj.h"
 
-#define UPDATE_INTERVAL_DEFAULT  1.0   /* in seconds */
-#define UPDATE_INTERVAL_NEVER    0.0   /* in seconds */
+#define UPDATE_INTERVAL_DEFAULT  11.0   /* in seconds */
+#define UPDATE_INTERVAL_NEVER     0.0   /* in seconds */
 
 enum {
     OF_NONE          = 0,
@@ -82,6 +82,7 @@ typedef struct sysobj_class {
     const gchar *s_label; /* label for "simple" classes, not translated */
     const gchar *s_halp;  /* markup text. halp for "simple" classes */
     const gchar *s_suggest; /* suggest an alternate path */
+    double s_update_interval;
 
     gboolean (*f_verify) (sysobj *obj);      /* verify the object is of this class */
     const gchar *(*f_label)  (sysobj *obj);  /* translated label */
@@ -223,10 +224,10 @@ GSList *class_get_list();
 void class_free(sysobj_class *c);
 const sysobj_class *class_add(sysobj_class *c);
 const sysobj_class *class_add_full(sysobj_class *base,
-    const gchar *tag, const gchar *pattern, const gchar *s_label, const gchar *s_halp, guint flags,
+    const gchar *tag, const gchar *pattern, const gchar *s_label, const gchar *s_halp, guint flags, double s_update_interval,
     void *f_verify, void *f_label, void *f_halp,
     void *f_format, void *f_update_interval, void *f_compare, void *f_flags );
-const sysobj_class *class_add_simple(const gchar *pattern, const gchar *label, const gchar *tag, guint flags);
+const sysobj_class *class_add_simple(const gchar *pattern, const gchar *label, const gchar *tag, guint flags, double update_interval);
 gboolean class_has_flag(const sysobj_class *c, guint flag);
 void class_cleanup();
 
