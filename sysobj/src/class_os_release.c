@@ -65,7 +65,11 @@ const gchar *os_release_label(sysobj *obj) {
 
 static gchar *os_release_format(sysobj *obj, int fmt_opts) {
     if (!strcmp("os_release", obj->name)) {
+        gchar *ret = NULL;
         gchar *full_name = sysobj_raw_from_fn(":/os_release", "PRETTY_NAME");
+        gchar *ansi_color = sysobj_raw_from_fn(":/os_release", "ANSI_COLOR");
+        if (ansi_color)
+            util_strstrip_double_quotes_dumb(ansi_color);
         if (!full_name) {
             gchar *name = sysobj_raw_from_fn(":/os_release", "NAME");
             gchar *version = sysobj_raw_from_fn(":/os_release", "VERSION");
@@ -75,13 +79,18 @@ static gchar *os_release_format(sysobj *obj, int fmt_opts) {
                 full_name = g_strdup_printf("%s %s", name, version ? version : "");
             g_free(name);
             g_free(version);
-        } else {
+        } else
             util_strstrip_double_quotes_dumb(full_name);
-        }
-        if (full_name)
-            return full_name;
-        else
-            return g_strdup(_("(Unknown)")); /* TODO: check fmt_opts */
+        if (full_name) {
+            ret = full_name;
+            if (ansi_color && (fmt_opts & FMT_OPT_ATERM) ) {
+                ret = g_strdup_printf("\x1b[%sm%s" ANSI_COLOR_RESET, ansi_color, full_name);
+                free(full_name);
+            }
+        } else
+            ret = g_strdup(_("(Unknown)")); /* TODO: check fmt_opts */
+        g_free(ansi_color);
+        return ret;
     }
     return simple_format(obj, fmt_opts);
 }
