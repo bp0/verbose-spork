@@ -85,6 +85,7 @@ static void _create(bpPinInspect *s) {
     gtk_widget_set_halign(lbl_top, GTK_ALIGN_START);
     gtk_widget_set_valign(lbl_top, GTK_ALIGN_START);
     gtk_widget_set_margin_start(lbl_top, 10);
+    gtk_label_set_selectable(GTK_LABEL(lbl_top), TRUE);
     g_signal_connect(lbl_top, "activate-link", G_CALLBACK(_activate_link), NULL);
     gtk_widget_show(lbl_top);
 
@@ -94,6 +95,7 @@ static void _create(bpPinInspect *s) {
     gtk_widget_set_halign(lbl_value, GTK_ALIGN_START);
     gtk_widget_set_valign(lbl_value, GTK_ALIGN_START);
     gtk_widget_set_margin_start(lbl_value, 10);
+    gtk_label_set_selectable(GTK_LABEL(lbl_value), TRUE);
     g_signal_connect (lbl_value, "activate-link", G_CALLBACK(_activate_link), NULL);
     gtk_widget_show(lbl_value);
 
@@ -103,6 +105,7 @@ static void _create(bpPinInspect *s) {
     gtk_widget_set_halign(lbl_debug, GTK_ALIGN_START);
     gtk_widget_set_valign(lbl_debug, GTK_ALIGN_START);
     gtk_widget_set_margin_start(lbl_debug, 10);
+    gtk_label_set_selectable(GTK_LABEL(lbl_debug), TRUE);
     g_signal_connect (lbl_debug, "activate-link", G_CALLBACK(_activate_link), NULL);
     gtk_widget_show(lbl_debug);
 
@@ -123,6 +126,7 @@ static void _create(bpPinInspect *s) {
     gtk_widget_set_halign(lbl_help, GTK_ALIGN_START);
     gtk_widget_set_valign(lbl_help, GTK_ALIGN_START);
     gtk_widget_set_margin_start(lbl_help, 10);
+    gtk_label_set_selectable(GTK_LABEL(lbl_help), TRUE);
     g_signal_connect(lbl_help, "activate-link", G_CALLBACK(_activate_link), NULL);
     gtk_widget_show(lbl_help);
 
