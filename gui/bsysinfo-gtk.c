@@ -21,6 +21,7 @@
 #include "bsysinfo-gtk.h"
 #include <inttypes.h> /* for PRIu64 */
 #include "uri_handler.h"
+#include "bp_sysobj_search.h"
 #include "bp_sysobj_browser.h"
 #include "bp_sysobj_view.h"
 
@@ -34,6 +35,7 @@ GtkWidget *stack = NULL;
 
 GtkWidget *browser = NULL;
 GtkWidget *watchlist = NULL;
+GtkWidget *search = NULL;
 GtkWidget *about = NULL;
 
 const char about_markup_text[] =
@@ -165,8 +167,19 @@ static void destroy( GtkWidget *widget,
     gtk_main_quit();
 }
 
-void watchlist_activated (gpointer user_data, const gchar *sysobj_path) {
+void search_activated(gpointer view, gchar *sysobj_path, gpointer user_data) {
     browser_navigate(sysobj_path);
+    g_free(sysobj_path);
+}
+
+void watchlist_activated(gpointer view, gchar *sysobj_path, gpointer user_data) {
+    /* resolve the symlink target */
+    sysobj *obj = sysobj_new_from_fn(sysobj_path, NULL);
+    gchar *target = g_strdup(obj->path);
+    sysobj_free(obj);
+    g_free(sysobj_path);
+    browser_navigate(target);
+    g_free(target);
 }
 
 int main(int argc, char **argv) {
@@ -195,6 +208,9 @@ int main(int argc, char **argv) {
     bp_sysobj_view_set_path(BP_SYSOBJ_VIEW(watchlist), ":app/watchlist");
     g_signal_connect(watchlist, "item-activated",
           G_CALLBACK(watchlist_activated), watchlist);
+    search = bp_sysobj_search_new();
+    g_signal_connect(search, "search-result-activated",
+          G_CALLBACK(search_activated), search);
 
     /* notebook pages */
     GtkWidget *blah = NULL;
@@ -213,6 +229,7 @@ int main(int argc, char **argv) {
         gtk_widget_show(stack);
     }
     notebook_add_page("browser", _("Browser"), notebook, browser, 5);
+    notebook_add_page("search", _("Search"), notebook, search, 5);
     notebook_add_page("watchlist", _("Watchlist"), notebook, watchlist, 5);
     notebook_add_page("about", _("About"), notebook, about, 5);
 

@@ -27,7 +27,6 @@ struct _bpSysObjBrowserPrivate {
     GtkWidget *sv;
     GtkWidget *query;
     GtkWidget *btn_watch;
-    GtkWidget *browser;
     GSList *history;
     int h_pos; /* index into history */
     int h_len; /* g_slist_lenght(.history) */
@@ -92,8 +91,9 @@ void bp_sysobj_browser_navigate(bpSysObjBrowser *s, const gchar *new_location) {
     bp_sysobj_view_set_path(BP_SYSOBJ_VIEW(priv->sv), new_location);
 }
 
-void _browser_line_activate(bpSysObjView *view, const gchar *sysobj_path, bpSysObjBrowser *s) {
+static void _browser_line_activate(bpSysObjView *view, const gchar *sysobj_path, bpSysObjBrowser *s) {
     bp_sysobj_browser_navigate(s, sysobj_path);
+    g_free(sysobj_path);
 }
 
 static void _browser_entry_activate(GtkEntry *entry, gpointer user_data) {

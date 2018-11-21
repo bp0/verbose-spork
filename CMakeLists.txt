@@ -118,6 +118,7 @@ set_target_properties(uber-graph PROPERTIES COMPILE_FLAGS "-Wno-deprecated-decla
 endif()
 add_executable(bsysinfo-gtk
         gui/bsysinfo-gtk.c
+        gui/bp_sysobj_search.c
         gui/bp_sysobj_browser.c
         gui/bp_sysobj_view.c
         gui/bp_pin_inspect.c
