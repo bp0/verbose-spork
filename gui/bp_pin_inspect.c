@@ -197,7 +197,8 @@ void bp_pin_inspect_do(bpPinInspect *s, const pin *p, int fmt_opts) {
         suggest = g_strdup_printf(_("Consider using <a href=\"sysobj:%s\">%s</a>"), suggest_path, suggest_path);
 
     /* debug stuff */
-    gchar *data_info = g_strdup_printf("raw_size = %lu byte(s)%s; guess_nbase = %d\ntag = %s",
+    gchar *data_info = g_strdup_printf("was_read = %s; is_null = %s; len = %lu byte(s)%s; guess_nbase = %d\ntag = %s",
+        p->obj->data.was_read ? "yes" : "no", (p->obj->data.any == NULL) ? "yes" : "no",
         p->obj->data.len, p->obj->data.is_utf8 ? ", utf8" : "", p->obj->data.maybe_num, tag);
     gchar *update = g_strdup_printf("update_interval = %0.4lfs, last_update = %0.4lfs", p->update_interval, p->obj->data.stamp);
     gchar *pin_info = g_strdup_printf("hist_stat = %d, hist_len = %" PRIu64 "/%" PRIu64 ", hist_mem_size = %" PRIu64 " (%" PRIu64 " bytes)",

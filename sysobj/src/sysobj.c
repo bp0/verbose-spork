@@ -17,10 +17,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  */
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include "gg_file.h"
 #include "sysobj.h"
 
 gchar sysobj_root[1024] = "";
@@ -58,7 +58,7 @@ static sysobj_filter path_filters[] = {
 
     { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/usr/lib/os-release", NULL },
 
-    { SO_FILTER_STATIC | SO_FILTER_EXCLUDE,     "/sys/kernel/security/apparmor*/revision", NULL },
+    //{ SO_FILTER_STATIC | SO_FILTER_EXCLUDE,     "/sys/kernel/security/apparmor*/revision", NULL },
 
     { SO_FILTER_NONE, "", NULL },
 };
@@ -312,7 +312,9 @@ sysobj *sysobj_dup(const sysobj *src) {
 void sysobj_data_free(sysobj_data *d, gboolean and_self) {
     if (d) {
         g_free(d->any);
+        d->any = NULL;
         g_slist_free_full(d->childs, (GDestroyNotify)g_free);
+        d->childs = NULL;
         if (and_self)
             g_free(d);
     }
@@ -425,6 +427,7 @@ static void sysobj_read_dir(sysobj *s) {
             s->data.was_read = TRUE;
         }
     }
+    sysobj_data_free(&s->data, FALSE);
     s->data.childs = nl;
 }
 
@@ -445,6 +448,7 @@ static void sysobj_read_data(sysobj *s) {
             }
 
             if (readable) {
+                sysobj_data_free(&s->data, FALSE);
                 s->data.str = sysobj_virt_get_data(vo, s->path);
                 s->data.was_read = TRUE;
                 if (s->data.str) {
@@ -456,14 +460,25 @@ static void sysobj_read_data(sysobj *s) {
         }
     } else {
         /* normal */
-        s->data.was_read =
-            g_file_get_contents(s->path_fs, &s->data.str, &s->data.len, &error);
+        if (0) {
+            sysobj_data_free(&s->data, FALSE);
+            s->data.was_read =
+                g_file_get_contents(s->path_fs, &s->data.str, &s->data.len, &error);
+                if (!s->data.str) {
+                    if (error && error->code == G_FILE_ERROR_ACCES)
+                        s->access_fail = TRUE;
+                }
+                if (error)
+                    g_error_free(error);
+        } else {
+            sysobj_data_free(&s->data, FALSE);
+            int err = 0;
+            s->data.was_read = gg_file_get_contents_non_blocking(s->path_fs, &s->data.str, &s->data.len, &err);
             if (!s->data.str) {
-                if (error && error->code == G_FILE_ERROR_ACCES)
+                if (err == EACCES)
                     s->access_fail = TRUE;
             }
-            if (error)
-                g_error_free(error);
+        }
     }
 
     if (s->data.was_read) {
