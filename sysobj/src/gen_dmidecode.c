@@ -92,7 +92,7 @@ static gchar *dmidecode_get_str(const gchar *path) {
         ret = g_strdup(string_dir);
     } else {
         /* only when not using a different sysobj_root */
-        if (!sysobj_root_get()) {
+        if (!sysobj_using_alt_root() ) {
             const gchar *argv[] = { "/usr/bin/env", "dmidecode", "-s", name, NULL };
             ret = util_exec(argv);
         }

@@ -156,7 +156,7 @@ struct sysobj {
     gboolean root_can_write;
     gboolean others_can_read;
     gboolean others_can_write;
-    gboolean access_fail; /* needed root, but didn't have it */
+    gboolean access_fail; /* permission denied */
 
     sysobj_data data;
     const sysobj_class *cls;
@@ -184,6 +184,7 @@ typedef struct sysobj_virt {
 
 gboolean sysobj_root_set(const gchar *alt_root);
 const gchar *sysobj_root_get();
+#define sysobj_using_alt_root() (strlen(sysobj_root_get())!=0)
 /* NULL will not change the root
  * if sysobj_root_set() was already used. */
 void sysobj_init(const gchar *alt_root);

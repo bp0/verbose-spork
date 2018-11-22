@@ -159,7 +159,7 @@ uint32_t sysobj_uint32_from_fn(const gchar *base, const gchar *name, int nbase) 
 
 gchar *simple_format(sysobj* obj, int fmt_opts) {
     static const gchar *special[] = {
-        N_("{needs root}"),
+        N_("{permission denied}"),
         N_("{node}"),
         N_("{binary value}"),
         N_("{not found}"),
@@ -434,22 +434,27 @@ static void sysobj_read_data(sysobj *s) {
         s->data.was_read = FALSE;
         const sysobj_virt *vo = sysobj_virt_find(s->path);
         if (vo) {
-            s->data.str = sysobj_virt_get_data(vo, s->path);
-            if (s->data.str) {
-                s->data.was_read = TRUE;
-                s->data.len = strlen(s->data.str); //TODO: what if not c-string?
-            } else {
-                if (sysobj_has_flag(s, OF_REQ_ROOT) && !util_have_root())
-                    s->access_fail = TRUE;
+            gboolean readable = s->others_can_read;
+            if (!readable) {
+                if (s->root_can_read && util_have_root() )
+                    readable = TRUE;
             }
+
+            if (readable) {
+                s->data.str = sysobj_virt_get_data(vo, s->path);
+                s->data.was_read = TRUE;
+                if (s->data.str) {
+                    s->data.len = strlen(s->data.str); //TODO: what if not c-string?
+                } else
+                    s->exists = FALSE;
+            } else
+                s->access_fail = TRUE;
         }
     } else {
         /* normal */
         s->data.was_read =
             g_file_get_contents(s->path_fs, &s->data.str, &s->data.len, &error);
             if (!s->data.str) {
-                if (sysobj_has_flag(s, OF_REQ_ROOT) && !util_have_root())
-                    s->access_fail = TRUE;
                 if (error && error->code == G_FILE_ERROR_ACCES)
                     s->access_fail = TRUE;
             }
@@ -472,14 +477,13 @@ gboolean sysobj_read(sysobj *s, gboolean force) {
             if (!sysobj_data_expired(s) )
                 return FALSE;
         }
+
         if (s->data.is_dir)
             sysobj_read_dir(s);
         else
             sysobj_read_data(s);
 
-        if (s->data.was_read)
-            s->data.stamp = sysobj_elapsed();
-
+        s->data.stamp = sysobj_elapsed();
         return TRUE;
     }
     return FALSE;

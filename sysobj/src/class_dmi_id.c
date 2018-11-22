@@ -119,6 +119,7 @@ gboolean dmi_value_is_placeholder(sysobj *obj) {
         "System Product Name",
         "System Manufacturer",
         "System Version",
+        "System Serial Number",
         "Rev X.0x", /* ASUS board version nonsense */
         "x.x",      /* Gigabyte board version nonsense */
         "NA",
