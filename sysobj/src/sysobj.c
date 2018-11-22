@@ -163,6 +163,7 @@ gchar *simple_format(sysobj* obj, int fmt_opts) {
         N_("{node}"),
         N_("{binary value}"),
         N_("{not found}"),
+        N_("{empty}"),
     };
 
     if (obj) {
@@ -172,7 +173,10 @@ gchar *simple_format(sysobj* obj, int fmt_opts) {
         else if ( obj->data.is_dir )
             nice = g_strdup_printf( TERM_COLOR_FMT(ANSI_COLOR_BLUE), special[1] );
         else if ( !obj->data.is_utf8 )
-            nice = g_strdup_printf( TERM_COLOR_FMT(ANSI_COLOR_YELLOW), special[2] );
+            if ( obj->data.len == 0 )
+                nice = g_strdup_printf( TERM_COLOR_FMT(ANSI_COLOR_YELLOW), special[4] );
+            else
+                nice = g_strdup_printf( TERM_COLOR_FMT(ANSI_COLOR_YELLOW), special[2] );
         else if ( !obj->exists || !obj->data.str ) {
             if (fmt_opts & FMT_OPT_NULL_IF_MISSING)
                 nice = NULL;
