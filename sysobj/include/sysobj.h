@@ -195,6 +195,7 @@ sysobj_virt *sysobj_virt_find(const gchar *path);
 gchar *sysobj_virt_get_data(const sysobj_virt *vo, const gchar *req);
 int sysobj_virt_get_type(const sysobj_virt *vo, const gchar *req);
 GSList *sysobj_virt_all_paths();
+int sysobj_virt_count();
 void sysobj_virt_cleanup();
 /* using the glib key-value file parser, create a tree of
  * base/group/name=value virtual sysobj's. Items before a first
@@ -214,6 +215,7 @@ int compare_str_base16(const sysobj_data *a, const sysobj_data *b);
 
 void class_init();
 GSList *class_get_list();
+int class_count();
 #define class_new() g_new0(sysobj_class, 1)
 void class_free(sysobj_class *c);
 const sysobj_class *class_add(sysobj_class *c);

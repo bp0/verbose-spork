@@ -26,14 +26,20 @@ static void buff_basename(const gchar *path, gchar *buff, gsize n) {
     g_free(fname);
 }
 
-static gchar *get_root(const gchar *path) {
-    PARAM_NOT_UNUSED(path);
-    return g_strdup_printf("%s", sysobj_root_get());
-}
+static gchar *get_item(const gchar *path) {
+    gchar name[128] = "";
+    buff_basename(path, name, 127);
 
-static gchar *get_elapsed(const gchar *path) {
-    PARAM_NOT_UNUSED(path);
-    return g_strdup_printf("%lf", sysobj_elapsed());
+    if (!g_strcmp0(name, "root") )
+        return g_strdup_printf("%s", sysobj_root_get());
+    if (!g_strcmp0(name, "elapsed") )
+        return g_strdup_printf("%lf", sysobj_elapsed());
+    if (!g_strcmp0(name, "class_count") )
+        return g_strdup_printf("%lu", (long unsigned)class_count() );
+    if (!g_strcmp0(name, "virt_count") )
+        return g_strdup_printf("%lu", (long unsigned)sysobj_virt_count() );
+
+    return g_strdup("?");
 }
 
 static const gchar class_item_list[] =
@@ -157,10 +163,16 @@ static sysobj_virt vol[] = {
       .f_get_data = NULL, .f_get_type = NULL },
     { .path = ":sysobj/elapsed", .str = "",
       .type = VSO_TYPE_STRING | VSO_TYPE_CONST,
-      .f_get_data = get_elapsed, .f_get_type = NULL },
+      .f_get_data = get_item, .f_get_type = NULL },
     { .path = ":sysobj/root", .str = "",
       .type = VSO_TYPE_STRING | VSO_TYPE_CONST,
-      .f_get_data = get_root, .f_get_type = NULL },
+      .f_get_data = get_item, .f_get_type = NULL },
+    { .path = ":sysobj/class_count", .str = "",
+      .type = VSO_TYPE_STRING | VSO_TYPE_CONST,
+      .f_get_data = get_item, .f_get_type = NULL },
+    { .path = ":sysobj/virt_count", .str = "",
+      .type = VSO_TYPE_STRING | VSO_TYPE_CONST,
+      .f_get_data = get_item, .f_get_type = NULL },
     { .path = ":sysobj/classes", .str = "*",
       .type = VSO_TYPE_DIR | VSO_TYPE_DYN | VSO_TYPE_CONST,
       .f_get_data = get_class_info, .f_get_type = get_class_info_type },

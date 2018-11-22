@@ -55,6 +55,8 @@ static sysobj_filter path_filters[] = {
 
     { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/usr/lib/os-release", NULL },
 
+    { SO_FILTER_STATIC | SO_FILTER_EXCLUDE,     "/sys/kernel/security/apparmor*/revision", NULL },
+
     { SO_FILTER_NONE, "", NULL },
 };
 static GSList *sysobj_global_filters = NULL;
@@ -1110,7 +1112,6 @@ GSList *sysobj_filter_list(GSList *items, GSList *filters) {
     gsize i = 0, num_items = g_slist_length(items);
 
     marked = g_new(gboolean, num_items);
-
     while (fp) {
         f = fp->data;
         if (!f->pspec)
@@ -1230,4 +1231,12 @@ gboolean sysobj_data_expired(sysobj *s) {
         }
     }
     return FALSE;
+}
+
+int class_count() {
+    return g_slist_length(class_list);
+}
+
+int sysobj_virt_count() {
+    return g_slist_length(vo_list);
 }

@@ -18,7 +18,6 @@ static guint _signals[SIG_LAST] = { 0 };
 /* Forward declarations */
 static void _create(bpSysObjView *s);
 static void _cleanup(bpSysObjView *s);
-static gboolean _update_store(bpSysObjView *s);
 
 static void _expand_all(bpSysObjView *s);
 static void _select_first_item(bpSysObjView *s);
@@ -248,43 +247,50 @@ void _row_activate(GtkTreeView *tree_view, GtkTreePath *path, GtkTreeViewColumn 
     }
 }
 
-static void _check_row(GtkTreeModel *model, GtkTreePath *path, GtkTreeIter *iter, bpSysObjViewPrivate *priv) {
+static gboolean _check_row(GtkTreeModel *model, GtkTreePath *path, GtkTreeIter *iter, bpSysObjViewPrivate *priv) {
     int pi = 0, full = 0, depth = gtk_tree_path_get_depth(path);
     gtk_tree_model_get(model, iter, KV_COL_INDEX, &pi, KV_COL_LIVE, &full, -1);
     const pin *p = pins_get_nth(priv->pins, pi);
+    if (!p) return FALSE; //TODO:
     gboolean up = sysobj_read(p->obj, FALSE);
-    if (up || full) {
-        /* update value */
-        gchar *nice = sysobj_format(p->obj, priv->fmt_opts | FMT_OPT_LIST_ITEM);
-        gtk_tree_store_set(GTK_TREE_STORE(model), iter,
-            KV_COL_ICON, (p->obj->data.is_dir) ? "folder" : "text-x-generic",
-            KV_COL_KEY, p->obj->name_req,
-            KV_COL_VALUE, nice,
-            KV_COL_LIVE, 0, -1);
-        g_free(nice);
-        if (p == bp_pin_inspect_get_pin(BP_PIN_INSPECT(priv->pi)) ) {
-            bp_pin_inspect_do(BP_PIN_INSPECT(priv->pi), p, priv->fmt_opts);
-        }
-        /* check children */
-        if (p->obj->data.is_dir && depth <= priv->max_depth) {
-            GSList *l = NULL, *childs = sysobj_children(p->obj, NULL, NULL, TRUE);
-            for (l = childs; l; l = l->next) {
-                GtkTreeIter iter_new;
-                int npi = pins_add_from_fn(priv->pins, p->obj->path_req, (gchar*)l->data);
-                if (npi >= 0) {
-                    /* needs to be added */
-                    gtk_tree_store_append(priv->store, &iter_new, iter);
-                    gtk_tree_store_set(priv->store, &iter_new,
-                                KV_COL_INDEX, npi,
-                                KV_COL_LIVE, 1,
-                                -1);
-                } /* new row added */
-            } /* for each child */
-            g_slist_free_full(childs, g_free);
-            if (depth == 1)
-                gtk_tree_view_expand_row(GTK_TREE_VIEW(priv->view), path, FALSE);
-        } /* if is_dir */
+    if (up || full || !sysobj_exists(p->obj) ) {
+        if (sysobj_exists(p->obj) ) {
+            /* update value */
+            gchar *nice = sysobj_format(p->obj, priv->fmt_opts | FMT_OPT_LIST_ITEM);
+            gtk_tree_store_set(GTK_TREE_STORE(model), iter,
+                KV_COL_ICON, (p->obj->data.is_dir) ? "folder" : "text-x-generic",
+                KV_COL_KEY, p->obj->name_req,
+                KV_COL_VALUE, nice,
+                KV_COL_LIVE, 0, -1);
+            g_free(nice);
+            if (p == bp_pin_inspect_get_pin(BP_PIN_INSPECT(priv->pi)) ) {
+                bp_pin_inspect_do(BP_PIN_INSPECT(priv->pi), p, priv->fmt_opts);
+            }
+            /* check children */
+            if (p->obj->data.is_dir && depth <= priv->max_depth) {
+                GSList *l = NULL, *childs = sysobj_children(p->obj, NULL, NULL, TRUE);
+                for (l = childs; l; l = l->next) {
+                    GtkTreeIter iter_new;
+                    int npi = pins_add_from_fn(priv->pins, p->obj->path_req, (gchar*)l->data);
+                    if (npi >= 0) {
+                        /* needs to be added */
+                        gtk_tree_store_append(priv->store, &iter_new, iter);
+                        gtk_tree_store_set(priv->store, &iter_new,
+                                    KV_COL_INDEX, npi,
+                                    KV_COL_LIVE, 1,
+                                    -1);
+                    } /* new row added */
+                } /* for each child */
+                g_slist_free_full(childs, g_free);
+                if (depth == 1)
+                    gtk_tree_view_expand_row(GTK_TREE_VIEW(priv->view), path, FALSE);
+            } /* if is_dir */
+        } else {
+            /* stopped existing */
+            gtk_tree_store_remove(GTK_TREE_STORE(model), iter);
+        } /* exists */
     } /* if up(date) */
+    return FALSE; /* continue */
 };
 
 static void _check_tree(bpSysObjView *s) {

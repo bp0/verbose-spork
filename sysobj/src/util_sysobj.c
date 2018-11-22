@@ -21,6 +21,24 @@
 #include <string.h>
 #include "util_sysobj.h"
 
+gchar *util_build_fn(const gchar *base, const gchar *name) {
+    gchar *ret = NULL;
+    gboolean slash = TRUE;
+
+    if (!base) return NULL;
+    if (base[strlen(base)-1] == '/')
+        slash = FALSE;
+
+    if (name) {
+        if (*name == '/') slash = FALSE;
+        ret = g_strdup_printf("%s%s%s", base, slash ? "/" : "", name);
+    } else
+        ret = g_strdup(base);
+
+    util_null_trailing_slash(ret);
+    return ret;
+}
+
 gboolean util_have_root() {
     return (getuid() == 0) ? TRUE : FALSE;
 }

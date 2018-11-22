@@ -91,7 +91,7 @@ void bp_sysobj_browser_navigate(bpSysObjBrowser *s, const gchar *new_location) {
     bp_sysobj_view_set_path(BP_SYSOBJ_VIEW(priv->sv), new_location);
 }
 
-static void _browser_line_activate(bpSysObjView *view, const gchar *sysobj_path, bpSysObjBrowser *s) {
+static void _browser_line_activate(bpSysObjView *view, gchar *sysobj_path, bpSysObjBrowser *s) {
     bp_sysobj_browser_navigate(s, sysobj_path);
     g_free(sysobj_path);
 }

@@ -31,6 +31,7 @@
 gboolean util_have_root();
 void util_null_trailing_slash(gchar *str); /* in-place */
 void util_strstrip_double_quotes_dumb(gchar *str); /* in-place, strips any double-quotes from the start and end of str */
+gchar *util_build_fn(const gchar *base, const gchar *name); /* returns "<base>[/<name>]" */
 gchar *util_canonicalize_path(const gchar *path);
 gchar *util_normalize_path(const gchar *path, const gchar *relto);
 gsize util_count_lines(const gchar *str);

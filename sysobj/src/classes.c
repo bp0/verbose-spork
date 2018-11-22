@@ -77,6 +77,7 @@ void class_any_utf8();
 void class_init() {
     generators_init();
     class_add_simple(":", _("Virtual sysfs root"), "vsfs", OF_NONE, 60);
+    class_add_simple(":sysobj/elapsed", _("Seconds since sysobj_init()"), "sysobj:elapsed", OF_NONE, 1);
 
     class_proc_alts();
 

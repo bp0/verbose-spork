@@ -140,12 +140,12 @@ static void _search_func(bpSysObjSearch *s) {
 
     GList *searched_paths = NULL;
     GList *to_search = NULL;
-    to_search = __push_if_uniq(to_search, "/sys", NULL);
+    to_search = __push_if_uniq(to_search, ":/", NULL);
 
     gchar *path = NULL;
     while(!priv->stop && g_list_length(to_search) && found < 100) {
-        //printf("found:%d stop:%d to_search:%d searched:%d\n", found, priv->stop ? 1 : 0, g_list_length(to_search), g_list_length(searched_paths) );
         to_search = __shift(to_search, &path);
+        //printf("found:%d stop:%d to_search:%d searched:%d now: %s\n", found, priv->stop ? 1 : 0, g_list_length(to_search), g_list_length(searched_paths), path );
         sysobj *obj = sysobj_new_from_fn(path, NULL);
         if (!g_list_find_custom(searched_paths, obj->path, (GCompareFunc)g_strcmp0) ) {
             searched_paths = __push_if_uniq(searched_paths, obj->path, NULL);
@@ -226,6 +226,7 @@ void _create(bpSysObjSearch *s) {
     bp_sysobj_view_set_fmt_opts(BP_SYSOBJ_VIEW(priv->sv), FMT_OPT_PANGO | FMT_OPT_NO_JUNK);
     bp_sysobj_view_hide_inspector(BP_SYSOBJ_VIEW(priv->sv));
     bp_sysobj_view_set_path(BP_SYSOBJ_VIEW(priv->sv), priv->search_result_path);
+    //bp_sysobj_view_set_include_target(FALSE);
 
     gtk_orientable_set_orientation(GTK_ORIENTABLE(s), GTK_ORIENTATION_VERTICAL);
     gtk_box_pack_start (GTK_BOX(s), btns, FALSE, FALSE, 5); gtk_widget_show(btns);
