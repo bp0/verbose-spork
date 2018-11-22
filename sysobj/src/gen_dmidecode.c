@@ -141,7 +141,7 @@ static int dmidecode_check_type(const gchar *path) {
         if (strcmp(pn, "sysfs_map") == 0)
             ret = VSO_TYPE_SYMLINK;
         else if (strcmp(pn, "--string") == 0)
-            ret = VSO_TYPE_STRING;
+            ret = VSO_TYPE_STRING | VSO_TYPE_REQ_ROOT;
         else if (strcmp(pn, "best_available") == 0)
             ret = VSO_TYPE_SYMLINK;
         g_free(pp);

@@ -158,15 +158,26 @@ void bp_pin_inspect_do(bpPinInspect *s, const pin *p, int fmt_opts) {
 
     priv->p = p;
     priv->fmt_opts = fmt_opts;
-	if (!p) {
+    if (!p) {
         gtk_label_set_markup(GTK_LABEL(priv->lbl_top), "");
-		gtk_label_set_markup(GTK_LABEL(priv->lbl_debug), "");
+        gtk_label_set_markup(GTK_LABEL(priv->lbl_debug), "");
         gtk_label_set_markup(GTK_LABEL(priv->lbl_value), "");
-		gtk_widget_hide(priv->help_container);
-		return;
-	}
+        gtk_widget_hide(priv->help_container);
+        return;
+    }
 
     /* item */
+    gchar *fperm = NULL;
+    if (!p->obj->data.is_dir) {
+        fperm = g_strdup_printf("<small>(%s%s/%s%s)</small>",
+            p->obj->root_can_read ? "r" : "-",
+            p->obj->root_can_write ? "w" : "-",
+            p->obj->others_can_read ? "r" : "-",
+            p->obj->others_can_write ? "w" : "-"
+        );
+    } else
+        fperm = g_strdup("");
+
     gchar *label = g_strdup(sysobj_label(p->obj));
     gchar *halp = g_strdup(sysobj_halp(p->obj));
     gchar *nice = sysobj_format(p->obj, fmt_opts);
@@ -198,11 +209,11 @@ void bp_pin_inspect_do(bpPinInspect *s, const pin *p, int fmt_opts) {
     gchar *mt = NULL;
     if (is_new) {
         mt = g_strdup_printf(
-            /* name   */ "<big><big>%s</big></big>\n"
+            /* name   */ "<big><big>%s</big></big> %s\n"
             /* resolv */ "<a href=\"sysobj:%s\">%s</a>\n"
             /* suggest */ "%s%s"
             /* label  */ "%s\n",
-                p->obj->name,
+                p->obj->name, fperm,
                 p->obj->path, p->obj->path,
                 suggest ? suggest : "",
                 suggest ? "\n" : "",
@@ -229,6 +240,7 @@ void bp_pin_inspect_do(bpPinInspect *s, const pin *p, int fmt_opts) {
         }
     }
 
+    g_free(fperm);
     g_free(suggest);
     g_free(label);
     g_free(nice);

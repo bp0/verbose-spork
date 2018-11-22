@@ -18,6 +18,9 @@
  *
  */
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include "sysobj.h"
 
 gchar sysobj_root[1024] = "";
@@ -357,14 +360,21 @@ void sysobj_classify(sysobj *s) {
 
 void sysobj_fscheck(sysobj *s) {
     if (s && s->path) {
+        s->exists = FALSE;
+        s->root_can_read = FALSE;
+        s->root_can_write = FALSE;
+        s->others_can_read = FALSE;
+        s->others_can_write = FALSE;
+        s->data.is_dir = FALSE;
+
         if (*(s->path) == ':') {
             /* virtual */
-            s->exists = FALSE;
-            s->data.is_dir = FALSE;
             const sysobj_virt *vo = sysobj_virt_find(s->path);
             if (vo) {
                 s->exists = TRUE;
+                s->root_can_read = TRUE;
                 int t = sysobj_virt_get_type(vo, s->path);
+                s->others_can_read = (t & VSO_TYPE_REQ_ROOT) ? FALSE : TRUE;
                 if (t & VSO_TYPE_DIR)
                     s->data.is_dir = TRUE;
             }
@@ -372,6 +382,14 @@ void sysobj_fscheck(sysobj *s) {
             s->exists = g_file_test(s->path_fs, G_FILE_TEST_EXISTS);
             if (s->exists) {
                 s->data.is_dir = g_file_test(s->path_fs, G_FILE_TEST_IS_DIR);
+                struct stat fst;
+                if (stat(s->path_fs, &fst) != -1 ) {
+                    if (fst.st_mode & S_IFIFO) s->is_pipe = TRUE;
+                    if (fst.st_mode & S_IRUSR) s->root_can_read = TRUE;
+                    if (fst.st_mode & S_IWUSR) s->root_can_write = TRUE;
+                    if (fst.st_mode & S_IROTH) s->others_can_read = TRUE;
+                    if (fst.st_mode & S_IWOTH) s->others_can_write = TRUE;
+                }
             }
         }
     }

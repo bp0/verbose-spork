@@ -149,11 +149,15 @@ struct sysobj {
     gchar *path;     /* canonical, points into path_fs */
     gchar *name;
 
-    gboolean req_is_link;
-    gboolean req_was_redirected;
-
     gboolean exists;
+    gboolean req_is_link;
+    gboolean is_pipe;
+    gboolean root_can_read;
+    gboolean root_can_write;
+    gboolean others_can_read;
+    gboolean others_can_write;
     gboolean access_fail; /* needed root, but didn't have it */
+
     sysobj_data data;
     const sysobj_class *cls;
 };
@@ -163,6 +167,7 @@ enum {
     VSO_TYPE_DIR      = 1,
     VSO_TYPE_STRING   = 1<<1,
 
+    VSO_TYPE_REQ_ROOT = 1<<15,
     VSO_TYPE_SYMLINK  = 1<<16,
     VSO_TYPE_DYN      = 1<<17, /* any path beyond */
     VSO_TYPE_AUTOLINK = 1<<18,
