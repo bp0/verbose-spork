@@ -78,7 +78,7 @@ static gchar *get_class_info(const gchar *path) {
 
     /* lookup */
     sysobj_class *match = NULL;
-    int ml = 0;
+    gsize ml = 0;
     for(l = cl; l; l = l->next) {
         sysobj_class *c = (sysobj_class *)l->data;
         if (g_str_has_prefix(path + crsz + 1, c->tag) ) {
@@ -134,7 +134,7 @@ static int get_class_info_type(const gchar *path) {
     int ret = VSO_TYPE_DIR; //assume
     gchar **il = g_strsplit(class_item_list, "\n", -1);
     gsize l = g_strv_length(il);
-    for(int i = 0; i < l; i++)
+    for(unsigned int i = 0; i < l; i++)
         if (!strcmp(name, il[i]) ) {
             ret = VSO_TYPE_STRING;
             break;
