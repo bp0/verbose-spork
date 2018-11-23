@@ -33,6 +33,7 @@ struct _bpSysObjSearchPrivate {
     GtkWidget *sv;
     GtkWidget *entry;
     GtkWidget *btn_go;
+    GtkWidget *btn_stop;
     GtkWidget *spinner;
     gchar *search_result_path;
     gchar *search_query;
@@ -171,8 +172,10 @@ static void _search_func(bpSysObjSearch *s) {
     g_list_free_full(searched_paths, g_free);
     g_list_free_full(to_search, g_free);
 
-    gtk_spinner_stop(GTK_SPINNER(priv->spinner));
     priv->now_searching = FALSE;
+    gtk_spinner_stop(GTK_SPINNER(priv->spinner));
+    gtk_widget_hide(priv->btn_stop);
+    gtk_widget_show(priv->btn_go);
 }
 
 static void _search_go(GtkButton *button, gpointer user_data) {
@@ -185,6 +188,8 @@ static void _search_go(GtkButton *button, gpointer user_data) {
         g_thread_join(priv->search_thread);
     } else {
         /* start a search */
+        gtk_widget_hide(priv->btn_go);
+        gtk_widget_show(priv->btn_stop);
         priv->search_query = g_strdup( gtk_entry_get_text(GTK_ENTRY(priv->entry)) );
         gtk_spinner_start(GTK_SPINNER(priv->spinner));
         priv->now_searching = TRUE;
@@ -214,12 +219,15 @@ void _create(bpSysObjSearch *s) {
 
     GtkWidget *btn_go = gtk_button_new_from_icon_name("go-next", GTK_ICON_SIZE_LARGE_TOOLBAR);
     gtk_widget_set_tooltip_text(btn_go, _("Search"));
+    GtkWidget *btn_stop = gtk_button_new_from_icon_name("process-stop", GTK_ICON_SIZE_LARGE_TOOLBAR);
+    gtk_widget_set_tooltip_text(btn_stop, _("Stop search"));
 
     GtkWidget *btns = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
     priv->entry = gtk_entry_new();
     GtkWidget *spinner = gtk_spinner_new();
     gtk_box_pack_start (GTK_BOX (btns), priv->entry, TRUE, TRUE, 0); gtk_widget_show (priv->entry);
     gtk_box_pack_start (GTK_BOX (btns), btn_go, FALSE, FALSE, 0); gtk_widget_show (btn_go);
+    gtk_box_pack_start (GTK_BOX (btns), btn_stop, FALSE, FALSE, 0); gtk_widget_hide (btn_stop);
     gtk_box_pack_start (GTK_BOX (btns), spinner, FALSE, FALSE, 10); gtk_widget_show (spinner);
 
     priv->sv = bp_sysobj_view_new();
@@ -233,12 +241,15 @@ void _create(bpSysObjSearch *s) {
     gtk_box_pack_start (GTK_BOX(s), priv->sv, TRUE, TRUE, 5); gtk_widget_show(priv->sv);
 
     priv->btn_go = btn_go;
+    priv->btn_stop = btn_stop;
     priv->spinner = spinner;
 
     /* buttons */
     g_signal_connect (priv->entry, "activate",
           G_CALLBACK (_query_entry_activate), s);
     g_signal_connect (btn_go, "clicked",
+          G_CALLBACK (_search_go), s);
+    g_signal_connect (btn_stop, "clicked",
           G_CALLBACK (_search_go), s);
     /* sysobj view */
     g_signal_connect (priv->sv, "item-activated",

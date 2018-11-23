@@ -58,8 +58,6 @@ static sysobj_filter path_filters[] = {
 
     { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/usr/lib/os-release", NULL },
 
-    //{ SO_FILTER_STATIC | SO_FILTER_EXCLUDE,     "/sys/kernel/security/apparmor*/revision", NULL },
-
     { SO_FILTER_NONE, "", NULL },
 };
 static GSList *sysobj_global_filters = NULL;
