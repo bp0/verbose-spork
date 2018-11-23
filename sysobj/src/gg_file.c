@@ -67,7 +67,8 @@ gboolean gg_file_get_contents_non_blocking(const gchar *file, gchar **contents, 
             buff = g_realloc(buff, pages * GFC_PAGE_SIZE);
             loc = buff + ((pages-1) * GFC_PAGE_SIZE);
             ps = 0;
-        }
+        } else
+            loc = buff + fs;
     }
     close(fd);
 
@@ -75,12 +76,6 @@ gboolean gg_file_get_contents_non_blocking(const gchar *file, gchar **contents, 
     memmove(tmp, buff, fs);
     g_free(buff);
     buff = tmp;
-
-    if (0) {
-        printf("gg_file_get_contents_non_blocking( %s ): slen: %lu, fs: %lu, bs: %lu, pages: %lu, page_size: %lu, slept: %llu\n",
-            file, (long unsigned int)strlen(buff), (long unsigned int)fs, (pages * GFC_PAGE_SIZE) , pages, (long unsigned int)GFC_PAGE_SIZE,
-            total_sleep );
-    }
 
     if (size) *size = fs;
     if (contents) *contents = buff;
