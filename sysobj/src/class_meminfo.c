@@ -20,7 +20,6 @@
 
 #include "sysobj.h"
 
-static gchar *meminfo_feature_format(sysobj *obj, int fmt_opts);
 static gchar *meminfo_format(sysobj *obj, int fmt_opts);
 static double meminfo_update_interval(sysobj *obj);
 
