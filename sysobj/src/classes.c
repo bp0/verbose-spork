@@ -28,6 +28,7 @@
 void gen_sysobj();
 void gen_pci_ids();
 void gen_usb_ids();
+void gen_dt_ids();
 void gen_os_release();
 void gen_dmidecode();
 void gen_mobo(); /* requires :/dmidecode */
@@ -36,13 +37,12 @@ void gen_cpuinfo();
 void gen_meminfo();
 void gen_procs(); /* requires :/cpuinfo */
 
-void gen_computer(); /* formerly vo_computer */
-
 void generators_init() {
     gen_sysobj(); /* internals, like vsysfs root (":"), and ":/watchlist" */
 
     gen_pci_ids();
     gen_usb_ids();
+    gen_dt_ids();
     gen_os_release();
     gen_dmidecode();
     gen_mobo();
@@ -50,10 +50,9 @@ void generators_init() {
     gen_cpuinfo();
     gen_meminfo();
     gen_procs();
-
-    //gen_computer();
 }
 
+void class_power();
 void class_os_release();
 void class_mobo();
 void class_rpi();
@@ -79,6 +78,7 @@ void class_init() {
     class_add_simple(":", _("Virtual sysfs root"), "vsfs", OF_NONE, 60);
     class_add_simple(":sysobj/elapsed", _("Seconds since sysobj_init()"), "sysobj:elapsed", OF_NONE, 1);
 
+    class_power();
     class_proc_alts();
 
     class_os_release();

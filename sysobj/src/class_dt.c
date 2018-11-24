@@ -34,6 +34,27 @@
 #include <inttypes.h> /* for PRIu64 */
 #include <endian.h>
 
+#define BULLET "\u2022"
+#define REFLINK(URI) "<a href=\"" URI "\">" URI "</a>"
+#define REFLINKT(TEXT, URI) "<a href=\"" URI "\">" TEXT "</a>"
+
+const gchar dt_reference_markup_text[] =
+    "References:\n"
+    BULLET REFLINK("http://elinux.org/Device_Tree_Usage")
+    BULLET REFLINK("http://elinux.org/Device_Tree_Mysteries")
+    "\n";
+
+const gchar dt_ids_reference_markup_text[] =
+    " Items are generated on-demand and cached.\n"
+    "\n"
+    " :/devicetree/dt.ids/{compat_element}/vendor\n"
+    " :/devicetree/dt.ids/{compat_element}/name\n"
+    " :/devicetree/dt.ids/{compat_element}/class\n"
+    "\n"
+    "Reference:\n"
+    BULLET REFLINKT("dt.ids", "https://github.com/bp0/dtid")
+    "\n";
+
 /* operating-points v0,v1,v2 */
 typedef struct {
     uint32_t version; /* opp version, 0 = clock-frequency only */
@@ -68,6 +89,8 @@ static guint dtr_flags(sysobj *obj);
 static gchar *dt_messages(const gchar *path);
 static double dtr_update_interval(sysobj *obj) { PARAM_NOT_UNUSED(obj); return 0.0; } /* dt is static */
 
+static gchar *dt_ids_format(sysobj *obj, int fmt_opts);
+
 void class_dt_cleanup();
 
 enum {
@@ -77,6 +100,7 @@ enum {
     DTP_UNK,     /* arbitrary-length byte sequence */
     DTP_EMPTY,   /* empty property */
     DTP_STR,     /* null-delimited list of strings */
+    DTP_COMPAT,  /* "compatible", DTP_STR */
     DTP_HEX,     /* list of 32-bit values displayed in hex */
     DTP_UINT,    /* unsigned int list */
     DTP_UINT64,  /* unsigned int64 list */
@@ -96,12 +120,51 @@ enum {
 #define CLS_DT_FLAGS OF_GLOB_PATTERN | OF_CONST
 
 static sysobj_class cls_dtr[] = {
+  { .tag = "dt.ids:id", .pattern = ":/devicetree/dt.ids/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .s_halp = dt_ids_reference_markup_text, .s_label = "dt.ids lookup result",
+    .f_format = dt_ids_format },
+  { .tag = "dt.ids", .pattern = ":/devicetree/dt.ids", .flags = OF_CONST,
+    .s_halp = dt_ids_reference_markup_text, .s_label = "dt.ids lookup virtual tree",
+    .f_format = dt_ids_format,.s_update_interval = 3.0 },
+
   { .tag = "devicetree:compat", .pattern = DTROOT "*/compatible", .flags = CLS_DT_FLAGS,
+    .s_halp = dt_reference_markup_text,
     .f_format = dtr_format, .f_update_interval = dtr_update_interval },
   /* all else */
   { .tag = "devicetree", .pattern = DTROOT "*", .flags = CLS_DT_FLAGS,
+    .s_halp = dt_reference_markup_text,
     .f_format = dtr_format, .f_flags = dtr_flags, .f_update_interval = dtr_update_interval, .f_cleanup = class_dt_cleanup },
 };
+
+static gchar *dt_ids_format(sysobj *obj, int fmt_opts) {
+    if (obj) {
+        gchar *ret = NULL;
+        gchar *pname = sysobj_parent_name(obj);
+        if (!strcmp(pname, "dt.ids")) {
+            /* compat elem */
+            gchar *vendor = sysobj_raw_from_fn(obj->path, "vendor");
+            gchar *name = sysobj_raw_from_fn(obj->path, "name");
+            gchar *cls = sysobj_raw_from_fn(obj->path, "class");
+            if (vendor || name || cls) {
+                if (!g_strcmp0(cls, "vendor"))
+                    ret = g_strdup_printf("%s (%s)", vendor, cls);
+                else if (vendor && name && cls)
+                    ret = g_strdup_printf("%s %s (%s)", vendor, name, cls);
+                else if (name && cls)
+                    ret = g_strdup_printf("%s (%s)", vendor, cls);
+                else if (vendor)
+                    ret = g_strdup_printf("%s %s", vendor, "Unknown");
+            }
+            g_free(vendor);
+            g_free(name);
+            g_free(cls);
+        }
+        g_free(pname);
+        if (ret)
+            return ret;
+    }
+    return simple_format(obj, fmt_opts);
+}
 
 static sysobj_virt vol[] = {
     { .path = ":/devicetree", .str = "*",
@@ -130,7 +193,7 @@ static struct {
     GPatternSpec *pspec; /* compiled later */
 } prop_types[] = {
     { "name", DTP_STR, NULL },
-    { "compatible", DTP_STR, NULL },
+    { "compatible", DTP_COMPAT, NULL },
     { "model", DTP_STR, NULL },
     { "reg", DTP_REG, NULL },
     { "clocks", DTP_CLOCKS, NULL },
@@ -695,6 +758,33 @@ static guint dtr_flags(sysobj *obj) {
     return CLS_DT_FLAGS;
 }
 
+static gchar *dtr_compat_decode(const gchar *compat_str_list, gsize len) {
+    gchar *ret = NULL;
+    if (compat_str_list) {
+        const gchar *el = compat_str_list;
+        while(el < compat_str_list + len) {
+            gchar *lookup_path = g_strdup_printf(":/devicetree/dt.ids/%s", el);
+            gchar *cls = sysobj_raw_from_fn(lookup_path, "class");
+            gchar *vendor = sysobj_raw_from_fn(lookup_path, "vendor");
+            gchar *name = sysobj_raw_from_fn(lookup_path, "name");
+
+            if (vendor && name && cls)
+                ret = appfs(ret, ", ", "%s %s (%s)", vendor, name, cls);
+            else if (name && cls)
+                ret = appfs(ret, ", ", "%s (%s)", name, cls);
+            else if (vendor)
+                ret = appfs(ret, ", ", "%s", vendor);
+
+            g_free(vendor);
+            g_free(name);
+            g_free(cls);
+            g_free(lookup_path);
+            el += strlen(el) + 1;
+        }
+    }
+    return ret;
+}
+
 static gchar *dtr_format(sysobj *obj, int fmt_opts) {
     gchar *ret = NULL;
     const gchar *sym, *al;
@@ -714,6 +804,20 @@ static gchar *dtr_format(sysobj *obj, int fmt_opts) {
             if (fmt_opts & FMT_OPT_NULL_IF_EMPTY)
                 return NULL;
             return g_strdup("{empty}");
+        case DTP_COMPAT:
+            if (fmt_opts & FMT_OPT_NULL_IF_EMPTY) {
+                if (obj->data.len == 1 && *obj->data.str == 0)
+                    return NULL;
+            }
+            gchar *compat = dtr_compat_decode(obj->data.str, obj->data.len);
+            gchar *raw = dtr_list_str0(obj->data.str, obj->data.len);
+            if (compat)
+                ret = g_strdup_printf("[%s] %s", raw, compat);
+            else
+                ret = g_strdup_printf("[%s]", raw);
+            g_free(compat);
+            g_free(raw);
+            break;
         case DTP_STR:
             if (fmt_opts & FMT_OPT_NULL_IF_EMPTY) {
                 if (obj->data.len == 1 && *obj->data.str == 0)

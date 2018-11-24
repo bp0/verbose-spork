@@ -50,6 +50,7 @@ add_library(sysobj STATIC
         sysobj/src/class_usb.c
 
 # class only
+        sysobj/src/class_sysfs.c
         sysobj/src/class_os_release.c
         sysobj/src/class_mobo.c
         sysobj/src/class_rpi.c
@@ -63,6 +64,7 @@ add_library(sysobj STATIC
         sysobj/src/gen_sysobj.c
         sysobj/src/gen_usb_ids.c
         sysobj/src/gen_pci_ids.c
+        sysobj/src/gen_dt_ids.c
         sysobj/src/gen_os_release.c
         sysobj/src/gen_dmidecode.c
         sysobj/src/gen_mobo.c
@@ -70,7 +72,6 @@ add_library(sysobj STATIC
         sysobj/src/gen_cpuinfo.c
         sysobj/src/gen_meminfo.c
         sysobj/src/gen_procs.c
-        sysobj/src/vo_computer.c
 
         sysobj/src/arm_data.c
         sysobj/src/x86_data.c
@@ -140,3 +141,4 @@ endif()
 configure_file(config.h.cmake ${CMAKE_BINARY_DIR}/config.h @ONLY)
 configure_file("data/pci.ids" ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file("data/usb.ids" ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file("data/dt.ids" ${CMAKE_BINARY_DIR}/ COPYONLY)
