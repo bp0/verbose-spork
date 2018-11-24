@@ -32,6 +32,41 @@ static sysobj_virt vol[] = {
       .f_get_data = NULL, .f_get_type = NULL },
 };
 
+gboolean cpu_x86_vfms(int logical, gchar **vendor_id, int *family, int *model, int *stepping) {
+    gchar *cpuinfo_path = g_strdup_printf(":/cpuinfo/logical_cpu%d", logical);
+    gchar *type_str =
+        sysobj_raw_from_fn(cpuinfo_path, "_type");
+
+    if (g_strcmp0(type_str, "x86") != 0) {
+        g_free(type_str);
+        return FALSE;
+    }
+
+    gchar *vendor_str =
+        sysobj_raw_from_fn(cpuinfo_path, "vendor_id");
+    gchar *family_str =
+        sysobj_raw_from_fn(cpuinfo_path, "family");
+    gchar *model_str =
+        sysobj_raw_from_fn(cpuinfo_path, "model");
+    gchar *stepping_str =
+        sysobj_raw_from_fn(cpuinfo_path, "stepping");
+
+    if (vendor_id)
+        *vendor_id = vendor_str;
+    else
+        g_free(vendor_str);
+
+    if (family_str && family) *family = atoi(family_str);
+    if (model_str && model) *model = atoi(model_str);
+    if (stepping_str && stepping) *stepping = atoi(stepping_str);
+
+    g_free(type_str);
+    g_free(family_str);
+    g_free(model_str);
+    g_free(stepping_str);
+    return TRUE;
+}
+
 /* obj points to a cpuN/topology */
 void cpu_pct(sysobj *obj, int *logical, int *pack, int *core_of_pack, int *thread_of_core) {
     gchar *pn = sysobj_parent_name(obj);
@@ -59,6 +94,15 @@ void cpu_pct(sysobj *obj, int *logical, int *pack, int *core_of_pack, int *threa
             *thread_of_core = i;
         free(bits);
     }
+
+    /* Old physical_package_id is always 0 even with multi-socket systems.
+     * Just assume pack = logical if the processor is old enough. */
+    gchar *x86_vid = NULL;
+    int x86_f = 0, x86_m = 0;
+    gboolean x86 = cpu_x86_vfms(*logical, &x86_vid, &x86_f, &x86_m, NULL);
+    if (!g_strcmp0(x86_vid, "GenuineIntel") )
+        if (x86_f < 6 || ( x86_f == 6 && (x86_m < 14 || x86_m == 21) ) )
+            *pack = *logical;
 
     g_free(pack_str);
     g_free(core_id);
