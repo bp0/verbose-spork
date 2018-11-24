@@ -58,7 +58,10 @@ static sysobj_filter path_filters[] = {
 
     { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/usr/lib/os-release", NULL },
 
-    { SO_FILTER_NONE, "", NULL },
+    /* things in here can break the whole universe if read */
+    { SO_FILTER_STATIC | SO_FILTER_EXCLUDE,     "/sys/kernel/debug/*", NULL },
+
+    { SO_FILTER_NONE, "", NULL }, /* end of list */
 };
 static GSList *sysobj_global_filters = NULL;
 static GTimer *sysobj_global_timer = NULL;
