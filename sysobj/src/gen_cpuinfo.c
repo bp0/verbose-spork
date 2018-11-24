@@ -75,6 +75,9 @@ typedef struct {
     gchar *clflush_size;
     gchar *cache_alignment;
     gchar *address_sizes;
+    gchar *cpu_mhz;
+    gchar *cache_size;
+    gchar *bogomips;
 } lcpu;
 
 void lcpu_free(lcpu *s) {
@@ -101,6 +104,9 @@ void lcpu_free(lcpu *s) {
     g_free(s->cpuid_level);
     g_free(s->apicid);
     g_free(s->apicid_initial);
+    g_free(s->cpu_mhz);
+    g_free(s->cache_size);
+    g_free(s->bogomips);
     /* self */
     g_free(s);
 }
@@ -217,6 +223,12 @@ void cpuinfo_scan_arm_x86(gchar **lines, gsize line_count) {
         CHKSETFOR_EZ(stepping);
         CHKSETFOR_EZ(apicid);
         CHKSETFOR("initial apicid", apicid_initial);
+        CHKSETFOR("cpu MHz", cpu_mhz);
+        CHKSETFOR("cache size", cache_size);
+
+        CHKSETFOR("bogomips", bogomips);
+        CHKSETFOR("BogoMips", bogomips);
+        CHKSETFOR("BogoMIPS", bogomips);
 
         //TODO: old cpu bugs, like f00f
 
@@ -267,6 +279,12 @@ void cpuinfo_scan_arm_x86(gchar **lines, gsize line_count) {
             }
             cpuinfo_arm_decoded_name(this_lcpu);
         }
+
+        /* compress model name:
+         * "Intel(R) Pentium(R) III CPU - S         1400MHz" -> "Intel(R) Pentium(R) III CPU - S 1400MHz"
+         */
+        util_compress_space(this_lcpu->model_name);
+
         l = l->next;
     }
 
@@ -329,6 +347,9 @@ void cpuinfo_scan() {
         EASY_VOM(cpuid_level);
         EASY_VOM(apicid_initial);
         EASY_VOM(apicid);
+        EASY_VOM(cache_size);
+        EASY_VOM(cpu_mhz);
+        EASY_VOM(bogomips);
 
         g_free(base);
         l = l->next;

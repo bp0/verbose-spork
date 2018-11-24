@@ -30,6 +30,7 @@
 
 gboolean util_have_root();
 void util_null_trailing_slash(gchar *str); /* in-place */
+void util_compress_space(gchar *str); /* in-place, multiple whitespace replaced by one space */
 void util_strstrip_double_quotes_dumb(gchar *str); /* in-place, strips any double-quotes from the start and end of str */
 gchar *util_build_fn(const gchar *base, const gchar *name); /* returns "<base>[/<name>]" */
 gchar *util_canonicalize_path(const gchar *path);

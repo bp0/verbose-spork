@@ -43,6 +43,28 @@ gboolean util_have_root() {
     return (getuid() == 0) ? TRUE : FALSE;
 }
 
+void util_compress_space(gchar *str) {
+    gchar *p = str, *t = str;
+    if (str && *str) {
+        int n = 0;
+        while(*p) {
+            if (isspace(*p) ) {
+                if (!n)
+                    *t++ = ' ';
+                n++;
+            } else {
+                n = 0;
+                if (t != p)
+                    *t = *p;
+                t++;
+            }
+            p++;
+        }
+    }
+    if (t != p)
+        *t = 0;
+}
+
 void util_null_trailing_slash(gchar *str) {
     if (str && *str) {
         if (str[strlen(str)-1] == '/' )
