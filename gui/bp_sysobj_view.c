@@ -46,8 +46,8 @@ struct _bpSysObjViewPrivate {
     gboolean show_inspector;
     GtkWidget *pi;
 
-    gint refresh_timer_timeout_id;
-    gint refresh_timer_interval_ms;
+    guint refresh_timer_timeout_id;
+    guint refresh_timer_interval_ms;
 };
 
 G_DEFINE_TYPE(bpSysObjView, bp_sysobj_view, GTK_TYPE_PANED);
@@ -347,8 +347,7 @@ static gboolean _new_target(bpSysObjView *s) {
         g_slist_free_full(childs, g_free);
     }
 
-    /* will be refreshed in ~0.2 seconds */
-    _check_tree(s); /* or just do it now */
+    bp_sysobj_view_refresh(s);
 
     _select_first_item(s);
     g_signal_emit(s, _signals[SIG_LANDED], 0);
@@ -360,7 +359,17 @@ _new_target_finish:
 gboolean bp_sysobj_view_refresh(bpSysObjView *s) {
     bpSysObjViewPrivate *priv = BP_SYSOBJ_VIEW_PRIVATE(s);
     _check_tree(s);
-    return G_SOURCE_CONTINUE;
+    guint min_ms = (priv->pins->shortest_interval * 1000.0);
+    if (min_ms == 0) min_ms = 9876; /* ~10s for "never" changes */
+    if (min_ms < 100) min_ms = 98;  /* ~0.1s minumum */
+    if (priv->refresh_timer_interval_ms != min_ms) {
+        g_source_remove(priv->refresh_timer_timeout_id);
+        priv->refresh_timer_interval_ms = min_ms;
+        priv->refresh_timer_timeout_id = g_timeout_add(priv->refresh_timer_interval_ms, (GSourceFunc)bp_sysobj_view_refresh, s);
+        //printf("bp_sysobj_view(0x%llx) refresh timer is now %lu ms\n", (long long unsigned)s, (long unsigned)min_ms);
+        return G_SOURCE_REMOVE; /* was already removed a few lines ago */
+    } else
+        return G_SOURCE_CONTINUE;
 }
 
 void _expand_all(bpSysObjView *s) {

@@ -21,7 +21,6 @@
 #include "bsysinfo.h"
 
 void print_obj(sysobj *s) {
-    static const gchar none[] = "--";
     int fmt_opts = FMT_OPT_NO_JUNK | FMT_OPT_LIST_ITEM;
     const gchar *label = NULL;
     gchar *nice = NULL;
@@ -29,17 +28,12 @@ void print_obj(sysobj *s) {
     if (isatty(fileno(stdout)) )
         fmt_opts |= FMT_OPT_ATERM;
 
-    label = sysobj_label(s);
     nice = sysobj_format(s, fmt_opts);
 
-    if (label == NULL)
-        label = none;
-
-    printf("%s%s{%s}\t%s\t(%lu)\t%s\n",
+    printf("%s%s\t%s\n",
         s->req_is_link ? "!" : "",
         s->name_req,
-        s->cls ? (s->cls->tag ? s->cls->tag : s->cls->pattern) : "none",
-        label, s->data.len, nice);
+        nice);
     g_free(nice);
 }
 
