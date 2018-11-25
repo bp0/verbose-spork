@@ -122,9 +122,9 @@ static gchar *power_format(sysobj *obj, int fmt_opts) {
         gchar *ret = NULL;
         gchar *async = sysobj_raw_from_fn(obj->path, "async");
         gchar *control = sysobj_raw_from_fn(obj->path, "control");
-        g_strstrip(async);
-        g_strstrip(control);
-        ret = g_strdup_printf("async: %s, control: %s", async, control);
+        if (async) g_strstrip(async);
+        if (control) g_strstrip(control);
+        ret = g_strdup_printf("async: %s, control: %s", async ? async : "(disabled)", control ? control : "(auto)");
         g_free(async);
         g_free(control);
         return ret;

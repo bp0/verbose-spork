@@ -956,7 +956,7 @@ void sysobj_virt_from_kv(gchar *base, const gchar *kv_data_in) {
 }
 
 sysobj_virt *sysobj_virt_find(const gchar *path) {
-    DEBUG("find path %s", path);
+    //DEBUG("find path %s", path);
     sysobj_virt *ret = NULL;
     gchar *spath = g_strdup(path);
     util_null_trailing_slash(spath);
@@ -974,7 +974,7 @@ sysobj_virt *sysobj_virt_find(const gchar *path) {
         l = l->next;
     }
     g_free(spath);
-    DEBUG("... %s", (ret) ? ret->path : "(NOT FOUND)");
+    //DEBUG("... %s", (ret) ? ret->path : "(NOT FOUND)");
     return ret;
 }
 
@@ -1261,6 +1261,10 @@ gchar *sysobj_format_table(sysobj *obj, gchar **table, int table_len, int nbase,
 sysobj *sysobj_parent(sysobj *s) {
     if (s) {
         gchar *rpp = g_path_get_dirname(s->path_req);
+        if (!g_strcmp0(rpp, ".") ) {
+            g_free(rpp);
+            return NULL;
+        }
         sysobj *ret = sysobj_new_from_fn(rpp, NULL);
         g_free(rpp);
         return ret;

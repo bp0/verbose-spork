@@ -2,6 +2,7 @@
 #include "bp_sysobj_search.h"
 #include "bp_sysobj_view.h"
 #include "sysobj.h"
+#include "sysobj_foreach.h"
 #include "pin.h"
 
 enum {
@@ -38,6 +39,8 @@ struct _bpSysObjSearchPrivate {
     gchar *search_result_path;
     gchar *search_query;
     gboolean now_searching;
+    guint searched;
+    guint found;
     GThread *search_thread;
     gboolean stop;
 };
@@ -107,71 +110,40 @@ static void _results_line_activate(bpSysObjView *view, gchar *sysobj_path, bpSys
     g_signal_emit(s, _signals[SIG_ITEM_ACTIVATED], 0, target);
 }
 
-static GList* __push_if_uniq(GList *l, gchar *base, gchar *name) {
-    gchar *path = name
-        ? g_strdup_printf("%s/%s", base, name)
-        : g_strdup(base);
-    GList *a = NULL;
-    for(a = l; a; a = a->next) {
-        if (!g_strcmp0((gchar*)a->data, path) ) {
-            g_free(path);
-            return l;
-        }
-    }
-    return g_list_append(l, path);
-}
-
-static GList* __shift(GList *l, gchar **s) {
-    *s = (gchar*)l->data;
-    return g_list_delete_link(l, l);
-}
-
 static void _clear_results(bpSysObjSearch *s) {
     bpSysObjSearchPrivate *priv = BP_SYSOBJ_SEARCH_PRIVATE(s);
     gchar *glob = g_strdup_printf("%s/*", priv->search_result_path);
     sysobj_virt_remove(glob);
     g_free(glob);
+    bp_sysobj_view_refresh(BP_SYSOBJ_VIEW(priv->sv));
+}
+
+gboolean _search_examine(sysobj *obj, bpSysObjSearch *s) {
+    bpSysObjSearchPrivate *priv = BP_SYSOBJ_SEARCH_PRIVATE(s);
+
+    priv->searched++;
+    if (!g_strcmp0(priv->search_query, obj->name_req) ) {
+        gchar rname[256] = "";
+        snprintf(rname, 255, "result%d_(%s)", priv->found, obj->name_req);
+        sysobj_virt_add_simple(priv->search_result_path, rname, obj->path_req, VSO_TYPE_SYMLINK);
+        priv->found++;
+    }
+
+    if (priv->stop || priv->found >= 100)
+        return SYSOBJ_FOREACH_STOP;
+    else
+        return SYSOBJ_FOREACH_CONTINUE;
 }
 
 static void _search_func(bpSysObjSearch *s) {
     bpSysObjSearchPrivate *priv = BP_SYSOBJ_SEARCH_PRIVATE(s);
-    int found = 0;
+    priv->searched = 0;
+    priv->found = 0;
 
-    _clear_results(s);
+    /* begin search */
+    sysobj_foreach(NULL, (f_sysobj_foreach)_search_examine, s);
 
-    GList *searched_paths = NULL;
-    GList *to_search = NULL;
-    to_search = __push_if_uniq(to_search, ":/", NULL);
-
-    gchar *path = NULL;
-    while(!priv->stop && g_list_length(to_search) && found < 100) {
-        to_search = __shift(to_search, &path);
-        //printf("found:%d stop:%d to_search:%d searched:%d now: %s\n", found, priv->stop ? 1 : 0, g_list_length(to_search), g_list_length(searched_paths), path );
-        sysobj *obj = sysobj_new_from_fn(path, NULL);
-        if (!g_list_find_custom(searched_paths, obj->path, (GCompareFunc)g_strcmp0) ) {
-            searched_paths = __push_if_uniq(searched_paths, obj->path, NULL);
-            if (obj) {
-                /* check for match */
-                if (strstr(obj->name_req, priv->search_query) ) {
-                    sysobj_virt_add_simple(priv->search_result_path, obj->name_req, obj->path_req, VSO_TYPE_SYMLINK);
-                    found++;
-                }
-                /* scan children */
-                if (obj->data.is_dir) {
-                    sysobj_read(obj, FALSE);
-                    GSList *lc = obj->data.childs;
-                    for (lc = obj->data.childs; lc; lc = lc->next) {
-                        to_search = __push_if_uniq(to_search, obj->path_req, (gchar*)lc->data);
-                    }
-                }
-            }
-        }
-        sysobj_free(obj);
-    }
     /* done searching */
-    g_list_free_full(searched_paths, g_free);
-    g_list_free_full(to_search, g_free);
-
     priv->now_searching = FALSE;
     gtk_spinner_stop(GTK_SPINNER(priv->spinner));
     gtk_widget_hide(priv->btn_stop);
@@ -194,6 +166,7 @@ static void _search_go(GtkButton *button, gpointer user_data) {
         gtk_spinner_start(GTK_SPINNER(priv->spinner));
         priv->now_searching = TRUE;
         priv->stop = FALSE;
+        _clear_results(s);
         priv->search_thread = g_thread_new("searcher", (GThreadFunc)_search_func, s);
     }
 }
