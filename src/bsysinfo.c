@@ -20,13 +20,14 @@
 
 #include "bsysinfo.h"
 
-int fmt_opts = FMT_OPT_ATERM | FMT_OPT_NO_JUNK | FMT_OPT_LIST_ITEM;
-
 void print_obj(sysobj *s) {
     static const gchar none[] = "--";
-
+    int fmt_opts = FMT_OPT_NO_JUNK | FMT_OPT_LIST_ITEM;
     const gchar *label = NULL;
     gchar *nice = NULL;
+
+    if (isatty(fileno(stdout)) )
+        fmt_opts |= FMT_OPT_ATERM;
 
     label = sysobj_label(s);
     nice = sysobj_format(s, fmt_opts);
