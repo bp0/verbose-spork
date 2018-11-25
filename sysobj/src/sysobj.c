@@ -156,58 +156,86 @@ uint32_t sysobj_uint32_from_fn(const gchar *base, const gchar *name, int nbase) 
     return ret;
 }
 
-#define TERM_COLOR_FMT(CLR) ((fmt_opts & FMT_OPT_ATERM) ? (CLR "%s" ANSI_COLOR_RESET) : "%s")
-
 gchar *simple_format(sysobj* obj, int fmt_opts) {
-    static const gchar *special[] = {
-        N_("{permission denied}"),
-        N_("{node}"),
-        N_("{binary value}"),
-        N_("{not found}"),
-        N_("{empty}"),
-    };
+    const gchar *msg = NULL;
+    gchar *text = NULL, *nice = NULL;
 
-    if (obj) {
-        gchar *nice = NULL;
-        if ( obj->access_fail )
-            nice = g_strdup_printf( TERM_COLOR_FMT(ANSI_COLOR_RED), special[0] );
-        else if ( obj->data.is_dir )
-            nice = g_strdup_printf( TERM_COLOR_FMT(ANSI_COLOR_BLUE), special[1] );
-        else if ( !obj->data.is_utf8 )
-            if ( obj->data.len == 0 )
-                nice = g_strdup_printf( TERM_COLOR_FMT(ANSI_COLOR_YELLOW), special[4] );
-            else
-                nice = g_strdup_printf( TERM_COLOR_FMT(ANSI_COLOR_YELLOW), special[2] );
-        else if ( !obj->exists || !obj->data.str ) {
-            if (fmt_opts & FMT_OPT_NULL_IF_MISSING)
-                nice = NULL;
-            else
-                nice = g_strdup_printf( TERM_COLOR_FMT(ANSI_COLOR_RED), special[3] );
-        } else {
-            if ( *(obj->data.str) == 0
-                && ( fmt_opts & FMT_OPT_NULL_IF_EMPTY) )
-                nice = NULL;
-            else {
-                gchar *text = NULL;
-                if (fmt_opts & FMT_OPT_LIST_ITEM &&
-                    (obj->data.lines > 1 || obj->data.len > 120) )
-                    text = g_strdup_printf("{%lu line(s) text, utf8}", obj->data.lines);
-                else
-                    text = g_strdup(obj->data.str);
+    if (!obj) return NULL;
 
-                g_strchomp(text);
+    const gchar *str = obj->data.str;
+    gboolean
+        exists = obj->exists,
+        fail   = obj->access_fail,
+        utf8   = obj->data.is_utf8,
+        dir    = obj->data.is_dir,
+        empty  = ( strlen(text = g_strstrip(g_strdup(str ? str : ""))) == 0 );
+    g_free(text);
 
-                if (fmt_opts & FMT_OPT_HTML
-                    || fmt_opts & FMT_OPT_PANGO) {
-                    nice = util_escape_markup(text, FALSE);
-                    g_free(text);
-                } else
-                    nice = text;
-            }
-        }
-        return nice;
+    if (!exists) {
+        msg = N_("{not found}");
+        if (! (fmt_opts & FMT_OPT_NO_TRANSLATE) )
+            msg = _(msg);
+        if (fmt_opts & FMT_OPT_NULL_IF_MISSING)
+            return NULL;
+        if (fmt_opts & FMT_OPT_ATERM)
+            return g_strdup_printf( ANSI_COLOR_RED "%s" ANSI_COLOR_RESET, msg );
+        return g_strdup( msg );
     }
-    return NULL;
+    if (fail) {
+        msg = N_("{permission denied}");
+        if (! (fmt_opts & FMT_OPT_NO_TRANSLATE) )
+            msg = _(msg);
+        if (fmt_opts & FMT_OPT_NULL_IF_EMPTY)
+            return NULL;
+        if (fmt_opts & FMT_OPT_NULL_IF_MISSING)
+            return NULL;
+        if (fmt_opts & FMT_OPT_ATERM)
+            return g_strdup_printf( ANSI_COLOR_RED "%s" ANSI_COLOR_RESET, msg );
+        return g_strdup( msg );
+    }
+    if (dir) {
+        msg = N_("{node}");
+        if (! (fmt_opts & FMT_OPT_NO_TRANSLATE) )
+            msg = _(msg);
+        if (fmt_opts & FMT_OPT_ATERM)
+            return g_strdup_printf( ANSI_COLOR_BLUE "%s" ANSI_COLOR_RESET, msg );
+        return g_strdup( msg );
+    }
+    if (empty) {
+        msg = N_("{empty}");
+        if (! (fmt_opts & FMT_OPT_NO_TRANSLATE) )
+            msg = _(msg);
+        if (fmt_opts & FMT_OPT_NULL_IF_EMPTY)
+            return NULL;
+        if (fmt_opts & FMT_OPT_ATERM)
+            return g_strdup_printf( ANSI_COLOR_YELLOW "%s" ANSI_COLOR_RESET, msg );
+        return g_strdup( msg );
+    }
+    if (!utf8) {
+        msg = N_("{binary value}");
+        if (! (fmt_opts & FMT_OPT_NO_TRANSLATE) )
+            msg = _(msg);
+        if (fmt_opts & FMT_OPT_ATERM)
+            return g_strdup_printf( ANSI_COLOR_YELLOW "%s" ANSI_COLOR_RESET, msg );
+        return g_strdup( msg );
+    }
+
+    /* a string */
+    if (fmt_opts & FMT_OPT_LIST_ITEM &&
+        (obj->data.lines > 1 || obj->data.len > 120) )
+        text = g_strdup_printf(_("{%lu line(s) text, utf8}"), obj->data.lines);
+    else
+        text = g_strdup(str);
+    g_strchomp(text);
+
+    if (fmt_opts & FMT_OPT_HTML
+        || fmt_opts & FMT_OPT_PANGO) {
+        nice = util_escape_markup(text, FALSE);
+        g_free(text);
+    } else
+        nice = text;
+
+    return nice;
 }
 
 const sysobj_class *class_add(sysobj_class *c) {
@@ -391,7 +419,6 @@ void sysobj_fscheck(sysobj *s) {
                 s->data.is_dir = g_file_test(s->path_fs, G_FILE_TEST_IS_DIR);
                 struct stat fst;
                 if (stat(s->path_fs, &fst) != -1 ) {
-                    if (fst.st_mode & S_IFIFO) s->is_pipe = TRUE;
                     if (fst.st_mode & S_IRUSR) s->root_can_read = TRUE;
                     if (fst.st_mode & S_IWUSR) s->root_can_write = TRUE;
                     if (fst.st_mode & S_IROTH) s->others_can_read = TRUE;

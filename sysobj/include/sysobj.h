@@ -151,7 +151,6 @@ struct sysobj {
 
     gboolean exists;
     gboolean req_is_link;
-    gboolean is_pipe;
     gboolean root_can_read;
     gboolean root_can_write;
     gboolean others_can_read;
