@@ -35,6 +35,7 @@ add_library(gettext STATIC
 add_library(sysobj STATIC
         sysobj/src/sysobj.c
         sysobj/src/sysobj_foreach.c
+        sysobj/src/sysobj_collection.c
         sysobj/src/util_sysobj.c
         sysobj/src/gg_file.c
         sysobj/src/pin.c
