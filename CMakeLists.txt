@@ -7,6 +7,8 @@ if(${CMAKE_BUILD_TYPE} MATCHES [Dd]ebug)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address")
 endif()
 
+add_definitions(-DSRC_ROOT="${CMAKE_SOURCE_DIR}")
+
 include(FindPkgConfig)
 pkg_check_modules(GLIB REQUIRED glib-2.0>=2.10)
 pkg_check_modules(GTK gtk+-3.0>=3.12)

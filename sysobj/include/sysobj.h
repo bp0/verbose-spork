@@ -70,11 +70,15 @@ enum {
 typedef struct sysobj sysobj;
 typedef struct sysobj_data sysobj_data;
 
+/* can be used in a struct sysobj_class to provide debug information
+ * sysobj_class my_class = { SYSOBJ_CLASS_DEF .pattern = "...", ... }
+ * The define can be removed for "reproducible" builds. */
+#define SYSOBJ_CLASS_DEF .def_file = __FILE__ + sizeof(SRC_ROOT), .def_line = __LINE__,
+
 /* "halp" is like help. Reference text or
  * explaination for an object.
  * It is always markup text: the Pango-safe subset
  * of HTML, plus links. */
-
 typedef struct sysobj_class {
     const gchar *tag;
     const gchar *pattern;
@@ -92,6 +96,10 @@ typedef struct sysobj_class {
     guint (*f_flags) (sysobj *obj); /* provide flags, result replaces flags */
     void (*f_cleanup) (void); /* shutdown/cleanup function */
     const gchar *(*f_halp) (sysobj *obj); /* markup text */
+
+    /* use SYSOBJ_CLASS_DEF for these */
+    const gchar *def_file; /* __FILE__ */
+    const int    def_line; /* __LINE__ */
 } sysobj_class;
 
 enum {

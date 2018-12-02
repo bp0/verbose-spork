@@ -43,6 +43,8 @@ static gchar *get_item(const gchar *path) {
 }
 
 static const gchar class_item_list[] =
+  "_def_file\n"
+  "_def_line\n"
   "_pattern\n"
   "_flags\n"
   "_s_label\n"
@@ -91,6 +93,13 @@ static gchar *get_class_info(const gchar *path) {
     }
 
     if (match) {
+        if (!strcmp(name, "_def_file") )
+            return g_strdup(match->def_file);
+        if (!strcmp(name, "_def_line") )
+            if (match->def_file)
+                return g_strdup_printf("%d", match->def_line);
+            else
+                return NULL;
         if (!strcmp(name, "_pattern") )
             return g_strdup(match->pattern);
         if (!strcmp(name, "_flags") )

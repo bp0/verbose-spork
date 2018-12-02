@@ -1,6 +1,10 @@
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
+#ifndef SRC_ROOT
+#define SRC_ROOT ""
+#endif
+
 #if !defined DEBUG_BUILD
 #define DEBUG_BUILD 0
 #endif
