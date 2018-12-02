@@ -61,9 +61,16 @@ static void gen_pci_ids_cache_item(util_pci_id *pid) {
         sprintf(buff, ":/pci/pci.ids/%04x/%04x/%04x", pid->vendor, pid->device, pid->sub_vendor);
         sysobj_virt_add_simple(buff, NULL, "*", VSO_TYPE_DIR );
         if (pid->sub_vendor_str)
-            sysobj_virt_add_simple(buff, "name", pid->sub_vendor_str, dev_symlink_flags );
+            sysobj_virt_add_simple(buff, "name", pid->sub_vendor_str, VSO_TYPE_STRING );
         if (pid->address)
             sysobj_virt_add_simple(buff, pid->address, devpath, dev_symlink_flags );
+
+        /* also cache as vendor */
+        if (pid->sub_vendor_str) {
+            sprintf(buff, ":/pci/pci.ids/%04x", pid->sub_vendor);
+            sysobj_virt_add_simple(buff, NULL, "*", VSO_TYPE_DIR );
+            sysobj_virt_add_simple(buff, "name", pid->sub_vendor_str, VSO_TYPE_STRING );
+        }
     }
     if (pid->sub_device) {
         sprintf(buff, ":/pci/pci.ids/%04x/%04x/%04x/%04x", pid->vendor, pid->device, pid->sub_vendor, pid->sub_device);
