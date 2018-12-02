@@ -30,7 +30,7 @@ static sysobj_class cls_uptime[] = {
     .f_format = uptime_format, .f_update_interval = uptime_update_interval },
 };
 
-static gchar *formatted_time_span(double real_seconds) {
+static gchar *formatted_time_span(double real_seconds, gboolean short_version, gboolean include_seconds) {
     long days = 0, hours = 0, minutes = 0, seconds = 0;
 
     seconds = real_seconds;
@@ -38,25 +38,32 @@ static gchar *formatted_time_span(double real_seconds) {
     hours = minutes / 60; minutes %= 60;
     days = hours / 24; hours %= 24;
 
-    const gchar *days_fmt, *hours_fmt, *minutes_fmt;
-    gchar *full_fmt = NULL, *ret = NULL;
+    const gchar *days_fmt, *hours_fmt, *minutes_fmt, *seconds_fmt;
+    const gchar *sep = " ";
+    gchar *ret = NULL;
 
-    days_fmt = ngettext("%d day", "%d days", days);
-    hours_fmt = ngettext("%d hour", "%d hours", hours);
-    minutes_fmt = ngettext("%d minute", "%d minutes", minutes);
-
-    if (days < 1) {
-        if (hours < 1) {
-            ret = g_strdup_printf(minutes_fmt, minutes);
-        } else {
-            full_fmt = g_strdup_printf("%s %s", hours_fmt, minutes_fmt);
-            ret = g_strdup_printf(full_fmt, hours, minutes);
-        }
+    if (short_version) {
+        days_fmt = ngettext("%dd", "%dd", days);
+        hours_fmt = ngettext("%dh", "%dh", hours);
+        minutes_fmt = ngettext("%dm", "%dm", minutes);
+        seconds_fmt = ngettext("%ds", "%ds", seconds);
+        sep = ":";
     } else {
-        full_fmt = g_strdup_printf("%s %s %s", days_fmt, hours_fmt, minutes_fmt);
-        ret = g_strdup_printf(full_fmt, days, hours, minutes);
+        days_fmt = ngettext("%d day", "%d days", days);
+        hours_fmt = ngettext("%d hour", "%d hours", hours);
+        minutes_fmt = ngettext("%d minute", "%d minutes", minutes);
+        seconds_fmt = ngettext("%d second", "%d seconds", seconds);
     }
-    g_free(full_fmt);
+
+    if (days > 1)
+        ret = appfs(ret, sep, days_fmt, days);
+    if (ret || hours > 1)
+        ret = appfs(ret, sep, hours_fmt, hours);
+    if (ret || minutes > 1 || !include_seconds)
+        ret = appfs(ret, sep, minutes_fmt, minutes);
+    if (include_seconds)
+        ret = appfs(ret, sep, seconds_fmt, seconds);
+
     return ret;
 }
 
@@ -64,10 +71,18 @@ static gchar *uptime_format(sysobj *obj, int fmt_opts) {
     double up = 0, idle = 0;
     int mc = sscanf(obj->data.str, "%lf %lf", &up, &idle);
     if (mc > 0) {
-        gchar *up_str = formatted_time_span(up);
-        if (0 && idle) { //TODO: what to do with idle?
-            gchar *idle_str = formatted_time_span(idle);
-            gchar *ret = g_strdup_printf("%s (idle: %s)", up_str, idle_str);
+        if (fmt_opts & FMT_OPT_NO_UNIT
+            || fmt_opts & FMT_OPT_NO_TRANSLATE)
+            return g_strdup_printf("%lf", up);
+
+        if (fmt_opts & FMT_OPT_PART
+            || fmt_opts & FMT_OPT_SHORT)
+            return formatted_time_span(up, TRUE, TRUE);
+
+        gchar *up_str = formatted_time_span(up, FALSE, TRUE);
+        if (idle && fmt_opts & FMT_OPT_COMPLETE) {
+            gchar *idle_str = formatted_time_span(idle, FALSE, TRUE);
+            gchar *ret = g_strdup_printf("Uptime: %s\nTime spent idle (all CPU): %s", up_str, idle_str);
             g_free(up_str);
             g_free(idle_str);
             return ret;

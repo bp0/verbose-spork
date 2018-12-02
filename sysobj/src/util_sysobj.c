@@ -253,7 +253,7 @@ gchar *util_find_line_value(gchar *data, gchar *key, gchar delim) {
     return ret;
 }
 
-gchar *appf(gchar *src, gchar *fmt, ...) {
+gchar *appf(gchar *src, const gchar *fmt, ...) {
     gchar *buf, *ret;
     va_list args;
     va_start(args, fmt);
@@ -268,7 +268,7 @@ gchar *appf(gchar *src, gchar *fmt, ...) {
     return ret;
 }
 
-gchar *appfs(gchar *src, const gchar *sep, gchar *fmt, ...) {
+gchar *appfs(gchar *src, const gchar *sep, const gchar *fmt, ...) {
     gchar *buf, *ret;
     va_list args;
     va_start(args, fmt);

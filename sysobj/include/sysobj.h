@@ -47,10 +47,11 @@ enum {
     FMT_OPT_NONE      = 0,          /* plain */
     FMT_OPT_PART      = 1,          /* part of larger string */
     FMT_OPT_SHORT     = 1<<1,       /* shortest version please */
-    FMT_OPT_LIST_ITEM = 1<<2,       /* listing, one line value or single line summary of larger data */
-    FMT_OPT_NO_UNIT   = 1<<3,       /* don't include unit */
-    FMT_OPT_NO_JUNK   = 1<<4,       /* class specific, for example: dmi/id ignores placeholder strings */
-    FMT_OPT_NO_TRANSLATE = 1<<5,   /* don't translate via gettext() */
+    FMT_OPT_COMPLETE  = 1<<2,       /* most complete/verbose version please */
+    FMT_OPT_LIST_ITEM = 1<<3,       /* listing, one line value or single line summary of larger data */
+    FMT_OPT_NO_UNIT   = 1<<4,       /* don't include unit */
+    FMT_OPT_NO_JUNK   = 1<<5,       /* class specific, for example: dmi/id ignores placeholder strings */
+    FMT_OPT_NO_TRANSLATE = 1<<6,    /* don't translate via gettext() */
 
     FMT_OPT_NULL_IF_EMPTY   = 1<<8,
     FMT_OPT_NULL_IF_MISSING = 1<<9,

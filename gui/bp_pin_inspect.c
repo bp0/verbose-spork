@@ -180,7 +180,7 @@ void bp_pin_inspect_do(bpPinInspect *s, const pin *p, int fmt_opts) {
 
     gchar *label = g_strdup(sysobj_label(p->obj));
     gchar *halp = g_strdup(sysobj_halp(p->obj));
-    gchar *nice = sysobj_format(p->obj, fmt_opts);
+    gchar *nice = sysobj_format(p->obj, fmt_opts | FMT_OPT_COMPLETE);
 
     gchar *tag = NULL;
     if (p->obj->cls) {

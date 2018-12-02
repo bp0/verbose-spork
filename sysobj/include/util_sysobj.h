@@ -47,9 +47,9 @@ gchar *util_find_line_value(gchar *data, gchar *key, gchar delim);
 /* appends an element to a string, adding a space if
  * the string is not empty.
  * ex: ret = appf(ret, "%s=%s\n", name, value); */
-gchar *appf(gchar *src, gchar *fmt, ...)
+gchar *appf(gchar *src, const gchar *fmt, ...)
     __attribute__ ((format (printf, 2, 3)));
-gchar *appfs(gchar *src, const gchar *sep, gchar *fmt, ...)
+gchar *appfs(gchar *src, const gchar *sep, const gchar *fmt, ...)
     __attribute__ ((format (printf, 3, 4)));
 
 #endif
