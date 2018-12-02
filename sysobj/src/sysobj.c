@@ -744,6 +744,18 @@ sysobj *sysobj_new_from_fn(const gchar *base, const gchar *name) {
     return s;
 }
 
+sysobj *sysobj_new_from_printf(gchar *path_fmt, ...) {
+    sysobj *ret = NULL;
+    gchar *path = NULL;
+    va_list args;
+    va_start(args, path_fmt);
+    path = g_strdup_vprintf(path_fmt, args);
+    va_end(args);
+    ret = sysobj_new_from_fn(path, NULL);
+    g_free(path);
+    return ret;
+}
+
 gchar *sysobj_parent_path(sysobj *s) {
     if (s) {
         gchar *pp = g_path_get_dirname(s->path);
