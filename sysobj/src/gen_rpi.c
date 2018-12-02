@@ -64,7 +64,8 @@ static struct {
   { 0xa020a0, "a020a0", "Q1 2017",    "Compute Module 3 or CM3 Lite",  "1.0",    "1GB",    "Sony",          NULL },
   { 0xa22082, "a22082", "Q1 2016",    "3 Model B",           "1.2",    "1GB",      "Embest",        "BCM2837" },
   { 0xa32082, "a32082", "Q4 2016",    "3 Model B",           "1.2",    "1GB",      "Sony Japan",    NULL  },
-  { 0xa020d3, "a020d3", "Q4 2018",    "3 Model B+",          "1.3",    "1GB",      "Sony",          "BCM2837" },
+  { 0xa020d3, "a020d3", "Q1 2018",    "3 Model B+",          "1.3",    "1GB",      "Sony",          "BCM2837" },
+  { 0x9020e0, "9020e0", "Q4 2018",    "3 Model A+",          "1.0",    "512MB",    "Sony",          "BCM2837" },
 };
 
 /* return number of chars to skip */
