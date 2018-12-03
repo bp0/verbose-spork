@@ -168,7 +168,8 @@ gchar *simple_format(sysobj* obj, int fmt_opts) {
         fail   = obj->access_fail,
         utf8   = obj->data.is_utf8,
         dir    = obj->data.is_dir,
-        empty  = ( strlen(text = g_strstrip(g_strdup(str ? str : ""))) == 0 );
+        empty  = (obj->data.len == 0)
+            || (utf8 && strlen(text = g_strstrip(g_strdup(str ? str : ""))) == 0 );
     g_free(text);
 
     if (!exists) {
