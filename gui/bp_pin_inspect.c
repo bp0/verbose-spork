@@ -18,10 +18,11 @@ typedef struct _bpPinInspectPrivate bpPinInspectPrivate;
 struct _bpPinInspectPrivate {
     const pin *p;
     int fmt_opts;
-    GtkWidget *container;
-    GtkWidget *box_sections;
+
+    GtkTextBuffer *val_formatted;
+    GtkTextBuffer *val_raw;
+
     GtkWidget *lbl_top;
-    GtkWidget *lbl_value;
     GtkWidget *lbl_debug;
 
     GtkWidget *help_container;
@@ -74,6 +75,17 @@ static void _cleanup(bpPinInspect *s) {
     bpPinInspectPrivate *priv = BP_PIN_INSPECT_PRIVATE(s);
 }
 
+static void notebook_add_page(const gchar *name, const gchar *label, GtkWidget *notebook, GtkWidget *page_widget, gint border) {
+    GtkWidget *lbl = gtk_label_new (label);
+    GtkWidget *scroll = gtk_scrolled_window_new(NULL, NULL);
+    gtk_widget_set_size_request(scroll, 100, 100);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_ALWAYS);
+    gtk_container_add(GTK_CONTAINER(scroll), page_widget);
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), scroll, lbl);
+    gtk_widget_show(page_widget);
+    gtk_widget_show(scroll);
+}
+
 static void _create(bpPinInspect *s) {
     bpPinInspectPrivate *priv = BP_PIN_INSPECT_PRIVATE(s);
 
@@ -85,19 +97,9 @@ static void _create(bpPinInspect *s) {
     gtk_widget_set_halign(lbl_top, GTK_ALIGN_START);
     gtk_widget_set_valign(lbl_top, GTK_ALIGN_START);
     gtk_widget_set_margin_start(lbl_top, 10);
-    gtk_label_set_selectable(GTK_LABEL(lbl_top), TRUE);
+    //gtk_label_set_selectable(GTK_LABEL(lbl_top), TRUE);
     g_signal_connect(lbl_top, "activate-link", G_CALLBACK(_activate_link), NULL);
     gtk_widget_show(lbl_top);
-
-    GtkWidget *lbl_value = gtk_label_new("");
-    gtk_label_set_line_wrap(GTK_LABEL(lbl_value), TRUE);
-    gtk_label_set_justify(GTK_LABEL(lbl_value), GTK_JUSTIFY_LEFT);
-    gtk_widget_set_halign(lbl_value, GTK_ALIGN_START);
-    gtk_widget_set_valign(lbl_value, GTK_ALIGN_START);
-    gtk_widget_set_margin_start(lbl_value, 10);
-    gtk_label_set_selectable(GTK_LABEL(lbl_value), TRUE);
-    g_signal_connect (lbl_value, "activate-link", G_CALLBACK(_activate_link), NULL);
-    gtk_widget_show(lbl_value);
 
     GtkWidget *lbl_debug = gtk_label_new("");
     gtk_label_set_line_wrap(GTK_LABEL(lbl_debug), TRUE);
@@ -105,20 +107,33 @@ static void _create(bpPinInspect *s) {
     gtk_widget_set_halign(lbl_debug, GTK_ALIGN_START);
     gtk_widget_set_valign(lbl_debug, GTK_ALIGN_START);
     gtk_widget_set_margin_start(lbl_debug, 10);
-    gtk_label_set_selectable(GTK_LABEL(lbl_debug), TRUE);
+    //gtk_label_set_selectable(GTK_LABEL(lbl_debug), TRUE);
     g_signal_connect (lbl_debug, "activate-link", G_CALLBACK(_activate_link), NULL);
     gtk_widget_show(lbl_debug);
 
+    GtkTextBuffer *val_formatted = gtk_text_buffer_new(NULL);
+    GtkWidget *text_formatted = gtk_text_view_new_with_buffer(val_formatted);
+    gtk_text_view_set_editable(GTK_TEXT_VIEW(text_formatted), FALSE);
+    gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(text_formatted), GTK_WRAP_WORD_CHAR);
+    gtk_widget_show(text_formatted);
+
+    GtkTextBuffer *val_raw = gtk_text_buffer_new(NULL);
+    GtkWidget *text_raw = gtk_text_view_new_with_buffer(val_raw);
+    gtk_text_view_set_editable(GTK_TEXT_VIEW(text_raw), FALSE);
+    gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(text_raw), GTK_WRAP_WORD_CHAR);
+    gtk_text_view_set_monospace(GTK_TEXT_VIEW(text_raw), TRUE);
+    gtk_widget_show(text_raw);
+
+    GtkWidget *value_notebook = gtk_notebook_new();
+    gtk_notebook_set_tab_pos(GTK_NOTEBOOK (value_notebook), GTK_POS_TOP);
+    notebook_add_page("formatted", _("Formatted"), value_notebook, text_formatted, 5);
+    notebook_add_page("raw", _("Raw"), value_notebook, text_raw, 5);
+    notebook_add_page("debug", _("Debug"), value_notebook, lbl_debug, 5);
+    gtk_widget_show(value_notebook);
+
     GtkWidget *box_sections = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
     gtk_box_pack_start(GTK_BOX(box_sections), lbl_top, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(box_sections), lbl_value, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(box_sections), lbl_debug, FALSE, FALSE, 0);
-
-    GtkWidget *top_scroll = gtk_scrolled_window_new(NULL, NULL);
-    gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(top_scroll), GTK_SHADOW_IN);
-    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(top_scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_ALWAYS);
-    gtk_container_add(GTK_CONTAINER(top_scroll), box_sections);
-    gtk_widget_show(box_sections);
+    gtk_box_pack_start(GTK_BOX(box_sections), value_notebook, TRUE, TRUE, 0);
 
     GtkWidget *lbl_help = gtk_label_new("");
     gtk_label_set_line_wrap(GTK_LABEL(lbl_help), TRUE);
@@ -138,12 +153,12 @@ static void _create(bpPinInspect *s) {
 
     GtkWidget *paned = gtk_paned_new(GTK_ORIENTATION_VERTICAL);
     gtk_paned_set_position(GTK_PANED(s), 200);
-    gtk_paned_pack1(GTK_PANED(s), top_scroll, TRUE, FALSE); gtk_widget_show (top_scroll);
+    gtk_paned_pack1(GTK_PANED(s), box_sections, TRUE, FALSE); gtk_widget_show (box_sections);
     gtk_paned_pack2(GTK_PANED(s), help_scroll, FALSE, FALSE); gtk_widget_show (help_scroll);
 
-    priv->box_sections = box_sections;
+    priv->val_formatted = val_formatted;
+    priv->val_raw = val_raw;
     priv->lbl_top = lbl_top;
-    priv->lbl_value = lbl_value;
     priv->lbl_debug = lbl_debug;
     priv->help_container = help_scroll;
     priv->lbl_help = lbl_help;
@@ -161,7 +176,6 @@ void bp_pin_inspect_do(bpPinInspect *s, const pin *p, int fmt_opts) {
     if (!p) {
         gtk_label_set_markup(GTK_LABEL(priv->lbl_top), "");
         gtk_label_set_markup(GTK_LABEL(priv->lbl_debug), "");
-        gtk_label_set_markup(GTK_LABEL(priv->lbl_value), "");
         gtk_widget_hide(priv->help_container);
         return;
     }
@@ -222,8 +236,27 @@ void bp_pin_inspect_do(bpPinInspect *s, const pin *p, int fmt_opts) {
         gtk_label_set_markup(GTK_LABEL(priv->lbl_top), mt);
     }
 
-    mt = g_strdup_printf(/* value  */ "%s\n", nice);
-    gtk_label_set_markup(GTK_LABEL(priv->lbl_value), mt);
+    GtkTextIter iter;
+    gtk_text_buffer_set_text(priv->val_formatted, "", -1);
+    gtk_text_buffer_get_iter_at_offset(priv->val_formatted, &iter, 0);
+    gtk_text_buffer_insert_markup(priv->val_formatted, &iter, nice, -1);
+
+    if (p->obj->data.is_utf8)
+        gtk_text_buffer_set_text(priv->val_raw, p->obj->data.str, -1);
+    else {
+        gchar *hex = NULL;
+        gsize i = 0, l = p->obj->data.len;
+        uint8_t *byte = (uint8_t*)p->obj->data.any;
+
+        if (l)
+            hex = g_strdup_printf("%lu bytes:\n%02X", p->obj->data.len, byte[0]);
+        else
+            hex = g_strdup_printf("%lu bytes:\n", p->obj->data.len);
+        for(i = 1; i < l; i++)
+            hex = appf(hex, "%02X", byte[i]);
+        gtk_text_buffer_set_text(priv->val_raw, hex ? hex : "", -1);
+        g_free(hex);
+    }
 
     mt = g_strdup_printf("debug info:\n"
         /* data info */ "%s\n"
