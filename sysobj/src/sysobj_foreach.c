@@ -24,17 +24,23 @@ static GList* __push_if_uniq(GList *l, gchar *base, gchar *name) {
     gchar *path = name
         ? g_strdup_printf("%s/%s", base, name)
         : g_strdup(base);
-    GList *a = NULL;
+    GList *a = NULL, *last = a;
     for(a = l; a; a = a->next) {
         if (!g_strcmp0((gchar*)a->data, path) ) {
             g_free(path);
             return l;
         }
+        last = a;
     }
-    return g_list_append(l, path);
+    if (last)
+        last = g_list_append(last, path);
+    else
+        l = g_list_append(l, path);
+    return l;
 }
 
 static GList* __shift(GList *l, gchar **s) {
+    if (!l) return l;
     *s = (gchar*)l->data;
     return g_list_delete_link(l, l);
 }
@@ -63,14 +69,16 @@ loop_check_fail:
     return TRUE;
 }
 
-void sysobj_foreach(GSList *filters, f_sysobj_foreach callback, gpointer user_data) {
+static void sysobj_foreach_st(GSList *filters, f_sysobj_foreach callback, gpointer user_data) {
+    double rate = 0.0, start_time = sysobj_elapsed();
     guint searched = 0;
     GList *to_search = NULL;
     to_search = __push_if_uniq(to_search, ":/", NULL);
     gchar *path = NULL;
     while( g_list_length(to_search) ) {
         to_search = __shift(to_search, &path);
-        printf("to_search:%d searched:%d now: %s\n", g_list_length(to_search), searched, path );
+        rate = (double)searched / (sysobj_elapsed() - start_time);
+        printf("(rate: %0.2lf/s) to_search:%d searched:%d now: %s\n", rate, g_list_length(to_search), searched, path );
         if (_has_symlink_loop(path) ) { g_free(path); continue; }
 
         sysobj *obj = sysobj_new_from_fn(path, NULL);
@@ -103,4 +111,118 @@ void sysobj_foreach(GSList *filters, f_sysobj_foreach callback, gpointer user_da
         g_free(path);
     }
     g_list_free_full(to_search, g_free);
+}
+
+typedef struct {
+    guint searched;
+    GList *to_search;
+    GMutex lock;
+    gboolean stop;
+
+    GSList *threads;
+
+    GSList *filters;
+    f_sysobj_foreach callback;
+    gpointer user_data;
+
+    double start_time;
+} mt_state;
+
+static void mt_state_init(mt_state *s) {
+    if (!s) return;
+    s->stop = FALSE;
+    s->searched = 0;
+    s->to_search = NULL;
+    s->start_time = sysobj_elapsed();
+    g_mutex_init(&s->lock);
+}
+
+static void mt_state_clear(mt_state *s) {
+    g_list_free_full(s->to_search, g_free);
+    g_mutex_clear(&s->lock);
+}
+
+static gpointer _thread_main(mt_state *s) {
+    gchar *path = NULL;
+    gsize tslen = 0;
+    gsize searched = 0;
+    double rate = 0.0;
+    while(1) {
+        g_mutex_lock(&s->lock);
+        s->to_search = __shift(s->to_search, &path);
+        tslen = g_list_length(s->to_search);
+        searched = s->searched;
+        rate = (double)searched / (sysobj_elapsed() - s->start_time);
+        g_mutex_unlock(&s->lock);
+
+        if (s->stop) {
+            g_free(path);
+            return NULL;
+        }
+
+        if (!path) { printf("omg had to wait\n"); usleep(10000); continue; }
+
+        printf("[0x%016llx](rate: %0.2lf/s) to_search:%lu searched:%lu now: %s\n", (long long unsigned)g_thread_self(), rate, tslen, searched, path);
+        if (_has_symlink_loop(path) ) { g_free(path); continue; }
+
+        sysobj *obj = sysobj_new_from_fn(path, NULL);
+        if (!obj) { g_free(path); continue; }
+        if (s->filters
+            && !sysobj_filter_item_include(obj->path, s->filters) ) {
+                sysobj_free(obj);
+                g_free(path);
+                continue;
+            }
+
+        /* callback */
+        if ( s->callback(obj, s->user_data) == SYSOBJ_FOREACH_STOP ) {
+            s->stop = TRUE;
+            sysobj_free(obj);
+            g_free(path);
+            return NULL;
+        }
+
+        if (obj->data.is_dir)
+            sysobj_read(obj, FALSE);
+
+        g_mutex_lock(&s->lock);
+        s->searched++;
+        /* queue children */
+        const GSList *lc = obj->data.childs;
+        for (lc = obj->data.childs; lc; lc = lc->next) {
+            s->to_search = __push_if_uniq(s->to_search, obj->path_req, (gchar*)lc->data);
+        }
+        g_mutex_unlock(&s->lock);
+
+        sysobj_free(obj);
+        g_free(path);
+    }
+    /* never arrives here */
+}
+
+static void sysobj_foreach_mt(GSList *filters, f_sysobj_foreach callback, gpointer user_data) {
+    GSList *l = NULL;
+    int max_threads = g_get_num_processors();
+    mt_state state = {.filters = filters, .callback = callback, .user_data = user_data };
+    mt_state_init(&state);
+    state.to_search = __push_if_uniq(state.to_search, ":/", NULL);
+
+    for (int t = 0; t < max_threads; t++) {
+        GThread *nt = g_thread_new(NULL, (GThreadFunc)_thread_main, &state);
+        state.threads = g_slist_append(state.threads, nt);
+    }
+
+    for(l = state.threads; l; l = l->next)
+        g_thread_join(l->data);
+
+    mt_state_clear(&state);
+}
+
+void sysobj_foreach(GSList *filters, f_sysobj_foreach callback, gpointer user_data) {
+    int use_mt = 1;
+
+    if (use_mt)
+        sysobj_foreach_mt(filters, callback, user_data);
+    else
+        sysobj_foreach_st(filters, callback, user_data);
 }
