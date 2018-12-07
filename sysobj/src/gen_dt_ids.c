@@ -182,8 +182,8 @@ static gchar *gen_dt_ids_lookup_value(const gchar *path) {
     gchar *ret = NULL;
 
     char compat_elem[128] = "";
-    sscanf(path, ":/devicetree/dt.ids/%s", compat_elem);
-    if (compat_elem) {
+    int mc = sscanf(path, ":/devicetree/dt.ids/%s", compat_elem);
+    if (mc == 1) {
         gchar *slash = strchr(compat_elem, '/');
         if (slash) *slash = 0;
 
