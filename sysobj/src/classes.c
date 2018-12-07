@@ -133,7 +133,6 @@ void class_init() {
     class_cputopo();
     class_pci();
     class_usb();
-    class_os_release();
     class_uptime();
 /* consumes every direct child, careful with order */
     class_dmi_id();

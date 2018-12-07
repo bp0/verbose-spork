@@ -103,6 +103,8 @@ typedef struct sysobj_class {
     /* use SYSOBJ_CLASS_DEF for these */
     const gchar *def_file; /* __FILE__ */
     const int    def_line; /* __LINE__ */
+
+    GPatternSpec *pspec;
 } sysobj_class;
 
 enum {

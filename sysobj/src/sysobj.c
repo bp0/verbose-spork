@@ -93,6 +93,10 @@ void class_free(sysobj_class *s) {
     if (s) {
         if (s->f_cleanup)
             s->f_cleanup();
+        if (s->pspec) {
+            g_pattern_spec_free(s->pspec);
+            s->pspec = NULL;
+        }
         if (!(s->flags & OF_CONST) )
             g_free(s);
     }
@@ -241,6 +245,10 @@ gchar *simple_format(sysobj* obj, int fmt_opts) {
 
 const sysobj_class *class_add(sysobj_class *c) {
     if (c) {
+        if (g_slist_find(class_list, c) ) {
+            DEBUG("Duplicate class address: 0x%llx (%s)", (long long unsigned)c, c->tag ? c->tag : "untagged");
+            return NULL;
+        }
         if (class_has_flag(c, OF_BLAST) )
             class_list = g_slist_append(class_list, c);
         else
@@ -376,14 +384,18 @@ void sysobj_free(sysobj *s) {
 void sysobj_classify(sysobj *s) {
     GSList *l = NULL;
     sysobj_class *c = NULL, *c_blast = NULL;
+    gsize len = 0;
     if (s) {
+        len = strlen(s->path);
         for (l = class_list; l; l = l->next) {
             c = l->data;
             gboolean match = FALSE;
 
-            if ( class_has_flag(c, OF_GLOB_PATTERN) )
-                match = g_pattern_match_simple(c->pattern, s->path);
-            else
+            if ( class_has_flag(c, OF_GLOB_PATTERN) ) {
+                if (!c->pspec)
+                    c->pspec = g_pattern_spec_new(c->pattern);
+                match = g_pattern_match(c->pspec, len, s->path, NULL);
+            } else
                 match = g_str_has_suffix(s->path, c->pattern);
 
             if (match && c->f_verify)
