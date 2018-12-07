@@ -118,7 +118,7 @@ static void _clear_results(bpSysObjSearch *s) {
     bp_sysobj_view_refresh(BP_SYSOBJ_VIEW(priv->sv));
 }
 
-gboolean _search_examine(sysobj *obj, bpSysObjSearch *s) {
+gboolean _search_examine(sysobj *obj, bpSysObjSearch *s, const sysobj_foreach_stats *stats) {
     bpSysObjSearchPrivate *priv = BP_SYSOBJ_SEARCH_PRIVATE(s);
 
     priv->searched++;
@@ -141,7 +141,7 @@ static void _search_func(bpSysObjSearch *s) {
     priv->found = 0;
 
     /* begin search */
-    sysobj_foreach(NULL, (f_sysobj_foreach)_search_examine, s);
+    sysobj_foreach(NULL, (f_sysobj_foreach)_search_examine, s, SO_FOREACH_MT);
 
     /* done searching */
     priv->now_searching = FALSE;

@@ -20,7 +20,7 @@
 
 #include "sysobj_foreach.h"
 
-static GList* __push_if_uniq(GList *l, gchar *base, gchar *name) {
+static GList* __push_if_uniq(GList *l, gchar *base, gchar *name, long unsigned int *length) {
     gchar *path = name
         ? g_strdup_printf("%s/%s", base, name)
         : g_strdup(base);
@@ -32,6 +32,7 @@ static GList* __push_if_uniq(GList *l, gchar *base, gchar *name) {
         }
         last = a;
     }
+    if (length) (*length)++;
     if (last)
         last = g_list_append(last, path);
     else
@@ -73,7 +74,7 @@ static void sysobj_foreach_st(GSList *filters, f_sysobj_foreach callback, gpoint
     double rate = 0.0, start_time = sysobj_elapsed();
     guint searched = 0;
     GList *to_search = NULL;
-    to_search = __push_if_uniq(to_search, ":/", NULL);
+    to_search = __push_if_uniq(to_search, ":/", NULL, NULL);
     gchar *path = NULL;
     while( g_list_length(to_search) ) {
         to_search = __shift(to_search, &path);
@@ -91,7 +92,7 @@ static void sysobj_foreach_st(GSList *filters, f_sysobj_foreach callback, gpoint
             }
 
         /* callback */
-        if ( callback(obj, user_data) == SYSOBJ_FOREACH_STOP ) {
+        if ( callback(obj, user_data, NULL) == SYSOBJ_FOREACH_STOP ) {
             sysobj_free(obj);
             g_free(path);
             break;
@@ -103,7 +104,7 @@ static void sysobj_foreach_st(GSList *filters, f_sysobj_foreach callback, gpoint
             sysobj_read(obj, FALSE);
             const GSList *lc = obj->data.childs;
             for (lc = obj->data.childs; lc; lc = lc->next) {
-                to_search = __push_if_uniq(to_search, obj->path_req, (gchar*)lc->data);
+                to_search = __push_if_uniq(to_search, obj->path_req, (gchar*)lc->data, NULL);
             }
         }
 
@@ -114,7 +115,6 @@ static void sysobj_foreach_st(GSList *filters, f_sysobj_foreach callback, gpoint
 }
 
 typedef struct {
-    guint searched;
     GList *to_search;
     GMutex lock;
     gboolean stop;
@@ -125,34 +125,34 @@ typedef struct {
     f_sysobj_foreach callback;
     gpointer user_data;
 
-    double start_time;
+    sysobj_foreach_stats stats;
 } mt_state;
 
 static void mt_state_init(mt_state *s) {
     if (!s) return;
     s->stop = FALSE;
-    s->searched = 0;
     s->to_search = NULL;
-    s->start_time = sysobj_elapsed();
+    memset(&s->stats, 0, sizeof(sysobj_foreach_stats) );
+    s->stats.start_time = sysobj_elapsed();
     g_mutex_init(&s->lock);
 }
 
 static void mt_state_clear(mt_state *s) {
     g_list_free_full(s->to_search, g_free);
     g_mutex_clear(&s->lock);
+    g_slist_free(s->threads);
+}
+
+static void mt_update(mt_state *s, guint increment) {
+    s->stats.searched += increment;
+    s->stats.rate = (double)s->stats.searched / (sysobj_elapsed() - s->stats.start_time);
 }
 
 static gpointer _thread_main(mt_state *s) {
     gchar *path = NULL;
-    gsize tslen = 0;
-    gsize searched = 0;
-    double rate = 0.0;
     while(1) {
         g_mutex_lock(&s->lock);
         s->to_search = __shift(s->to_search, &path);
-        tslen = g_list_length(s->to_search);
-        searched = s->searched;
-        rate = (double)searched / (sysobj_elapsed() - s->start_time);
         g_mutex_unlock(&s->lock);
 
         if (s->stop) {
@@ -162,10 +162,12 @@ static gpointer _thread_main(mt_state *s) {
 
         if (!path) { printf("omg had to wait\n"); usleep(10000); continue; }
 
-        printf("[0x%016llx](rate: %0.2lf/s) to_search:%lu searched:%lu now: %s\n", (long long unsigned)g_thread_self(), rate, tslen, searched, path);
+        printf("[0x%016llx](rate: %0.2lf/s) to_search:%lu searched:%lu now: %s\n",
+            (long long unsigned)g_thread_self(), s->stats.rate, s->stats.queue_length, s->stats.searched, path);
+
         if (_has_symlink_loop(path) ) { g_free(path); continue; }
 
-        sysobj *obj = sysobj_new_from_fn(path, NULL);
+        sysobj *obj = sysobj_new_fast(path);
         if (!obj) { g_free(path); continue; }
         if (s->filters
             && !sysobj_filter_item_include(obj->path, s->filters) ) {
@@ -175,7 +177,7 @@ static gpointer _thread_main(mt_state *s) {
             }
 
         /* callback */
-        if ( s->callback(obj, s->user_data) == SYSOBJ_FOREACH_STOP ) {
+        if ( s->callback(obj, s->user_data, &s->stats) == SYSOBJ_FOREACH_STOP ) {
             s->stop = TRUE;
             sysobj_free(obj);
             g_free(path);
@@ -186,14 +188,15 @@ static gpointer _thread_main(mt_state *s) {
             sysobj_read(obj, FALSE);
 
         g_mutex_lock(&s->lock);
-        s->searched++;
+        mt_update(s, 1);
         /* queue children */
         const GSList *lc = obj->data.childs;
         for (lc = obj->data.childs; lc; lc = lc->next) {
-            s->to_search = __push_if_uniq(s->to_search, obj->path_req, (gchar*)lc->data);
+            s->to_search = __push_if_uniq(s->to_search, obj->path_req, (gchar*)lc->data, &s->stats.queue_length);
         }
         g_mutex_unlock(&s->lock);
 
+        if (obj->data.was_read && !obj->data.is_dir) exit(0);
         sysobj_free(obj);
         g_free(path);
     }
@@ -202,12 +205,12 @@ static gpointer _thread_main(mt_state *s) {
 
 static void sysobj_foreach_mt(GSList *filters, f_sysobj_foreach callback, gpointer user_data) {
     GSList *l = NULL;
-    int max_threads = g_get_num_processors();
     mt_state state = {.filters = filters, .callback = callback, .user_data = user_data };
     mt_state_init(&state);
-    state.to_search = __push_if_uniq(state.to_search, ":/", NULL);
+    state.stats.threads = g_get_num_processors();
+    state.to_search = __push_if_uniq(state.to_search, ":/", NULL, &state.stats.queue_length);
 
-    for (int t = 0; t < max_threads; t++) {
+    for (int t = 0; t < state.stats.threads; t++) {
         GThread *nt = g_thread_new(NULL, (GThreadFunc)_thread_main, &state);
         state.threads = g_slist_append(state.threads, nt);
     }
@@ -218,8 +221,8 @@ static void sysobj_foreach_mt(GSList *filters, f_sysobj_foreach callback, gpoint
     mt_state_clear(&state);
 }
 
-void sysobj_foreach(GSList *filters, f_sysobj_foreach callback, gpointer user_data) {
-    int use_mt = 1;
+void sysobj_foreach(GSList *filters, f_sysobj_foreach callback, gpointer user_data, int opts) {
+    gboolean use_mt = !(opts & SO_FOREACH_ST);
 
     if (use_mt)
         sysobj_foreach_mt(filters, callback, user_data);

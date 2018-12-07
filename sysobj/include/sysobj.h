@@ -170,6 +170,8 @@ struct sysobj {
     gboolean others_can_write;
     gboolean access_fail; /* permission denied */
 
+    gboolean fast_mode;
+
     sysobj_data data;
     const sysobj_class *cls;
 };
@@ -250,6 +252,7 @@ const gchar *simple_halp(sysobj* obj);
 gchar *simple_format(sysobj* obj, int fmt_opts);
 
 sysobj *sysobj_new();
+sysobj *sysobj_new_fast(const gchar *path);  /* does not classify() */
 sysobj *sysobj_new_from_fn(const gchar *base, const gchar *name);
 sysobj *sysobj_new_from_printf(gchar *path_fmt, ...)
     __attribute__ ((format (printf, 1, 2)));

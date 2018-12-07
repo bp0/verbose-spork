@@ -23,9 +23,23 @@
 
 #include "sysobj.h"
 
+enum {
+    SO_FOREACH_NONE = 0,
+    SO_FOREACH_ST   = 1,
+    SO_FOREACH_MT   = 2,
+};
+
+typedef struct {
+    long unsigned int threads;
+    long unsigned int searched;
+    long unsigned int queue_length;
+    double start_time;
+    double rate;
+} sysobj_foreach_stats;
+
 #define SYSOBJ_FOREACH_STOP FALSE
 #define SYSOBJ_FOREACH_CONTINUE TRUE
-typedef gboolean (*f_sysobj_foreach)(const sysobj *s, gpointer user_data);
-void sysobj_foreach(GSList *filters, f_sysobj_foreach callback, gpointer user_data);
+typedef gboolean (*f_sysobj_foreach)(const sysobj *s, gpointer user_data, gconstpointer stats);
+void sysobj_foreach(GSList *filters, f_sysobj_foreach callback, gpointer user_data, int opts);
 
 #endif

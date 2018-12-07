@@ -755,6 +755,19 @@ config_bad_path:
     return FALSE;
 }
 
+sysobj *sysobj_new_fast(const gchar *path) {
+    sysobj *s = NULL;
+    if (path) {
+        s = sysobj_new();
+        s->fast_mode = TRUE;
+        sysobj_config_paths(s, path, NULL);
+        s->name_req = g_path_get_basename(s->path_req);
+        s->name = g_path_get_basename(s->path);
+        sysobj_fscheck(s);
+    }
+    return s;
+}
+
 sysobj *sysobj_new_from_fn(const gchar *base, const gchar *name) {
     sysobj *s = NULL;
     if (base) {
@@ -1301,7 +1314,11 @@ sysobj *sysobj_parent(sysobj *s) {
             g_free(rpp);
             return NULL;
         }
-        sysobj *ret = sysobj_new_from_fn(rpp, NULL);
+        sysobj *ret = NULL;
+        if (s->fast_mode)
+            ret = sysobj_new_fast(rpp);
+        else
+            ret = sysobj_new_from_fn(rpp, NULL);
         g_free(rpp);
         return ret;
     }
