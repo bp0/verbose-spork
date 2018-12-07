@@ -25,7 +25,8 @@ static gchar *uptime_format(sysobj *obj, int fmt_opts);
 static double uptime_update_interval(sysobj *obj);
 
 static sysobj_class cls_uptime[] = {
-  { .tag = "uptime", .pattern = "/proc/uptime", .flags = OF_CONST,
+  { SYSOBJ_CLASS_DEF
+    .tag = "uptime", .pattern = "/proc/uptime", .flags = OF_CONST,
     .s_label = N_("System Up/Idle time"),
     .f_format = uptime_format, .f_update_interval = uptime_update_interval },
 };

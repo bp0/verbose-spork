@@ -24,7 +24,8 @@ static gchar *procs_format(sysobj *obj, int fmt_opts);
 static double procs_update_interval(sysobj *obj);
 
 static sysobj_class cls_procs[] = {
-  { .tag = "procs", .pattern = ":/procs*", .flags = OF_GLOB_PATTERN | OF_CONST,
+  { SYSOBJ_CLASS_DEF
+    .tag = "procs", .pattern = ":/procs*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_format = procs_format, .f_update_interval = procs_update_interval },
 };
 

@@ -52,31 +52,38 @@ static gchar *usb_format_bus(sysobj *obj, int fmt_opts);
  */
 
 static sysobj_class cls_usb[] = {
-/*  { .tag = "usb:iface_id", .pattern = "/sys/devices*<<<<>>>>/*-*:*.*<<<<>>>>/*", .flags = CLS_USB_FLAGS,
-    .f_verify = usb_verify_idcomp,
-    .f_format = usb_format_idcomp, .f_flags = usb_flags, .f_update_interval = usb_update_interval }, */
-/*  { .tag = "usb:iface", .pattern = "/sys/devices*<<<<>>>>/*-*:*.*", .flags = CLS_USB_FLAGS,
-    .f_verify = usb_verify_idcomp,
-    .f_format = usb_format_idcomp, .f_flags = usb_flags, .f_update_interval = usb_update_interval }, */
-  { .tag = "usb:device_id", .pattern = "/sys/devices*/*-*/*", .flags = CLS_USB_FLAGS,
-    .f_verify = usb_verify_idcomp,
-    .f_format = usb_format_idcomp, .f_flags = usb_flags, .f_update_interval = usb_update_interval },
-  { .tag = "usb:device", .pattern = "/sys/devices*/*-*", .flags = CLS_USB_FLAGS,
-    .f_verify = usb_verify_device,
-    .f_format = usb_format_device, .f_flags = usb_flags, .f_update_interval = usb_update_interval },
-  { .tag = "usb:bus", .pattern = "/sys/devices*/usb*", .flags = CLS_USB_FLAGS,
+  /* all under :/usb */
+  { SYSOBJ_CLASS_DEF
+    .tag = "usb", .pattern = ":/usb*", .flags = CLS_USB_FLAGS,
+    .f_format = usb_format, .f_flags = usb_flags, .f_update_interval = usb_update_interval },
+  { SYSOBJ_CLASS_DEF
+    .tag = "usb:bus", .pattern = "/sys/devices*/usb*", .flags = CLS_USB_FLAGS,
     .f_verify = usb_verify_bus,
     .f_format = usb_format_bus, .f_flags = usb_flags, .f_update_interval = usb_update_interval },
+  { SYSOBJ_CLASS_DEF
+    .tag = "usb:device", .pattern = "/sys/devices*/*-*", .flags = CLS_USB_FLAGS,
+    .f_verify = usb_verify_device,
+    .f_format = usb_format_device, .f_flags = usb_flags, .f_update_interval = usb_update_interval },
+  { SYSOBJ_CLASS_DEF
+    .tag = "usb:device_id", .pattern = "/sys/devices*/*-*/*", .flags = CLS_USB_FLAGS,
+    .f_verify = usb_verify_idcomp,
+    .f_format = usb_format_idcomp, .f_flags = usb_flags, .f_update_interval = usb_update_interval },
+/*  { SYSOBJ_CLASS_DEF
+    .tag = "usb:iface", .pattern = "/sys/devices*<<<<>>>>/*-*:*.*", .flags = CLS_USB_FLAGS,
+    .f_verify = usb_verify_idcomp,
+    .f_format = usb_format_idcomp, .f_flags = usb_flags, .f_update_interval = usb_update_interval }, */
+/*  { SYSOBJ_CLASS_DEF
+    .tag = "usb:iface_id", .pattern = "/sys/devices*<<<<>>>>/*-*:*.*<<<<>>>>/*", .flags = CLS_USB_FLAGS,
+    .f_verify = usb_verify_idcomp,
+    .f_format = usb_format_idcomp, .f_flags = usb_flags, .f_update_interval = usb_update_interval }, */
 
-  { .tag = "usb.ids:id", .pattern = ":/usb/usb.ids/*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .s_halp = usb_ids_reference_markup_text, .s_label = "usb.ids lookup result" },
-  { .tag = "usb.ids", .pattern = ":/usb/usb.ids", .flags = OF_CONST,
+  { SYSOBJ_CLASS_DEF
+    .tag = "usb.ids", .pattern = ":/usb/usb.ids", .flags = OF_CONST,
     .s_halp = usb_ids_reference_markup_text, .s_label = "usb.ids lookup virtual tree",
     .f_update_interval = usb_ids_update_interval },
-
-  /* all under :/usb */
-  { .tag = "usb", .pattern = ":/usb*", .flags = CLS_USB_FLAGS,
-    .f_format = usb_format, .f_flags = usb_flags, .f_update_interval = usb_update_interval },
+  { SYSOBJ_CLASS_DEF
+    .tag = "usb.ids:id", .pattern = ":/usb/usb.ids/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .s_halp = usb_ids_reference_markup_text, .s_label = "usb.ids lookup result" },
 };
 
 static sysobj_virt vol[] = {

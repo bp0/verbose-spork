@@ -38,7 +38,7 @@ void gen_meminfo();
 void gen_procs(); /* requires :/cpuinfo */
 
 void generators_init() {
-    gen_sysobj(); /* internals, like vsysfs root (":"), and ":/watchlist" */
+    gen_sysobj(); /* internals, like vsysfs root (":") */
 
     gen_pci_ids();
     gen_usb_ids();
@@ -73,10 +73,49 @@ void class_os_release();
 void class_proc_alts();
 void class_any_utf8();
 
+gchar *class_flags_format(sysobj *obj, int fmt_opts) {
+    gchar *flags_list = NULL;
+    uint32_t flags = strtol(obj->data.str, NULL, 16);
+    if (flags & OF_CONST)
+        flags_list = appfs(flags_list, " | ", "%s", "OF_CONST");
+    if (flags & OF_BLAST)
+        flags_list = appfs(flags_list, " | ", "%s", "OF_BLAST");
+    if (flags & OF_GLOB_PATTERN)
+        flags_list = appfs(flags_list, " | ", "%s", "OF_GLOB_PATTERN");
+
+    if (flags & OF_REQ_ROOT)
+        flags_list = appfs(flags_list, " | ", "%s", "OF_REQ_ROOT");
+    if (flags & OF_IS_VENDOR)
+        flags_list = appfs(flags_list, " | ", "%s", "OF_IS_VENDOR");
+
+    if (flags_list) {
+        gchar *ret = g_strdup_printf("[%s] %s", obj->data.str, flags_list);
+        g_free(flags_list);
+        return ret;
+    }
+    return simple_format(obj, fmt_opts);
+}
+
+static sysobj_class cls_internal[] = {
+  { SYSOBJ_CLASS_DEF
+    .tag = "vsfs", .pattern = ":", .flags = OF_CONST,
+    .s_label = N_("Virtual sysfs root"), .s_update_interval = 60.0 },
+  { SYSOBJ_CLASS_DEF
+    .tag = "sysobj:elapsed", .pattern = ":sysobj/elapsed", .flags = OF_CONST,
+    .s_label = N_("Seconds since sysobj_init()"), .s_update_interval = 0.1 },
+  { SYSOBJ_CLASS_DEF
+    .tag = "sysobj:class_flags", .pattern = ":sysobj/classes/*/_flags", .flags = OF_CONST | OF_GLOB_PATTERN,
+    .f_format = class_flags_format },
+};
+
+void class_internal() {
+    for (int i = 0; i < (int)G_N_ELEMENTS(cls_internal); i++)
+        class_add(&cls_internal[i]);
+}
+
 void class_init() {
     generators_init();
-    class_add_simple(":", _("Virtual sysfs root"), "vsfs", OF_NONE, 60);
-    class_add_simple(":sysobj/elapsed", _("Seconds since sysobj_init()"), "sysobj:elapsed", OF_NONE, 0.1);
+    class_internal();
 
     class_power();
     class_proc_alts();
@@ -101,5 +140,5 @@ void class_init() {
     class_dt();
 
 /* anything left that is human-readable */
-    class_any_utf8();
+    class_any_utf8(); /* OF_BLAST */
 }

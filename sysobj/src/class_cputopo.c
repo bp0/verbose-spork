@@ -26,7 +26,7 @@ const gchar *cputopo_label(sysobj *obj);
 gchar *cputopo_format(sysobj *obj, int fmt_opts);
 guint cputopo_flags(sysobj *obj);
 
-static sysobj_class cls_cputopo = {
+static sysobj_class cls_cputopo = { SYSOBJ_CLASS_DEF
     .tag = "cputopo", .pattern = "/sys/devices/system/cpu/cpu*/topology*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_verify = cputopo_verify, .f_label = cputopo_label, .f_format = cputopo_format,
     .f_flags = cputopo_flags  };

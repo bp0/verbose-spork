@@ -24,7 +24,8 @@ static gchar *meminfo_format(sysobj *obj, int fmt_opts);
 static double meminfo_update_interval(sysobj *obj);
 
 static sysobj_class cls_meminfo[] = {
-  { .tag = "meminfo", .pattern = ":/meminfo*", .flags = OF_GLOB_PATTERN | OF_CONST,
+  { SYSOBJ_CLASS_DEF
+    .tag = "meminfo", .pattern = ":/meminfo*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_format = meminfo_format, .f_update_interval = meminfo_update_interval },
 };
 

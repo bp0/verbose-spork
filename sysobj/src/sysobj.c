@@ -240,8 +240,12 @@ gchar *simple_format(sysobj* obj, int fmt_opts) {
 }
 
 const sysobj_class *class_add(sysobj_class *c) {
-    if (c)
-        class_list = g_slist_append(class_list, c);
+    if (c) {
+        if (class_has_flag(c, OF_BLAST) )
+            class_list = g_slist_append(class_list, c);
+        else
+            class_list = g_slist_prepend(class_list, c);
+    }
     return c;
 }
 
@@ -370,10 +374,10 @@ void sysobj_free(sysobj *s) {
 }
 
 void sysobj_classify(sysobj *s) {
-    GSList *l = class_list;
-    sysobj_class *c;
+    GSList *l = NULL;
+    sysobj_class *c = NULL, *c_blast = NULL;
     if (s) {
-        while (l) {
+        for (l = class_list; l; l = l->next) {
             c = l->data;
             gboolean match = FALSE;
 
@@ -386,10 +390,17 @@ void sysobj_classify(sysobj *s) {
                 match = c->f_verify(s);
 
             if (match) {
-                s->cls = c;
-                return;
+                if (class_has_flag(c, OF_BLAST) ) {
+                    if (!c_blast) c_blast = c;
+                } else {
+                    s->cls = c;
+                    return;
+                }
             }
-            l = l->next;
+        }
+        if (c_blast) {
+            s->cls = c_blast;
+            return;
         }
     }
 }

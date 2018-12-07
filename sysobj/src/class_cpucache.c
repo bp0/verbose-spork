@@ -147,19 +147,23 @@ gchar *cpucache_format_collection(sysobj *obj, int fmt_opts) {
 }
 
 static sysobj_class cls_cpucache[] = {
-  { .tag = "cache:size", .pattern = "/sys/*/cache/index*/size", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .s_label = N_("Cache Size"), .s_halp = cpucache_reference_markup_text,
-    .f_verify = cpucache_verify_index_child, .f_format = cpucache_format_size },
-
-  { .tag = "cache:part", .pattern = "/sys/*/cache/index*/type", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .s_label = N_("Cache Type"), .s_halp = cpucache_reference_markup_text,
-    .f_verify = cpucache_verify_index_child, .f_format = cpucache_format_type },
-
-  { .tag = "cache:part", .pattern = "/sys/*/cache/index*", .flags = OF_GLOB_PATTERN | OF_CONST,
+  { SYSOBJ_CLASS_DEF
+    .tag = "cache:part", .pattern = "/sys/*/cache/index*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .s_label = N_("Cache"), .s_halp = cpucache_reference_markup_text,
     .f_verify = cpucache_verify_index, .f_format = cpucache_format_index },
 
-  { .tag = "cache", .pattern = "/sys/*/cpu*/cache", .flags = OF_GLOB_PATTERN | OF_CONST,
+  { SYSOBJ_CLASS_DEF
+    .tag = "cache:size", .pattern = "/sys/*/cache/index*/size", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .s_label = N_("Cache Size"), .s_halp = cpucache_reference_markup_text,
+    .f_verify = cpucache_verify_index_child, .f_format = cpucache_format_size },
+
+  { SYSOBJ_CLASS_DEF
+    .tag = "cache:part", .pattern = "/sys/*/cache/index*/type", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .s_label = N_("Cache Type"), .s_halp = cpucache_reference_markup_text,
+    .f_verify = cpucache_verify_index_child, .f_format = cpucache_format_type },
+
+  { SYSOBJ_CLASS_DEF
+    .tag = "cache", .pattern = "/sys/*/cpu*/cache", .flags = OF_GLOB_PATTERN | OF_CONST,
     .s_label = N_("CPU Cache(s)"), .s_halp = cpucache_reference_markup_text,
     .f_verify = cpu_verify_child, .f_format = cpucache_format_collection },
 };

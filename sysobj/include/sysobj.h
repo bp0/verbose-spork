@@ -38,6 +38,8 @@ enum {
     OF_NONE          = 0,
     OF_GLOB_PATTERN  = 1,
     OF_CONST         = 1<<1,
+    OF_BLAST         = 1<<2,  /* match as late as possible */
+
     /* used in "simple" classes */
     OF_REQ_ROOT      = 1<<16,
     OF_IS_VENDOR     = 1<<17,

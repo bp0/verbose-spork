@@ -40,21 +40,26 @@ static gchar *power_format(sysobj *obj, int fmt_opts);
 static double power_update_interval(sysobj *obj);
 
 static sysobj_class cls_power[] = {
-  { .tag = "subsystem:class", .pattern = "/sys/class/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+  { SYSOBJ_CLASS_DEF
+    .tag = "subsystem:class", .pattern = "/sys/class/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_verify = subsystem_verify,
     .s_label = "sysfs sub-system", .f_format = subsystem_format, .s_update_interval = 0.0 },
-  { .tag = "subsystem:bus", .pattern = "/sys/bus/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+  { SYSOBJ_CLASS_DEF
+    .tag = "subsystem:bus", .pattern = "/sys/bus/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_verify = subsystem_verify,
     .s_label = "sysfs sub-system", .f_format = subsystem_format, .s_update_interval = 0.0 },
-  { .tag = "subsystem:block", .pattern = "/sys/block/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+  { SYSOBJ_CLASS_DEF
+    .tag = "subsystem:block", .pattern = "/sys/block/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_verify = subsystem_verify,
     .s_label = "sysfs sub-system", .f_format = subsystem_format, .s_update_interval = 0.0 },
 
-  { .tag = "device_power:attribute", .pattern = "/sys/devices/*/power/*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .f_verify = power_verify, .s_halp = power_reference_markup_text,
-    .f_label = power_label, .f_format = power_format, .f_update_interval = power_update_interval },
-  { .tag = "device_power", .pattern = "/sys/devices/*/power", .flags = OF_GLOB_PATTERN | OF_CONST,
+  { SYSOBJ_CLASS_DEF
+    .tag = "device_power", .pattern = "/sys/devices/*/power", .flags = OF_GLOB_PATTERN | OF_CONST,
     .s_halp = power_reference_markup_text,
+    .f_label = power_label, .f_format = power_format, .f_update_interval = power_update_interval },
+  { SYSOBJ_CLASS_DEF
+    .tag = "device_power:attribute", .pattern = "/sys/devices/*/power/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .f_verify = power_verify, .s_halp = power_reference_markup_text,
     .f_label = power_label, .f_format = power_format, .f_update_interval = power_update_interval },
 };
 

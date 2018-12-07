@@ -26,11 +26,14 @@ gchar *dmi_id_format(sysobj *obj, int fmt_opts);
 guint dmi_id_flags(sysobj *obj);
 
 static sysobj_class cls_dmi_id[] = {
-  { .tag = "dmi:id", .pattern = "/sys/devices/virtual/dmi/id*", .flags = OF_GLOB_PATTERN | OF_CONST,
+  { SYSOBJ_CLASS_DEF
+    .tag = "dmi:id", .pattern = "/sys/devices/virtual/dmi/id*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_verify = dmi_id_verify, .f_label = dmi_id_label, .f_flags = dmi_id_flags,
     .f_format = dmi_id_format },
 
-  { .tag = "dmidecode:string", .pattern = ":/dmidecode/--string/*", .flags = OF_GLOB_PATTERN | OF_REQ_ROOT | OF_CONST },
+  { SYSOBJ_CLASS_DEF
+    .tag = "dmidecode:string", .pattern = ":/dmidecode/--string/*", .flags = OF_GLOB_PATTERN | OF_REQ_ROOT | OF_CONST,
+    .s_label = N_("Result of `dmidecode --string {}`") },
 };
 
 static const struct { gchar *rp; gchar *lbl; int extra_flags; } dmi_id_items[] = {

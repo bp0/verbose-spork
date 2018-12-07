@@ -120,20 +120,24 @@ enum {
 #define CLS_DT_FLAGS OF_GLOB_PATTERN | OF_CONST
 
 static sysobj_class cls_dtr[] = {
-  { .tag = "dt.ids:id", .pattern = ":/devicetree/dt.ids/*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .s_halp = dt_ids_reference_markup_text, .s_label = "dt.ids lookup result",
-    .f_format = dt_ids_format },
-  { .tag = "dt.ids", .pattern = ":/devicetree/dt.ids", .flags = OF_CONST,
-    .s_halp = dt_ids_reference_markup_text, .s_label = "dt.ids lookup virtual tree",
-    .f_format = dt_ids_format,.s_update_interval = 3.0 },
-
-  { .tag = "devicetree:compat", .pattern = DTROOT "*/compatible", .flags = CLS_DT_FLAGS,
-    .s_halp = dt_reference_markup_text,
-    .f_format = dtr_format, .f_update_interval = dtr_update_interval },
-  /* all else */
-  { .tag = "devicetree", .pattern = DTROOT "*", .flags = CLS_DT_FLAGS,
+  /* all else (first added is last tested for match) */
+  { SYSOBJ_CLASS_DEF
+    .tag = "devicetree", .pattern = DTROOT "*", .flags = CLS_DT_FLAGS,
     .s_halp = dt_reference_markup_text,
     .f_format = dtr_format, .f_flags = dtr_flags, .f_update_interval = dtr_update_interval, .f_cleanup = class_dt_cleanup },
+  { SYSOBJ_CLASS_DEF
+    .tag = "devicetree:compat", .pattern = DTROOT "*/compatible", .flags = CLS_DT_FLAGS,
+    .s_halp = dt_reference_markup_text,
+    .f_format = dtr_format, .f_update_interval = dtr_update_interval },
+
+  { SYSOBJ_CLASS_DEF
+    .tag = "dt.ids", .pattern = ":/devicetree/dt.ids", .flags = OF_CONST,
+    .s_halp = dt_ids_reference_markup_text, .s_label = "dt.ids lookup virtual tree",
+    .f_format = dt_ids_format,.s_update_interval = 3.0 },
+  { SYSOBJ_CLASS_DEF
+    .tag = "dt.ids:id", .pattern = ":/devicetree/dt.ids/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .s_halp = dt_ids_reference_markup_text, .s_label = "dt.ids lookup result",
+    .f_format = dt_ids_format },
 };
 
 static gchar *dt_ids_format(sysobj *obj, int fmt_opts) {

@@ -25,7 +25,8 @@ static gchar *rpi_format(sysobj *obj, int fmt_opts);
 static double rpi_update_interval(sysobj *obj);
 
 static sysobj_class cls_rpi[] = {
-  { .tag = "rpi", .pattern = ":/raspberry_pi*", .flags = OF_GLOB_PATTERN | OF_CONST,
+  { SYSOBJ_CLASS_DEF
+    .tag = "rpi", .pattern = ":/raspberry_pi*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_label = rpi_label, .f_format = rpi_format, .f_update_interval = rpi_update_interval },
 };
 

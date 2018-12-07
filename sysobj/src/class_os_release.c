@@ -32,11 +32,12 @@ const gchar os_release_reference_markup_text[] =
     "\n";
 
 static sysobj_class cls_os_release[] = {
-  /* all else */
-  { .tag = "os_release", .pattern = ":/os_release", .flags = OF_CONST,
+  { SYSOBJ_CLASS_DEF
+    .tag = "os_release", .pattern = ":/os_release", .flags = OF_CONST,
     .s_halp = os_release_reference_markup_text, .f_label = os_release_label,
     .f_format = os_release_format, .f_update_interval = os_release_update_interval },
-  { .tag = "os_release:item", .pattern = ":/os_release/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+  { SYSOBJ_CLASS_DEF
+    .tag = "os_release:item", .pattern = ":/os_release/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .s_halp = os_release_reference_markup_text, .f_label = os_release_label,
     .f_format = os_release_format, .f_update_interval = os_release_update_interval },
 };

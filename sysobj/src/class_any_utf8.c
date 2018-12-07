@@ -33,7 +33,7 @@ gboolean any_utf8_verify(sysobj *obj) {
 }
 
 static sysobj_class cls_any_utf8 = { SYSOBJ_CLASS_DEF
-    .tag = "any", .pattern = "*", .flags = OF_CONST | OF_GLOB_PATTERN,
+    .tag = "any", .pattern = "*", .flags = OF_CONST | OF_GLOB_PATTERN | OF_BLAST,
     .f_verify = any_utf8_verify };
 
 void class_any_utf8() {
