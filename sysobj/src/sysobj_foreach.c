@@ -46,6 +46,13 @@ static GList* __shift(GList *l, gchar **s) {
     return g_list_delete_link(l, l);
 }
 
+static GList* __pop(GList *l, gchar **s) {
+    GList *last = g_list_last(l);
+    if (last)
+        *s = (gchar*)last->data;
+    return g_list_delete_link(l, last);
+}
+
 static gboolean _has_symlink_loop(const gchar *path) {
     GList *targets = NULL;
     sysobj *obj = sysobj_new_from_fn(path, NULL);
@@ -153,6 +160,7 @@ static gpointer _thread_main(mt_state *s) {
     while(1) {
         g_mutex_lock(&s->lock);
         s->to_search = __shift(s->to_search, &path);
+        //s->to_search = __pop(s->to_search, &path);
         g_mutex_unlock(&s->lock);
 
         if (s->stop) {
