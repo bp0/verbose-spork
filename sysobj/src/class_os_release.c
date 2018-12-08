@@ -91,7 +91,7 @@ static gchar *os_format(sysobj *obj, int fmt_opts) {
         g_free(src);
         return ret;
     }
-    return simple_format(obj, fmt_opts);
+    return g_strdup("Linux");
 }
 
 static const struct { gchar *rp; gchar *lbl; int extra_flags; } os_release_items[] = {
@@ -146,7 +146,7 @@ static gchar *os_release_format(sysobj *obj, int fmt_opts) {
                 free(full_name);
             }
         } else
-            ret = g_strdup(_("(Unknown)")); /* TODO: check fmt_opts */
+            ret = g_strdup("Linux");
         g_free(ansi_color);
         return ret;
     }
@@ -188,7 +188,7 @@ static gchar *lsb_release_format(sysobj *obj, int fmt_opts) {
         if (full_name) {
             ret = full_name;
         } else
-            ret = g_strdup(_("(Unknown)")); /* TODO: check fmt_opts */
+            ret = g_strdup("Linux");
         return ret;
     }
     return simple_format(obj, fmt_opts);
