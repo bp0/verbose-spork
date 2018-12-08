@@ -11,13 +11,9 @@ enum {
 };
 static guint _signals[SIG_LAST] = { 0 };
 
-static const struct {gchar *label, *path;} places_list[] = {
-    /* label = path if label is null */
-    { NULL, "/sys" },
-    { "vsysfs", ":" },
-
-    { NULL, "/sys/devices/system/cpu" },
-    { NULL, "/proc/sys" },
+static sysobj_filter search_default_filters[] = {
+    //{ SO_FILTER_STATIC | SO_FILTER_EXCLUDE,     "/sys/kernel/slab/*", NULL },
+    { SO_FILTER_NONE, "", NULL }, /* end of list */
 };
 
 /* Forward declarations */
@@ -43,6 +39,7 @@ struct _bpSysObjSearchPrivate {
     guint found;
     GThread *search_thread;
     gboolean stop;
+    GSList *filters;
 };
 
 G_DEFINE_TYPE(bpSysObjSearch, bp_sysobj_search, GTK_TYPE_BOX);
@@ -88,6 +85,14 @@ bp_sysobj_search_init(bpSysObjSearch *s)
     sysobj_virt_add_simple_mkpath(priv->search_result_path, NULL, "*", VSO_TYPE_DIR);
     class_add_simple(priv->search_result_path, "Search result set", priv->search_result_path, OF_NONE, 1.0);
     priv->now_searching = FALSE;
+
+    GSList *filters = NULL;
+    int i = 0;
+    while(search_default_filters[i].type != SO_FILTER_NONE) {
+        filters = g_slist_append(filters, &search_default_filters[i]);
+        i++;
+    }
+    priv->filters = filters;
 
     _create(s);
 
@@ -141,7 +146,7 @@ static void _search_func(bpSysObjSearch *s) {
     priv->found = 0;
 
     /* begin search */
-    sysobj_foreach(NULL, (f_sysobj_foreach)_search_examine, s, SO_FOREACH_MT);
+    sysobj_foreach(priv->filters, (f_sysobj_foreach)_search_examine, s, SO_FOREACH_MT);
 
     /* done searching */
     priv->now_searching = FALSE;
