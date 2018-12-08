@@ -73,6 +73,27 @@ void class_os_release();
 void class_proc_alts();
 void class_any_utf8();
 
+gboolean class_verify(sysobj *obj) {
+    gboolean ret = FALSE;
+    gchar *pp = sysobj_parent_path(obj);
+    if (!g_strcmp0(pp, ":sysobj/classes") )
+        ret = TRUE;
+    g_free(pp);
+    return ret;
+}
+
+gchar *class_format(sysobj *obj, int fmt_opts) {
+    gchar *file = sysobj_raw_from_fn(obj->path, "_def_file");
+    gchar *line = sysobj_raw_from_fn(obj->path, "_def_line");
+    if (file && line) {
+        gchar *ret = g_strdup_printf("%s:%s", file, line);
+        g_free(file);
+        g_free(line);
+        return ret;
+    }
+    return simple_format(obj, fmt_opts);
+}
+
 gchar *class_flags_format(sysobj *obj, int fmt_opts) {
     gchar *flags_list = NULL;
     uint32_t flags = strtol(obj->data.str, NULL, 16);
@@ -103,6 +124,9 @@ static sysobj_class cls_internal[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "sysobj:elapsed", .pattern = ":sysobj/elapsed", .flags = OF_CONST,
     .s_label = N_("Seconds since sysobj_init()"), .s_update_interval = 0.1 },
+  { SYSOBJ_CLASS_DEF
+    .tag = "sysobj:class", .pattern = ":sysobj/classes/*", .flags = OF_CONST | OF_GLOB_PATTERN,
+    .f_verify = class_verify, .f_format = class_format },
   { SYSOBJ_CLASS_DEF
     .tag = "sysobj:class_flags", .pattern = ":sysobj/classes/*/_flags", .flags = OF_CONST | OF_GLOB_PATTERN,
     .f_format = class_flags_format },
