@@ -56,6 +56,7 @@ static sysobj_filter path_filters[] = {
     { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc/crypto", NULL },
     { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc/modules", NULL },
 
+    { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/etc/*-release", NULL },
     { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/usr/lib/os-release", NULL },
 
     /* things in here can break the whole universe if read */

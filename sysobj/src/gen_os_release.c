@@ -23,22 +23,34 @@
  */
 #include "sysobj.h"
 
-#define PATH_TO_OS_RELEASE "/usr/lib/os-release"
-
-static int os_release_was_found = 0;
-gchar *os_release_found(const gchar *path) {
-    PARAM_NOT_UNUSED(path);
-    return g_strdup_printf("%d", os_release_was_found);
-}
+#define PATH_TO_OS_RELEASE "/etc/os-release"
+#define PATH_TO_LSB_RELEASE "/etc/lsb-release"
 
 static sysobj_virt vol[] = {
-    { .path = ":/os_release/_found", .str = "",
-      .type = VSO_TYPE_STRING | VSO_TYPE_CONST,
-      .f_get_data = os_release_found, .f_get_type = NULL },
-    { .path = ":/os_release", .str = "*",
+    { .path = ":/os", .str = "*",
       .type = VSO_TYPE_DIR | VSO_TYPE_CONST,
       .f_get_data = NULL, .f_get_type = NULL },
 };
+
+void try_os_release() {
+    sysobj *obj = sysobj_new_from_fn(PATH_TO_OS_RELEASE, NULL);
+    if (obj->exists) {
+        sysobj_read(obj, FALSE);
+        sysobj_virt_add_simple(":/os/os_release", NULL, "*", VSO_TYPE_DIR);
+        sysobj_virt_from_kv(":/os/os_release", obj->data.str);
+    }
+    sysobj_free(obj);
+}
+
+void try_lsb_release() {
+    sysobj *obj = sysobj_new_from_fn(PATH_TO_LSB_RELEASE, NULL);
+    if (obj->exists) {
+        sysobj_read(obj, FALSE);
+        sysobj_virt_add_simple(":/os/lsb_release", NULL, "*", VSO_TYPE_DIR);
+        sysobj_virt_from_kv(":/os/lsb_release", obj->data.str);
+    }
+    sysobj_free(obj);
+}
 
 void gen_os_release() {
     int i = 0;
@@ -47,11 +59,6 @@ void gen_os_release() {
         sysobj_virt_add(&vol[i]);
     }
 
-    sysobj *obj = sysobj_new_from_fn(PATH_TO_OS_RELEASE, NULL);
-    if (obj->exists) {
-        os_release_was_found = 1;
-        sysobj_read(obj, FALSE);
-        sysobj_virt_from_kv(":/os_release", obj->data.str);
-    }
-    sysobj_free(obj);
+    try_os_release();
+    try_lsb_release();
 }
