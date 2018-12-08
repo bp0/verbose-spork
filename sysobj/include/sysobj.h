@@ -30,6 +30,7 @@
 #include "gettext.h"
 #include "term_color.h" /* used in formatting output */
 #include "util_sysobj.h"
+#include "sysobj_filter.h"
 
 #define UPDATE_INTERVAL_DEFAULT  10.0   /* in seconds */
 #define UPDATE_INTERVAL_NEVER     0.0   /* in seconds */
@@ -106,31 +107,6 @@ typedef struct sysobj_class {
 
     GPatternSpec *pspec;
 } sysobj_class;
-
-enum {
-                               /*  match | no-match */
-    SO_FILTER_NONE        = 0, /*     NC | NC       */
-    SO_FILTER_EXCLUDE     = 1, /*      E | NC       */
-    SO_FILTER_INCLUDE     = 2, /*      I | NC       */
-    SO_FILTER_EXCLUDE_IIF = 5, /*      E | I        */
-    SO_FILTER_INCLUDE_IIF = 6, /*      I | E        */
-
-    SO_FILTER_IIF         = 4,
-    SO_FILTER_MASK        = 7,
-    SO_FILTER_STATIC      = 256, /* free the pspec, but not the filter */
-};
-
-typedef struct sysobj_filter {
-    int type;
-    gchar *pattern;
-    GPatternSpec *pspec;
-} sysobj_filter;
-
-sysobj_filter *sysobj_filter_new(int type, gchar *pattern);
-void sysobj_filter_free(sysobj_filter *f);
-gboolean sysobj_filter_item_include(gchar *item, GSList *filters);
-/* returns the new head of now-filtered items */
-GSList *sysobj_filter_list(GSList *items, GSList *filters);
 
 typedef struct sysobj_data {
     gboolean was_read;
