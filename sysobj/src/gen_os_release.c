@@ -52,6 +52,28 @@ void try_lsb_release() {
     sysobj_free(obj);
 }
 
+void try_etc_files() {
+    static const char *etc_release_files[] = {
+        "/etc/issue",
+        "/etc/debian_version",
+        "/etc/redhat-release",
+        "/etc/SuSE-release",
+        "/etc/arch-release",
+        "/etc/gentoo-release",
+        "/etc/slackware-version",
+        "/etc/frugalware-release",
+        "/etc/altlinux-release",
+        "/etc/mandriva-release",
+        "/etc/meego-release",
+        "/etc/angstrom-version",
+        "/etc/mageia-release"
+    };
+    for (int i = 0; i < (int)G_N_ELEMENTS(etc_release_files); i++) {
+        gchar *name = g_path_get_basename(etc_release_files[i]);
+        sysobj_virt_add_simple(":/os", name, g_strdup(etc_release_files[i]), VSO_TYPE_SYMLINK);
+    }
+}
+
 void gen_os_release() {
     int i = 0;
     /* add virtual sysobj */
@@ -61,4 +83,5 @@ void gen_os_release() {
 
     try_os_release();
     try_lsb_release();
+    try_etc_files();
 }

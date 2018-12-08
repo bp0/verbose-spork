@@ -20,4 +20,8 @@ zip -y -r "SS_$ZNAME.zip" \
 	"/proc/crypto" \
 	"/proc/modules" \
 	"/usr/lib/os-release" \
+	/etc/issue \
+	/etc/*-release \
+	/etc/*-version \
+	/etc/*_version \
     --exclude "/sys/kernel/security/apparmor/*"
