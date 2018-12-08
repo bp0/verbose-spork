@@ -262,7 +262,8 @@ void sysobj_classify(sysobj *s);
 gboolean sysobj_exists(sysobj *s);
 gboolean sysobj_exists_from_fn(const gchar *base, const gchar *name);
 gboolean sysobj_has_flag(sysobj *s, guint flag);
-gboolean sysobj_read(sysobj *s, gboolean force); /* TRUE = data state updated, FALSE = data state not updated. Use data.was_read to see check for read error. */
+#define sysobj_read(o, f) sysobj_read_(o, f, __FUNCTION__);
+gboolean sysobj_read_(sysobj *s, gboolean force, const char *call_func); /* TRUE = data state updated, FALSE = data state not updated. Use data.was_read to see check for read error. */
 gboolean sysobj_data_expired(sysobj *s);
 void sysobj_unread_data(sysobj *s); /* frees data, but keeps is_utf8, len, lines, etc. */
 const gchar *sysobj_label(sysobj *s);

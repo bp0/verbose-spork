@@ -542,7 +542,8 @@ static void sysobj_read_data(sysobj *s) {
     }
 }
 
-gboolean sysobj_read(sysobj *s, gboolean force) {
+gboolean sysobj_read_(sysobj *s, gboolean force, const char *call_func) {
+    //printf("sysobj_read(%s, %s) from %s() fast:%s\n", s->path_req, force ? "true" : "false", call_func, s->fast_mode ? "true" : "false");
     if (s && s->path) {
         if (!force && s->data.was_read) {
             if (!sysobj_data_expired(s) )
@@ -1308,20 +1309,29 @@ gchar *sysobj_format_table(sysobj *obj, gchar **table, int table_len, int nbase,
 }
 
 sysobj *sysobj_parent(sysobj *s) {
+    gchar *rpp = NULL;
+    sysobj *ret = NULL;
+
     if (s) {
-        gchar *rpp = g_path_get_dirname(s->path_req);
-        if (!g_strcmp0(rpp, ".") ) {
-            g_free(rpp);
-            return NULL;
-        }
-        sysobj *ret = NULL;
+        rpp = g_path_get_dirname(s->path_req);
+        if (!g_strcmp0(rpp, ".") )
+            goto sysobj_parent_none;
+
+
         if (s->fast_mode)
             ret = sysobj_new_fast(rpp);
         else
             ret = sysobj_new_from_fn(rpp, NULL);
+
+        if (g_str_has_prefix(ret->path, ":error/") )
+            goto sysobj_parent_none;
+
         g_free(rpp);
         return ret;
     }
+sysobj_parent_none:
+    sysobj_free(ret);
+    g_free(rpp);
     return NULL;
 }
 

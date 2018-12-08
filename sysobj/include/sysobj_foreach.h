@@ -29,12 +29,21 @@ enum {
     SO_FOREACH_MT   = 2,
 };
 
+enum {
+    SO_FOREACH_END_UND = 0,
+    SO_FOREACH_END_INT = 1,
+    SO_FOREACH_END_EXH = 2,
+};
+
 typedef struct {
     long unsigned int threads;
     long unsigned int searched;
     long unsigned int queue_length;
+    long unsigned int filtered;
+    long unsigned int total_wait; /* in us, across all threads */
     double start_time;
     double rate;
+    int end_type;
 } sysobj_foreach_stats;
 
 #define SYSOBJ_FOREACH_STOP FALSE
