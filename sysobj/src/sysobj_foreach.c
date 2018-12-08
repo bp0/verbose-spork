@@ -245,6 +245,7 @@ static void sysobj_foreach_mt(GSList *filters, f_sysobj_foreach callback, gpoint
         state.stats.threads = max_threads;
     state.to_search = __push_if_uniq(state.to_search, ":/", NULL, &state.stats.queue_length);
     state.to_search = __push_if_uniq(state.to_search, "/sys", NULL, &state.stats.queue_length);
+    state.to_search = __push_if_uniq(state.to_search, "/proc", NULL, &state.stats.queue_length);
 
     if (state.stats.threads == 1) {
         _sysobj_foreach_thread_main(&state);
