@@ -46,10 +46,11 @@ static sysobj_class cls_os_release[] = {
     .s_halp = os_release_reference_markup_text,
     .s_label = gen_raw_label, .s_suggest = ":/os/os_release" },
   { SYSOBJ_CLASS_DEF
-    .tag = "os_release:raw:any_etc", .pattern = "/etc/*-release", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .s_label = gen_raw_label, .s_suggest = ":/os" },
+    .tag = "os_release:raw:etc", .pattern = "/etc/os-release", .flags = OF_CONST,
+    .s_halp = os_release_reference_markup_text,
+    .s_label = gen_raw_label, .s_suggest = ":/os/os_release" },
   { SYSOBJ_CLASS_DEF
-    .tag = "os_release:raw", .pattern = "/etc/lsb-release", .flags = OF_CONST,
+    .tag = "lsb_release:raw", .pattern = "/etc/lsb-release", .flags = OF_CONST,
     .s_halp = lsb_release_reference_markup_text,
     .s_label = gen_raw_label, .s_suggest = ":/os/lsb_release" },
 
@@ -78,13 +79,18 @@ static sysobj_class cls_os_release[] = {
 };
 
 static gchar *os_format(sysobj *obj, int fmt_opts) {
-    gchar *ret = sysobj_format_from_fn(obj->path, "os_release", fmt_opts);
+    gchar *ret = sysobj_format_from_fn(obj->path, "os_release", fmt_opts | FMT_OPT_OR_NULL);
     if (ret)
         return ret;
-    ret = sysobj_format_from_fn(obj->path, "lsb_release", fmt_opts);
+    ret = sysobj_format_from_fn(obj->path, "lsb_release", fmt_opts | FMT_OPT_OR_NULL);
     if (ret)
         return ret;
-
+    gchar *src = sysobj_raw_from_fn(obj->path, "debian_version");
+    if (src) {
+        ret = g_strdup_printf("Debian %s", src);
+        g_free(src);
+        return ret;
+    }
     return simple_format(obj, fmt_opts);
 }
 

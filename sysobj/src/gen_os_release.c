@@ -69,8 +69,10 @@ void try_etc_files() {
         "/etc/mageia-release"
     };
     for (int i = 0; i < (int)G_N_ELEMENTS(etc_release_files); i++) {
-        gchar *name = g_path_get_basename(etc_release_files[i]);
-        sysobj_virt_add_simple(":/os", name, g_strdup(etc_release_files[i]), VSO_TYPE_SYMLINK);
+        sysobj *obj = sysobj_new_fast(etc_release_files[i]);
+        if (obj->exists)
+            sysobj_virt_add_simple(":/os", obj->name_req, g_strdup(etc_release_files[i]), VSO_TYPE_SYMLINK);
+        sysobj_free(obj);
     }
 }
 
