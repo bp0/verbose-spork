@@ -29,11 +29,20 @@ const gchar hwmon_reference_markup_text[] =
     BULLET REFLINK("https://www.kernel.org/doc/Documentation/hwmon/sysfs-interface")
     "\n";
 
+const gchar thermal_reference_markup_text[] =
+    "Reference:\n"
+    BULLET REFLINK("https://www.kernel.org/doc/Documentation/thermal/sysfs-api.txt")
+    "\n";
+
 static gboolean hwmon_verify(sysobj *obj);
 static gchar *hwmon_format(sysobj *obj, int fmt_opts);
 
 static gboolean hwmon_attr_verify(sysobj *obj);
 static gchar *hwmon_attr_format(sysobj *obj, int fmt_opts);
+
+static gboolean tz_verify(sysobj *obj);
+static gchar *tz_format(sysobj *obj, int fmt_opts);
+static double tz_update_interval(sysobj *obj);
 
 static sysobj_class cls_hwmon[] = {
   { SYSOBJ_CLASS_DEF
@@ -44,6 +53,16 @@ static sysobj_class cls_hwmon[] = {
     .tag = "hwmon:attr", .pattern = "/sys/devices/*/hwmon*/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .s_halp = hwmon_reference_markup_text, .s_update_interval = 0.2,
     .f_verify = hwmon_attr_verify, .f_format = hwmon_attr_format },
+
+  { SYSOBJ_CLASS_DEF
+    .tag = "thermal:thermal_zone", .pattern = "/sys/devices/*/thermal/thermal_zone*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .s_halp = thermal_reference_markup_text,
+    .f_verify = tz_verify, .f_format = tz_format, .f_update_interval = tz_update_interval },
+  { SYSOBJ_CLASS_DEF
+    .tag = "thermal:cooling_device", .pattern = "/sys/devices/*/thermal/cooling_device*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .s_halp = thermal_reference_markup_text,
+    .f_verify = tz_verify, .f_format = tz_format },
+
 };
 
 static gboolean hwmon_verify(sysobj *obj) {
@@ -464,6 +483,46 @@ static gchar *hwmon_attr_format(sysobj *obj, int fmt_opts) {
             return ret;
     }
     return simple_format(obj, fmt_opts);
+}
+
+static gboolean tz_verify(sysobj *obj) {
+    if (verify_lblnum(obj, "cooling_device") )
+        return TRUE;
+    if (verify_lblnum(obj, "thermal_zone") )
+        return TRUE;
+    if (verify_lblnum_child(obj, "thermal_zone") ) {
+        if (SEQ(obj->name, "temp") )
+            return TRUE;
+    }
+    return FALSE;
+}
+
+static gchar *tz_format(sysobj *obj, int fmt_opts) {
+    if (verify_lblnum(obj, "cooling_device") ) {
+        gchar *ret = sysobj_format_from_fn(obj->path, "type", fmt_opts | FMT_OPT_OR_NULL);
+        if (ret)
+            return ret;
+    }
+    if (verify_lblnum(obj, "thermal_zone") ) {
+        gchar *ret = sysobj_format_from_fn(obj->path, "temp", fmt_opts | FMT_OPT_OR_NULL);
+        if (ret)
+            return ret;
+    }
+    if (verify_lblnum_child(obj, "thermal_zone") ) {
+        if (SEQ(obj->name, "temp") ) {
+            return fmt_millidegree_c(obj, fmt_opts);
+        }
+    }
+    return simple_format(obj, fmt_opts);
+}
+
+static double tz_update_interval(sysobj *obj) {
+    if (verify_lblnum_child(obj, "thermal_zone") ) {
+        if (SEQ(obj->name, "temp") ) {
+            return 0.2;
+        }
+    }
+    return 1.0;
 }
 
 void class_hwmon() {
