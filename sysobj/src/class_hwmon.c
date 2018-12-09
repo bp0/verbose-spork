@@ -19,6 +19,7 @@
  */
 
 #include "sysobj.h"
+#include "format_funcs.h"
 
 const gchar hwmon_reference_markup_text[] =
     "Reference:\n"
@@ -167,15 +168,6 @@ static gchar *fmt_enable(sysobj *obj, int fmt_opts) {
     return sysobj_format_table(obj, (gchar**)&disable_enable, (int)G_N_ELEMENTS(disable_enable), 10, fmt_opts);
 }
 
-static gchar *fmt_rpm(sysobj *obj, int fmt_opts) {
-    gchar *trim = g_strstrip(g_strdup(obj->data.str));
-    if (fmt_opts & FMT_OPT_NO_UNIT)
-        return trim;
-    double rpm = strtol(trim, NULL, 10);
-    g_free(trim);
-    return g_strdup_printf("%.1lf %s", rpm, _("RPM") );
-}
-
 static gchar *fmt_pwm_level(sysobj *obj, int fmt_opts) {
     gchar *trim = g_strstrip(g_strdup(obj->data.str));
     if (fmt_opts & FMT_OPT_NO_UNIT)
@@ -209,25 +201,6 @@ static gchar *fmt_pwm_mode(sysobj *obj, int fmt_opts) {
     return sysobj_format_table(obj, (gchar**)&pwm_mode, (int)G_N_ELEMENTS(pwm_mode), 10, fmt_opts);
 }
 
-static gchar *fmt_hz(sysobj *obj, int fmt_opts) {
-    gchar *trim = g_strstrip(g_strdup(obj->data.str));
-    if (fmt_opts & FMT_OPT_NO_UNIT)
-        return trim;
-    double rpm = strtol(trim, NULL, 10);
-    g_free(trim);
-    return g_strdup_printf("%.1lf %s", rpm, _("Hz") );
-}
-
-static gchar *fmt_millivolt(sysobj *obj, int fmt_opts) {
-    gchar *trim = g_strstrip(g_strdup(obj->data.str));
-    if (fmt_opts & FMT_OPT_NO_UNIT)
-        return trim;
-    double volt = strtol(obj->data.str, NULL, 10);
-    volt /= 1000;
-    g_free(trim);
-    return g_strdup_printf("%.3lf %s", volt, _("V") );
-}
-
 static gchar *fmt_temp_type(sysobj *obj, int fmt_opts) {
     static const char *temp_types[] = {
         N_("(Unknown)"),
@@ -240,76 +213,6 @@ static gchar *fmt_temp_type(sysobj *obj, int fmt_opts) {
         NULL
     };
     return sysobj_format_table(obj, (gchar**)&temp_types, (int)G_N_ELEMENTS(temp_types), 10, fmt_opts);
-}
-
-static gchar *fmt_millidegree_c(sysobj *obj, int fmt_opts) {
-    gchar *trim = g_strstrip(g_strdup(obj->data.str));
-    if (fmt_opts & FMT_OPT_NO_UNIT)
-        return trim;
-    double degc = strtol(obj->data.str, NULL, 10);
-    degc /= 1000;
-    g_free(trim);
-    return g_strdup_printf("%.3lf %s", degc, _("\u00B0C") );
-}
-
-static gchar *fmt_milliampere(sysobj *obj, int fmt_opts) {
-    gchar *trim = g_strstrip(g_strdup(obj->data.str));
-    if (fmt_opts & FMT_OPT_NO_UNIT)
-        return trim;
-    double mA = strtol(obj->data.str, NULL, 10);
-    g_free(trim);
-    if (mA > 2000)
-        return g_strdup_printf("%.3lf %s", (mA/1000), _("A") );
-    else
-        return g_strdup_printf("%.1lf %s", mA, _("mA") );
-}
-
-static gchar *fmt_microwatt(sysobj *obj, int fmt_opts) {
-    gchar *trim = g_strstrip(g_strdup(obj->data.str));
-    if (fmt_opts & FMT_OPT_NO_UNIT)
-        return trim;
-    double mW = strtol(obj->data.str, NULL, 10);
-    mW /= 1000;
-    g_free(trim);
-    return g_strdup_printf("%.3lf %s", mW, _("mW") );
-}
-
-static gchar *fmt_milliseconds(sysobj *obj, int fmt_opts) {
-    gchar *trim = g_strstrip(g_strdup(obj->data.str));
-    if (fmt_opts & FMT_OPT_NO_UNIT)
-        return trim;
-    double ms = strtol(obj->data.str, NULL, 10);
-    g_free(trim);
-    return g_strdup_printf("%.1lf %s", ms, _("ms") );
-}
-
-static gchar *fmt_microjoule(sysobj *obj, int fmt_opts) {
-    gchar *trim = g_strstrip(g_strdup(obj->data.str));
-    if (fmt_opts & FMT_OPT_NO_UNIT)
-        return trim;
-    double mJ = strtol(obj->data.str, NULL, 10);
-    mJ /= 1000;
-    g_free(trim);
-    return g_strdup_printf("%.3lf %s", mJ, _("mJ") );
-}
-
-static gchar *fmt_percent(sysobj *obj, int fmt_opts) {
-    gchar *trim = g_strstrip(g_strdup(obj->data.str));
-    if (fmt_opts & FMT_OPT_NO_UNIT)
-        return trim;
-    double perc = strtol(obj->data.str, NULL, 10);
-    g_free(trim);
-    return g_strdup_printf("%.1lf%s", perc, _("%") );
-}
-
-static gchar *fmt_millepercent(sysobj *obj, int fmt_opts) {
-    gchar *trim = g_strstrip(g_strdup(obj->data.str));
-    if (fmt_opts & FMT_OPT_NO_UNIT)
-        return trim;
-    double perc = strtol(obj->data.str, NULL, 10);
-    perc /= 1000;
-    g_free(trim);
-    return g_strdup_printf("%.3lf%s", perc, _("%") );
 }
 
 static gchar *hwmon_attr_format(sysobj *obj, int fmt_opts) {

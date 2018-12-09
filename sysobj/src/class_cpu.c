@@ -19,6 +19,7 @@
  */
 
 #include "sysobj.h"
+#include "format_funcs.h"
 
 const gchar cpu_reference_markup_text[] =
     "Reference:\n"
@@ -63,14 +64,6 @@ double cpu_update_interval(sysobj *obj) {
     return 1.0;
 }
 
-gchar *cpu_format_1yes0no(sysobj *obj, int fmt_opts) {
-    if (obj && obj->data.str) {
-        int value = strtol(obj->data.str, NULL, 10);
-        return g_strdup_printf("[%d] %s", value, value ? _("Yes") : _("No") );
-    }
-    return simple_format(obj, fmt_opts);
-}
-
 static sysobj_class cls_cpu[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "cpu_list", .pattern = "/sys/devices/system/cpu", .flags = OF_CONST,
@@ -85,7 +78,7 @@ static sysobj_class cls_cpu[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "cpu:isonline", .pattern = "/sys/devices/system/cpu/cpu*/online", .flags = OF_GLOB_PATTERN | OF_CONST,
     .s_label = N_("Is Online"), .s_halp = cpu_reference_markup_text,
-    .f_verify = cpu_verify_child, .f_format = cpu_format_1yes0no, .f_update_interval = cpu_update_interval },
+    .f_verify = cpu_verify_child, .f_format = fmt_1yes0no, .f_update_interval = cpu_update_interval },
 
   { SYSOBJ_CLASS_DEF
     .tag = "cpu:microcode_version", .pattern = "/sys/devices/system/cpu/cpu*/microcode/version", OF_GLOB_PATTERN | OF_CONST | OF_REQ_ROOT,

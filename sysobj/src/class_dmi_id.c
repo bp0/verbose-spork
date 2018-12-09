@@ -19,6 +19,7 @@
  */
 
 #include "sysobj.h"
+#include "format_funcs.h"
 
 gboolean dmi_id_verify(sysobj *obj);
 const gchar *dmi_id_label(sysobj *obj);

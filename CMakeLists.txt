@@ -38,6 +38,7 @@ add_library(sysobj STATIC
         sysobj/src/sysobj_foreach.c
         sysobj/src/util_sysobj.c
         sysobj/src/gg_file.c
+        sysobj/src/format_funcs.c
         sysobj/src/pin.c
         sysobj/src/classes.c
         sysobj/src/cpubits.c

@@ -19,6 +19,7 @@
  */
 
 #include "sysobj.h"
+#include "format_funcs.h"
 
 const gchar cpufreq_reference_markup_text[] =
     "Reference:\n"
@@ -72,33 +73,6 @@ gboolean cpufreq_verify(sysobj *obj) {
     return FALSE;
 }
 
-gchar *cpufreq_format_ns(sysobj *obj, int fmt_opts) {
-    if (obj) {
-        if (obj->data.was_read && obj->data.str) {
-            uint32_t ns = strtoul(obj->data.str, NULL, 10);
-            if (fmt_opts & FMT_OPT_NO_UNIT)
-                return g_strdup_printf("%u", ns);
-            else
-                return g_strdup_printf("%u %s", ns, _("ns"));
-        }
-    }
-    return simple_format(obj, fmt_opts);
-}
-
-gchar *cpufreq_format_khz(sysobj *obj, int fmt_opts) {
-    if (obj) {
-        if (obj->data.was_read && obj->data.str) {
-            uint32_t khz = strtoul(obj->data.str, NULL, 10);
-            double mhz = (double)khz / 1000;
-            if (fmt_opts & FMT_OPT_NO_UNIT)
-                return g_strdup_printf("%.3f", mhz);
-            else
-                return g_strdup_printf("%.3f %s", mhz, _("MHz"));
-        }
-    }
-    return simple_format(obj, fmt_opts);
-}
-
 const gchar *cpufreq_label(sysobj *obj) {
     if (obj) {
         int i = cpufreq_item_find(obj->name);
@@ -106,6 +80,7 @@ const gchar *cpufreq_label(sysobj *obj) {
     }
     return NULL;
 }
+
 //TODO:
 const gchar *cpufreq_desc(sysobj *obj) {
     if (obj) {
@@ -127,7 +102,7 @@ double cpufreq_update_interval_for_khz(sysobj *obj) {
 
 static void cpufreq_class_for_hz(sysobj_class *c) {
     c->f_verify = cpufreq_verify;
-    c->f_format = cpufreq_format_khz;
+    c->f_format = fmt_khz;
     c->f_label = cpufreq_label;
     c->f_update_interval = cpufreq_update_interval_for_khz;
     c->f_compare = compare_str_base10;
@@ -135,7 +110,7 @@ static void cpufreq_class_for_hz(sysobj_class *c) {
 
 static void cpufreq_class_for_ns(sysobj_class *c) {
     c->f_verify = cpufreq_verify;
-    c->f_format = cpufreq_format_ns;
+    c->f_format = fmt_nanoseconds;
     c->f_label = cpufreq_label;
     c->f_update_interval = NULL;
     c->f_compare = compare_str_base10;
