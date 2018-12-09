@@ -117,6 +117,7 @@ static gboolean name_is_0x04(gchar *name) {
 }
 
 static gchar *gen_usb_ids_lookup_value(const gchar *path) {
+    if (!path) return NULL;
     gchar name[16] = "";
     buff_basename(path, name, 15);
 

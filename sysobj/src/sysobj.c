@@ -22,6 +22,7 @@
 #include <unistd.h>
 #include "gg_file.h"
 #include "sysobj.h"
+#include "vendor.h"
 
 gchar sysobj_root[1024] = "";
 #define USING_ALT_ROOT (*sysobj_root != 0)
@@ -1144,7 +1145,13 @@ static GSList *sysobj_virt_children(const sysobj_virt *vo, const gchar *req) {
 }
 
 void sysobj_virt_free(sysobj_virt *s) {
-    if (s && !(s->type & VSO_TYPE_CONST)) {
+    if (!s) return;
+    /* allow objects to cleanup */
+    if (s->f_get_data) {
+        gchar *trash = s->f_get_data(NULL);
+        g_free(trash);
+    }
+    if (!(s->type & VSO_TYPE_CONST)) {
         g_free(s->path);
         g_free(s->str);
         g_free(s);
@@ -1168,6 +1175,7 @@ void sysobj_init(const gchar *alt_root) {
     sysobj_global_timer = g_timer_new();
     g_timer_start(sysobj_global_timer);
 
+    vendor_init();
     class_init();
 }
 
@@ -1178,6 +1186,7 @@ double sysobj_elapsed() {
 void sysobj_cleanup() {
     class_cleanup();
     sysobj_virt_cleanup();
+    vendor_cleanup();
     g_timer_destroy(sysobj_global_timer);
 }
 

@@ -169,7 +169,7 @@ typedef struct sysobj_virt {
     gchar *path;
     int type;
     gchar *str; /* default f_get_data() uses str; */
-    gchar *(*f_get_data)(const gchar *path);
+    gchar *(*f_get_data)(const gchar *path); /* f_get_data(NULL) is called for cleanup */
     int (*f_get_type)(const gchar *path);
 } sysobj_virt;
 

@@ -24,6 +24,46 @@
 #include "sysobj.h"
 #include "sysobj_foreach.h"
 #include "util_pci.h"
+#include "vendor.h"
+
+#if 0
+static void gpu_make_nice_name(sysobj *gpu_obj) {
+    static const char unk_v[] = "Unknown"; /* do not...    */
+    static const char unk_d[] = "Device";  /* ...translate */
+    const char *vendor_str = s->vendor_str;
+    const char *device_str = s->device_str;
+    if (!vendor_str)
+        vendor_str = unk_v;
+    if (!device_str)
+        device_str = unk_d;
+
+    /* try and a get a "short name" for the vendor */
+    vendor_str = vendor_get_shortest_name(vendor_str);
+
+    /* These two former special cases are currently handled by the vendor_get_shortest_name()
+     * function well enough, but the notes are preserved here. */
+        /* nvidia PCI strings are pretty nice already,
+         * just shorten the company name */
+        // s->nice_name = g_strdup_printf("%s %s", "nVidia", device_str);
+        /* Intel Graphics may have very long names, like "Intel Corporation Seventh Generation Something Core Something Something Integrated Graphics Processor Revision Ninety-four"
+         * but for now at least shorten "Intel Corporation" to just "Intel" */
+        // s->nice_name = g_strdup_printf("%s %s", "Intel", device_str);
+
+    if (strstr(vendor_str, "AMD")) {
+        /* AMD PCI strings are crazy stupid because they use the exact same
+         * chip and device id for a zillion "different products" */
+        char *full_name = strdup(device_str);
+        /* Try and shorten it to the chip code name only, at least */
+        char *b = strchr(full_name, '[');
+        if (b) *b = '\0';
+        s->nice_name = g_strdup_printf("%s %s", "AMD/ATI", g_strstrip(full_name));
+        free(full_name);
+    } else {
+        /* nothing nicer */
+        s->nice_name = g_strdup_printf("%s %s", vendor_str, device_str);
+    }
+}
+#endif
 
 static void find_drm_cards() {
     sysobj *drm_obj = sysobj_new_from_fn("/sys/class/drm", NULL);
@@ -33,7 +73,7 @@ static void find_drm_cards() {
             sysobj *card_obj = sysobj_new_from_fn(drm_obj->path, (gchar*)l->data);
             if (verify_lblnum(card_obj, "card") ) {
                 gchar *gpu_id = g_strdup_printf("drm-%s", card_obj->name_req);
-                sysobj_virt_add_simple(":/gpu",  gpu_id, card_obj->path, VSO_TYPE_SYMLINK | VSO_TYPE_AUTOLINK | VSO_TYPE_DYN );
+                sysobj_virt_add_simple(":/gpu/found",  gpu_id, card_obj->path, VSO_TYPE_SYMLINK | VSO_TYPE_AUTOLINK | VSO_TYPE_DYN );
                 g_free(gpu_id);
             }
             sysobj_free(card_obj);
@@ -61,7 +101,7 @@ static void find_pci_vga_devices() {
                     if ( (pci_class >= 0x30000 && pci_class <= 0x3ffff)
                         || (pci_class >= 0x000100 && pci_class <= 0x0001ff) ) {
                         gchar *gpu_id = g_strdup_printf("pci-dc-%s", card_obj->name_req);
-                        sysobj_virt_add_simple(":/gpu", gpu_id, card_obj->path, VSO_TYPE_SYMLINK | VSO_TYPE_AUTOLINK | VSO_TYPE_DYN );
+                        sysobj_virt_add_simple(":/gpu/found", gpu_id, card_obj->path, VSO_TYPE_SYMLINK | VSO_TYPE_AUTOLINK | VSO_TYPE_DYN );
                         g_free(gpu_id);
                     }
                 }
@@ -85,7 +125,7 @@ static gboolean _dt_item_callback(const sysobj *obj, gpointer user_data, gconstp
     /* should either be NULL or @ */
     if (*(obj->name+3) == '\0' || *(obj->name+3) == '@') {
         gchar *gpu_id = g_strdup_printf("dt-%s", obj->name_req);
-        sysobj_virt_add_simple(":/gpu", gpu_id, obj->path, VSO_TYPE_SYMLINK | VSO_TYPE_AUTOLINK | VSO_TYPE_DYN );
+        sysobj_virt_add_simple(":/gpu/found", gpu_id, obj->path, VSO_TYPE_SYMLINK | VSO_TYPE_AUTOLINK | VSO_TYPE_DYN );
         g_free(gpu_id);
     }
     return SYSOBJ_FOREACH_CONTINUE;
@@ -95,8 +135,27 @@ static void find_dt_gpu_devices() {
     sysobj_foreach_from("/sys/firmware/devicetree/base", NULL, (f_sysobj_foreach)_dt_item_callback, NULL, SO_FOREACH_NORMAL);
 }
 
+static void create_gpus() {
+
+}
+
+static gchar *gpu_dir(const gchar *path) {
+    if (!path) return NULL; //TODO
+    return g_strdup("found");
+}
+
+static sysobj_virt vol[] = {
+    { .path = ":/gpu", .f_get_data = gpu_dir,
+      .type = VSO_TYPE_DIR | VSO_TYPE_CONST },
+    { .path = ":/gpu/found", .str = "*",
+      .type = VSO_TYPE_DIR | VSO_TYPE_CONST },
+};
+
 void gen_gpu() {
-    sysobj_virt_add_simple(":/gpu", NULL, "*", VSO_TYPE_DIR);
+    /* add virtual sysobj */
+    for (int i = 0; i < (int)G_N_ELEMENTS(vol); i++)
+        sysobj_virt_add(&vol[i]);
+
     find_drm_cards();
     find_pci_vga_devices();
     find_dt_gpu_devices();

@@ -86,6 +86,7 @@ static gchar *util_exec(const gchar **argv) {
 }
 
 static gchar *dmidecode_get_str(const gchar *path) {
+    if (!path) return NULL;
     gchar *name = g_path_get_basename(path);
     gchar *ret = NULL;
     if (strcmp(name, "--string") == 0) {
@@ -102,6 +103,7 @@ static gchar *dmidecode_get_str(const gchar *path) {
 }
 
 static gchar *dmidecode_get_link(const gchar *path) {
+    if (!path) return NULL;
     gchar *name = g_path_get_basename(path);
     gchar *ret = NULL;
     if (strcmp(name, "sysfs_map") == 0) {
@@ -114,6 +116,7 @@ static gchar *dmidecode_get_link(const gchar *path) {
 }
 
 static gchar *dmidecode_get_best(const gchar *path) {
+    if (!path) return NULL;
     gchar *name = g_path_get_basename(path);
     gchar *ret = NULL;
     if (strcmp(name, "best_available") == 0) {

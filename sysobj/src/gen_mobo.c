@@ -22,6 +22,7 @@
  *  :/mobo
  */
 #include "sysobj.h"
+#include "vendor.h"
 
 #define dt_get_model() sysobj_format_from_fn("/sys/firmware/devicetree/base", "model", FMT_OPT_OR_NULL );
 #define dmi_get_str(k) sysobj_format_from_fn(":/dmidecode/best_available", k, FMT_OPT_NO_JUNK | FMT_OPT_OR_NULL );
@@ -29,10 +30,10 @@ static gchar *mobo_get_name(const gchar *path) {
     gchar *board_name, *board_vendor, *board_version;
     gchar *product_name, *product_vendor, *product_version;
     gchar *board_part = NULL, *product_part = NULL;
-    //const gchar *tmp;
+    const gchar *tmp;
     int b = 0, p = 0;
 
-    PARAM_NOT_UNUSED(path);
+    if (!path) return NULL; /* cleanup not needed */
 
     gchar *ret = NULL;
 
@@ -48,24 +49,24 @@ static gchar *mobo_get_name(const gchar *path) {
     board_version = dmi_get_str("baseboard-version");
     board_vendor = dmi_get_str("baseboard-manufacturer");
     if (board_vendor) {
-        /* attempt to shorten */ /*
+        /* attempt to shorten */
         tmp = vendor_get_shortest_name(board_vendor);
         if (tmp && tmp != board_vendor) {
             g_free(board_vendor);
             board_vendor = g_strdup(tmp);
-        } */
+        }
     }
 
     product_name = dmi_get_str("system-product-name");
     product_version = dmi_get_str("system-version");
     product_vendor = dmi_get_str("system-manufacturer");
     if (product_vendor) {
-        /* attempt to shorten */ /*
+        /* attempt to shorten */
         tmp = vendor_get_shortest_name(product_vendor);
         if (tmp && tmp != product_vendor) {
             g_free(product_vendor);
             product_vendor = g_strdup(tmp);
-        } */
+        }
     }
 
     if (board_vendor && product_vendor &&

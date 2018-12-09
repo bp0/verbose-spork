@@ -173,6 +173,7 @@ static void buff_parent_name(const gchar *path, gchar *buff, gsize n) {
 }
 
 static gchar *gen_dt_ids_lookup_value(const gchar *path) {
+    if (!path) return NULL;
     gchar name[128] = "";
     buff_basename(path, name, 127);
 

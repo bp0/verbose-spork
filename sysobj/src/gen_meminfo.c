@@ -42,6 +42,7 @@ static sysobj_virt vol[] = {
 };
 
 gchar *meminfo_read(const gchar *path) {
+    if (!path) return NULL; /* cleanup not needed */
     gchar *ret = NULL;
     gchar *data = sysobj_raw_from_fn(PROC_MEMINFO, NULL);
     gchar *name = g_path_get_basename(path);

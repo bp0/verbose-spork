@@ -249,7 +249,7 @@ void dtr_msg(char *fmt, ...) {
 }
 
 static gchar *dt_messages(const gchar *path) {
-    PARAM_NOT_UNUSED(path);
+    if (!path) return NULL; /* cleanup not needed */
     return g_strdup(dtr_log ? dtr_log : "");
 }
 

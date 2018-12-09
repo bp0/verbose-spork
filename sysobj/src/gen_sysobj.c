@@ -27,6 +27,7 @@ static void buff_basename(const gchar *path, gchar *buff, gsize n) {
 }
 
 static gchar *get_item(const gchar *path) {
+    if (!path) return NULL;
     gchar name[128] = "";
     buff_basename(path, name, 127);
 
@@ -61,6 +62,7 @@ static const gchar class_item_list[] =
   "_f_halp\n";
 
 static gchar *get_class_info(const gchar *path) {
+    if (!path) return NULL;
     gchar name[128] = "";
     buff_basename(path, name, 127);
     GSList *cl = class_get_list();
