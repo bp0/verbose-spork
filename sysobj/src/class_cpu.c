@@ -32,6 +32,7 @@ gboolean cpu_verify(sysobj *obj) {
     return verify_lblnum(obj, "cpu");
 }
 
+/* export */
 gboolean cpu_verify_child(sysobj *obj) {
     return verify_lblnum_child(obj, "cpu");
 }

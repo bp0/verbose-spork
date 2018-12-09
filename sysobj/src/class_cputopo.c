@@ -19,6 +19,7 @@
  */
 
 #include "sysobj.h"
+#include "sysobj_extras.h" /* for cpu_pct() */
 #include "cpubits.h"
 
 gboolean cputopo_verify(sysobj *obj);
@@ -69,9 +70,6 @@ const gchar *cputopo_label(sysobj *obj) {
         return _(cputopo_items[i].lbl);
     return NULL;
 }
-
-/* in gen_procs.c */
-void cpu_pct(sysobj *obj, int *logical, int *pack, int *core_of_pack, int *thread_of_core);
 
 gchar *topology_summary(sysobj *obj, int fmt_opts) {
     static const char sfmt[] = N_("{P%d:C%d:T%d}");

@@ -67,6 +67,7 @@ gboolean cpu_x86_vfms(int logical, gchar **vendor_id, int *family, int *model, i
     return TRUE;
 }
 
+/* export */
 /* obj points to a cpuN/topology */
 void cpu_pct(sysobj *obj, int *logical, int *pack, int *core_of_pack, int *thread_of_core) {
     gchar *pn = sysobj_parent_name(obj);

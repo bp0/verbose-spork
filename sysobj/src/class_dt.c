@@ -763,6 +763,7 @@ static guint dtr_flags(sysobj *obj) {
     return CLS_DT_FLAGS;
 }
 
+/* export */
 gchar *dtr_compat_decode(const gchar *compat_str_list, gsize len, gboolean show_class) {
     gchar *ret = NULL;
     if (compat_str_list) {

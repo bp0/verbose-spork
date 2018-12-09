@@ -20,6 +20,7 @@
 
 #include <stdio.h> /* for sscanf() */
 #include "sysobj.h"
+#include "sysobj_extras.h" /* for cpu_verify_child() */
 
 #define BULLET "\u2022"
 #define REFLINK(URI) "<a href=\"" URI "\">" URI "</a>"
@@ -28,9 +29,6 @@ const gchar cpucache_reference_markup_text[] =
     BULLET REFLINK("https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-devices-system-cpu") "\n"
     BULLET REFLINK("https://www.kernel.org/doc/Documentation/ABI/stable/sysfs-devices-system-cpu") "\n"
     "\n";
-
-/* in class_cpu.c */
-gboolean cpu_verify_child(sysobj *obj);
 
 gboolean cpucache_verify_index(sysobj *obj) {
     return verify_lblnum(obj, "index");

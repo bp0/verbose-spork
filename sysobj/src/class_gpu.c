@@ -19,6 +19,7 @@
  */
 
 #include "sysobj.h"
+#include "sysobj_extras.h" /* for dtr_compat_decode() */
 
 static const gchar *gpu_label(sysobj *s);
 static gchar *gpu_format(sysobj *obj, int fmt_opts);
@@ -75,8 +76,6 @@ static gboolean drm_card_verify(sysobj *obj) {
     g_free(pn);
     return ret;
 }
-
-gchar *dtr_compat_decode(const gchar *compat_str_list, gsize len, gboolean show_class); /* in class_dt.c */
 
 static gchar *drm_card_format(sysobj *obj, int fmt_opts) {
     gchar *device_name = sysobj_format_from_fn(obj->path, "device", fmt_opts | FMT_OPT_NULL_IF_SIMPLE_DIR);
