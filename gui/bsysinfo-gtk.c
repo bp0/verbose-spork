@@ -198,8 +198,7 @@ int main(int argc, char **argv) {
     gtk_init (&argc, &argv);
     app_init();
 
-    if (DEBUG_BUILD)
-        class_dump_list();
+    //if (DEBUG_BUILD) class_dump_list();
 
     browser = bp_sysobj_browser_new();
     watchlist = bp_sysobj_view_new();
