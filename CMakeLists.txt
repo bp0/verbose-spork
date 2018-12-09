@@ -65,6 +65,7 @@ add_library(sysobj STATIC
         sysobj/src/class_uptime.c
         sysobj/src/class_proc_alts.c
         sysobj/src/class_gpu.c
+        sysobj/src/class_hwmon.c
 # gen only
         sysobj/src/gen_sysobj.c
         sysobj/src/gen_usb_ids.c
