@@ -665,7 +665,7 @@ gchar *sysobj_virt_is_symlink(gchar *req) {
 }
 
 gboolean sysobj_config_paths(sysobj *s, const gchar *base, const gchar *name) {
-    gchar *req = NULL, *norm = NULL, *vlink = NULL, *chkpath = NULL, *fspath = NULL;
+    gchar *req = NULL, *norm = NULL, *vlink = NULL, *chkpath = NULL, *fspath = NULL, *fspath_req = NULL;
     gboolean target_is_real = FALSE, req_is_real = FALSE;
     gchar *vlink_tmp = NULL;
     int vlr_count = 0;
@@ -729,6 +729,14 @@ gboolean sysobj_config_paths(sysobj *s, const gchar *base, const gchar *name) {
     s->path = s->path_fs = fspath;
     if (USING_ALT_ROOT) {
         int alt_root_len = strlen(sysobj_root);
+
+        if (req_is_real) {
+            fspath_req = g_strdup_printf("%s%s%s", sysobj_root, (*req == '/') ? "" : "/", req);
+            g_free(req);
+            s->path_req_fs = fspath_req;
+            s->path_req = s->path_req_fs + alt_root_len;
+        }
+
         if (target_is_real) {
             /* check for .. beyond sysobj_root */
             if (!g_str_has_prefix(s->path_fs, sysobj_root) )
