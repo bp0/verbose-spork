@@ -121,13 +121,83 @@ const gchar *os_release_label(sysobj *obj) {
     return NULL;
 }
 
+static const gchar *color_lookup(gchar *ansi_color) {
+    static struct { char *ansi, *html; } tab[] = {
+        { "0;30", "#010101" },
+        { "0;31", "#de382b" },
+        { "0;32", "#39b54a" },
+        { "0;33", "#ffc706" },
+        { "0;34", "#006fb8" },
+        { "0;35", "#762671" },
+        { "0;36", "#2cb5e9" },
+        { "0;37", "#cccccc" },
+        { "1;30", "#808080" },
+        { "1;31", "#ff0000" },
+        { "1;32", "#00ff00" },
+        { "1;33", "#ffff00" },
+        { "1;34", "#0000ff" },
+        { "1;35", "#ff00ff" },
+        { "1;36", "#00ffff" },
+        { "1;37", "#ffffff" },
+    };
+    for (int i = 0; i<(int)G_N_ELEMENTS(tab); i++)
+        if (!g_strcmp0(tab[i].ansi, ansi_color) )
+            return tab[i].html;
+    return NULL;
+}
+
+static gchar *safe_ansi_color(gchar *ansi_color, gboolean free_in) {
+    if (!ansi_color) return NULL;
+    int c1 = 0, c2 = 0;
+    int mc = sscanf(ansi_color, "%d;%d", &c1, &c2);
+    if (free_in)
+        g_free(ansi_color);
+    if (mc > 1) {
+        if (mc == 1) {
+            c2 = c1;
+            c1 = 0;
+        }
+        if (c1 == 0 || c1 == 1) {
+            if (c2 >= 90 && c2 <= 97) {
+                c1 = 1;
+                c2 -= 60;
+            }
+            if (c2 >= 30 && c2 <= 37)
+                return g_strdup_printf("%d;%d", c1, c2);
+        }
+    }
+    return NULL;
+}
+
+static gchar *format_with_ansi_color(const gchar *str, const gchar *ansi_color, int fmt_opts) {
+    gchar *ret = NULL;
+    gchar *safe_color = g_strdup(ansi_color);
+    util_strstrip_double_quotes_dumb(safe_color);
+    safe_color = safe_ansi_color(safe_color, TRUE);
+    if (!safe_color)
+        goto format_with_ansi_color_end;
+
+    const gchar *html_color = color_lookup(safe_color);
+
+    if (fmt_opts & FMT_OPT_ATERM)
+        ret = g_strdup_printf("\x1b[%sm%s" ANSI_COLOR_RESET, safe_color, str);
+    else if (fmt_opts & FMT_OPT_PANGO)
+        ret = g_strdup_printf("<span background=\"black\" color=\"%s\"> %s </span>", html_color, str);
+    else if (fmt_opts & FMT_OPT_HTML)
+        ret = g_strdup_printf("<span style=\"background-color: black; color: %s;\"> %s </span>", html_color, str);
+
+format_with_ansi_color_end:
+    g_free(safe_color);
+    if (!ret)
+        ret = g_strdup(str);
+    return ret;
+}
+
 static gchar *os_release_format(sysobj *obj, int fmt_opts) {
     if (!strcmp("os_release", obj->name)) {
         gchar *ret = NULL;
         gchar *full_name = sysobj_raw_from_fn(":/os/os_release", "PRETTY_NAME");
         gchar *ansi_color = sysobj_raw_from_fn(":/os/os_release", "ANSI_COLOR");
-        if (ansi_color)
-            util_strstrip_double_quotes_dumb(ansi_color);
         if (!full_name) {
             gchar *name = sysobj_raw_from_fn(":/os/os_release", "NAME");
             gchar *version = sysobj_raw_from_fn(":/os/os_release", "VERSION");
@@ -141,13 +211,17 @@ static gchar *os_release_format(sysobj *obj, int fmt_opts) {
             util_strstrip_double_quotes_dumb(full_name);
         if (full_name) {
             ret = full_name;
-            if (ansi_color && (fmt_opts & FMT_OPT_ATERM) ) {
-                ret = g_strdup_printf("\x1b[%sm%s" ANSI_COLOR_RESET, ansi_color, full_name);
+            if (ansi_color) {
+                ret = format_with_ansi_color(full_name, ansi_color, fmt_opts);
                 free(full_name);
             }
         } else
             ret = g_strdup("Linux");
         g_free(ansi_color);
+        return ret;
+    }
+    if (!strcmp("ANSI_COLOR", obj->name)) {
+        gchar *ret = format_with_ansi_color(obj->data.str, obj->data.str, fmt_opts);
         return ret;
     }
     return simple_format(obj, fmt_opts);
