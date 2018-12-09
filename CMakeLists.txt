@@ -85,6 +85,7 @@ add_library(sysobj STATIC
 
         sysobj/src/util_pci.c
         sysobj/src/util_usb.c
+        sysobj/src/vendor.c
 )
 target_link_libraries(sysobj
         gettext
@@ -148,3 +149,4 @@ configure_file(config.h.cmake ${CMAKE_BINARY_DIR}/config.h @ONLY)
 configure_file("data/pci.ids" ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file("data/usb.ids" ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file("data/dt.ids" ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file("data/vendor.ids" ${CMAKE_BINARY_DIR}/ COPYONLY)
