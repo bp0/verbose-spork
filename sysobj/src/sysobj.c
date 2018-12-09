@@ -152,10 +152,12 @@ gchar *sysobj_format_from_fn(const gchar *base, const gchar *name, int fmt_opts)
 
 gchar *sysobj_raw_from_fn(const gchar *base, const gchar *name) {
     gchar *ret = NULL;
-    sysobj *obj = sysobj_new_from_fn(base, name);
+    gchar *req = util_build_fn(base, name);
+    sysobj *obj = sysobj_new_fast(req);
     sysobj_read(obj, FALSE);
     ret = g_strdup(obj->data.str);
     sysobj_free(obj);
+    g_free(req);
     return ret;
 }
 
