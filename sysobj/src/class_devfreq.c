@@ -49,15 +49,15 @@ static sysobj_class cls_devfreq[] = {
 };
 
 static const struct { gchar *item; gchar *lbl; int extra_flags; } devfreq_items[] = {
-    { "governor",  N_(""), OF_NONE },
-    { "min_freq",  N_(""), OF_NONE },
-    { "max_freq",  N_(""), OF_NONE },
-    { "cur_freq",  N_(""), OF_NONE },
-    { "target_freq",  N_(""), OF_NONE },
-    { "polling_interval",  N_(""), OF_NONE },
-    { "trans_stat",  N_(""), OF_NONE },
-    { "available_frequencies",  N_(""), OF_NONE },
-    { "available_governors",  N_(""), OF_NONE },
+    { "governor",  N_("devfreq governor"), OF_NONE },
+    { "min_freq",  N_("minimum frequency requested"), OF_NONE },
+    { "max_freq",  N_("maximum frequency requested"), OF_NONE },
+    { "cur_freq",  N_("current frequency"), OF_NONE },
+    { "target_freq",  N_("next governor-predicted target frequency"), OF_NONE },
+    { "polling_interval",  N_("requested polling interval"), OF_NONE },
+    { "trans_stat",  N_("statistics of devfreq behavior"), OF_NONE },
+    { "available_frequencies",  N_("available frequencies"), OF_NONE },
+    { "available_governors",  N_("available devfreq governors"), OF_NONE },
     { NULL, NULL, 0 }
 };
 
