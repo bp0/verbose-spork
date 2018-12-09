@@ -22,7 +22,83 @@
  *  :/gpu
  */
 #include "sysobj.h"
+#include "sysobj_foreach.h"
+#include "util_pci.h"
+
+static void find_drm_cards() {
+    sysobj *drm_obj = sysobj_new_from_fn("/sys/class/drm", NULL);
+    if (drm_obj->exists) {
+        sysobj_read(drm_obj, FALSE);
+        for(GSList *l = drm_obj->data.childs; l; l = l->next) {
+            sysobj *card_obj = sysobj_new_from_fn(drm_obj->path, (gchar*)l->data);
+            if (verify_lblnum(card_obj, "card") ) {
+                gchar *gpu_id = g_strdup_printf("drm-%s", card_obj->name_req);
+                sysobj_virt_add_simple(":/gpu",  gpu_id, card_obj->path, VSO_TYPE_SYMLINK | VSO_TYPE_AUTOLINK | VSO_TYPE_DYN );
+                g_free(gpu_id);
+            }
+            sysobj_free(card_obj);
+        }
+    }
+    sysobj_free(drm_obj);
+}
+
+/* find all PCI devices with device class 0x03, display controller,
+ * (sysfs pci class attribute = 0x030000 - 0x03ffff)
+ * - or -
+ * class 00 subclass 01, VGA compatible unclassified device
+ * (sysfs pci class attribute = 0x000100 - 0x0001ff)
+ */
+static void find_pci_vga_devices() {
+    sysobj *drm_obj = sysobj_new_from_fn("/sys/bus/pci/devices", NULL);
+    if (drm_obj->exists) {
+        sysobj_read(drm_obj, FALSE);
+        for(GSList *l = drm_obj->data.childs; l; l = l->next) {
+            sysobj *card_obj = sysobj_new_from_fn(drm_obj->path, (gchar*)l->data);
+            if (verify_pci_device(card_obj->name) ) {
+                gchar *class_str = sysobj_raw_from_fn(card_obj->path, "class");
+                if (class_str) {
+                    int pci_class = strtol(class_str, NULL, 16);
+                    if ( (pci_class >= 0x30000 && pci_class <= 0x3ffff)
+                        || (pci_class >= 0x000100 && pci_class <= 0x0001ff) ) {
+                        gchar *gpu_id = g_strdup_printf("pci-dc-%s", card_obj->name_req);
+                        sysobj_virt_add_simple(":/gpu", gpu_id, card_obj->path, VSO_TYPE_SYMLINK | VSO_TYPE_AUTOLINK | VSO_TYPE_DYN );
+                        g_free(gpu_id);
+                    }
+                }
+            }
+            sysobj_free(card_obj);
+        }
+    }
+    sysobj_free(drm_obj);
+}
+
+/*  Look for this kind of thing:
+ *     * /soc/gpu
+ *     * /gpu@ff300000
+ *
+ *  Usually a gpu dt node will have ./name = "gpu"
+ */
+static gboolean _dt_item_callback(const sysobj *obj, gpointer user_data, gconstpointer stats) {
+    if ( !g_str_has_prefix(obj->name, "gpu") )
+        return SYSOBJ_FOREACH_CONTINUE;
+
+    /* should either be NULL or @ */
+    if (*(obj->name+3) == '\0' || *(obj->name+3) == '@') {
+        gchar *gpu_id = g_strdup_printf("dt-%s", obj->name_req);
+        sysobj_virt_add_simple(":/gpu", gpu_id, obj->path, VSO_TYPE_SYMLINK | VSO_TYPE_AUTOLINK | VSO_TYPE_DYN );
+        g_free(gpu_id);
+    }
+    return SYSOBJ_FOREACH_CONTINUE;
+}
+
+static void find_dt_gpu_devices() {
+    sysobj_foreach_from("/sys/firmware/devicetree/base", NULL, (f_sysobj_foreach)_dt_item_callback, NULL, SO_FOREACH_NORMAL);
+}
 
 void gen_gpu() {
     sysobj_virt_add_simple(":/gpu", NULL, "*", VSO_TYPE_DIR);
+    find_drm_cards();
+    find_pci_vga_devices();
+    find_dt_gpu_devices();
+    // TODO: usb3 gpus?
 }
