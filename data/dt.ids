@@ -59,6 +59,8 @@ vendor rockchip    RockChip
     soc rockchip,rk3288      RK3288     # Asus Tinkerboard
     soc rockchip,rk32*       RK32xx-family
     soc rockchip,rk33*       RK33xx-family
+# https://www.kernel.org/doc/Documentation/devicetree/bindings/display/rockchip/rockchip-drm.txt
+    gpu rockchip,display-subsystem    DRM master virtual device
 vendor ti          Texas Instruments
     soc ti,omap5432          OMAP5432
     soc ti,omap5430          OMAP5430
