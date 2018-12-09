@@ -24,9 +24,8 @@
 #include "sysobj.h"
 
 enum {
-    SO_FOREACH_NONE = 0,
-    SO_FOREACH_ST   = 1,
-    SO_FOREACH_MT   = 2,
+    SO_FOREACH_NORMAL = 0,
+    SO_FOREACH_MT     = 1,
 };
 
 enum {

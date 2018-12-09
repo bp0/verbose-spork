@@ -53,74 +53,6 @@ static GList* __pop(GList *l, gchar **s) {
     return g_list_delete_link(l, last);
 }
 
-static gboolean _has_symlink_loop(const gchar *path) {
-    GList *targets = NULL;
-    sysobj *obj = sysobj_new_from_fn(path, NULL);
-    sysobj *next = NULL;
-    while(obj) {
-        if ( g_list_find_custom(targets, obj->path, (GCompareFunc)g_strcmp0) )
-            goto loop_check_fail;
-
-        targets = g_list_prepend(targets, g_strdup(obj->path) );
-
-        /* request parent */
-        next = sysobj_parent(obj);
-        sysobj_free(obj);
-        obj = next;
-    }
-    g_list_free_full(targets, g_free);
-    return FALSE;
-
-loop_check_fail:
-    sysobj_free(obj);
-    g_list_free_full(targets, g_free);
-    return TRUE;
-}
-
-static void sysobj_foreach_st(GSList *filters, f_sysobj_foreach callback, gpointer user_data) {
-    double rate = 0.0, start_time = sysobj_elapsed();
-    guint searched = 0;
-    GList *to_search = NULL;
-    to_search = __push_if_uniq(to_search, ":/", NULL, NULL);
-    to_search = __push_if_uniq(to_search, "/sys", NULL, NULL);
-    gchar *path = NULL;
-    while( g_list_length(to_search) ) {
-        to_search = __shift(to_search, &path);
-        rate = (double)searched / (sysobj_elapsed() - start_time);
-        printf("(rate: %0.2lf/s) to_search:%d searched:%d now: %s\n", rate, g_list_length(to_search), searched, path );
-
-        sysobj *obj = sysobj_new_fast(path);
-        if (!obj) { g_free(path); continue; }
-        if (filters
-            && !sysobj_filter_item_include(obj->path, filters) ) {
-                sysobj_free(obj);
-                g_free(path);
-                continue;
-            }
-
-        /* callback */
-        if ( callback(obj, user_data, NULL) == SYSOBJ_FOREACH_STOP ) {
-            sysobj_free(obj);
-            g_free(path);
-            break;
-        }
-        searched++;
-
-        /* scan children */
-        if (obj->data.is_dir && !obj->req_is_link)
-            sysobj_read(obj, FALSE);
-
-        const GSList *lc = obj->data.childs;
-        for (lc = obj->data.childs; lc; lc = lc->next) {
-            to_search = __push_if_uniq(to_search, obj->path_req, (gchar*)lc->data, NULL);
-        }
-
-        sysobj_free(obj);
-        g_free(path);
-    }
-    g_list_free_full(to_search, g_free);
-}
-
 typedef struct {
     GList *to_search;
     GMutex lock;
@@ -287,6 +219,6 @@ static void sysobj_foreach_mt(GSList *filters, f_sysobj_foreach callback, gpoint
 }
 
 void sysobj_foreach(GSList *filters, f_sysobj_foreach callback, gpointer user_data, int opts) {
-    gboolean use_mt = !(opts & SO_FOREACH_ST);
+    gboolean use_mt = !!(opts & SO_FOREACH_MT);
     sysobj_foreach_mt(filters, callback, user_data, use_mt ? 0 : 1);
 }
