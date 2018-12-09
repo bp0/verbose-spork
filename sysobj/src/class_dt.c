@@ -149,13 +149,14 @@ static gchar *dt_ids_format(sysobj *obj, int fmt_opts) {
             gchar *vendor = sysobj_raw_from_fn(obj->path, "vendor");
             gchar *name = sysobj_raw_from_fn(obj->path, "name");
             gchar *cls = sysobj_raw_from_fn(obj->path, "class");
+
             if (vendor || name || cls) {
                 if (!g_strcmp0(cls, "vendor"))
                     ret = g_strdup_printf("%s (%s)", vendor, cls);
                 else if (vendor && name && cls)
                     ret = g_strdup_printf("%s %s (%s)", vendor, name, cls);
                 else if (name && cls)
-                    ret = g_strdup_printf("%s (%s)", vendor, cls);
+                    ret = g_strdup_printf("%s (%s)", name, cls);
                 else if (vendor)
                     ret = g_strdup_printf("%s %s", vendor, "Unknown");
             }
