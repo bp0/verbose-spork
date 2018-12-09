@@ -34,10 +34,6 @@
 #include <inttypes.h> /* for PRIu64 */
 #include <endian.h>
 
-#define BULLET "\u2022"
-#define REFLINK(URI) "<a href=\"" URI "\">" URI "</a>"
-#define REFLINKT(TEXT, URI) "<a href=\"" URI "\">" TEXT "</a>"
-
 const gchar dt_reference_markup_text[] =
     "References:\n"
     BULLET REFLINK("http://elinux.org/Device_Tree_Usage")
@@ -144,14 +140,14 @@ static gchar *dt_ids_format(sysobj *obj, int fmt_opts) {
     if (obj) {
         gchar *ret = NULL;
         gchar *pname = sysobj_parent_name(obj);
-        if (!strcmp(pname, "dt.ids")) {
+        if (SEQ(pname, "dt.ids")) {
             /* compat elem */
             gchar *vendor = sysobj_raw_from_fn(obj->path, "vendor");
             gchar *name = sysobj_raw_from_fn(obj->path, "name");
             gchar *cls = sysobj_raw_from_fn(obj->path, "class");
 
             if (vendor || name || cls) {
-                if (!g_strcmp0(cls, "vendor"))
+                if (SEQ(cls, "vendor"))
                     ret = g_strdup_printf("%s (%s)", vendor, cls);
                 else if (vendor && name && cls)
                     ret = g_strdup_printf("%s %s (%s)", vendor, name, cls);
@@ -284,7 +280,7 @@ int dtr_inh_find(sysobj *obj, char *qprop, int limit) {
     if (!found) {
         i = 0;
         while(default_values[i].name != NULL) {
-            if (strcmp(default_values[i].name, qprop) == 0) {
+            if (SEQ(default_values[i].name, qprop)) {
                 ret = default_values[i].v;
                 dtr_msg("Using default value %d for %s in %s\n", ret, qprop, obj->path);
                 break;
@@ -622,7 +618,7 @@ dt_opp_range *dtr_get_opp_range(const char *path) {
 
     if (!tab_compat || strcmp(tab_compat, "operating-points-v2") != 0)
         goto get_opp_finish;
-    if (tab_status && strcmp(tab_status, "disabled") == 0)
+    if (tab_status && SEQ(tab_status, "disabled"))
         goto get_opp_finish;
 
     ret = g_new0(dt_opp_range, 1);
@@ -710,20 +706,20 @@ int dtr_guess_type(sysobj *obj) {
     if (*obj->name == '#') {
         dash = strrchr(obj->name, '-');
         if (dash != NULL) {
-            if (strcmp(dash, "-cells") == 0)
+            if (SEQ(dash, "-cells"))
                 return DTP_UINT;
         }
     }
 
     gchar *parent = sysobj_parent_name(obj);
     /* /aliases/ * and /__symbols__/ * are always strings */
-    if (strcmp(parent, "aliases") == 0
-        || strcmp(parent, "__symbols__") == 0 ) {
+    if (SEQ(parent, "aliases")
+        || SEQ(parent, "__symbols__") ) {
         g_free(parent);
         return DTP_STR;
     }
     /* /__overrides__/ * */
-    if (strcmp(parent, "__overrides__") == 0
+    if (SEQ(parent, "__overrides__")
         && strcmp(obj->name, "name") != 0 ) {
             g_free(parent);
             return DTP_OVR;
@@ -931,7 +927,7 @@ const char *dtr_alias_lookup(const gchar* label) {
     GSList *l = aliases;
     while(l) {
         dtr_map_item *ali = (dtr_map_item *)l->data;
-        if (strcmp(ali->label, label) == 0)
+        if (SEQ(ali->label, label))
             return ali->path;
         l = l->next;
     }
@@ -942,7 +938,7 @@ const char *dtr_alias_lookup_by_path(const gchar* path) {
     GSList *l = aliases;
     while(l) {
         dtr_map_item *ali = (dtr_map_item *)l->data;
-        if (strcmp(ali->path, path) == 0)
+        if (SEQ(ali->path, path))
             return ali->label;
         l = l->next;
     }
@@ -977,7 +973,7 @@ const char *dtr_symbol_lookup_by_path(const gchar* path) {
     GSList *l = symbols;
     while(l) {
         dtr_map_item *ali = (dtr_map_item *)l->data;
-        if (strcmp(ali->path, path) == 0)
+        if (SEQ(ali->path, path))
             return ali->label;
         l = l->next;
     }

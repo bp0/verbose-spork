@@ -23,15 +23,13 @@
 
 #define SYSFS_USB "/sys/bus/usb"
 
-#define BULLET "\u2022"
-#define REFLINK(TEXT, URI) "<a href=\"" URI "\">" TEXT "</a>"
 const gchar usb_ids_reference_markup_text[] =
     " Items are generated on-demand and cached.\n"
     "\n"
     " :/usb/usb.ids/{vendor}/name\n"
     " :/usb/usb.ids/{vendor}/{device}/name\n\n"
     "Reference:\n"
-    BULLET REFLINK("<i>The Linux USB Project</i>'s usb.ids", "http://www.linux-usb.org/")
+    BULLET REFLINKT("<i>The Linux USB Project</i>'s usb.ids", "http://www.linux-usb.org/")
     "\n";
 
 static gchar *usb_format(sysobj *obj, int fmt_opts);
@@ -105,8 +103,8 @@ static int usb_device_count() {
         /* if (usb_verify_device(udc) || usb_verify_bus(udc) ) ret++; */
         /* should already have been verified */
         if (udc->cls) {
-            if (!strcmp(udc->cls->tag, "usb:device")
-                || !strcmp(udc->cls->tag, "usb:bus") ) {
+            if (SEQ(udc->cls->tag, "usb:device")
+                || SEQ(udc->cls->tag, "usb:bus") ) {
                     ret++;
             }
         }
@@ -119,8 +117,8 @@ static int usb_device_count() {
 }
 
 static gchar *usb_format(sysobj *obj, int fmt_opts) {
-    if (!strcmp(obj->path, ":/usb")
-        || !strcmp(obj->path, "/sys/bus/usb/devices") ) {
+    if (SEQ(obj->path, ":/usb")
+        || SEQ(obj->path, "/sys/bus/usb/devices") ) {
         //TODO: handle fmt_opts
         gchar *ret = NULL;
         int c = usb_device_count();
@@ -152,7 +150,7 @@ static const gchar *usb_idcomps[] =
 static gboolean usb_verify_idcomp(sysobj *obj) {
     int i = 0;
     for (i = 0; i < (int)G_N_ELEMENTS(usb_idcomps); i++ ) {
-        if (!g_strcmp0(obj->name, usb_idcomps[i]) )
+        if (SEQ(obj->name, usb_idcomps[i]) )
             return TRUE;
     }
     return FALSE;
@@ -181,9 +179,9 @@ static gchar *usb_format_idcomp(sysobj *obj, int fmt_opts) {
 
     gchar *ret = NULL;
     gchar *value_str = NULL;
-    if (!g_strcmp0(obj->name, "idVendor") )
+    if (SEQ(obj->name, "idVendor") )
         value_str = d->vendor_str ? d->vendor_str : "Unknown";
-    else if (!g_strcmp0(obj->name, "idProduct") )
+    else if (SEQ(obj->name, "idProduct") )
         value_str = d->device_str ? d->device_str : "Device";
     if (value_str) {
         uint32_t value = strtol(obj->data.str, NULL, 16);

@@ -57,7 +57,7 @@ static struct {
 static gchar *dmidecode_map(const gchar *name) {
     int i = 0;
     while(tab_dmi_sysfs[i].id) {
-        if (strcmp(name, tab_dmi_sysfs[i].id) == 0) {
+        if (SEQ(name, tab_dmi_sysfs[i].id)) {
             if (tab_dmi_sysfs[i].path)
                 return g_strdup_printf("/sys/devices/virtual/dmi/%s", tab_dmi_sysfs[i].path);
             else
@@ -89,7 +89,7 @@ static gchar *dmidecode_get_str(const gchar *path) {
     if (!path) return NULL;
     gchar *name = g_path_get_basename(path);
     gchar *ret = NULL;
-    if (strcmp(name, "--string") == 0) {
+    if (SEQ(name, "--string")) {
         ret = g_strdup(string_dir);
     } else {
         /* only when not using a different sysobj_root */
@@ -106,7 +106,7 @@ static gchar *dmidecode_get_link(const gchar *path) {
     if (!path) return NULL;
     gchar *name = g_path_get_basename(path);
     gchar *ret = NULL;
-    if (strcmp(name, "sysfs_map") == 0) {
+    if (SEQ(name, "sysfs_map")) {
         ret = g_strdup(sysfs_map_dir);
     } else {
         ret = dmidecode_map(name);
@@ -119,7 +119,7 @@ static gchar *dmidecode_get_best(const gchar *path) {
     if (!path) return NULL;
     gchar *name = g_path_get_basename(path);
     gchar *ret = NULL;
-    if (strcmp(name, "best_available") == 0) {
+    if (SEQ(name, "best_available")) {
         ret = g_strdup(string_dir);
     } else {
         ret = dmidecode_map(name);
@@ -133,19 +133,19 @@ static gchar *dmidecode_get_best(const gchar *path) {
 static int dmidecode_check_type(const gchar *path) {
     int ret = 0;
     gchar *name = g_path_get_basename(path);
-    if (strcmp(name, "sysfs_map") == 0
-        || strcmp(name, "--string") == 0
-        || strcmp(name, "best_available") == 0 )
+    if (SEQ(name, "sysfs_map")
+        || SEQ(name, "--string")
+        || SEQ(name, "best_available") )
         ret = VSO_TYPE_DIR;
     g_free(name);
     if (!ret) {
         gchar *pp = g_path_get_dirname(path);
         gchar *pn = g_path_get_basename(pp);
-        if (strcmp(pn, "sysfs_map") == 0)
+        if (SEQ(pn, "sysfs_map"))
             ret = VSO_TYPE_SYMLINK;
-        else if (strcmp(pn, "--string") == 0)
+        else if (SEQ(pn, "--string"))
             ret = VSO_TYPE_STRING | VSO_TYPE_REQ_ROOT;
-        else if (strcmp(pn, "best_available") == 0)
+        else if (SEQ(pn, "best_available"))
             ret = VSO_TYPE_SYMLINK;
         g_free(pp);
         g_free(pn);

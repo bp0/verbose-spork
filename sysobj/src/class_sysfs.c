@@ -24,8 +24,6 @@
 
 #include "sysobj.h"
 
-#define BULLET "\u2022"
-#define REFLINK(URI) "<a href=\"" URI "\">" URI "</a>"
 const gchar power_reference_markup_text[] =
     "Reference:\n"
     BULLET REFLINK("https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-devices-power")
@@ -66,11 +64,11 @@ static sysobj_class cls_power[] = {
 static gboolean subsystem_verify(sysobj *obj) {
     gboolean ret = FALSE;
     gchar *pp = sysobj_parent_path(obj);
-    if (!g_strcmp0("/sys/class", pp) )
+    if (SEQ("/sys/class", pp) )
         ret = TRUE;
-    if (!g_strcmp0("/sys/bus", pp) )
+    if (SEQ("/sys/bus", pp) )
         ret = TRUE;
-    if (!g_strcmp0("/sys/block", pp) )
+    if (SEQ("/sys/block", pp) )
         ret = TRUE;
     g_free(pp);
     return ret;
@@ -78,11 +76,11 @@ static gboolean subsystem_verify(sysobj *obj) {
 
 static gchar *subsystem_format(sysobj *obj, int fmt_opts) {
     if (obj) {
-        if (!g_strcmp0("subsystem:class", obj->cls->tag) )
+        if (SEQ("subsystem:class", obj->cls->tag) )
             return g_strdup_printf("class:%s", obj->name);
-        if (!g_strcmp0("subsystem:bus", obj->cls->tag) )
+        if (SEQ("subsystem:bus", obj->cls->tag) )
             return g_strdup_printf("bus:%s", obj->name);
-        if (!g_strcmp0("subsystem:block", obj->cls->tag) )
+        if (SEQ("subsystem:block", obj->cls->tag) )
             return g_strdup_printf("block:%s", obj->name);
     }
     return simple_format(obj, fmt_opts);
@@ -98,7 +96,7 @@ static const struct { gchar *item; gchar *lbl; int extra_flags; } power_items[] 
 static int power_lookup(const gchar *key) {
     int i = 0;
     while(power_items[i].item) {
-        if (strcmp(key, power_items[i].item) == 0)
+        if (SEQ(key, power_items[i].item))
             return i;
         i++;
     }
@@ -108,7 +106,7 @@ static int power_lookup(const gchar *key) {
 static gboolean power_verify(sysobj *obj) {
     gboolean ret = FALSE;
     gchar *pn = sysobj_parent_name(obj);
-    if (!g_strcmp0("power", pn) )
+    if (SEQ("power", pn) )
         ret = TRUE;
 
     g_free(pn);
@@ -123,7 +121,7 @@ const gchar *power_label(sysobj *obj) {
 }
 
 static gchar *power_format(sysobj *obj, int fmt_opts) {
-    if (!g_strcmp0("power", obj->name) ) {
+    if (SEQ("power", obj->name) ) {
         gchar *ret = NULL;
         gchar *async = sysobj_raw_from_fn(obj->path, "async");
         gchar *control = sysobj_raw_from_fn(obj->path, "control");

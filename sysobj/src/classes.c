@@ -80,7 +80,7 @@ void class_any_utf8();
 gboolean class_verify(sysobj *obj) {
     gboolean ret = FALSE;
     gchar *pp = sysobj_parent_path(obj);
-    if (!g_strcmp0(pp, ":sysobj/classes") )
+    if (SEQ(pp, ":sysobj/classes") )
         ret = TRUE;
     g_free(pp);
     return ret;

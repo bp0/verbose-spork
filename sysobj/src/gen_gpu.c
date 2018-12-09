@@ -135,12 +135,9 @@ static void find_dt_gpu_devices() {
     sysobj_foreach_from("/sys/firmware/devicetree/base", NULL, (f_sysobj_foreach)_dt_item_callback, NULL, SO_FOREACH_NORMAL);
 }
 
-static void create_gpus() {
-
-}
-
 static gchar *gpu_dir(const gchar *path) {
     if (!path) return NULL; //TODO
+
     return g_strdup("found");
 }
 

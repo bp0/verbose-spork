@@ -58,7 +58,7 @@ int64_t convert_kb_mem_str(gchar *v_str) {
 
 static gchar *meminfo_format(sysobj *obj, int fmt_opts) {
     int64_t mkb = 0;
-    if (!strcmp(obj->name, "meminfo") ) {
+    if (SEQ(obj->name, "meminfo") ) {
         gchar *mkb_str = sysobj_raw_from_fn(obj->path, "MemTotal");
         mkb = convert_kb_mem_str(mkb_str);
         g_free(mkb_str);
@@ -72,7 +72,7 @@ static gchar *meminfo_format(sysobj *obj, int fmt_opts) {
 }
 
 static double meminfo_update_interval(sysobj *obj) {
-    if (!strcmp(obj->path, ":/meminfo") )
+    if (SEQ(obj->path, ":/meminfo") )
         return 3.0;
     return 1.0;
 }

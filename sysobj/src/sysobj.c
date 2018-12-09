@@ -883,7 +883,7 @@ gboolean verify_parent_name(sysobj *obj, const gchar *parent_name) {
     gboolean verified = FALSE;
     if (obj && obj->name) {
         gchar *pn = sysobj_parent_name(obj);
-        if (!strcmp(pn, parent_name))
+        if (SEQ(pn, parent_name))
             verified = TRUE;
         g_free(pn);
     }
@@ -995,7 +995,7 @@ void sysobj_virt_from_kv(gchar *base, const gchar *kv_data_in) {
     g_key_file_load_from_data(key_file, kv_data, strlen(kv_data), 0, NULL);
     groups = g_key_file_get_groups(key_file, NULL);
     for (i = 0; groups[i]; i++) {
-        gboolean is_bs_group = (!strcmp(groups[i], before_first_group)) ? TRUE : FALSE;
+        gboolean is_bs_group = (SEQ(groups[i], before_first_group)) ? TRUE : FALSE;
 
         keys = g_key_file_get_keys(key_file, groups[i], NULL, NULL);
 
@@ -1035,7 +1035,7 @@ sysobj_virt *sysobj_virt_find(const gchar *path) {
             ret = vo;
             /* break; -- No, don't break, maybe a non-dynamic item matches */
         }
-        if (strcmp(vo->path, path) == 0) {
+        if (SEQ(vo->path, path)) {
             ret = vo;
             break;
         }
@@ -1231,7 +1231,7 @@ sysobj *sysobj_parent(sysobj *s) {
 
     if (s) {
         rpp = g_path_get_dirname(s->path_req);
-        if (!g_strcmp0(rpp, ".") )
+        if (SEQ(rpp, ".") )
             goto sysobj_parent_none;
 
 

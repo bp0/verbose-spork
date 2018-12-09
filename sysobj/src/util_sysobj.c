@@ -96,7 +96,7 @@ int32_t util_get_did(gchar *str, const gchar *lbl) {
     sprintf(tmpfmt, "%s%s", lbl, "%d");
     if ( sscanf(str, tmpfmt, &id) ) {
         sprintf(tmpchk, tmpfmt, id);
-        if ( strcmp(str, tmpchk) == 0 )
+        if ( SEQ(str, tmpchk) )
             return id;
     }
     return -1;
@@ -174,10 +174,10 @@ gchar *util_normalize_path(const gchar *path, const gchar *relto) {
         n = l->next; p = l->prev;
         part = l->data;
 
-        if (!g_strcmp0(part, ".") )
+        if (SEQ(part, ".") )
             lparts = g_list_delete_link(lparts, l);
 
-        if (!g_strcmp0(part, "..") ) {
+        if (SEQ(part, "..") ) {
             if (p)
                 lparts = g_list_delete_link(lparts, p);
             lparts = g_list_delete_link(lparts, l);
@@ -245,7 +245,7 @@ gchar *util_find_line_value(gchar *data, gchar *key, gchar delim) {
         value = g_strstrip(value+1);
         gchar *lkey = g_strstrip(line);
 
-        if (!g_strcmp0(lkey, key) ) {
+        if (SEQ(lkey, key) ) {
             ret = g_strdup(value);
         }
     }

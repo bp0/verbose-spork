@@ -31,13 +31,13 @@ static gchar *get_item(const gchar *path) {
     gchar name[128] = "";
     buff_basename(path, name, 127);
 
-    if (!g_strcmp0(name, "root") )
+    if (SEQ(name, "root") )
         return g_strdup_printf("%s", sysobj_root_get());
-    if (!g_strcmp0(name, "elapsed") )
+    if (SEQ(name, "elapsed") )
         return g_strdup_printf("%lf", sysobj_elapsed());
-    if (!g_strcmp0(name, "class_count") )
+    if (SEQ(name, "class_count") )
         return g_strdup_printf("%lu", (long unsigned)class_count() );
-    if (!g_strcmp0(name, "virt_count") )
+    if (SEQ(name, "virt_count") )
         return g_strdup_printf("%lu", (long unsigned)sysobj_virt_count() );
 
     return g_strdup("?");
@@ -72,7 +72,7 @@ static gchar *get_class_info(const gchar *path) {
     gsize crsz = strlen(cls_root);
 
     /* get list of class tags */
-    if (!strcmp(path, cls_root) ) {
+    if (SEQ(path, cls_root) ) {
         gchar *ret = NULL;
         for(l = cl; l; l = l->next) {
             sysobj_class *c = (sysobj_class *)l->data;
@@ -95,41 +95,41 @@ static gchar *get_class_info(const gchar *path) {
     }
 
     if (match) {
-        if (!strcmp(name, "_def_file") )
+        if (SEQ(name, "_def_file") )
             return g_strdup(match->def_file);
-        if (!strcmp(name, "_def_line") ) {
+        if (SEQ(name, "_def_line") ) {
             if (match->def_file)
                 return g_strdup_printf("%d", match->def_line);
             else
                 return NULL;
         }
-        if (!strcmp(name, "_pattern") )
+        if (SEQ(name, "_pattern") )
             return g_strdup(match->pattern);
-        if (!strcmp(name, "_flags") )
+        if (SEQ(name, "_flags") )
             return g_strdup_printf("0x%lx", (long unsigned)match->flags);
-        if (!strcmp(name, "_s_label") )
+        if (SEQ(name, "_s_label") )
             return g_strdup(match->s_label);
-        if (!strcmp(name, "_s_halp") )
+        if (SEQ(name, "_s_halp") )
             return g_strdup(match->s_halp);
-        if (!strcmp(name, "_s_suggest") )
+        if (SEQ(name, "_s_suggest") )
             return g_strdup(match->s_suggest);
-        if (!strcmp(name, "_s_update_interval") )
+        if (SEQ(name, "_s_update_interval") )
             return g_strdup_printf("%0.4lf", match->s_update_interval);
-        if (!strcmp(name, "_f_verify") )
+        if (SEQ(name, "_f_verify") )
             return g_strdup_printf("0x%llx", (long long unsigned)match->f_verify);
-        if (!strcmp(name, "_f_label") )
+        if (SEQ(name, "_f_label") )
             return g_strdup_printf("0x%llx", (long long unsigned)match->f_label);
-        if (!strcmp(name, "_f_format") )
+        if (SEQ(name, "_f_format") )
             return g_strdup_printf("0x%llx", (long long unsigned)match->f_format);
-        if (!strcmp(name, "_f_update_interval") )
+        if (SEQ(name, "_f_update_interval") )
             return g_strdup_printf("0x%llx", (long long unsigned)match->f_update_interval);
-        if (!strcmp(name, "_f_compare") )
+        if (SEQ(name, "_f_compare") )
             return g_strdup_printf("0x%llx", (long long unsigned)match->f_compare);
-        if (!strcmp(name, "_f_flags") )
+        if (SEQ(name, "_f_flags") )
             return g_strdup_printf("0x%llx", (long long unsigned)match->f_flags);
-        if (!strcmp(name, "_f_cleanup") )
+        if (SEQ(name, "_f_cleanup") )
             return g_strdup_printf("0x%llx", (long long unsigned)match->f_cleanup);
-        if (!strcmp(name, "_f_halp") )
+        if (SEQ(name, "_f_halp") )
             return g_strdup_printf("0x%llx", (long long unsigned)match->f_halp);
 
         /* assume it is a class tag */
@@ -143,14 +143,14 @@ static int get_class_info_type(const gchar *path) {
     gchar name[128] = "";
     buff_basename(path, name, 127);
 
-    if (!strcmp(path, ":sysobj/classes") )
+    if (SEQ(path, ":sysobj/classes") )
         return VSO_TYPE_DIR | VSO_TYPE_DYN;
 
     int ret = VSO_TYPE_DIR; //assume
     gchar **il = g_strsplit(class_item_list, "\n", -1);
     gsize l = g_strv_length(il);
     for(unsigned int i = 0; i < l; i++)
-        if (!strcmp(name, il[i]) ) {
+        if (SEQ(name, il[i]) ) {
             ret = VSO_TYPE_STRING;
             break;
         }

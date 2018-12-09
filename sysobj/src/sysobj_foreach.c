@@ -26,7 +26,7 @@ static GList* __push_if_uniq(GList *l, const gchar *base, const gchar *name, lon
         : g_strdup(base);
     GList *a = NULL, *last = a;
     for(a = l; a; a = a->next) {
-        if (!g_strcmp0((gchar*)a->data, path) ) {
+        if (SEQ((gchar*)a->data, path) ) {
             g_free(path);
             return l;
         }

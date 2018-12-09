@@ -26,8 +26,6 @@ static gchar *os_release_format(sysobj *obj, int fmt_opts);
 static const gchar *lsb_release_label(sysobj *obj);
 static gchar *lsb_release_format(sysobj *obj, int fmt_opts);
 
-#define BULLET "\u2022"
-#define REFLINK(URI) "<a href=\"" URI "\">" URI "</a>"
 const gchar os_release_reference_markup_text[] =
     "Reference:\n"
     BULLET REFLINK("https://www.freedesktop.org/software/systemd/man/os-release.html")
@@ -107,7 +105,7 @@ static const struct { gchar *rp; gchar *lbl; int extra_flags; } lsb_release_item
 int os_release_lookup(const gchar *key) {
     int i = 0;
     while(os_release_items[i].rp) {
-        if (strcmp(key, os_release_items[i].rp) == 0)
+        if (SEQ(key, os_release_items[i].rp))
             return i;
         i++;
     }
@@ -141,7 +139,7 @@ static const gchar *color_lookup(gchar *ansi_color) {
         { "1;37", "#ffffff" },
     };
     for (int i = 0; i<(int)G_N_ELEMENTS(tab); i++)
-        if (!g_strcmp0(tab[i].ansi, ansi_color) )
+        if (SEQ(tab[i].ansi, ansi_color) )
             return tab[i].html;
     return NULL;
 }
@@ -194,7 +192,7 @@ format_with_ansi_color_end:
 }
 
 static gchar *os_release_format(sysobj *obj, int fmt_opts) {
-    if (!strcmp("os_release", obj->name)) {
+    if (SEQ("os_release", obj->name)) {
         gchar *ret = NULL;
         gchar *full_name = sysobj_raw_from_fn(":/os/os_release", "PRETTY_NAME");
         gchar *ansi_color = sysobj_raw_from_fn(":/os/os_release", "ANSI_COLOR");
@@ -220,7 +218,7 @@ static gchar *os_release_format(sysobj *obj, int fmt_opts) {
         g_free(ansi_color);
         return ret;
     }
-    if (!strcmp("ANSI_COLOR", obj->name)) {
+    if (SEQ("ANSI_COLOR", obj->name)) {
         gchar *ret = format_with_ansi_color(obj->data.str, obj->data.str, fmt_opts);
         return ret;
     }
@@ -230,7 +228,7 @@ static gchar *os_release_format(sysobj *obj, int fmt_opts) {
 int lsb_release_lookup(const gchar *key) {
     int i = 0;
     while(lsb_release_items[i].rp) {
-        if (strcmp(key, lsb_release_items[i].rp) == 0)
+        if (SEQ(key, lsb_release_items[i].rp))
             return i;
         i++;
     }
@@ -245,7 +243,7 @@ const gchar *lsb_release_label(sysobj *obj) {
 }
 
 static gchar *lsb_release_format(sysobj *obj, int fmt_opts) {
-    if (!strcmp("lsb_release", obj->name)) {
+    if (SEQ("lsb_release", obj->name)) {
         gchar *ret = NULL;
         gchar *full_name = sysobj_raw_from_fn(":/os/lsb_release", "DISTRIB_DESCRIPTION");
         if (!full_name) {

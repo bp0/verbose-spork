@@ -42,7 +42,7 @@ static const struct { gchar *rp; gchar *lbl; int extra_flags; } cputopo_items[] 
 int cputopo_lookup(const gchar *key) {
     int i = 0;
     while(cputopo_items[i].rp) {
-        if (strcmp(key, cputopo_items[i].rp) == 0)
+        if (SEQ(key, cputopo_items[i].rp))
             return i;
         i++;
     }
@@ -53,7 +53,7 @@ gboolean cputopo_verify(sysobj *obj) {
     int i = cputopo_lookup(obj->name);
     if (i != -1)
         return TRUE;
-    if (!strcmp(obj->name, "topology")) {
+    if (SEQ(obj->name, "topology")) {
         if (verify_lblnum_child(obj, "cpu"))
             return TRUE;
     }
@@ -83,7 +83,7 @@ gchar *topology_summary(sysobj *obj, int fmt_opts) {
 }
 
 gchar *cputopo_format(sysobj *obj, int fmt_opts) {
-    if (!strcmp(obj->name, "topology"))
+    if (SEQ(obj->name, "topology"))
         return topology_summary(obj, fmt_opts);
     return simple_format(obj, fmt_opts);
 }

@@ -23,8 +23,6 @@
 
 #define SYSFS_PCI "/sys/bus/pci"
 
-#define BULLET "\u2022"
-#define REFLINK(TEXT, URI) "<a href=\"" URI "\">" TEXT "</a>"
 const gchar pci_ids_reference_markup_text[] =
     " Items are generated on-demand and cached.\n"
     "\n"
@@ -33,7 +31,7 @@ const gchar pci_ids_reference_markup_text[] =
     " :/pci/pci.ids/{vendor}/{device}/{subvendor}/name\n"
     " :/pci/pci.ids/{vendor}/{device}/{subvendor}/{subdevice}/name\n\n"
     "Reference:\n"
-    BULLET REFLINK("<i>The PCI ID Repository</i>'s pci.ids", "https://pci-ids.ucw.cz")
+    BULLET REFLINKT("<i>The PCI ID Repository</i>'s pci.ids", "https://pci-ids.ucw.cz")
     "\n";
 
 static gchar *pci_ids_format(sysobj *obj, int fmt_opts);
@@ -115,8 +113,8 @@ static int pci_device_count() {
 }
 
 static gchar *pci_format(sysobj *obj, int fmt_opts) {
-    if (!strcmp(obj->path, ":/pci")
-        || !strcmp(obj->path, "/sys/bus/pci/devices") ) {
+    if (SEQ(obj->path, ":/pci")
+        || SEQ(obj->path, "/sys/bus/pci/devices") ) {
         //TODO: handle fmt_opts
         gchar *ret = NULL;
         int c = pci_device_count();
@@ -148,7 +146,7 @@ static const gchar *pci_idcomps[] =
 static gboolean pci_verify_idcomp(sysobj *obj) {
     int i = 0;
     for (i = 0; i < (int)G_N_ELEMENTS(pci_idcomps); i++ ) {
-        if (!g_strcmp0(obj->name, pci_idcomps[i]) )
+        if (SEQ(obj->name, pci_idcomps[i]) )
             return TRUE;
     }
     return FALSE;
@@ -186,15 +184,15 @@ static gchar *pci_format_idcomp(sysobj *obj, int fmt_opts) {
 
     gchar *ret = NULL;
     gchar *value_str = NULL;
-    if (!g_strcmp0(obj->name, "vendor") )
+    if (SEQ(obj->name, "vendor") )
         value_str = d->vendor_str ? d->vendor_str : "Unknown";
-    else if (!g_strcmp0(obj->name, "device") )
+    else if (SEQ(obj->name, "device") )
         value_str = d->device_str ? d->device_str : "Device";
-    else if (!g_strcmp0(obj->name, "subsystem_vendor") )
+    else if (SEQ(obj->name, "subsystem_vendor") )
         value_str = d->sub_vendor_str ? d->sub_vendor_str : "Unknown";
-    else if (!g_strcmp0(obj->name, "subsystem_device") )
+    else if (SEQ(obj->name, "subsystem_device") )
         value_str = d->sub_device_str ? d->sub_device_str : "Device";
-    else if (!g_strcmp0(obj->name, "class") )
+    else if (SEQ(obj->name, "class") )
         value_str = d->dev_class_str ? d->dev_class_str : "Unknown";
     if (value_str) {
         uint32_t value = strtol(obj->data.str, NULL, 16);

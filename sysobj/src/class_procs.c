@@ -42,7 +42,7 @@ static gchar *procs_summarize_topology(int packs, int cores, int threads) {
 }
 
 static gchar *procs_format(sysobj *obj, int fmt_opts) {
-    if (!strcmp(obj->name, "procs")) {
+    if (SEQ(obj->name, "procs")) {
         gchar *ret = NULL;
         gchar *p_str = sysobj_raw_from_fn(obj->path, "packs");
         gchar *c_str = sysobj_raw_from_fn(obj->path, "cores");

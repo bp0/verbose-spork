@@ -101,7 +101,7 @@ void cpu_pct(sysobj *obj, int *logical, int *pack, int *core_of_pack, int *threa
     gchar *x86_vid = NULL;
     int x86_f = 0, x86_m = 0;
     gboolean x86 = cpu_x86_vfms(*logical, &x86_vid, &x86_f, &x86_m, NULL);
-    if (!g_strcmp0(x86_vid, "GenuineIntel") )
+    if (SEQ(x86_vid, "GenuineIntel") )
         if (x86_f < 6 || ( x86_f == 6 && (x86_m < 14 || x86_m == 21) ) )
             *pack = *logical;
 
@@ -210,7 +210,7 @@ void find_soc() {
             while(el < obj->data.str + obj->data.len) {
                 gchar *lookup_path = g_strdup_printf(":/devicetree/dt.ids/%s", el);
                 gchar *cls = sysobj_raw_from_fn(lookup_path, "class");
-                if (!g_strcmp0(cls, "soc") ) {
+                if (SEQ(cls, "soc") ) {
                     gchar *vendor = sysobj_raw_from_fn(lookup_path, "vendor");
                     gchar *name = sysobj_raw_from_fn(lookup_path, "name");
                     if (!vendor) vendor = g_strdup("Unknown");

@@ -104,7 +104,7 @@ static const gchar *chassis_types[] = {
 int dmi_id_lookup(const gchar *key) {
     int i = 0;
     while(dmi_id_items[i].rp) {
-        if (strcmp(key, dmi_id_items[i].rp) == 0)
+        if (SEQ(key, dmi_id_items[i].rp))
             return i;
         i++;
     }
@@ -182,7 +182,7 @@ gboolean dmi_id_verify(sysobj *obj) {
     if (i != -1)
         return TRUE;
 */
-    if (!strcmp(obj->name, "id")) {
+    if (SEQ(obj->name, "id")) {
         if (verify_parent_name(obj, "dmi"))
             return TRUE;
     } else if (verify_parent(obj, "/dmi/id"))
@@ -198,7 +198,7 @@ const gchar *dmi_id_label(sysobj *obj) {
 }
 
 gchar *dmi_id_format(sysobj *obj, int fmt_opts) {
-    if (!strcmp(obj->name, "chassis_type"))
+    if (SEQ(obj->name, "chassis_type"))
         return sysobj_format_table(obj, (gchar**)&chassis_types, (int)G_N_ELEMENTS(chassis_types), 10, fmt_opts);
 
     if ((fmt_opts & FMT_OPT_NO_JUNK) && dmi_value_is_placeholder(obj) ) {

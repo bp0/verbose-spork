@@ -30,7 +30,7 @@ static sysobj_class cls_mobo[] = {
 };
 
 static gchar *mobo_format(sysobj *obj, int fmt_opts) {
-    if (!strcmp("mobo", obj->name)) {
+    if (SEQ("mobo", obj->name)) {
         gchar *name = sysobj_raw_from_fn(":/mobo", "name");
         return name;
     }

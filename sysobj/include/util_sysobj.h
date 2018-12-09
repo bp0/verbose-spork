@@ -28,6 +28,14 @@
 #include <unistd.h>  /* for getuid() */
 #include <ctype.h>   /* for isxdigit(), etc. */
 
+/* string eq */
+#define SEQ(s1, s2) (g_strcmp0((s1), (s2)) == 0)
+
+/* handy for static halp */
+#define BULLET "\u2022"
+#define REFLINK(URI) "<a href=\"" URI "\">" URI "</a>"
+#define REFLINKT(TEXT, URI) "<a href=\"" URI "\">" TEXT "</a>"
+
 gboolean util_have_root();
 void util_null_trailing_slash(gchar *str); /* in-place */
 void util_compress_space(gchar *str); /* in-place, multiple whitespace replaced by one space */

@@ -20,10 +20,6 @@
 
 #include "sysobj.h"
 
-#define SEQ(s1, s2) (g_strcmp0(s1, s2) == 0)
-
-#define BULLET "\u2022"
-#define REFLINK(URI) "<a href=\"" URI "\">" URI "</a>"
 const gchar hwmon_reference_markup_text[] =
     "Reference:\n"
     BULLET REFLINK("https://www.kernel.org/doc/Documentation/hwmon/sysfs-interface")

@@ -46,7 +46,7 @@ static const struct { gchar *item; gchar *lbl; int extra_flags; } gpu_items[] = 
 int gpu_lookup(const gchar *key) {
     int i = 0;
     while(gpu_items[i].item) {
-        if (strcmp(key, gpu_items[i].item) == 0)
+        if (SEQ(key, gpu_items[i].item))
             return i;
         i++;
     }
@@ -61,7 +61,7 @@ const gchar *gpu_label(sysobj *obj) {
 }
 
 static gchar *gpu_format(sysobj *obj, int fmt_opts) {
-    if (!strcmp(":/gpu", obj->path)) {
+    if (SEQ(":/gpu", obj->path)) {
         //summary
     }
     return simple_format(obj, fmt_opts);
@@ -70,7 +70,7 @@ static gchar *gpu_format(sysobj *obj, int fmt_opts) {
 static gboolean drm_card_verify(sysobj *obj) {
     gboolean ret = FALSE;
     gchar *pn = sysobj_parent_name(obj);
-    if (!g_strcmp0(pn, "drm")
+    if (SEQ(pn, "drm")
         && verify_lblnum(obj, "card") )
         ret = TRUE;
     g_free(pn);
@@ -96,9 +96,7 @@ static gchar *drm_card_format(sysobj *obj, int fmt_opts) {
 }
 
 void class_gpu() {
-    int i = 0;
     /* add classes */
-    for (i = 0; i < (int)G_N_ELEMENTS(cls_gpu); i++) {
+    for (int i = 0; i < (int)G_N_ELEMENTS(cls_gpu); i++)
         class_add(&cls_gpu[i]);
-    }
 }

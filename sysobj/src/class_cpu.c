@@ -20,8 +20,6 @@
 
 #include "sysobj.h"
 
-#define BULLET "\u2022"
-#define REFLINK(URI) "<a href=\"" URI "\">" URI "</a>"
 const gchar cpu_reference_markup_text[] =
     "Reference:\n"
     BULLET REFLINK("https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-devices-system-cpu") "\n"

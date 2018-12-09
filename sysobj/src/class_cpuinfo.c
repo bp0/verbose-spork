@@ -45,10 +45,10 @@ static gchar *cpuinfo_feature_format(sysobj *obj, int fmt_opts) {
 
     PARAM_NOT_UNUSED(fmt_opts);
 
-    if (!strcmp(type_str, "x86"))
+    if (SEQ(type_str, "x86"))
         meaning = x86_flag_meaning(obj->data.str); /* returns translated */
 
-    if (!strcmp(type_str, "arm"))
+    if (SEQ(type_str, "arm"))
         meaning = arm_flag_meaning(obj->data.str); /* returns translated */
 
     if (meaning)
@@ -94,7 +94,7 @@ static gchar *cpuinfo_describe_models() {
 static gchar *cpuinfo_format(sysobj *obj, int fmt_opts) {
     if (verify_lblnum(obj, "logical_cpu") )
         return sysobj_raw_from_fn(obj->path, "model_name");
-    if (!strcmp(obj->name, "cpuinfo") ) {
+    if (SEQ(obj->name, "cpuinfo") ) {
         gchar *ret = cpuinfo_describe_models();
         if (ret) return ret;
         return g_strdup(_("(Unknown)"));

@@ -47,7 +47,7 @@ static const struct { gchar *rp; gchar *lbl; int extra_flags; } rpi_items[] = {
 int rpi_lookup(const gchar *key) {
     int i = 0;
     while(rpi_items[i].rp) {
-        if (strcmp(key, rpi_items[i].rp) == 0)
+        if (SEQ(key, rpi_items[i].rp))
             return i;
         i++;
     }
@@ -62,7 +62,7 @@ const gchar *rpi_label(sysobj *obj) {
 }
 
 static gchar *rpi_format(sysobj *obj, int fmt_opts) {
-    if (!strcmp("raspberry_pi", obj->name)) {
+    if (SEQ("raspberry_pi", obj->name)) {
         gchar *name = sysobj_raw_from_fn(":/raspberry_pi", "board_name");
         gchar *intro = sysobj_raw_from_fn(":/raspberry_pi", "introduction");
         gchar *mfgr = sysobj_raw_from_fn(":/raspberry_pi", "manufacturer");
@@ -72,7 +72,7 @@ static gchar *rpi_format(sysobj *obj, int fmt_opts) {
         g_free(mfgr);
         return full;
     }
-    if (!strcmp("overvolt", obj->name)) {
+    if (SEQ("overvolt", obj->name)) {
         int v = atoi(obj->data.str);
         return g_strdup_printf("[%d] %s", v, v ? "Set" : "Not-set");
     }

@@ -30,6 +30,8 @@
 #define NC_(Ctx, String) String
 #endif
 
+#define SEQ(s1, s2) (strcmp((s1), (s2)) == 0)
+
 /* sources:
  *   https://unix.stackexchange.com/a/43540
  *   https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git/tree/arch/x86/include/asm/cpufeatures.h?id=refs/tags/v4.9
@@ -320,7 +322,7 @@ const char *x86_flag_meaning(const char *flag) {
     int i = 0;
     if (flag)
     while(tab_flag_meaning[i].name != NULL) {
-        if (strcmp(tab_flag_meaning[i].name, flag) == 0) {
+        if (SEQ(tab_flag_meaning[i].name, flag)) {
             if (tab_flag_meaning[i].meaning != NULL)
                 return C_("x86-flag", tab_flag_meaning[i].meaning);
             else return NULL;
@@ -337,7 +339,7 @@ static void x86_flag_find_dups(void) {
     while(tab_flag_meaning[t].name != NULL) {
         i = t+1;
         while(tab_flag_meaning[i].name != NULL) {
-            if (strcmp(tab_flag_meaning[t].name, tab_flag_meaning[i].name) == 0) {
+            if (SEQ(tab_flag_meaning[t].name, tab_flag_meaning[i].name)) {
                 printf("x86-flag duplicate definition: %s\n ... %d: %s\n ... %d: %s\n",
                     tab_flag_meaning[i].name,
                     t, tab_flag_meaning[t].meaning,

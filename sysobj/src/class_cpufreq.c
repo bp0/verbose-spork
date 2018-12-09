@@ -20,8 +20,6 @@
 
 #include "sysobj.h"
 
-#define BULLET "\u2022"
-#define REFLINK(URI) "<a href=\"" URI "\">" URI "</a>"
 const gchar cpufreq_reference_markup_text[] =
     "Reference:\n"
     BULLET REFLINK("https://www.kernel.org/doc/Documentation/cpu-freq/")

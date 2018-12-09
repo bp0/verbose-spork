@@ -121,7 +121,7 @@ static gchar *gen_usb_ids_lookup_value(const gchar *path) {
     gchar name[16] = "";
     buff_basename(path, name, 15);
 
-    if (!strcmp(name, "usb.ids") )
+    if (SEQ(name, "usb.ids") )
         return g_strdup("*");
 
     util_usb_id *pid = g_new0(util_usb_id, 1);
@@ -162,7 +162,7 @@ static gchar *gen_usb_ids_lookup_value(const gchar *path) {
     }
 
     gchar *ret = NULL;
-    if (!strcmp(name, "name") ) {
+    if (SEQ(name, "name") ) {
         switch(mc) {
             case 1: ret = g_strdup(pid->vendor_str); break;
             case 2: ret = g_strdup(pid->device_str); break;
@@ -176,10 +176,10 @@ static int gen_usb_ids_lookup_type(const gchar *path) {
     gchar name[16] = "";
     buff_basename(path, name, 15);
 
-    if (!strcmp(name, "usb.ids") )
+    if (SEQ(name, "usb.ids") )
         return VSO_TYPE_DIR | VSO_TYPE_DYN;
 
-    if (!strcmp(name, "name") )
+    if (SEQ(name, "name") )
         return VSO_TYPE_STRING;
 
     if (name_is_0x04(name) )

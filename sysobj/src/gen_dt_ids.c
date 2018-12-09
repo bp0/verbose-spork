@@ -103,7 +103,7 @@ static dt_id *scan_dtids_file(const char *compat_elem) {
         name = p; /* whatever is left is name */
 
         /* remember vendor */
-        if (strcmp("vendor", cls) == 0)
+        if (SEQ("vendor", cls))
             strcpy(last_vendor, name);
 
 #if (ALLOW_WILDCARD)
@@ -120,7 +120,7 @@ static dt_id *scan_dtids_file(const char *compat_elem) {
 #endif
 
         /* exact match */
-        if (strcmp(compat_elem, cstr) == 0)
+        if (SEQ(compat_elem, cstr))
             goto scan_dtid_done;
 
     }
@@ -177,7 +177,7 @@ static gchar *gen_dt_ids_lookup_value(const gchar *path) {
     gchar name[128] = "";
     buff_basename(path, name, 127);
 
-    if (!strcmp(name, "dt.ids") )
+    if (SEQ(name, "dt.ids") )
         return g_strdup("*");
 
     gchar *ret = NULL;
@@ -191,13 +191,13 @@ static gchar *gen_dt_ids_lookup_value(const gchar *path) {
         dt_id *id = scan_dtids_file(compat_elem);
         if (id) {
             gen_dt_ids_cache_item(id);
-            if (!strcmp(name, "name") )
+            if (SEQ(name, "name") )
                 ret = g_strdup(id->name);
-            else if (!strcmp(name, "vendor") )
+            else if (SEQ(name, "vendor") )
                 ret = g_strdup(id->vendor);
-            else if (!strcmp(name, "class") )
+            else if (SEQ(name, "class") )
                 ret = g_strdup(id->class);
-            else if (!strcmp(name, "match_str") )
+            else if (SEQ(name, "match_str") )
                 ret = g_strdup(id->match_str);
             dt_id_free(id);
         } else {
@@ -214,7 +214,7 @@ static gchar *gen_dt_ids_lookup_value(const gchar *path) {
                     dt_id_free(idv);
 
                     gen_dt_ids_cache_item(id);
-                    if (!strcmp(name, "vendor") )
+                    if (SEQ(name, "vendor") )
                         ret = g_strdup(id->vendor);
 
                     dt_id_free(id);
@@ -230,25 +230,25 @@ static int gen_dt_ids_lookup_type(const gchar *path) {
     gchar name[128] = "";
     buff_basename(path, name, 127);
 
-    if (!strcmp(name, "dt.ids") )
+    if (SEQ(name, "dt.ids") )
         return VSO_TYPE_DIR | VSO_TYPE_DYN;
 
-    if (!strcmp(name, "name") )
+    if (SEQ(name, "name") )
         return VSO_TYPE_STRING;
 
-    if (!strcmp(name, "vendor") )
+    if (SEQ(name, "vendor") )
         return VSO_TYPE_STRING;
 
-    if (!strcmp(name, "class") )
+    if (SEQ(name, "class") )
         return VSO_TYPE_STRING;
 
-    if (!strcmp(name, "match_str") )
+    if (SEQ(name, "match_str") )
         return VSO_TYPE_STRING;
 
     gchar pname[128] = "";
     buff_parent_name(path, pname, 127);
     /* assume compat_elem if child of dt.ids */
-    if (!strcmp(pname, "dt.ids") )
+    if (SEQ(pname, "dt.ids") )
         return VSO_TYPE_DIR;
 
     return VSO_TYPE_NONE;
