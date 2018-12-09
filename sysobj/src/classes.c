@@ -36,6 +36,7 @@ void gen_rpi();
 void gen_cpuinfo();
 void gen_meminfo();
 void gen_procs(); /* requires :/cpuinfo */
+void gen_gpu();
 
 void generators_init() {
     gen_sysobj(); /* internals, like vsysfs root (":") */
@@ -50,6 +51,7 @@ void generators_init() {
     gen_cpuinfo();
     gen_meminfo();
     gen_procs();
+    gen_gpu();
 }
 
 void class_power();
@@ -59,6 +61,7 @@ void class_rpi();
 void class_cpuinfo();
 void class_meminfo();
 void class_procs();
+void class_gpu();
 
 void class_uptime();
 void class_dmi_id();
@@ -150,6 +153,7 @@ void class_init() {
     class_cpuinfo();
     class_meminfo();
     class_procs();
+    class_gpu();
 
     class_cpu();
     class_cpufreq();

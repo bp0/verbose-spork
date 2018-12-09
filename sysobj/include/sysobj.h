@@ -56,8 +56,9 @@ enum {
     FMT_OPT_NO_JUNK   = 1<<5,       /* class specific, for example: dmi/id ignores placeholder strings */
     FMT_OPT_NO_TRANSLATE = 1<<6,    /* don't translate via gettext() */
 
-    FMT_OPT_NULL_IF_EMPTY   = 1<<8,
-    FMT_OPT_NULL_IF_MISSING = 1<<9,
+    FMT_OPT_NULL_IF_EMPTY       = 1<<8,   /* null if simple_format would return "{empty}" */
+    FMT_OPT_NULL_IF_MISSING     = 1<<9,   /* null if simple_format would return "{not found}" */
+    FMT_OPT_NULL_IF_SIMPLE_DIR  = 1<<10,  /* null if simple_format would return "{node}" */
 
     FMT_OPT_ATERM  = 1<<16,  /* ANSI color terminal */
     FMT_OPT_PANGO  = 1<<17,  /* pango markup for gtk */

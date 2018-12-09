@@ -64,6 +64,7 @@ add_library(sysobj STATIC
         sysobj/src/class_dmi_id.c
         sysobj/src/class_uptime.c
         sysobj/src/class_proc_alts.c
+        sysobj/src/class_gpu.c
 # gen only
         sysobj/src/gen_sysobj.c
         sysobj/src/gen_usb_ids.c
@@ -76,6 +77,7 @@ add_library(sysobj STATIC
         sysobj/src/gen_cpuinfo.c
         sysobj/src/gen_meminfo.c
         sysobj/src/gen_procs.c
+        sysobj/src/gen_gpu.c
 
         sysobj/src/arm_data.c
         sysobj/src/x86_data.c

@@ -762,13 +762,13 @@ static guint dtr_flags(sysobj *obj) {
     return CLS_DT_FLAGS;
 }
 
-static gchar *dtr_compat_decode(const gchar *compat_str_list, gsize len) {
+gchar *dtr_compat_decode(const gchar *compat_str_list, gsize len, gboolean show_class) {
     gchar *ret = NULL;
     if (compat_str_list) {
         const gchar *el = compat_str_list;
         while(el < compat_str_list + len) {
             gchar *lookup_path = g_strdup_printf(":/devicetree/dt.ids/%s", el);
-            gchar *cls = sysobj_raw_from_fn(lookup_path, "class");
+            gchar *cls = show_class ? sysobj_raw_from_fn(lookup_path, "class") : NULL;
             gchar *vendor = sysobj_raw_from_fn(lookup_path, "vendor");
             gchar *name = sysobj_raw_from_fn(lookup_path, "name");
 
@@ -776,8 +776,12 @@ static gchar *dtr_compat_decode(const gchar *compat_str_list, gsize len) {
                 ret = appfs(ret, ", ", "%s %s (%s)", vendor, name, cls);
             else if (name && cls)
                 ret = appfs(ret, ", ", "%s (%s)", name, cls);
+            else if (vendor && name)
+                ret = appfs(ret, ", ", "%s %s", vendor, name);
             else if (vendor)
                 ret = appfs(ret, ", ", "%s", vendor);
+            else if (name)
+                ret = appfs(ret, ", ", "%s", name);
 
             g_free(vendor);
             g_free(name);
@@ -813,7 +817,7 @@ static gchar *dtr_format(sysobj *obj, int fmt_opts) {
                 if (obj->data.len == 1 && *obj->data.str == 0)
                     return NULL;
             }
-            gchar *compat = dtr_compat_decode(obj->data.str, obj->data.len);
+            gchar *compat = dtr_compat_decode(obj->data.str, obj->data.len, TRUE);
             gchar *raw = dtr_list_str0(obj->data.str, obj->data.len);
             if (compat)
                 ret = g_strdup_printf("[%s] %s", raw, compat);

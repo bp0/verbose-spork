@@ -207,6 +207,8 @@ gchar *simple_format(sysobj* obj, int fmt_opts) {
         msg = N_("{node}");
         if (! (fmt_opts & FMT_OPT_NO_TRANSLATE) )
             msg = _(msg);
+        if (fmt_opts & FMT_OPT_NULL_IF_SIMPLE_DIR)
+            return NULL;
         if (fmt_opts & FMT_OPT_ATERM)
             return g_strdup_printf( ANSI_COLOR_BLUE "%s" ANSI_COLOR_RESET, msg );
         return g_strdup( msg );
