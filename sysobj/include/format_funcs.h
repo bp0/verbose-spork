@@ -30,6 +30,7 @@
 gchar *fmt_nanoseconds(sysobj *obj, int fmt_opts);
 gchar *fmt_milliseconds(sysobj *obj, int fmt_opts);
 gchar *fmt_hz(sysobj *obj, int fmt_opts);
+gchar *fmt_hz_to_mhz(sysobj *obj, int fmt_opts);
 gchar *fmt_khz(sysobj *obj, int fmt_opts);
 gchar *fmt_millidegree_c(sysobj *obj, int fmt_opts);
 gchar *fmt_milliampere(sysobj *obj, int fmt_opts);

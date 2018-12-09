@@ -40,7 +40,7 @@ gchar *fmt_nanoseconds(sysobj *obj, int fmt_opts) {
 gchar *fmt_khz(sysobj *obj, int fmt_opts) {
     CHECK_OBJ();
     PREP_RAW();
-    double mhz = strtoul(raw, NULL, 10);
+    double mhz = strtoull(raw, NULL, 10);
     mhz /= 1000; /* raw is khz */
     FINISH_RAW();
     return g_strdup_printf("%.3f %s", mhz, _("MHz"));
@@ -49,7 +49,7 @@ gchar *fmt_khz(sysobj *obj, int fmt_opts) {
 gchar *fmt_millidegree_c(sysobj *obj, int fmt_opts) {
     CHECK_OBJ();
     PREP_RAW();
-    double degc = strtol(raw, NULL, 10);
+    double degc = strtoll(raw, NULL, 10);
     degc /= 1000;
     FINISH_RAW();
     return g_strdup_printf("%.3lf %s", degc, _("\u00B0C") );
@@ -58,7 +58,7 @@ gchar *fmt_millidegree_c(sysobj *obj, int fmt_opts) {
 gchar *fmt_milliampere(sysobj *obj, int fmt_opts) {
     CHECK_OBJ();
     PREP_RAW();
-    double mA = strtol(raw, NULL, 10);
+    double mA = strtoll(raw, NULL, 10);
     FINISH_RAW();
     if (mA > 2000)
         return g_strdup_printf("%.3lf %s", (mA/1000), _("A") );
@@ -69,7 +69,7 @@ gchar *fmt_milliampere(sysobj *obj, int fmt_opts) {
 gchar *fmt_microwatt(sysobj *obj, int fmt_opts) {
     CHECK_OBJ();
     PREP_RAW();
-    double mW = strtol(raw, NULL, 10);
+    double mW = strtoll(raw, NULL, 10);
     mW /= 1000;
     FINISH_RAW();
     return g_strdup_printf("%.3lf %s", mW, _("mW") );
@@ -78,7 +78,7 @@ gchar *fmt_microwatt(sysobj *obj, int fmt_opts) {
 gchar *fmt_milliseconds(sysobj *obj, int fmt_opts) {
     CHECK_OBJ();
     PREP_RAW();
-    double ms = strtol(raw, NULL, 10);
+    double ms = strtoll(raw, NULL, 10);
     FINISH_RAW();
     return g_strdup_printf("%.1lf %s", ms, _("ms") );
 }
@@ -86,7 +86,7 @@ gchar *fmt_milliseconds(sysobj *obj, int fmt_opts) {
 gchar *fmt_microjoule(sysobj *obj, int fmt_opts) {
     CHECK_OBJ();
     PREP_RAW();
-    double mJ = strtol(raw, NULL, 10);
+    double mJ = strtoll(raw, NULL, 10);
     mJ /= 1000;
     FINISH_RAW();
     return g_strdup_printf("%.3lf %s", mJ, _("mJ") );
@@ -109,10 +109,19 @@ gchar *fmt_millepercent(sysobj *obj, int fmt_opts) {
     return g_strdup_printf("%.3lf%s", perc, _("%") );
 }
 
+gchar *fmt_hz_to_mhz(sysobj *obj, int fmt_opts) {
+    CHECK_OBJ();
+    PREP_RAW();
+    double mhz = strtoll(raw, NULL, 10);
+    mhz /= 1000000;
+    FINISH_RAW();
+    return g_strdup_printf("%.3lf %s", mhz, _("MHz") );
+}
+
 gchar *fmt_hz(sysobj *obj, int fmt_opts) {
     CHECK_OBJ();
     PREP_RAW();
-    double hz = strtol(raw, NULL, 10);
+    double hz = strtoll(raw, NULL, 10);
     FINISH_RAW();
     return g_strdup_printf("%.1lf %s", hz, _("Hz") );
 }
@@ -120,7 +129,7 @@ gchar *fmt_hz(sysobj *obj, int fmt_opts) {
 gchar *fmt_millivolt(sysobj *obj, int fmt_opts) {
     CHECK_OBJ();
     PREP_RAW();
-    double volt = strtol(raw, NULL, 10);
+    double volt = strtoll(raw, NULL, 10);
     volt /= 1000;
     FINISH_RAW();
     return g_strdup_printf("%.3lf %s", volt, _("V") );
@@ -129,7 +138,7 @@ gchar *fmt_millivolt(sysobj *obj, int fmt_opts) {
 gchar *fmt_rpm(sysobj *obj, int fmt_opts) {
     CHECK_OBJ();
     PREP_RAW();
-    double rpm = strtol(raw, NULL, 10);
+    double rpm = strtoll(raw, NULL, 10);
     FINISH_RAW();
     return g_strdup_printf("%.1lf %s", rpm, _("RPM") );
 }

@@ -63,6 +63,7 @@ void class_meminfo();
 void class_procs();
 void class_gpu();
 void class_hwmon();
+void class_devfreq();
 
 void class_uptime();
 void class_dmi_id();
@@ -156,6 +157,7 @@ void class_init() {
     class_procs();
     class_gpu();
     class_hwmon();
+    class_devfreq();
 
     class_cpu();
     class_cpufreq();
