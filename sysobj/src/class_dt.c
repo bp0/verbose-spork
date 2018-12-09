@@ -36,8 +36,8 @@
 
 const gchar dt_reference_markup_text[] =
     "References:\n"
-    BULLET REFLINK("http://elinux.org/Device_Tree_Usage")
-    BULLET REFLINK("http://elinux.org/Device_Tree_Mysteries")
+    BULLET REFLINK("http://elinux.org/Device_Tree_Usage") "\n"
+    BULLET REFLINK("http://elinux.org/Device_Tree_Mysteries") "\n"
     "\n";
 
 const gchar dt_ids_reference_markup_text[] =
@@ -48,7 +48,7 @@ const gchar dt_ids_reference_markup_text[] =
     " :/devicetree/dt.ids/{compat_element}/class\n"
     "\n"
     "Reference:\n"
-    BULLET REFLINKT("dt.ids", "https://github.com/bp0/dtid")
+    BULLET REFLINKT("dt.ids", "https://github.com/bp0/dtid") "\n"
     "\n";
 
 /* operating-points v0,v1,v2 */
