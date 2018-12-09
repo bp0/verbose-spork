@@ -20,7 +20,7 @@
 
 #include "sysobj_foreach.h"
 
-static GList* __push_if_uniq(GList *l, gchar *base, gchar *name, long unsigned int *length) {
+static GList* __push_if_uniq(GList *l, const gchar *base, const gchar *name, long unsigned int *length) {
     gchar *path = name
         ? g_strdup_printf("%s/%s", base, name)
         : g_strdup(base);
@@ -121,6 +121,11 @@ static gpointer _sysobj_foreach_thread_main(mt_state *s) {
         g_mutex_unlock(&s->lock);
 
         if (!path) {
+            if (s->stats.threads == 1) {
+                /* so that we end with SO_FOREACH_END_EXH */
+                s->stats.total_wait += WAIT_TOO_MUCH + 1;
+                continue;
+            }
             g_mutex_lock(&s->lock_stats);
             s->stats.total_wait += WAIT_TIME;
             g_mutex_unlock(&s->lock_stats);
@@ -168,16 +173,20 @@ static gpointer _sysobj_foreach_thread_main(mt_state *s) {
     /* never arrives here */
 }
 
-static void sysobj_foreach_mt(GSList *filters, f_sysobj_foreach callback, gpointer user_data, int max_threads) {
+static void sysobj_foreach_mt(const gchar *root_path, GSList *filters, f_sysobj_foreach callback, gpointer user_data, int max_threads) {
     GSList *l = NULL;
     mt_state state = {.filters = filters, .callback = callback, .user_data = user_data };
     mt_state_init(&state);
     state.stats.threads = g_get_num_processors();
     if (max_threads && state.stats.threads > max_threads)
         state.stats.threads = max_threads;
-    state.to_search = __push_if_uniq(state.to_search, ":/", NULL, &state.stats.queue_length);
-    state.to_search = __push_if_uniq(state.to_search, "/sys", NULL, &state.stats.queue_length);
-    state.to_search = __push_if_uniq(state.to_search, "/proc", NULL, &state.stats.queue_length);
+    if (root_path)
+        state.to_search = __push_if_uniq(state.to_search, root_path, NULL, &state.stats.queue_length);
+    else {
+        state.to_search = __push_if_uniq(state.to_search, ":/", NULL, &state.stats.queue_length);
+        state.to_search = __push_if_uniq(state.to_search, "/sys", NULL, &state.stats.queue_length);
+        state.to_search = __push_if_uniq(state.to_search, "/proc", NULL, &state.stats.queue_length);
+    }
 
     if (state.stats.threads == 1) {
         _sysobj_foreach_thread_main(&state);
@@ -220,5 +229,11 @@ static void sysobj_foreach_mt(GSList *filters, f_sysobj_foreach callback, gpoint
 
 void sysobj_foreach(GSList *filters, f_sysobj_foreach callback, gpointer user_data, int opts) {
     gboolean use_mt = !!(opts & SO_FOREACH_MT);
-    sysobj_foreach_mt(filters, callback, user_data, use_mt ? 0 : 1);
+    sysobj_foreach_mt(NULL, filters, callback, user_data, use_mt ? 0 : 1);
 }
+
+void sysobj_foreach_from(const gchar *root_path, GSList *filters, f_sysobj_foreach callback, gpointer user_data, int opts) {
+    gboolean use_mt = !!(opts & SO_FOREACH_MT);
+    sysobj_foreach_mt(root_path, filters, callback, user_data, use_mt ? 0 : 1);
+}
+

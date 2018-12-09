@@ -49,5 +49,6 @@ typedef struct {
 #define SYSOBJ_FOREACH_CONTINUE TRUE
 typedef gboolean (*f_sysobj_foreach)(const sysobj *s, gpointer user_data, gconstpointer stats);
 void sysobj_foreach(GSList *filters, f_sysobj_foreach callback, gpointer user_data, int opts);
+void sysobj_foreach_from(const gchar *root_path, GSList *filters, f_sysobj_foreach callback, gpointer user_data, int opts);
 
 #endif
