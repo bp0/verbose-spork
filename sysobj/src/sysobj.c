@@ -24,6 +24,8 @@
 #include "sysobj.h"
 #include "vendor.h"
 
+so_stats sysobj_stats = {};
+
 gchar sysobj_root[1024] = "";
 #define USING_ALT_ROOT (*sysobj_root != 0)
 gboolean sysobj_root_set(const gchar *alt_root) {
@@ -98,20 +100,13 @@ typedef struct {
     GDestroyNotify f_free;
 } auto_free_item;
 
-long long unsigned auto_free_queue_length() {
-    return g_slist_length(free_list);
-}
-
-long long unsigned auto_freed() {
-    return freed_count;
-}
-
 gpointer auto_free_ex(gpointer p, GDestroyNotify f) {
     //DEBUG("auto free_ex(ptr: %p, fptr: %p)", p, f);
     auto_free_item *z = g_new0(auto_free_item, 1);
     z->ptr = p;
     z->f_free = f;
     free_list = g_slist_prepend(free_list, z);
+    sysobj_stats.auto_free_len++;
     return p;
 }
 
@@ -120,14 +115,17 @@ gpointer auto_free(gpointer p) {
 }
 
 void free_auto_free() {
+    uint64_t fc = 0;
     for(GSList *l = free_list; l; l = l->next) {
         auto_free_item *z = (auto_free_item*)l->data;
         //DEBUG("free_auto_free(): ptr: %p, fptr: %p", z->ptr, z->f_free);
         z->f_free(z->ptr);
-        freed_count++;
+        fc++;
     }
     g_slist_free_full(free_list, (GDestroyNotify)g_free);
     free_list = NULL;
+    sysobj_stats.auto_freed += fc;
+    sysobj_stats.auto_free_len -= fc;
 }
 
 GSList *class_get_list() {
@@ -379,6 +377,7 @@ sysobj_data *sysobj_data_dup(const sysobj_data *src) {
 
 sysobj *sysobj_new() {
     sysobj *s = g_new0(sysobj, 1);
+    sysobj_stats.so_new++;
     return s;
 }
 
@@ -420,6 +419,7 @@ static void sysobj_free_and_clean(sysobj *s) {
         g_free(s->name);
         sysobj_data_free(&s->data, FALSE);
         memset(s, 0, sizeof(sysobj) );
+        sysobj_stats.so_clean++;
     }
 }
 
@@ -427,6 +427,7 @@ void sysobj_free(sysobj *s) {
     if (s) {
         sysobj_free_and_clean(s);
         g_free(s);
+        sysobj_stats.so_free++;
     }
 }
 
@@ -822,6 +823,7 @@ sysobj *sysobj_new_fast(const gchar *path) {
         s->name_req = g_path_get_basename(s->path_req);
         s->name = g_path_get_basename(s->path);
         sysobj_fscheck(s);
+        sysobj_stats.so_new_fast++;
     }
     return s;
 }

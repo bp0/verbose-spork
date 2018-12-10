@@ -271,8 +271,17 @@ void sysobj_data_free(sysobj_data *d, gboolean and_self);
 gpointer auto_free(gpointer p);
 gpointer auto_free_ex(gpointer p, GDestroyNotify f);
 void free_auto_free();
-long long unsigned auto_free_queue_length();
-long long unsigned auto_freed();
+
+typedef struct {
+    long long unsigned
+        so_new,
+        so_new_fast,
+        so_clean,
+        so_free,
+        auto_freed,
+        auto_free_len;
+} so_stats;
+extern so_stats sysobj_stats;
 
 /* debugging stuff */
 void class_dump_list();

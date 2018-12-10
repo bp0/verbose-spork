@@ -26,6 +26,13 @@ static void buff_basename(const gchar *path, gchar *buff, gsize n) {
     g_free(fname);
 }
 
+static gchar *get_item_items[] = {
+    "elapsed", "root", "class_count", "virt_count",
+    "freed_count", "free_queue",
+    "sysobj_new", "sysobj_new_fast",
+    "sysobj_clean", "sysobj_free",
+};
+
 static gchar *get_item(const gchar *path) {
     if (!path) return NULL;
     gchar name[128] = "";
@@ -40,30 +47,38 @@ static gchar *get_item(const gchar *path) {
     if (SEQ(name, "virt_count") )
         return g_strdup_printf("%lu", (long unsigned)sysobj_virt_count() );
     if (SEQ(name, "free_queue") )
-        return g_strdup_printf("%llu", auto_free_queue_length() );
+        return g_strdup_printf("%llu", sysobj_stats.auto_free_len );
     if (SEQ(name, "freed_count") )
-        return g_strdup_printf("%llu", auto_freed() );
+        return g_strdup_printf("%llu", sysobj_stats.auto_freed );
+    if (SEQ(name, "sysobj_new") )
+        return g_strdup_printf("%llu", sysobj_stats.so_new );
+    if (SEQ(name, "sysobj_new_fast") )
+        return g_strdup_printf("%llu", sysobj_stats.so_new_fast );
+    if (SEQ(name, "sysobj_clean") )
+        return g_strdup_printf("%llu", sysobj_stats.so_clean );
+    if (SEQ(name, "sysobj_free") )
+        return g_strdup_printf("%llu", sysobj_stats.so_free );
 
     return g_strdup("?");
 }
 
 static const gchar class_item_list[] =
-  "_def_file\n"
-  "_def_line\n"
-  "_pattern\n"
-  "_flags\n"
-  "_s_label\n"
-  "_s_halp\n"
-  "_s_suggest\n"
-  "_s_update_interval\n"
-  "_f_verify\n"
-  "_f_label\n"
-  "_f_format\n"
-  "_f_update_interval\n"
-  "_f_compare\n"
-  "_f_flags\n"
-  "_f_cleanup\n"
-  "_f_halp\n";
+  ".def_file\n"
+  ".def_line\n"
+  ".pattern\n"
+  ".flags\n"
+  ".s_label\n"
+  ".s_halp\n"
+  ".s_suggest\n"
+  ".s_update_interval\n"
+  ".f_verify\n"
+  ".f_label\n"
+  ".f_format\n"
+  ".f_update_interval\n"
+  ".f_compare\n"
+  ".f_flags\n"
+  ".f_cleanup\n"
+  ".f_halp\n";
 
 static gchar *get_class_info(const gchar *path) {
     if (!path) return NULL;
@@ -99,42 +114,42 @@ static gchar *get_class_info(const gchar *path) {
     }
 
     if (match) {
-        if (SEQ(name, "_def_file") )
+        if (SEQ(name, ".def_file") )
             return g_strdup(match->def_file);
-        if (SEQ(name, "_def_line") ) {
+        if (SEQ(name, ".def_line") ) {
             if (match->def_file)
                 return g_strdup_printf("%d", match->def_line);
             else
                 return NULL;
         }
-        if (SEQ(name, "_pattern") )
+        if (SEQ(name, ".pattern") )
             return g_strdup(match->pattern);
-        if (SEQ(name, "_flags") )
+        if (SEQ(name, ".flags") )
             return g_strdup_printf("0x%lx", (long unsigned)match->flags);
-        if (SEQ(name, "_s_label") )
+        if (SEQ(name, ".s_label") )
             return g_strdup(match->s_label);
-        if (SEQ(name, "_s_halp") )
+        if (SEQ(name, ".s_halp") )
             return g_strdup(match->s_halp);
-        if (SEQ(name, "_s_suggest") )
+        if (SEQ(name, ".s_suggest") )
             return g_strdup(match->s_suggest);
-        if (SEQ(name, "_s_update_interval") )
+        if (SEQ(name, ".s_update_interval") )
             return g_strdup_printf("%0.4lf", match->s_update_interval);
-        if (SEQ(name, "_f_verify") )
-            return g_strdup_printf("0x%llx", (long long unsigned)match->f_verify);
-        if (SEQ(name, "_f_label") )
-            return g_strdup_printf("0x%llx", (long long unsigned)match->f_label);
-        if (SEQ(name, "_f_format") )
-            return g_strdup_printf("0x%llx", (long long unsigned)match->f_format);
-        if (SEQ(name, "_f_update_interval") )
-            return g_strdup_printf("0x%llx", (long long unsigned)match->f_update_interval);
-        if (SEQ(name, "_f_compare") )
-            return g_strdup_printf("0x%llx", (long long unsigned)match->f_compare);
-        if (SEQ(name, "_f_flags") )
-            return g_strdup_printf("0x%llx", (long long unsigned)match->f_flags);
-        if (SEQ(name, "_f_cleanup") )
-            return g_strdup_printf("0x%llx", (long long unsigned)match->f_cleanup);
-        if (SEQ(name, "_f_halp") )
-            return g_strdup_printf("0x%llx", (long long unsigned)match->f_halp);
+        if (SEQ(name, ".f_verify") )
+            return g_strdup_printf("%p", match->f_verify);
+        if (SEQ(name, ".f_label") )
+            return g_strdup_printf("%p", match->f_label);
+        if (SEQ(name, ".f_format") )
+            return g_strdup_printf("%p", match->f_format);
+        if (SEQ(name, ".f_update_interval") )
+            return g_strdup_printf("%p", match->f_update_interval);
+        if (SEQ(name, ".f_compare") )
+            return g_strdup_printf("%p", match->f_compare);
+        if (SEQ(name, ".f_flags") )
+            return g_strdup_printf("%p", match->f_flags);
+        if (SEQ(name, ".f_cleanup") )
+            return g_strdup_printf("%p", match->f_cleanup);
+        if (SEQ(name, ".f_halp") )
+            return g_strdup_printf("%p", match->f_halp);
 
         /* assume it is a class tag */
         return g_strdup(class_item_list);
@@ -180,24 +195,6 @@ static sysobj_virt vol[] = {
     { .path = ":sysobj", .str = "*",
       .type = VSO_TYPE_DIR | VSO_TYPE_CONST,
       .f_get_data = NULL, .f_get_type = NULL },
-    { .path = ":sysobj/elapsed", .str = "",
-      .type = VSO_TYPE_STRING | VSO_TYPE_CONST,
-      .f_get_data = get_item, .f_get_type = NULL },
-    { .path = ":sysobj/root", .str = "",
-      .type = VSO_TYPE_STRING | VSO_TYPE_CONST,
-      .f_get_data = get_item, .f_get_type = NULL },
-    { .path = ":sysobj/class_count", .str = "",
-      .type = VSO_TYPE_STRING | VSO_TYPE_CONST,
-      .f_get_data = get_item, .f_get_type = NULL },
-    { .path = ":sysobj/virt_count", .str = "",
-      .type = VSO_TYPE_STRING | VSO_TYPE_CONST,
-      .f_get_data = get_item, .f_get_type = NULL },
-    { .path = ":sysobj/freed_count", .str = "",
-      .type = VSO_TYPE_STRING | VSO_TYPE_CONST,
-      .f_get_data = get_item, .f_get_type = NULL },
-    { .path = ":sysobj/free_queue", .str = "",
-      .type = VSO_TYPE_STRING | VSO_TYPE_CONST,
-      .f_get_data = get_item, .f_get_type = NULL },
     { .path = ":sysobj/classes", .str = "*",
       .type = VSO_TYPE_DIR | VSO_TYPE_DYN | VSO_TYPE_CONST,
       .f_get_data = get_class_info, .f_get_type = get_class_info_type },
@@ -206,7 +203,16 @@ static sysobj_virt vol[] = {
 void gen_sysobj() {
     int i = 0;
     /* add virtual sysobj */
-    for (i = 0; i < (int)G_N_ELEMENTS(vol); i++) {
+    for (i = 0; i < (int)G_N_ELEMENTS(vol); i++)
         sysobj_virt_add(&vol[i]);
+
+    /* get_item()-able items */
+    for (i = 0; i < (int)G_N_ELEMENTS(get_item_items); i++) {
+        sysobj_virt *vo = sysobj_virt_new();
+        vo->path = util_build_fn(":sysobj", get_item_items[i]);
+        vo->type = VSO_TYPE_STRING,
+        vo->f_get_data = get_item;
+        sysobj_virt_add(vo);
     }
+
 }

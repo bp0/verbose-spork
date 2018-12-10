@@ -127,13 +127,16 @@ static sysobj_class cls_internal[] = {
     .tag = "vsfs", .pattern = ":", .flags = OF_CONST,
     .s_label = N_("Virtual sysfs root"), .s_update_interval = 60.0 },
   { SYSOBJ_CLASS_DEF
+    .tag = "sysobj:stat", .pattern = ":sysobj/*", .flags = OF_CONST | OF_GLOB_PATTERN,
+    .s_update_interval = 0.5 },
+  { SYSOBJ_CLASS_DEF
     .tag = "sysobj:elapsed", .pattern = ":sysobj/elapsed", .flags = OF_CONST,
     .s_label = N_("Seconds since sysobj_init()"), .s_update_interval = 0.1 },
   { SYSOBJ_CLASS_DEF
     .tag = "sysobj:class", .pattern = ":sysobj/classes/*", .flags = OF_CONST | OF_GLOB_PATTERN,
     .f_verify = class_verify, .f_format = class_format },
   { SYSOBJ_CLASS_DEF
-    .tag = "sysobj:class_flags", .pattern = ":sysobj/classes/*/_flags", .flags = OF_CONST | OF_GLOB_PATTERN,
+    .tag = "sysobj:class_flags", .pattern = ":sysobj/classes/*/.flags", .flags = OF_CONST | OF_GLOB_PATTERN,
     .f_format = class_flags_format },
 };
 
