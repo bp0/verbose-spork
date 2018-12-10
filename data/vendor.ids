@@ -152,6 +152,7 @@ name IBM
     match_string_case IBM
 
 name Dell Computer
+    name_short Dell
     url www.dell.com
     match_string Dell
 
