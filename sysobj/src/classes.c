@@ -88,12 +88,10 @@ gboolean class_verify(sysobj *obj) {
 }
 
 gchar *class_format(sysobj *obj, int fmt_opts) {
-    gchar *file = sysobj_raw_from_fn(obj->path, "_def_file");
-    gchar *line = sysobj_raw_from_fn(obj->path, "_def_line");
+    gchar *file = auto_free(sysobj_raw_from_fn(obj->path, ".def_file") );
+    gchar *line = auto_free(sysobj_raw_from_fn(obj->path, ".def_line") );
     if (file && line) {
         gchar *ret = g_strdup_printf("%s:%s", file, line);
-        g_free(file);
-        g_free(line);
         return ret;
     }
     return simple_format(obj, fmt_opts);
