@@ -39,6 +39,10 @@ static gchar *get_item(const gchar *path) {
         return g_strdup_printf("%lu", (long unsigned)class_count() );
     if (SEQ(name, "virt_count") )
         return g_strdup_printf("%lu", (long unsigned)sysobj_virt_count() );
+    if (SEQ(name, "free_queue") )
+        return g_strdup_printf("%llu", auto_free_queue_length() );
+    if (SEQ(name, "freed_count") )
+        return g_strdup_printf("%llu", auto_freed() );
 
     return g_strdup("?");
 }
@@ -186,6 +190,12 @@ static sysobj_virt vol[] = {
       .type = VSO_TYPE_STRING | VSO_TYPE_CONST,
       .f_get_data = get_item, .f_get_type = NULL },
     { .path = ":sysobj/virt_count", .str = "",
+      .type = VSO_TYPE_STRING | VSO_TYPE_CONST,
+      .f_get_data = get_item, .f_get_type = NULL },
+    { .path = ":sysobj/freed_count", .str = "",
+      .type = VSO_TYPE_STRING | VSO_TYPE_CONST,
+      .f_get_data = get_item, .f_get_type = NULL },
+    { .path = ":sysobj/free_queue", .str = "",
       .type = VSO_TYPE_STRING | VSO_TYPE_CONST,
       .f_get_data = get_item, .f_get_type = NULL },
     { .path = ":sysobj/classes", .str = "*",

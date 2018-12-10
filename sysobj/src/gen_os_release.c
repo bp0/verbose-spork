@@ -71,7 +71,7 @@ void try_etc_files() {
     for (int i = 0; i < (int)G_N_ELEMENTS(etc_release_files); i++) {
         sysobj *obj = sysobj_new_fast(etc_release_files[i]);
         if (obj->exists)
-            sysobj_virt_add_simple(":/os", obj->name_req, g_strdup(etc_release_files[i]), VSO_TYPE_SYMLINK);
+            sysobj_virt_add_simple(":/os", obj->name_req, etc_release_files[i], VSO_TYPE_SYMLINK);
         sysobj_free(obj);
     }
 }

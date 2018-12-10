@@ -149,13 +149,13 @@ static void gen_dt_ids_cache_item(dt_id *id) {
     snprintf(elpath, 127, ":/devicetree/dt.ids/%s", id->compat_elem);
     sysobj_virt_add_simple(elpath, NULL, "*", VSO_TYPE_DIR);
     if (id->vendor)
-        sysobj_virt_add_simple(elpath, "vendor", g_strdup(id->vendor), VSO_TYPE_STRING);
+        sysobj_virt_add_simple(elpath, "vendor", id->vendor, VSO_TYPE_STRING);
     if (id->name)
-        sysobj_virt_add_simple(elpath, "name", g_strdup(id->name), VSO_TYPE_STRING);
+        sysobj_virt_add_simple(elpath, "name", id->name, VSO_TYPE_STRING);
     if (id->class)
-        sysobj_virt_add_simple(elpath, "class", g_strdup(id->class), VSO_TYPE_STRING);
+        sysobj_virt_add_simple(elpath, "class", id->class, VSO_TYPE_STRING);
     if (id->match_str)
-        sysobj_virt_add_simple(elpath, "match_str", g_strdup(id->match_str), VSO_TYPE_STRING);
+        sysobj_virt_add_simple(elpath, "match_str", id->match_str, VSO_TYPE_STRING);
 }
 
 static void buff_basename(const gchar *path, gchar *buff, gsize n) {

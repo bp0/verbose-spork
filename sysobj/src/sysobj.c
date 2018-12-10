@@ -90,6 +90,45 @@ int compare_str_base16(const sysobj_data *a, const sysobj_data *b) {
 
 GSList *class_list = NULL;
 GSList *vo_list = NULL;
+GSList *free_list = NULL;
+long long unsigned freed_count = 0;
+
+typedef struct {
+    gpointer ptr;
+    GDestroyNotify f_free;
+} auto_free_item;
+
+long long unsigned auto_free_queue_length() {
+    return g_slist_length(free_list);
+}
+
+long long unsigned auto_freed() {
+    return freed_count;
+}
+
+gpointer auto_free_ex(gpointer p, GDestroyNotify f) {
+    //DEBUG("auto free_ex(ptr: %p, fptr: %p)", p, f);
+    auto_free_item *z = g_new0(auto_free_item, 1);
+    z->ptr = p;
+    z->f_free = f;
+    free_list = g_slist_prepend(free_list, z);
+    return p;
+}
+
+gpointer auto_free(gpointer p) {
+    return auto_free_ex(p, (GDestroyNotify)g_free);
+}
+
+void free_auto_free() {
+    for(GSList *l = free_list; l; l = l->next) {
+        auto_free_item *z = (auto_free_item*)l->data;
+        //DEBUG("free_auto_free(): ptr: %p, fptr: %p", z->ptr, z->f_free);
+        z->f_free(z->ptr);
+        freed_count++;
+    }
+    g_slist_free_full(free_list, (GDestroyNotify)g_free);
+    free_list = NULL;
+}
 
 GSList *class_get_list() {
     return class_list;
@@ -1186,6 +1225,7 @@ double sysobj_elapsed() {
 }
 
 void sysobj_cleanup() {
+    free_auto_free();
     class_cleanup();
     sysobj_virt_cleanup();
     vendor_cleanup();

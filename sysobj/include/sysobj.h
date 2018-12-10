@@ -268,6 +268,12 @@ GSList *sysobj_children_ex(sysobj *s, GSList *filters, gboolean sort);
 sysobj_data *sysobj_data_dup(const sysobj_data *src);
 void sysobj_data_free(sysobj_data *d, gboolean and_self);
 
+gpointer auto_free(gpointer p);
+gpointer auto_free_ex(gpointer p, GDestroyNotify f);
+void free_auto_free();
+long long unsigned auto_free_queue_length();
+long long unsigned auto_freed();
+
 /* debugging stuff */
 void class_dump_list();
 

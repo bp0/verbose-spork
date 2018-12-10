@@ -193,11 +193,11 @@ static void procs_scan() {
     sysobj_free(obj);
     g_slist_free_full(uniq_clocks, (GDestroyNotify)g_free);
 
-    sysobj_virt_add_simple(PROCS_ROOT "/packs", NULL, g_strdup_printf("%d", packs), VSO_TYPE_STRING);
-    sysobj_virt_add_simple(PROCS_ROOT "/cores", NULL, g_strdup_printf("%d", cores), VSO_TYPE_STRING);
-    sysobj_virt_add_simple(PROCS_ROOT "/threads", NULL, g_strdup_printf("%d", threads), VSO_TYPE_STRING);
-    sysobj_virt_add_simple(PROCS_ROOT "/freq_domains", NULL, g_strdup_printf("%d", clocks), VSO_TYPE_STRING);
-
+    sysobj_virt_add_simple(PROCS_ROOT "/packs", NULL, auto_free(g_strdup_printf("%d", packs) ), VSO_TYPE_STRING);
+    sysobj_virt_add_simple(PROCS_ROOT "/cores", NULL, auto_free(g_strdup_printf("%d", cores) ), VSO_TYPE_STRING);
+    sysobj_virt_add_simple(PROCS_ROOT "/threads", NULL, auto_free(g_strdup_printf("%d", threads) ), VSO_TYPE_STRING);
+    sysobj_virt_add_simple(PROCS_ROOT "/freq_domains", NULL, auto_free(g_strdup_printf("%d", clocks) ), VSO_TYPE_STRING);
+    free_auto_free();
 }
 
 void find_soc() {
