@@ -116,6 +116,8 @@ gpointer auto_free(gpointer p) {
 
 void free_auto_free() {
     uint64_t fc = 0;
+    if (free_list)
+        DEBUG("will now free %llu items...", sysobj_stats.auto_free_len);
     for(GSList *l = free_list; l; l = l->next) {
         auto_free_item *z = (auto_free_item*)l->data;
         //DEBUG("free_auto_free(): ptr: %p, fptr: %p", z->ptr, z->f_free);
@@ -455,12 +457,14 @@ void sysobj_classify(sysobj *s) {
                 if (class_has_flag(c, OF_BLAST) ) {
                     if (!c_blast) c_blast = c;
                 } else {
+                    c->hits++;
                     s->cls = c;
                     return;
                 }
             }
         }
         if (c_blast) {
+            c_blast->hits++;
             s->cls = c_blast;
             return;
         }

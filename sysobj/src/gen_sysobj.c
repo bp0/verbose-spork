@@ -78,7 +78,8 @@ static const gchar class_item_list[] =
   ".f_compare\n"
   ".f_flags\n"
   ".f_cleanup\n"
-  ".f_halp\n";
+  ".f_halp\n"
+  "hits\n";
 
 static gchar *get_class_info(const gchar *path) {
     if (!path) return NULL;
@@ -150,6 +151,8 @@ static gchar *get_class_info(const gchar *path) {
             return g_strdup_printf("%p", match->f_cleanup);
         if (SEQ(name, ".f_halp") )
             return g_strdup_printf("%p", match->f_halp);
+        if (SEQ(name, "hits") )
+            return g_strdup_printf("%llu", match->hits);
 
         /* assume it is a class tag */
         return g_strdup(class_item_list);

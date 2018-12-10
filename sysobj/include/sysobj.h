@@ -107,6 +107,7 @@ typedef struct sysobj_class {
     const int    def_line; /* __LINE__ */
 
     GPatternSpec *pspec;
+    long long unsigned hits;
 } sysobj_class;
 
 typedef struct sysobj_data {
