@@ -11,7 +11,7 @@
 
 #if (DEBUG_BUILD == 1)
 #   define DEBUG(msg,...) fprintf(stderr, "*** %s:%d (%s) *** " msg "\n", \
-        __FILE__, __LINE__, __FUNCTION__, ##__VA_ARGS__)
+        __FILE__ + sizeof(SRC_ROOT), __LINE__, __FUNCTION__, ##__VA_ARGS__)
 #else
 #   define DEBUG(msg,...)
 #endif  /* DEBUG_BUILD */
