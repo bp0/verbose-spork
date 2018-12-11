@@ -188,6 +188,7 @@ static void _cleanup(bpSysObjSearch *s) {
         priv->stop = TRUE;
         g_thread_join(priv->search_thread);
     }
+    sysobj_filter_free_list(priv->filters);
     g_free(priv->search_result_path);
     g_free(priv->search_query);
 }

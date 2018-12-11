@@ -48,4 +48,6 @@ gboolean sysobj_filter_item_include(gchar *item, GSList *filters);
 /* returns the new head of now-filtered items */
 GSList *sysobj_filter_list(GSList *items, GSList *filters);
 
+#define sysobj_filter_free_list(slist_filters) g_slist_free_full(slist_filters, (GDestroyNotify)sysobj_filter_free)
+
 #endif
