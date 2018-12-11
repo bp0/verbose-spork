@@ -253,6 +253,8 @@ const gchar *sysobj_halp(sysobj *s);
 const gchar *sysobj_suggest(sysobj *s);
 gchar *sysobj_format(sysobj *s, int fmt_opts);
 gchar *sysobj_raw_from_fn(const gchar *base, const gchar *name);
+gchar *sysobj_raw_from_printf(gchar *path_fmt, ...)
+    __attribute__ ((format (printf, 1, 2)));
 uint32_t sysobj_uint32_from_fn(const gchar *base, const gchar *name, int nbase);
 gchar *sysobj_format_from_fn(const gchar *base, const gchar *name, int fmt_opts);
 double sysobj_update_interval(sysobj *s);

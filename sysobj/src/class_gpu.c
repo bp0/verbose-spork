@@ -47,8 +47,10 @@ static sysobj_class cls_gpu[] = {
 
 static gchar *gpu_format(sysobj *obj, int fmt_opts) {
     if (SEQ(":/gpu", obj->path)) {
-        //summary
+        return sysobj_format_from_fn(obj->path, "list", fmt_opts);
     }
+    if (verify_lblnum(obj, "gpu"))
+        return sysobj_format_from_fn(obj->path, "name", fmt_opts);
     return simple_format(obj, fmt_opts);
 }
 

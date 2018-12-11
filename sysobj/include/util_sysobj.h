@@ -45,7 +45,7 @@ gchar *util_canonicalize_path(const gchar *path);
 gchar *util_normalize_path(const gchar *path, const gchar *relto);
 gsize util_count_lines(const gchar *str);
 gchar *util_escape_markup(gchar *v, gboolean replacing);
-int32_t util_get_did(gchar *str, const gchar *lbl); /* ("cpu6", "cpu") -> 6 */
+int32_t util_get_did(gchar *str, const gchar *lbl); /* ("cpu6", "cpu") -> 6, returns -1 if error */
 int util_maybe_num(gchar *str); /* returns the guessed base, 0 for not num */
 gchar *util_find_line_value(gchar *data, gchar *key, gchar delim);
 

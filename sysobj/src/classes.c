@@ -38,7 +38,7 @@ void gen_rpi();
 void gen_cpuinfo();
 void gen_meminfo();
 void gen_procs(); /* requires :/cpuinfo */
-void gen_gpu();
+void gen_gpu();   /* requires gen_*_ids */
 
 void generators_init() {
     gen_sysobj(); /* internals, like vsysfs root (":") */

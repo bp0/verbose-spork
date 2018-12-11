@@ -255,6 +255,18 @@ gchar *sysobj_raw_from_fn(const gchar *base, const gchar *name) {
     return ret;
 }
 
+gchar *sysobj_raw_from_printf(gchar *path_fmt, ...) {
+    gchar *ret = NULL;
+    gchar *path = NULL;
+    va_list args;
+    va_start(args, path_fmt);
+    path = g_strdup_vprintf(path_fmt, args);
+    va_end(args);
+    ret = sysobj_raw_from_fn(path, NULL);
+    g_free(path);
+    return ret;
+}
+
 uint32_t sysobj_uint32_from_fn(const gchar *base, const gchar *name, int nbase) {
     gchar *tmp = sysobj_raw_from_fn(base, name);
     uint32_t ret = tmp ? strtol(tmp, NULL, nbase) : 0;
@@ -562,7 +574,9 @@ void sysobj_fscheck(sysobj *s) {
     }
 }
 
+/* forward declaration */
 static GSList *sysobj_virt_children(const sysobj_virt *vo, const gchar *req);
+
 static void sysobj_read_dir(sysobj *s) {
     GSList *nl = NULL;
     GDir *dir;
