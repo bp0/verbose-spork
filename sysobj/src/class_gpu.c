@@ -20,51 +20,66 @@
 
 #include "sysobj.h"
 #include "sysobj_extras.h" /* for dtr_compat_decode() */
+#include "format_funcs.h"
 
-static const gchar *gpu_label(sysobj *s);
 static gchar *gpu_format(sysobj *obj, int fmt_opts);
 
 static gboolean drm_card_verify(sysobj *obj);
 static gchar *drm_card_format(sysobj *obj, int fmt_opts);
 
+static gboolean drm_card_attr_verify(sysobj *obj);
+static const gchar *drm_card_attr_label(sysobj *s);
+static gchar *drm_card_attr_format(sysobj *obj, int fmt_opts);
+
 static sysobj_class cls_gpu[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "gpu", .pattern = ":/gpu*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .f_label = gpu_label, .f_format = gpu_format },
+    .f_format = gpu_format },
 
   { SYSOBJ_CLASS_DEF
     .tag = "drm:card", .pattern = "/sys/devices/*/drm/card*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .s_label = N_("DRM-managed graphics device"),
     .f_verify = drm_card_verify, .f_format = drm_card_format },
+  { SYSOBJ_CLASS_DEF
+    .tag = "drm:card:attr", .pattern = "/sys/devices/*/drm/card*/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .f_label = drm_card_attr_label, .f_verify = drm_card_attr_verify, .f_format = drm_card_attr_format },
 };
-
-static const struct { gchar *item; gchar *lbl; int extra_flags; } gpu_items[] = {
-    //{ "raspberry_pi",  N_("Raspberry Pi Information"), OF_NONE },
-    { NULL, NULL, 0 }
-};
-
-int gpu_lookup(const gchar *key) {
-    int i = 0;
-    while(gpu_items[i].item) {
-        if (SEQ(key, gpu_items[i].item))
-            return i;
-        i++;
-    }
-    return -1;
-}
-
-const gchar *gpu_label(sysobj *obj) {
-    int i = gpu_lookup(obj->name);
-    if (i != -1)
-        return _(gpu_items[i].lbl);
-    return NULL;
-}
 
 static gchar *gpu_format(sysobj *obj, int fmt_opts) {
     if (SEQ(":/gpu", obj->path)) {
         //summary
     }
     return simple_format(obj, fmt_opts);
+}
+
+static const struct { gchar *item; gchar *lbl; int extra_flags; func_format f_func; } drm_items[] = {
+    //TODO: labels
+    { "gt_cur_freq_mhz",   NULL, OF_NONE, fmt_mhz },
+    { "gt_min_freq_mhz",   NULL, OF_NONE, fmt_mhz },
+    { "gt_max_freq_mhz",   NULL, OF_NONE, fmt_mhz },
+    { "gt_boost_freq_mhz", NULL, OF_NONE, fmt_mhz },
+    { "gt_act_freq_mhz",   NULL, OF_NONE, fmt_mhz },
+    { "gt_RP0_freq_mhz",   NULL, OF_NONE, fmt_mhz },
+    { "gt_RP1_freq_mhz",   NULL, OF_NONE, fmt_mhz },
+    { "gt_RPn_freq_mhz",   NULL, OF_NONE, fmt_mhz },
+    { NULL, NULL, 0 }
+};
+
+int drm_attr_lookup(const gchar *key) {
+    int i = 0;
+    while(drm_items[i].item) {
+        if (SEQ(key, drm_items[i].item))
+            return i;
+        i++;
+    }
+    return -1;
+}
+
+const gchar *drm_card_attr_label(sysobj *obj) {
+    int i = drm_attr_lookup(obj->name);
+    if (i != -1)
+        return _(drm_items[i].lbl);
+    return NULL;
 }
 
 static gboolean drm_card_verify(sysobj *obj) {
@@ -75,6 +90,29 @@ static gboolean drm_card_verify(sysobj *obj) {
         ret = TRUE;
     g_free(pn);
     return ret;
+}
+
+static gboolean drm_card_attr_verify(sysobj *obj) {
+    if (verify_lblnum_child(obj, "card") ) {
+        int i = drm_attr_lookup(obj->name);
+        if (i != -1)
+            return TRUE;
+    }
+    if (g_str_has_suffix(obj->name, "_freq_mhz") )
+        return TRUE;
+    return FALSE;
+}
+
+static gchar *drm_card_attr_format(sysobj *obj, int fmt_opts) {
+    int i = drm_attr_lookup(obj->name);
+    if (i != -1) {
+        if (drm_items[i].f_func)
+            return drm_items[i].f_func(obj, fmt_opts);
+    }
+    if (g_str_has_suffix(obj->name, "_freq_mhz") )
+        return fmt_mhz(obj, fmt_opts);
+
+    return simple_format(obj, fmt_opts);
 }
 
 static gchar *drm_card_format(sysobj *obj, int fmt_opts) {

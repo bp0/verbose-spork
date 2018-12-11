@@ -34,6 +34,7 @@ gchar *fmt_seconds_to_span(sysobj *obj, int fmt_opts); /* [D days, ][H hours, ][
 gchar *fmt_hz(sysobj *obj, int fmt_opts);
 gchar *fmt_hz_to_mhz(sysobj *obj, int fmt_opts);
 gchar *fmt_khz(sysobj *obj, int fmt_opts);
+gchar *fmt_mhz(sysobj *obj, int fmt_opts);
 gchar *fmt_millidegree_c(sysobj *obj, int fmt_opts);
 gchar *fmt_milliampere(sysobj *obj, int fmt_opts);
 gchar *fmt_microwatt(sysobj *obj, int fmt_opts);

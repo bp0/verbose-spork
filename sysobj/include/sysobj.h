@@ -75,6 +75,10 @@ enum {
 typedef struct sysobj sysobj;
 typedef struct sysobj_data sysobj_data;
 
+typedef gchar* (*func_format)(sysobj *obj, int fmt_opts);
+typedef int (*func_compare_sysobj_data)(const sysobj_data *a, const sysobj_data *b);
+typedef gboolean (*func_verify)(sysobj *obj);
+
 /* can be used in a struct sysobj_class to provide debug information
  * sysobj_class my_class = { SYSOBJ_CLASS_DEF .pattern = "...", ... }
  * The define can be removed for "reproducible" builds. */
@@ -93,11 +97,12 @@ typedef struct sysobj_class {
     const gchar *s_suggest; /* suggest an alternate path */
     double s_update_interval;
 
-    gboolean (*f_verify) (sysobj *obj);      /* verify the object is of this class */
+    func_verify f_verify;  /* verify the object is of this class */
+    func_format f_format;  /* translated human-readable value */
+    func_compare_sysobj_data f_compare;
+
     const gchar *(*f_label)  (sysobj *obj);  /* translated label */
-    gchar *(*f_format) (sysobj *obj, int fmt_opts);  /* translated human-readable value */
     double (*f_update_interval) (sysobj *obj); /* time until the value might change, in seconds */
-    int (*f_compare) (const sysobj_data *a, const sysobj_data *b);
     guint (*f_flags) (sysobj *obj); /* provide flags, result replaces flags */
     void (*f_cleanup) (void); /* shutdown/cleanup function */
     const gchar *(*f_halp) (sysobj *obj); /* markup text */
@@ -207,7 +212,6 @@ gboolean verify_parent_name(sysobj *obj, const gchar *parent_name);
 gboolean verify_parent(sysobj *obj, const gchar *parent_path_suffix);
 
 /* to be used by sysobj_class::f_compare */
-typedef int (f_compare_sysobj_data)(const sysobj_data *a, const sysobj_data *b);
 int compare_str_base10(const sysobj_data *a, const sysobj_data *b);
 int compare_str_base16(const sysobj_data *a, const sysobj_data *b);
 

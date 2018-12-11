@@ -98,7 +98,7 @@ const pin *pins_pin_if_updated_since(pin_list *pl, int pi, double seconds_ago) {
 }
 
 void pin_update(pin *p, gboolean force) {
-    f_compare_sysobj_data *compare_func = NULL;
+    func_compare_sysobj_data compare_func = NULL;
     if (p->obj) {
         if (p->update_interval || force) {
             const sysobj_class *c = p->obj->cls;

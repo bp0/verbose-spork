@@ -51,6 +51,14 @@ gchar *fmt_khz(sysobj *obj, int fmt_opts) {
     return g_strdup_printf("%.3f %s", mhz, _("MHz"));
 }
 
+gchar *fmt_mhz(sysobj *obj, int fmt_opts) {
+    CHECK_OBJ();
+    PREP_RAW();
+    double mhz = strtod(raw, NULL);
+    FINISH_RAW();
+    return g_strdup_printf("%.3f %s", mhz, _("MHz"));
+}
+
 gchar *fmt_millidegree_c(sysobj *obj, int fmt_opts) {
     CHECK_OBJ();
     PREP_RAW();
