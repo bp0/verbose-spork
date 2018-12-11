@@ -18,6 +18,7 @@
  *
  */
 
+#include <stdlib.h>
 #include "format_funcs.h"
 
 #define CHECK_OBJ()  \
@@ -27,20 +28,24 @@
     gchar *raw = g_strstrip(g_strdup(obj->data.str));    \
     if (fmt_opts & FMT_OPT_NO_UNIT)                      \
         return raw;
+#define PREP_RAW_RJ(reject) \
+    gchar *raw = g_strstrip(g_strdup(obj->data.str));    \
+    if (fmt_opts & (FMT_OPT_NO_UNIT | reject))           \
+        return raw;
 #define FINISH_RAW() g_free(raw);
 
 gchar *fmt_nanoseconds(sysobj *obj, int fmt_opts) {
     CHECK_OBJ();
     PREP_RAW();
-    uint32_t ns = strtoul(raw, NULL, 10);
+    double ns = strtod(raw, NULL);
     FINISH_RAW();
-    return g_strdup_printf("%u %s", ns, _("ns"));
+    return g_strdup_printf("%.1lf %s", ns, _("ns"));
 }
 
 gchar *fmt_khz(sysobj *obj, int fmt_opts) {
     CHECK_OBJ();
     PREP_RAW();
-    double mhz = strtoull(raw, NULL, 10);
+    double mhz = strtod(raw, NULL);
     mhz /= 1000; /* raw is khz */
     FINISH_RAW();
     return g_strdup_printf("%.3f %s", mhz, _("MHz"));
@@ -49,7 +54,7 @@ gchar *fmt_khz(sysobj *obj, int fmt_opts) {
 gchar *fmt_millidegree_c(sysobj *obj, int fmt_opts) {
     CHECK_OBJ();
     PREP_RAW();
-    double degc = strtoll(raw, NULL, 10);
+    double degc = strtod(raw, NULL);
     degc /= 1000;
     FINISH_RAW();
     return g_strdup_printf("%.3lf %s", degc, _("\u00B0C") );
@@ -58,7 +63,7 @@ gchar *fmt_millidegree_c(sysobj *obj, int fmt_opts) {
 gchar *fmt_milliampere(sysobj *obj, int fmt_opts) {
     CHECK_OBJ();
     PREP_RAW();
-    double mA = strtoll(raw, NULL, 10);
+    double mA = strtod(raw, NULL);
     FINISH_RAW();
     if (mA > 2000)
         return g_strdup_printf("%.3lf %s", (mA/1000), _("A") );
@@ -69,7 +74,7 @@ gchar *fmt_milliampere(sysobj *obj, int fmt_opts) {
 gchar *fmt_microwatt(sysobj *obj, int fmt_opts) {
     CHECK_OBJ();
     PREP_RAW();
-    double mW = strtoll(raw, NULL, 10);
+    double mW = strtod(raw, NULL);
     mW /= 1000;
     FINISH_RAW();
     return g_strdup_printf("%.3lf %s", mW, _("mW") );
@@ -78,7 +83,7 @@ gchar *fmt_microwatt(sysobj *obj, int fmt_opts) {
 gchar *fmt_milliseconds(sysobj *obj, int fmt_opts) {
     CHECK_OBJ();
     PREP_RAW();
-    double ms = strtoll(raw, NULL, 10);
+    double ms = strtod(raw, NULL);
     FINISH_RAW();
     return g_strdup_printf("%.1lf %s", ms, _("ms") );
 }
@@ -86,7 +91,7 @@ gchar *fmt_milliseconds(sysobj *obj, int fmt_opts) {
 gchar *fmt_microjoule(sysobj *obj, int fmt_opts) {
     CHECK_OBJ();
     PREP_RAW();
-    double mJ = strtoll(raw, NULL, 10);
+    double mJ = strtod(raw, NULL);
     mJ /= 1000;
     FINISH_RAW();
     return g_strdup_printf("%.3lf %s", mJ, _("mJ") );
@@ -95,7 +100,7 @@ gchar *fmt_microjoule(sysobj *obj, int fmt_opts) {
 gchar *fmt_percent(sysobj *obj, int fmt_opts) {
     CHECK_OBJ();
     PREP_RAW();
-    double perc = strtol(raw, NULL, 10);
+    double perc = strtod(raw, NULL);
     FINISH_RAW();
     return g_strdup_printf("%.1lf%s", perc, _("%") );
 }
@@ -103,7 +108,7 @@ gchar *fmt_percent(sysobj *obj, int fmt_opts) {
 gchar *fmt_millepercent(sysobj *obj, int fmt_opts) {
     CHECK_OBJ();
     PREP_RAW();
-    double perc = strtol(raw, NULL, 10);
+    double perc = strtod(raw, NULL);
     perc /= 1000;
     FINISH_RAW();
     return g_strdup_printf("%.3lf%s", perc, _("%") );
@@ -112,7 +117,7 @@ gchar *fmt_millepercent(sysobj *obj, int fmt_opts) {
 gchar *fmt_hz_to_mhz(sysobj *obj, int fmt_opts) {
     CHECK_OBJ();
     PREP_RAW();
-    double mhz = strtoll(raw, NULL, 10);
+    double mhz = strtod(raw, NULL);
     mhz /= 1000000;
     FINISH_RAW();
     return g_strdup_printf("%.3lf %s", mhz, _("MHz") );
@@ -121,7 +126,7 @@ gchar *fmt_hz_to_mhz(sysobj *obj, int fmt_opts) {
 gchar *fmt_hz(sysobj *obj, int fmt_opts) {
     CHECK_OBJ();
     PREP_RAW();
-    double hz = strtoll(raw, NULL, 10);
+    double hz = strtod(raw, NULL);
     FINISH_RAW();
     return g_strdup_printf("%.1lf %s", hz, _("Hz") );
 }
@@ -129,7 +134,7 @@ gchar *fmt_hz(sysobj *obj, int fmt_opts) {
 gchar *fmt_millivolt(sysobj *obj, int fmt_opts) {
     CHECK_OBJ();
     PREP_RAW();
-    double volt = strtoll(raw, NULL, 10);
+    double volt = strtod(raw, NULL);
     volt /= 1000;
     FINISH_RAW();
     return g_strdup_printf("%.3lf %s", volt, _("V") );
@@ -138,7 +143,7 @@ gchar *fmt_millivolt(sysobj *obj, int fmt_opts) {
 gchar *fmt_rpm(sysobj *obj, int fmt_opts) {
     CHECK_OBJ();
     PREP_RAW();
-    double rpm = strtoll(raw, NULL, 10);
+    double rpm = strtod(raw, NULL);
     FINISH_RAW();
     return g_strdup_printf("%.1lf %s", rpm, _("RPM") );
 }
@@ -146,9 +151,65 @@ gchar *fmt_rpm(sysobj *obj, int fmt_opts) {
 gchar *fmt_1yes0no(sysobj *obj, int fmt_opts) {
     CHECK_OBJ();
     PREP_RAW();
-    int value = strtol(raw, NULL, 10);
+    int value = strtod(raw, NULL);
     FINISH_RAW();
     return g_strdup_printf("[%d] %s", value, value ? _("Yes") : _("No") );
+}
+
+gchar *fmt_seconds(sysobj *obj, int fmt_opts) {
+    CHECK_OBJ();
+    PREP_RAW();
+    double seconds = strtod(raw, NULL);
+    FINISH_RAW();
+    return g_strdup_printf("%.3lf %s", seconds, _("s"));
+}
+
+gchar *fmt_seconds_to_span(sysobj *obj, int fmt_opts) {
+    CHECK_OBJ();
+    PREP_RAW_RJ(FMT_OPT_NO_TRANSLATE);
+    double seconds = strtod(raw, NULL);
+    FINISH_RAW();
+    if (fmt_opts & FMT_OPT_PART
+        || fmt_opts & FMT_OPT_SHORT)
+        return formatted_time_span(seconds, TRUE, TRUE); /* short */
+    return formatted_time_span(seconds, FALSE, TRUE);    /* long */
+}
+
+gchar *formatted_time_span(double real_seconds, gboolean short_version, gboolean include_seconds) {
+    long days = 0, hours = 0, minutes = 0, seconds = 0;
+
+    seconds = real_seconds;
+    minutes = seconds / 60; seconds %= 60;
+    hours = minutes / 60; minutes %= 60;
+    days = hours / 24; hours %= 24;
+
+    const gchar *days_fmt, *hours_fmt, *minutes_fmt, *seconds_fmt;
+    const gchar *sep = " ";
+    gchar *ret = NULL;
+
+    if (short_version) {
+        days_fmt = ngettext("%dd", "%dd", days);
+        hours_fmt = ngettext("%dh", "%dh", hours);
+        minutes_fmt = ngettext("%dm", "%dm", minutes);
+        seconds_fmt = ngettext("%ds", "%ds", seconds);
+        sep = ":";
+    } else {
+        days_fmt = ngettext("%d day", "%d days", days);
+        hours_fmt = ngettext("%d hour", "%d hours", hours);
+        minutes_fmt = ngettext("%d minute", "%d minutes", minutes);
+        seconds_fmt = ngettext("%d second", "%d seconds", seconds);
+    }
+
+    if (days > 1)
+        ret = appfs(ret, sep, days_fmt, days);
+    if (ret || hours > 1)
+        ret = appfs(ret, sep, hours_fmt, hours);
+    if (ret || minutes > 1 || !include_seconds)
+        ret = appfs(ret, sep, minutes_fmt, minutes);
+    if (include_seconds)
+        ret = appfs(ret, sep, seconds_fmt, seconds);
+
+    return ret;
 }
 
 /* table is null-terminated string list of null-terminated UNTRANSLATED strings

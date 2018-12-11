@@ -28,7 +28,7 @@ static void buff_basename(const gchar *path, gchar *buff, gsize n) {
 
 static gchar *get_item_items[] = {
     "elapsed", "root", "class_count", "virt_count",
-    "freed_count", "free_queue",
+    "freed_count", "free_queue", "free_expected",
     "sysobj_new", "sysobj_new_fast",
     "sysobj_clean", "sysobj_free",
 };
@@ -40,8 +40,6 @@ static gchar *get_item(const gchar *path) {
 
     if (SEQ(name, "root") )
         return g_strdup_printf("%s", sysobj_root_get());
-    if (SEQ(name, "elapsed") )
-        return g_strdup_printf("%lf", sysobj_elapsed());
     if (SEQ(name, "class_count") )
         return g_strdup_printf("%lu", (long unsigned)class_count() );
     if (SEQ(name, "virt_count") )
@@ -58,6 +56,12 @@ static gchar *get_item(const gchar *path) {
         return g_strdup_printf("%llu", sysobj_stats.so_clean );
     if (SEQ(name, "sysobj_free") )
         return g_strdup_printf("%llu", sysobj_stats.so_free );
+
+    double elapsed = sysobj_elapsed();
+    if (SEQ(name, "elapsed") )
+        return g_strdup_printf("%lf", elapsed);
+    if (SEQ(name, "free_expected") )
+        return g_strdup_printf("%lf", sysobj_stats.auto_free_next - elapsed);
 
     return g_strdup("?");
 }

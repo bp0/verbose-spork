@@ -29,6 +29,8 @@
 
 gchar *fmt_nanoseconds(sysobj *obj, int fmt_opts);
 gchar *fmt_milliseconds(sysobj *obj, int fmt_opts);
+gchar *fmt_seconds(sysobj *obj, int fmt_opts);
+gchar *fmt_seconds_to_span(sysobj *obj, int fmt_opts); /* [D days, ][H hours, ][M minutes, ]S seconds */
 gchar *fmt_hz(sysobj *obj, int fmt_opts);
 gchar *fmt_hz_to_mhz(sysobj *obj, int fmt_opts);
 gchar *fmt_khz(sysobj *obj, int fmt_opts);
@@ -41,6 +43,8 @@ gchar *fmt_millepercent(sysobj *obj, int fmt_opts);
 gchar *fmt_millivolt(sysobj *obj, int fmt_opts);
 gchar *fmt_rpm(sysobj *obj, int fmt_opts);
 gchar *fmt_1yes0no(sysobj *obj, int fmt_opts);
+
+gchar *formatted_time_span(double real_seconds, gboolean short_version, gboolean include_seconds);
 
 /* table is null-terminated string list of null-terminated UNTRANSLATED strings
  * table_len, optional, improves speed

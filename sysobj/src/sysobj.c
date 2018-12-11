@@ -92,42 +92,97 @@ int compare_str_base16(const sysobj_data *a, const sysobj_data *b) {
 
 GSList *class_list = NULL;
 GSList *vo_list = NULL;
-GSList *free_list = NULL;
-long long unsigned freed_count = 0;
+
+static GMutex free_lock;
+static GSList *free_list = NULL;
+static guint free_event_source = 0;
 
 typedef struct {
     gpointer ptr;
+    GThread *thread;
     GDestroyNotify f_free;
+
+    const char *file;
+    int  line;
+    const char *func;
 } auto_free_item;
 
-gpointer auto_free_ex(gpointer p, GDestroyNotify f) {
-    //DEBUG("auto free_ex(ptr: %p, fptr: %p)", p, f);
+gpointer auto_free_ex_(gpointer p, GDestroyNotify f, const char *file, int line, const char *func) {
+    if (!p) return p;
+
     auto_free_item *z = g_new0(auto_free_item, 1);
     z->ptr = p;
     z->f_free = f;
+    z->thread = g_thread_self();
+    z->file = file;
+    z->line = line;
+    z->func = func;
+    g_mutex_lock(&free_lock);
     free_list = g_slist_prepend(free_list, z);
     sysobj_stats.auto_free_len++;
+    g_mutex_unlock(&free_lock);
     return p;
 }
 
-gpointer auto_free(gpointer p) {
-    return auto_free_ex(p, (GDestroyNotify)g_free);
+gpointer auto_free_(gpointer p, const char *file, int line, const char *func) {
+    return auto_free_ex_(p, (GDestroyNotify)g_free, file, line, func);
 }
 
+static struct { GDestroyNotify fptr; char *name; }
+    free_function_tab[] = {
+    { (GDestroyNotify) g_free,             "g_free" },
+    { (GDestroyNotify) sysobj_free,        "sysobj_free" },
+    { (GDestroyNotify) class_free,         "class_free" },
+    { (GDestroyNotify) sysobj_filter_free, "sysobj_filter_free" },
+    { (GDestroyNotify) sysobj_virt_free,   "sysobj_virt_free" },
+    { NULL, "(null)" },
+};
+
 void free_auto_free() {
-    uint64_t fc = 0;
-    if (free_list)
-        DEBUG("will now free %llu items...", sysobj_stats.auto_free_len);
-    for(GSList *l = free_list; l; l = l->next) {
+    GThread *this_thread = g_thread_self();
+    GSList *l = NULL, *n = NULL;
+    long long unsigned fc = 0;
+
+    if (!free_list) return;
+
+    g_mutex_lock(&free_lock);
+    DEBUG("%llu total items in queue, but will free from thread %p only... ", sysobj_stats.auto_free_len, this_thread);
+    for(l = free_list; l; l = n) {
         auto_free_item *z = (auto_free_item*)l->data;
-        //DEBUG("free_auto_free(): ptr: %p, fptr: %p", z->ptr, z->f_free);
-        z->f_free(z->ptr);
-        fc++;
+        n = l->next;
+        if (z->thread == this_thread) {
+            if (DEBUG_AUTO_FREE) {
+                char fptr[128] = "", *fname;
+                for(int i = 0; i < (int)G_N_ELEMENTS(free_function_tab); i++)
+                    if (z->f_free == free_function_tab[i].fptr)
+                        fname = free_function_tab[i].name;
+                if (!fname) {
+                    snprintf(fname, 127, "%p", z->f_free);
+                    fname = fptr;
+                }
+                if (z->file || z->func)
+                    DEBUG("free: %s(%p) from %s:%d %s()", fname, z->ptr, z->file, z->line, z->func);
+                else
+                    DEBUG("free: %s(%p)", fname, z->ptr);
+            }
+
+            z->f_free(z->ptr);
+            g_free(z);
+            free_list = g_slist_delete_link(free_list, l);
+            fc++;
+        }
     }
-    g_slist_free_full(free_list, (GDestroyNotify)g_free);
-    free_list = NULL;
+    DEBUG("... freed %llu (from thread %p)", fc, this_thread);
     sysobj_stats.auto_freed += fc;
     sysobj_stats.auto_free_len -= fc;
+    g_mutex_unlock(&free_lock);
+}
+
+gboolean free_auto_free_sf(gpointer trash) {
+    PARAM_NOT_UNUSED(trash);
+    free_auto_free();
+    sysobj_stats.auto_free_next = sysobj_elapsed() + AF_SECONDS;
+    return G_SOURCE_CONTINUE;
 }
 
 GSList *class_get_list() {
@@ -1224,6 +1279,14 @@ void sysobj_init(const gchar *alt_root) {
 
     vendor_init();
     class_init();
+
+    /* if there is a main loop, then this will call
+     * free_auto_free() in idle time every AF_SECONDS seconds.
+     * If there is no main loop, then free_auto_free()
+     * will be called at sysobj_cleanup() and when exiting
+     * threads, as in sysobj_foreach(). */
+    free_event_source = g_timeout_add_seconds(AF_SECONDS, (GSourceFunc)free_auto_free_sf, NULL);
+    sysobj_stats.auto_free_next = sysobj_elapsed() + AF_SECONDS;
 }
 
 double sysobj_elapsed() {

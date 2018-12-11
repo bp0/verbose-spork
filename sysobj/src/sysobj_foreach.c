@@ -112,7 +112,7 @@ static gpointer _sysobj_foreach_thread_main(mt_state *s) {
                     s->stats.end_type = SO_FOREACH_END_EXH;
             }
             g_mutex_unlock(&s->lock_stats);
-            return NULL;
+            goto foreach_main_finish;
         }
 
         g_mutex_lock(&s->lock);
@@ -171,6 +171,11 @@ static gpointer _sysobj_foreach_thread_main(mt_state *s) {
         sysobj_free(obj);
     }
     /* never arrives here */
+
+foreach_main_finish:
+    if (s->stats.threads != 1) {
+        free_auto_free();
+    return NULL;
 }
 
 static void sysobj_foreach_mt(const gchar *root_path, GSList *filters, f_sysobj_foreach callback, gpointer user_data, int max_threads) {

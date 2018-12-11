@@ -19,6 +19,8 @@
  */
 
 #include "sysobj.h"
+#include "format_funcs.h"
+
 /*
  * - generators create virtual sysobj's
  *    - can't use sysobj_format, only sysobj_raw as there are no classes yet.
@@ -129,7 +131,10 @@ static sysobj_class cls_internal[] = {
     .s_update_interval = 0.5 },
   { SYSOBJ_CLASS_DEF
     .tag = "sysobj:elapsed", .pattern = ":sysobj/elapsed", .flags = OF_CONST,
-    .s_label = N_("Seconds since sysobj_init()"), .s_update_interval = 0.1 },
+    .s_label = N_("Seconds since sysobj_init()"), .s_update_interval = 0.2, .f_format = fmt_seconds_to_span },
+  { SYSOBJ_CLASS_DEF
+    .tag = "sysobj:free_expected", .pattern = ":sysobj/free_expected", .flags = OF_CONST,
+    .s_label = N_("Seconds until next free_auto_free()"), .s_update_interval = 0.2, .f_format = fmt_seconds },
   { SYSOBJ_CLASS_DEF
     .tag = "sysobj:class", .pattern = ":sysobj/classes/*", .flags = OF_CONST | OF_GLOB_PATTERN,
     .f_verify = class_verify, .f_format = class_format },

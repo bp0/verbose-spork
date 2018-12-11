@@ -269,8 +269,12 @@ GSList *sysobj_children_ex(sysobj *s, GSList *filters, gboolean sort);
 sysobj_data *sysobj_data_dup(const sysobj_data *src);
 void sysobj_data_free(sysobj_data *d, gboolean and_self);
 
-gpointer auto_free(gpointer p);
-gpointer auto_free_ex(gpointer p, GDestroyNotify f);
+#define DEBUG_AUTO_FREE 0
+#define AF_SECONDS 68
+#define auto_free(p) auto_free_(p, __FILE__, __LINE__, __FUNCTION__)
+#define auto_free_ex(p, f) auto_free_ex_(p, f, __FILE__, __LINE__, __FUNCTION__)
+gpointer auto_free_(gpointer p, const char *file, int line, const char *func);
+gpointer auto_free_ex_(gpointer p, GDestroyNotify f, const char *file, int line, const char *func);
 void free_auto_free();
 
 typedef struct {
@@ -281,6 +285,8 @@ typedef struct {
         so_free,
         auto_freed,
         auto_free_len;
+    double
+        auto_free_next;
 } so_stats;
 extern so_stats sysobj_stats;
 

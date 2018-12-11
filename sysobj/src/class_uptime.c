@@ -19,54 +19,16 @@
  */
 
 #include "sysobj.h"
+#include "format_funcs.h"
 
-static const gchar *uptime_label(sysobj *s);
 static gchar *uptime_format(sysobj *obj, int fmt_opts);
-static double uptime_update_interval(sysobj *obj);
 
 static sysobj_class cls_uptime[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "uptime", .pattern = "/proc/uptime", .flags = OF_CONST,
     .s_label = N_("System Up/Idle time"),
-    .f_format = uptime_format, .f_update_interval = uptime_update_interval },
+    .f_format = uptime_format, .s_update_interval = 1.0 },
 };
-
-static gchar *formatted_time_span(double real_seconds, gboolean short_version, gboolean include_seconds) {
-    long days = 0, hours = 0, minutes = 0, seconds = 0;
-
-    seconds = real_seconds;
-    minutes = seconds / 60; seconds %= 60;
-    hours = minutes / 60; minutes %= 60;
-    days = hours / 24; hours %= 24;
-
-    const gchar *days_fmt, *hours_fmt, *minutes_fmt, *seconds_fmt;
-    const gchar *sep = " ";
-    gchar *ret = NULL;
-
-    if (short_version) {
-        days_fmt = ngettext("%dd", "%dd", days);
-        hours_fmt = ngettext("%dh", "%dh", hours);
-        minutes_fmt = ngettext("%dm", "%dm", minutes);
-        seconds_fmt = ngettext("%ds", "%ds", seconds);
-        sep = ":";
-    } else {
-        days_fmt = ngettext("%d day", "%d days", days);
-        hours_fmt = ngettext("%d hour", "%d hours", hours);
-        minutes_fmt = ngettext("%d minute", "%d minutes", minutes);
-        seconds_fmt = ngettext("%d second", "%d seconds", seconds);
-    }
-
-    if (days > 1)
-        ret = appfs(ret, sep, days_fmt, days);
-    if (ret || hours > 1)
-        ret = appfs(ret, sep, hours_fmt, hours);
-    if (ret || minutes > 1 || !include_seconds)
-        ret = appfs(ret, sep, minutes_fmt, minutes);
-    if (include_seconds)
-        ret = appfs(ret, sep, seconds_fmt, seconds);
-
-    return ret;
-}
 
 static gchar *uptime_format(sysobj *obj, int fmt_opts) {
     double up = 0, idle = 0;
@@ -93,15 +55,8 @@ static gchar *uptime_format(sysobj *obj, int fmt_opts) {
     return simple_format(obj, fmt_opts);
 }
 
-static double uptime_update_interval(sysobj *obj) {
-    PARAM_NOT_UNUSED(obj);
-    return 1.0; /* although, display is in minutes */
-}
-
 void class_uptime() {
-    int i = 0;
-    /* add classes */
-    for (i = 0; i < (int)G_N_ELEMENTS(cls_uptime); i++) {
+    /* add class(es) */
+    for (int i = 0; i < (int)G_N_ELEMENTS(cls_uptime); i++)
         class_add(&cls_uptime[i]);
-    }
 }
