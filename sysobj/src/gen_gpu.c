@@ -336,8 +336,13 @@ static gchar *gpu_data(const gchar *path) {
 
     if (SEQ(path, ":/gpu") ) {
         /* dir */
-        gchar *ret = g_strdup("found\n" "list\n");
         gpu_scan();
+
+        /* use manual dir creation instead of
+         * auto ("*") so that "found" and
+         * "list" may be hidden from listing */
+        #define HIDE_STUFF 1
+        gchar *ret = HIDE_STUFF ? NULL : g_strdup("found\n" "list\n");
         for(GSList *l = gpu_list; l; l = l->next) {
             gpud *g = (gpud*)l->data;
             ret = appfs(ret, "\n", "%s", g->name);
