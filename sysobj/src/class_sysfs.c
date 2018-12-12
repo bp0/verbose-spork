@@ -52,6 +52,11 @@ static sysobj_class cls_power[] = {
     .s_label = "sysfs sub-system", .f_format = subsystem_format, .s_update_interval = 0.0 },
 
   { SYSOBJ_CLASS_DEF
+    .tag = "kernel:module", .pattern = "/sys/module/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .f_verify = subsystem_verify,
+    .s_label = "kernel module", .f_format = subsystem_format, .s_update_interval = 0.0 },
+
+  { SYSOBJ_CLASS_DEF
     .tag = "device_power", .pattern = "/sys/devices/*/power", .flags = OF_GLOB_PATTERN | OF_CONST,
     .s_halp = power_reference_markup_text,
     .f_label = power_label, .f_format = power_format, .f_update_interval = power_update_interval },
@@ -70,6 +75,8 @@ static gboolean subsystem_verify(sysobj *obj) {
         ret = TRUE;
     if (SEQ("/sys/block", pp) )
         ret = TRUE;
+    if (SEQ("/sys/module", pp) )
+        ret = TRUE;
     g_free(pp);
     return ret;
 }
@@ -82,6 +89,8 @@ static gchar *subsystem_format(sysobj *obj, int fmt_opts) {
             return g_strdup_printf("bus:%s", obj->name);
         if (SEQ("subsystem:block", obj->cls->tag) )
             return g_strdup_printf("block:%s", obj->name);
+        if (SEQ("kernel:module", obj->cls->tag) )
+            return g_strdup_printf("kmod:%s", obj->name);
     }
     return simple_format(obj, fmt_opts);
 }

@@ -54,9 +54,6 @@ static sysobj_class cls_pci[] = {
     .f_format = pci_format, .f_flags = pci_flags, .f_update_interval = pci_update_interval },
 
   { SYSOBJ_CLASS_DEF
-    .tag = "pci:bus", .pattern = "/sys/bus/pci", .flags = CLS_PCI_FLAGS,
-    .f_format = pci_format, .f_flags = pci_flags, .f_update_interval = pci_update_interval },
-  { SYSOBJ_CLASS_DEF
     .tag = "pci:device_list", .pattern = "/sys/bus/pci/devices", .flags = CLS_PCI_FLAGS,
     .f_format = pci_format, .f_flags = pci_flags, .f_update_interval = pci_update_interval },
   { SYSOBJ_CLASS_DEF
