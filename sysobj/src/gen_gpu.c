@@ -26,6 +26,7 @@
 #include "util_pci.h"
 #include "vendor.h"
 
+/* listing is sorted, num is priority */
 #define PFX_DRM "1-drm-"
 #define PFX_PCI "2-pci-dc-"
 #define PFX_DT  "3-dt-"
@@ -165,25 +166,40 @@ static void make_nice_name(gpud *s) {
         s->nice_name = g_strdup_printf("%s %s", "NVIDIA", s->nv_info->model);
         return;
     }
-    int ok = 2;
 
     static const gchar unk_v[] = "Unknown"; /* do not...    */
     static const gchar unk_d[] = "Device";  /* ...translate */
     const gchar *vendor_str = s->vendor_str;
     const gchar *device_str = s->device_str;
-    if (!vendor_str) { vendor_str = unk_v; ok--; }
-    if (!device_str) { device_str = unk_d; ok--; }
-
-    if (!ok) {
-        if (s->dt_compat) {
-            s->nice_name = g_strdup(s->dt_compat);
-            return;
-        }
-        goto nice_is_over;
-    }
 
     /* try and a get a "short name" for the vendor */
-    vendor_str = vendor_get_shortest_name(vendor_str);
+    if (vendor_str)
+        vendor_str = vendor_get_shortest_name(vendor_str);
+
+    if (s->dt_compat) {
+        if (!vendor_str && !device_str) {
+            s->nice_name = g_strdup(s->dt_compat);
+            char *comma = strchr(s->nice_name, ',');
+            if (comma) *comma = ' ';  /* "brcm,bcm2835-vc4" -> "brcm bcm2835-vc4" */
+            return;
+        }
+        if (!device_str) {
+            char *comma = strchr(s->dt_compat, ',');
+            if (comma)
+                device_str = g_strdup(comma + 1);
+            else {
+                s->nice_name = g_strdup_printf("%s %s", vendor_str, device_str);
+                return;
+            }
+        }
+        if (!vendor_str) {
+            s->nice_name = g_strdup_printf("%s", device_str);
+            return;
+        }
+    }
+
+    if (!vendor_str) vendor_str = unk_v;
+    if (!device_str) device_str = unk_d;
 
     /* These two former special cases are currently handled by the vendor_get_shortest_name()
      * function well enough, but the notes are preserved here. */
