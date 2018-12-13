@@ -26,6 +26,7 @@ static gboolean gpu_verify(sysobj *obj);
 static gchar *gpu_format(sysobj *obj, int fmt_opts);
 
 static gboolean gpu_prop_verify(sysobj *obj);
+static const gchar *gpu_prop_label(sysobj *s);
 static gchar *gpu_prop_format(sysobj *obj, int fmt_opts);
 
 static gboolean drm_card_verify(sysobj *obj);
@@ -41,7 +42,7 @@ static sysobj_class cls_gpu[] = {
     .f_verify = gpu_verify, .f_format = gpu_format },
   { SYSOBJ_CLASS_DEF
     .tag = "gpu:prop", .pattern = ":/gpu/gpu*/*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .f_verify = gpu_prop_verify, .f_format = gpu_prop_format },
+    .f_verify = gpu_prop_verify, .f_format = gpu_prop_format, .f_label = gpu_prop_label },
 
   { SYSOBJ_CLASS_DEF
     .tag = "drm:card", .pattern = "/sys/devices/*/drm/card*", .flags = OF_GLOB_PATTERN | OF_CONST,
@@ -70,11 +71,10 @@ static gchar *gpu_format(sysobj *obj, int fmt_opts) {
 }
 
 static const struct { gchar *item; gchar *lbl; int extra_flags; func_format f_func; } gpu_prop_items[] = {
-    //TODO: labels
-    { "opp.khz_min",   NULL, OF_NONE, fmt_khz },
-    { "opp.khz_max",   NULL, OF_NONE, fmt_khz },
-    { "opp.clock_frequency",   NULL, OF_NONE, fmt_khz },
-    { "opp.clock_latency_ns",  NULL, OF_NONE, fmt_nanoseconds },
+    { "opp.khz_min",   "operating-performance-points minimum frequency", OF_NONE, fmt_khz },
+    { "opp.khz_max",   "operating-performance-points maximum frequency", OF_NONE, fmt_khz },
+    { "opp.clock_frequency",  "devicetree-specified clock frequency", OF_NONE, fmt_khz },
+    { "opp.clock_latency_ns", "transition latency", OF_NONE, fmt_nanoseconds },
     { NULL, NULL, 0 }
 };
 
