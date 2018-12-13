@@ -458,8 +458,6 @@ static void buff_basename(const gchar *path, gchar *buff, gsize n) {
 }
 
 static gchar *gpu_data(const gchar *path) {
-    gchar name[16] = "";
-
     if (!path) {
         /* cleanup */
         gpu_list_free();
@@ -471,7 +469,7 @@ static gchar *gpu_data(const gchar *path) {
         gpu_scan();
 
         /* use manual dir creation instead of
-         * auto ("*") so that "found" and
+         * auto ("*" or NULL) so that "found" and
          * "list" may be hidden from listing */
         #define HIDE_STUFF 1
         gchar *ret = HIDE_STUFF ? NULL : g_strdup("found\n" "list\n");
@@ -498,7 +496,7 @@ static gchar *gpu_summary(const gchar *path) {
 
 static sysobj_virt vol[] = {
     { .path = ":/gpu", .f_get_data = gpu_data, /* note: manual dir creation */
-      .type = VSO_TYPE_DIR | VSO_TYPE_CONST },
+      .type = VSO_TYPE_DIR | VSO_TYPE_CONST | VSO_TYPE_CLEANUP },
     { .path = ":/gpu/list", .f_get_data = gpu_summary,
       .type = VSO_TYPE_STRING | VSO_TYPE_CONST },
     { .path = ":/gpu/found", .str = "*",

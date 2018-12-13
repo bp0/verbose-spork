@@ -39,7 +39,7 @@ static sysobj_virt vol[] = {
     { .path = ":/devicetree/base", .str = DTROOT,
       .type = VSO_TYPE_AUTOLINK | VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_CONST },
     { .path = ":/devicetree/_messages", .str = "",
-      .type = VSO_TYPE_STRING | VSO_TYPE_CONST,
+      .type = VSO_TYPE_STRING | VSO_TYPE_CONST | VSO_TYPE_CLEANUP,
       .f_get_data = dt_messages },
     { .path = ":/devicetree/_phandle_map", .str = "*",
       .type = VSO_TYPE_DIR | VSO_TYPE_CONST },

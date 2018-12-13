@@ -166,8 +166,9 @@ enum {
 
     VSO_TYPE_REQ_ROOT = 1<<15,
     VSO_TYPE_SYMLINK  = 1<<16,
-    VSO_TYPE_DYN      = 1<<17, /* any path beyond */
+    VSO_TYPE_DYN      = 1<<17, /* any path beyond that doesn't match a non-dyn path */
     VSO_TYPE_AUTOLINK = 1<<18,
+    VSO_TYPE_CLEANUP  = 1<<19, /* will get a call f_get_data(NULL) to signal cleanup */
     VSO_TYPE_CONST    = 1<<30, /* don't free */
 };
 

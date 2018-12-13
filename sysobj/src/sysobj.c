@@ -1267,7 +1267,7 @@ static GSList *sysobj_virt_children(const sysobj_virt *vo, const gchar *req) {
 void sysobj_virt_free(sysobj_virt *s) {
     if (!s) return;
     /* allow objects to cleanup */
-    if (s->f_get_data) {
+    if (s->f_get_data && s->type & VSO_TYPE_CLEANUP) {
         gchar *trash = s->f_get_data(NULL);
         g_free(trash);
     }
