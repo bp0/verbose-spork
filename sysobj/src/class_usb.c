@@ -55,6 +55,9 @@ static sysobj_class cls_usb[] = {
     .tag = "usb", .pattern = ":/usb*", .flags = CLS_USB_FLAGS,
     .f_format = usb_format, .f_flags = usb_flags, .f_update_interval = usb_update_interval },
   { SYSOBJ_CLASS_DEF
+    .tag = "usb:device_list", .pattern = "/sys/bus/usb/devices", .flags = CLS_USB_FLAGS,
+    .f_format = usb_format, .f_flags = usb_flags, .f_update_interval = usb_update_interval },
+  { SYSOBJ_CLASS_DEF
     .tag = "usb:bus", .pattern = "/sys/devices*/usb*", .flags = CLS_USB_FLAGS,
     .f_verify = usb_verify_bus,
     .f_format = usb_format_bus, .f_flags = usb_flags, .f_update_interval = usb_update_interval },
