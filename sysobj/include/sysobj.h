@@ -260,15 +260,15 @@ gchar *sysobj_format_from_fn(const gchar *base, const gchar *name, int fmt_opts)
 double sysobj_update_interval(sysobj *s);
 void sysobj_free(sysobj *s);
 
-sysobj *sysobj_parent(sysobj *s, gboolean req);  /* req = parent in the request path */
-sysobj *sysobj_sibling(sysobj *s, gchar *sib_name, gboolean req);  /* req = parent in the request path */
+#define sysobj_parent_path(s) sysobj_parent_path_ex(s, FALSE)
+#define sysobj_parent_name(s) sysobj_parent_name_ex(s, FALSE)
+/* req = parent in the request path */
+gchar *sysobj_parent_path_ex(const sysobj *s, gboolean req);
+gchar *sysobj_parent_name_ex(const sysobj *s, gboolean req);
+sysobj *sysobj_parent(sysobj *s, gboolean req);
+sysobj *sysobj_sibling(sysobj *s, gchar *sib_name, gboolean req);
 sysobj *sysobj_child(sysobj *s, gchar *child);
 GSList *sysobj_children(sysobj *s, gchar *include_glob, gchar *exclude_glob, gboolean sort);
-
-/* using the real parent */
-gchar *sysobj_parent_path(sysobj *s);
-gchar *sysobj_parent_name(sysobj *s);
-
 /* filters is list of sysobj_filter */
 GSList *sysobj_children_ex(sysobj *s, GSList *filters, gboolean sort);
 

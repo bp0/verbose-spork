@@ -926,17 +926,19 @@ sysobj *sysobj_new_from_printf(gchar *path_fmt, ...) {
     return ret;
 }
 
-gchar *sysobj_parent_path(sysobj *s) {
+gchar *sysobj_parent_path_ex(const sysobj *s, gboolean req) {
     if (s) {
-        gchar *pp = g_path_get_dirname(s->path);
+        gchar *pp = req
+            ? g_path_get_dirname(s->path_req)
+            : g_path_get_dirname(s->path);
         return pp;
     }
     return NULL;
 }
 
-gchar *sysobj_parent_name(sysobj *s) {
+gchar *sysobj_parent_name_ex(const sysobj *s, gboolean req) {
     if (s) {
-        gchar *pp = sysobj_parent_path(s);
+        gchar *pp = sysobj_parent_path_ex(s, req);
         if (pp) {
             gchar *pn = g_path_get_basename(pp);
             g_free(pp);

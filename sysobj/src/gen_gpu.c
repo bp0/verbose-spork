@@ -128,9 +128,10 @@ typedef struct {
     gchar *drm_card;  /* cardN */
     gchar *pci_addy;
     gchar *dt_name;
-    gchar *dt_path;
     gchar *unk;       /* link to :/gpu/found item that is unknown */
 
+    gchar *device_path;
+    gchar *dt_path;
     gchar *nice_name;
     gchar *vendor_str;
     gchar *device_str;
@@ -147,9 +148,10 @@ static void gpud_free(gpud *s) {
         g_free(s->drm_card);
         g_free(s->pci_addy);
         g_free(s->dt_name);
-        g_free(s->dt_path);
+        g_free(s->device_path);
         g_free(s->unk);
 
+        g_free(s->dt_path);
         g_free(s->nice_name);
         g_free(s->vendor_str);
         g_free(s->device_str);
@@ -298,6 +300,19 @@ static void gpu_dt_opp(gpud *g) {
     g_free(gpu_path);
 }
 
+static gboolean _dev_by_of_node_callback(const sysobj *obj, gpud *g, gconstpointer stats) {
+    if (SEQ(obj->name_req, "of_node")
+        && SEQ(obj->path, g->dt_path) ) {
+        g->device_path = sysobj_parent_path_ex(obj, TRUE);
+        return SYSOBJ_FOREACH_STOP;
+    }
+    return SYSOBJ_FOREACH_CONTINUE;
+}
+
+static void find_dev_by_of_node(gpud *g) {
+    sysobj_foreach_from("/sys/devices/platform", NULL, (f_sysobj_foreach)_dev_by_of_node_callback, g, SO_FOREACH_NORMAL);
+}
+
 static void gpu_scan() {
     g_mutex_lock(&gpu_list_lock);
     /* look through all found and if something new is there, create a gpud */
@@ -342,6 +357,7 @@ static void gpu_scan() {
                     sysobj *dev = sysobj_new_from_fn(fobj->path, "device");
                     sysobj *subsys = sysobj_new_from_fn(fobj->path, "device/subsystem");
                     sysobj *of_node = sysobj_new_from_fn(fobj->path, "device/of_node");
+                    g->device_path = g_strdup(dev->path);
                     if (SEQ(subsys->name, "pci") )
                         g->pci_addy = g_strdup(dev->name);
                     if (of_node->exists) {
@@ -356,6 +372,7 @@ static void gpu_scan() {
                     break;
                 case 2:
                     g->pci_addy = g_strdup(id);
+                    g->device_path = g_strdup(fobj->path);
                     break;
                 case 3:
                     g->dt_name = g_strdup(id);
@@ -393,9 +410,15 @@ static void gpu_scan() {
                 gpu_pci_hwmon(g);
             }
             if (g->dt_name) {
-                gchar *lt = g_strdup_printf(":/gpu/found/" PFX_DT "%s", g->dt_name);
-                sysobj_virt_add_simple(gpu_path, g->dt_name, lt, VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_AUTOLINK );
-                g_free(lt);
+                /* device path in platform */
+                if (!g->device_path)
+                    find_dev_by_of_node(g);
+                /* still no device? link the dt node */
+                if (!g->device_path) {
+                    gchar *lt = g_strdup_printf(":/gpu/found/" PFX_DT "%s", g->dt_name);
+                    sysobj_virt_add_simple(gpu_path, g->dt_name, lt, VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_AUTOLINK );
+                    g_free(lt);
+                }
                 /* name by dt.ids */
                 g->vendor_str = sysobj_raw_from_printf(":/devicetree/dt.ids/%s/vendor", g->dt_compat);
                 g->device_str = sysobj_raw_from_printf(":/devicetree/dt.ids/%s/name", g->dt_compat);
@@ -404,6 +427,21 @@ static void gpu_scan() {
             }
             make_nice_name(g);
             sysobj_virt_add_simple(gpu_path, "name", g->nice_name, VSO_TYPE_STRING );
+            if (g->device_path) {
+                sysobj *dev = sysobj_new_fast(g->device_path);
+                if (!g->drm_card && !g->pci_addy)
+                    sysobj_virt_add_simple(gpu_path, dev->name, dev->path, VSO_TYPE_SYMLINK | VSO_TYPE_AUTOLINK | VSO_TYPE_DYN );
+
+                /* devfreq */
+                gchar *devfreq_path = g_strdup_printf("%s/devfreq/%s", dev->path, dev->name);
+                sysobj *devfreq = sysobj_new_fast(devfreq_path);
+                if (devfreq->exists)
+                    sysobj_virt_add_simple(gpu_path, "devfreq", devfreq->path, VSO_TYPE_SYMLINK | VSO_TYPE_AUTOLINK | VSO_TYPE_DYN );
+                sysobj_free(devfreq);
+                g_free(devfreq_path);
+
+                sysobj_free(dev);
+            }
             g_free(gpu_path);
         }
         sysobj_free(fobj);
