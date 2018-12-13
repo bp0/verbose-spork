@@ -1315,15 +1315,17 @@ void sysobj_cleanup() {
     g_timer_destroy(sysobj_global_timer);
 }
 
-sysobj *sysobj_parent(sysobj *s) {
+sysobj *sysobj_parent(sysobj *s, gboolean req) {
     gchar *rpp = NULL;
     sysobj *ret = NULL;
 
     if (s) {
-        rpp = g_path_get_dirname(s->path_req);
+        rpp = req
+            ? g_path_get_dirname(s->path_req)
+            : g_path_get_dirname(s->path);
+
         if (SEQ(rpp, ".") )
             goto sysobj_parent_none;
-
 
         if (s->fast_mode)
             ret = sysobj_new_fast(rpp);
@@ -1346,9 +1348,11 @@ sysobj *sysobj_child(sysobj *s, gchar *child) {
     return sysobj_new_from_fn(s->path_req, child);
 }
 
-sysobj *sysobj_child_of_parent(sysobj *s, gchar *child_path) {
+sysobj *sysobj_sibling(sysobj *s, gchar *child_path, gboolean req) {
     if (s) {
-        gchar *rpp = g_path_get_dirname(s->path_req);
+        gchar *rpp = req
+            ? g_path_get_dirname(s->path_req)
+            : g_path_get_dirname(s->path);
         sysobj *ret = sysobj_new_from_fn(rpp, child_path);
         g_free(rpp);
         return ret;

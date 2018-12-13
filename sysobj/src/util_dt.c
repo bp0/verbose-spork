@@ -113,11 +113,11 @@ int dtr_inh_find(sysobj *obj, char *qprop, int limit) {
 
     tobj = obj;
     while (tobj != NULL) {
-        pobj = sysobj_parent(tobj);
+        pobj = sysobj_parent(tobj, FALSE);
         if (tobj != obj)
             sysobj_free(tobj);
         if (!limit || pobj == NULL) break;
-        qobj = sysobj_child_of_parent(pobj, qprop);
+        qobj = sysobj_sibling(pobj, qprop, FALSE);
         if (qobj != NULL && qobj->exists) {
             sysobj_read(qobj, FALSE);
             ret = be32toh(*qobj->data.uint32);
@@ -406,12 +406,6 @@ char *dtr_get_prop_str(sysobj *node, const char *name) {
     sysobj_free(obj);
     return ret;
 }
-
-    uint32_t version; /* opp version, 0 = clock-frequency only */
-    uint32_t phandle; /* v2 only */
-    uint32_t khz_min;
-    uint32_t khz_max;
-    uint32_t clock_latency_ns;
 
 /* export */
 gchar *dtr_get_opp_kv(const gchar *path, const gchar *key_prefix) {
