@@ -164,6 +164,52 @@ gchar *fmt_1yes0no(sysobj *obj, int fmt_opts) {
     return g_strdup_printf("[%d] %s", value, value ? _("Yes") : _("No") );
 }
 
+gchar *fmt_KiB(sysobj *obj, int fmt_opts) {
+    CHECK_OBJ();
+    PREP_RAW();
+    double v = strtod(raw, NULL);
+    FINISH_RAW();
+    return g_strdup_printf("%0.1f %s", v, _("KiB") );
+}
+
+static const double bytes_KiB = 1024.0;
+static const double bytes_MiB = bytes_KiB * 1024.0;
+static const double bytes_GiB = bytes_MiB * 1024.0;
+static const double bytes_TiB = bytes_GiB * 1024.0;
+static const double bytes_PiB = bytes_TiB * 1024.0;
+
+gchar *fmt_KiB_to_MiB(sysobj *obj, int fmt_opts) {
+    CHECK_OBJ();
+    PREP_RAW();
+    double v = strtod(raw, NULL);
+    v *= bytes_KiB; /* v is KiB */
+    FINISH_RAW();
+
+    if (v > 2 * bytes_MiB)
+        return g_strdup_printf("%0.3f %s", v / bytes_MiB, _("MiB") );
+
+    return g_strdup_printf("%0.1f %s", v / bytes_KiB, _("KiB") );
+}
+
+gchar *fmt_KiB_to_higher(sysobj *obj, int fmt_opts) {
+    CHECK_OBJ();
+    PREP_RAW();
+    double v = strtod(raw, NULL);
+    v *= bytes_KiB; /* v is KiB */
+    FINISH_RAW();
+
+    if (v > 2 * bytes_PiB)
+        return g_strdup_printf("%0.1f %s", v / bytes_PiB, _("PiB") );
+    if (v > 2 * bytes_TiB)
+        return g_strdup_printf("%0.1f %s", v / bytes_TiB, _("TiB") );
+    if (v > 2 * bytes_GiB)
+        return g_strdup_printf("%0.1f %s", v / bytes_GiB, _("GiB") );
+    if (v > 2 * bytes_MiB)
+        return g_strdup_printf("%0.1f %s", v / bytes_MiB, _("MiB") );
+
+    return g_strdup_printf("%0.1f %s", v / bytes_KiB, _("KiB") );
+}
+
 gchar *fmt_seconds(sysobj *obj, int fmt_opts) {
     CHECK_OBJ();
     PREP_RAW();
