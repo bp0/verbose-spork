@@ -121,7 +121,7 @@ void vendor_init(void) {
 
     DEBUG("initializing vendor list");
 
-    char *file_search_order[] = {
+    gchar *file_search_order[] = {
         g_strdup("./vendor.ids"),
         NULL
     };
@@ -154,7 +154,7 @@ void vendor_init(void) {
     /* free search location strings */
     n = 0;
     while (file_search_order[n]) {
-        free(file_search_order[n]);
+        g_free(file_search_order[n]);
         n++;
     }
 }
