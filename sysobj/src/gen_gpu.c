@@ -288,6 +288,29 @@ static void gpu_pci_hwmon(gpud *g) {
     g_free(gpu_path);
 }
 
+static void gpu_pcie(gpud *g) {
+    if (!g->name || !g->pci_addy) return;
+
+    gchar *gpu_path = util_build_fn(":/gpu", g->name);
+    sysobj *max_speed = sysobj_new_from_fn(g->device_path, "max_link_speed");
+    sysobj *cur_speed = sysobj_new_from_fn(g->device_path, "current_link_speed");
+    sysobj *max_width = sysobj_new_from_fn(g->device_path, "max_link_width");
+    sysobj *cur_width = sysobj_new_from_fn(g->device_path, "current_link_width");
+    if (max_speed->exists)
+        sysobj_virt_add_simple(gpu_path, "pcie.max_link_speed", max_speed->path, VSO_TYPE_SYMLINK );
+    if (max_width->exists)
+        sysobj_virt_add_simple(gpu_path, "pcie.max_link_width", max_width->path, VSO_TYPE_SYMLINK );
+    if (cur_speed->exists)
+        sysobj_virt_add_simple(gpu_path, "pcie.current_link_speed", cur_speed->path, VSO_TYPE_SYMLINK );
+    if (cur_width->exists)
+        sysobj_virt_add_simple(gpu_path, "pcie.current_link_width", cur_width->path, VSO_TYPE_SYMLINK );
+    sysobj_free(max_speed);
+    sysobj_free(cur_speed);
+    sysobj_free(max_width);
+    sysobj_free(cur_width);
+    g_free(gpu_path);
+}
+
 static void gpu_dt_opp(gpud *g) {
     if (!g->name || !g->dt_name) return;
 
@@ -408,6 +431,7 @@ static void gpu_scan() {
                 g_free(lt);
                 /* extra stuff */
                 gpu_pci_hwmon(g);
+                gpu_pcie(g);
             }
             if (g->dt_name) {
                 /* device path in platform */
