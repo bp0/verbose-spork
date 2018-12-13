@@ -27,7 +27,7 @@ const gchar *mem_label(sysobj *obj);
 static sysobj_class cls_meminfo[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "meminfo", .pattern = ":/meminfo", .flags = OF_CONST,
-    .f_format = meminfo_format, .s_update_interval = 1.0 },
+    .f_format = meminfo_format },
   { SYSOBJ_CLASS_DEF
     .tag = "meminfo:stat", .pattern = ":/meminfo/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_label = mem_label, .f_format = meminfo_format, .s_update_interval = 1.0 },

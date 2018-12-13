@@ -26,19 +26,9 @@
 
 #define PROC_MEMINFO "/proc/meminfo"
 
-static int meminfo_was_found = 0;
-static gchar *meminfo_found(const gchar *path) {
-    PARAM_NOT_UNUSED(path);
-    return g_strdup(meminfo_was_found ? "1" : "0");
-}
-
 static sysobj_virt vol[] = {
-    { .path = ":/meminfo/_found", .str = "",
-      .type = VSO_TYPE_STRING | VSO_TYPE_CONST,
-      .f_get_data = meminfo_found, .f_get_type = NULL },
     { .path = ":/meminfo", .str = "*",
-      .type = VSO_TYPE_DIR | VSO_TYPE_CONST,
-      .f_get_data = NULL, .f_get_type = NULL },
+      .type = VSO_TYPE_DIR | VSO_TYPE_CONST },
 };
 
 gchar *meminfo_read(const gchar *path) {
@@ -57,6 +47,8 @@ gchar *meminfo_read(const gchar *path) {
 
 void meminfo_scan() {
     gchar *data = sysobj_raw_from_fn(PROC_MEMINFO, NULL);
+    if (!data) return;
+
     gchar **lines = g_strsplit(data, "\n", -1);
     for(int i = 0; lines[i]; i++) {
         gchar *c = strchr(lines[i], ':');
@@ -74,15 +66,9 @@ void meminfo_scan() {
 }
 
 void gen_meminfo() {
-    int i = 0;
-
     /* add virtual sysobj */
-    for (i = 0; i < (int)G_N_ELEMENTS(vol); i++) {
+    for (int i = 0; i < (int)G_N_ELEMENTS(vol); i++)
         sysobj_virt_add(&vol[i]);
-    }
 
-    if (sysobj_exists_from_fn(PROC_MEMINFO, NULL)) {
-        meminfo_was_found = 1;
-        meminfo_scan();
-    }
+    meminfo_scan();
 }

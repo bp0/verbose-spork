@@ -230,9 +230,11 @@ gboolean sysobj_exists(sysobj *s) {
 
 gboolean sysobj_exists_from_fn(const gchar *base, const gchar *name) {
     gboolean exists = FALSE;
-    sysobj *obj = sysobj_new_from_fn(base, name);
+    gchar *path = util_build_fn(base, name);
+    sysobj *obj = sysobj_new_fast(path);
     exists = sysobj_exists(obj);
     sysobj_free(obj);
+    g_free(path);
     return exists;
 }
 
