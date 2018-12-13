@@ -25,10 +25,15 @@
 /* obj points to a cpuN/topology */
 void cpu_pct(sysobj *obj, int *logical, int *pack, int *core_of_pack, int *thread_of_core);
 
-/* in class_dt.c */
+/* in util_dt.c */
 gchar *dtr_compat_decode(const gchar *compat_str_list, gsize len, gboolean show_class);
+gchar *dtr_get_opp_kv(const gchar *path, const gchar *key_prefix);
 
 /* in class_cpu.c */
 gboolean cpu_verify_child(sysobj *obj);
+
+/* in class_hwmon.c */
+gchar *hwmon_attr_encode_name(const gchar *type, int index, const gchar *attrib);
+gboolean hwmon_attr_decode_name(const gchar *name, gchar **type, int *index, gchar **attrib, gboolean *is_value);
 
 #endif

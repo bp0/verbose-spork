@@ -28,6 +28,7 @@
  */
 
 void gen_sysobj();
+void gen_dt();
 void gen_pci_ids();
 void gen_usb_ids();
 void gen_dt_ids();
@@ -38,11 +39,12 @@ void gen_rpi();
 void gen_cpuinfo();
 void gen_meminfo();
 void gen_procs(); /* requires :/cpuinfo */
-void gen_gpu();   /* requires gen_*_ids */
+void gen_gpu();   /* requires gen_*_ids, gen_dt */
 
 void generators_init() {
     gen_sysobj(); /* internals, like vsysfs root (":") */
 
+    gen_dt();
     gen_pci_ids();
     gen_usb_ids();
     gen_dt_ids();

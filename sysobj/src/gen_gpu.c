@@ -23,6 +23,7 @@
  */
 #include "sysobj.h"
 #include "sysobj_foreach.h"
+#include "sysobj_extras.h"
 #include "util_pci.h"
 #include "vendor.h"
 
@@ -127,6 +128,7 @@ typedef struct {
     gchar *drm_card;  /* cardN */
     gchar *pci_addy;
     gchar *dt_name;
+    gchar *dt_path;
     gchar *unk;       /* link to :/gpu/found item that is unknown */
 
     gchar *nice_name;
@@ -145,6 +147,7 @@ static void gpud_free(gpud *s) {
         g_free(s->drm_card);
         g_free(s->pci_addy);
         g_free(s->dt_name);
+        g_free(s->dt_path);
         g_free(s->unk);
 
         g_free(s->nice_name);
@@ -155,8 +158,10 @@ static void gpud_free(gpud *s) {
     }
 }
 
-GSList *gpu_list = NULL;
+static GSList *gpu_list = NULL;
 #define gpu_list_free() g_slist_free_full(gpu_list, (GDestroyNotify)gpud_free)
+
+static GMutex gpu_list_lock;
 
 /* TODO: In the future, when there is more vendor specific information available in
  * the gpu struct, then more precise names can be given to each gpu */
@@ -228,7 +233,73 @@ nice_is_over:
     s->nice_name = g_strdup_printf("%s %s", vendor_str, device_str);
 }
 
+static void gpu_pci_hwmon(gpud *g) {
+    /* for hwmon_attr_decode_name */
+    gchar *type = NULL, *attrib = NULL;
+    int index;
+    gboolean is_value;
+
+    if (!g->name || !g->pci_addy) return;
+
+    gchar *gpu_path = util_build_fn(":/gpu", g->name);
+
+    /* link hwmon inputs */
+    sysobj *pcid = sysobj_new_from_printf("/sys/bus/pci/devices/%s", g->pci_addy);
+    sysobj *hwmon_list = sysobj_new_from_fn(pcid->path, "hwmon");
+    if (pcid->exists && hwmon_list->exists) {
+        sysobj_read(hwmon_list, FALSE);
+        for(GSList *l = hwmon_list->data.childs; l; l = l->next) {
+            sysobj *hwmon = sysobj_new_from_fn(hwmon_list->path, (gchar*)l->data);
+            sysobj_read(hwmon, FALSE);
+            gchar *hwmon_name = g_strchomp(sysobj_raw_from_fn(hwmon->path, "name") );
+            if (!hwmon_name)
+                hwmon_name = g_strdup(hwmon->name);
+            for(GSList *m = hwmon->data.childs; m; m = m->next) {
+                gchar *sensor = (gchar*)m->data;
+                /* hwmon_attr_decode_name() will free the strings before setting them, if
+                 * they are not null, and reset is_value */
+                if (hwmon_attr_decode_name(sensor, &type, &index, &attrib, &is_value) )
+                if (is_value) {
+                    gchar *sl = NULL, *st = NULL, *lbl = NULL;
+                    lbl = sysobj_raw_from_fn(hwmon->path,
+                        auto_free(hwmon_attr_encode_name(type, index, "label")));
+                    if (lbl) {
+                        g_strchomp(lbl);
+                        sl = g_strdup_printf("%s.%s", hwmon_name, lbl);
+                    } else
+                        sl = g_strdup_printf("%s.%s", hwmon_name,
+                            (gchar*)auto_free(hwmon_attr_encode_name(type, index, NULL)) );
+                    st = util_build_fn(hwmon->path, sensor);
+
+                    sysobj_virt_add_simple(gpu_path, sl, st, VSO_TYPE_SYMLINK );
+                    g_free(sl);
+                    g_free(st);
+                    g_free(lbl);
+                }
+            }
+            sysobj_free(hwmon);
+            g_free(hwmon_name);
+        }
+    }
+    sysobj_free(pcid);
+    sysobj_free(hwmon_list);
+    g_free(gpu_path);
+}
+
+static void gpu_dt_opp(gpud *g) {
+    if (!g->name || !g->dt_name) return;
+
+    gchar *gpu_path = util_build_fn(":/gpu", g->name);
+    gchar *oppkv = dtr_get_opp_kv(g->dt_path, NULL);
+
+    sysobj_virt_from_kv(gpu_path, oppkv);
+
+    g_free(oppkv);
+    g_free(gpu_path);
+}
+
 static void gpu_scan() {
+    g_mutex_lock(&gpu_list_lock);
     /* look through all found and if something new is there, create a gpud */
     sysobj *flobj = sysobj_new_fast(":/gpu/found");
     GSList *found = sysobj_children(flobj, NULL, NULL, TRUE);
@@ -275,6 +346,7 @@ static void gpu_scan() {
                         g->pci_addy = g_strdup(dev->name);
                     if (of_node->exists) {
                         g->dt_name = g_strdup(of_node->name);
+                        g->dt_path = g_strdup(of_node->path);
                         g->dt_compat = sysobj_raw_from_fn(of_node->path, "compatible");
                         util_strstrip_double_quotes_dumb(g->dt_compat);
                     }
@@ -287,6 +359,7 @@ static void gpu_scan() {
                     break;
                 case 3:
                     g->dt_name = g_strdup(id);
+                    g->dt_path = g_strdup(fobj->path);
                     g->dt_compat = sysobj_raw_from_fn(fobj->path, "compatible");
                     util_strstrip_double_quotes_dumb(g->dt_compat);
                     break;
@@ -316,6 +389,8 @@ static void gpu_scan() {
                 g_free(v_str);
                 g_free(d_str);
                 g_free(lt);
+                /* extra stuff */
+                gpu_pci_hwmon(g);
             }
             if (g->dt_name) {
                 gchar *lt = g_strdup_printf(":/gpu/found/" PFX_DT "%s", g->dt_name);
@@ -324,6 +399,8 @@ static void gpu_scan() {
                 /* name by dt.ids */
                 g->vendor_str = sysobj_raw_from_printf(":/devicetree/dt.ids/%s/vendor", g->dt_compat);
                 g->device_str = sysobj_raw_from_printf(":/devicetree/dt.ids/%s/name", g->dt_compat);
+                /* extra stuff */
+                gpu_dt_opp(g);
             }
             make_nice_name(g);
             sysobj_virt_add_simple(gpu_path, "name", g->nice_name, VSO_TYPE_STRING );
@@ -333,6 +410,7 @@ static void gpu_scan() {
         g_free(req);
     } /* each found */
     sysobj_free(flobj);
+    g_mutex_unlock(&gpu_list_lock);
 }
 
 static void buff_basename(const gchar *path, gchar *buff, gsize n) {

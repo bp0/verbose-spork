@@ -22,7 +22,11 @@
 #include "sysobj_extras.h" /* for dtr_compat_decode() */
 #include "format_funcs.h"
 
+static gboolean gpu_verify(sysobj *obj);
 static gchar *gpu_format(sysobj *obj, int fmt_opts);
+
+static gboolean gpu_prop_verify(sysobj *obj);
+static gchar *gpu_prop_format(sysobj *obj, int fmt_opts);
 
 static gboolean drm_card_verify(sysobj *obj);
 static gchar *drm_card_format(sysobj *obj, int fmt_opts);
@@ -34,7 +38,10 @@ static gchar *drm_card_attr_format(sysobj *obj, int fmt_opts);
 static sysobj_class cls_gpu[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "gpu", .pattern = ":/gpu*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .f_format = gpu_format },
+    .f_verify = gpu_verify, .f_format = gpu_format },
+  { SYSOBJ_CLASS_DEF
+    .tag = "gpu:prop", .pattern = ":/gpu/gpu*/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .f_verify = gpu_prop_verify, .f_format = gpu_prop_format },
 
   { SYSOBJ_CLASS_DEF
     .tag = "drm:card", .pattern = "/sys/devices/*/drm/card*", .flags = OF_GLOB_PATTERN | OF_CONST,
@@ -45,12 +52,64 @@ static sysobj_class cls_gpu[] = {
     .f_label = drm_card_attr_label, .f_verify = drm_card_attr_verify, .f_format = drm_card_attr_format },
 };
 
+static gboolean gpu_verify(sysobj *obj) {
+    if (SEQ(":/gpu", obj->path))
+        return TRUE;
+    if (verify_lblnum(obj, "gpu"))
+        return TRUE;
+    return FALSE;
+}
+
 static gchar *gpu_format(sysobj *obj, int fmt_opts) {
     if (SEQ(":/gpu", obj->path)) {
         return sysobj_format_from_fn(obj->path, "list", fmt_opts);
     }
     if (verify_lblnum(obj, "gpu"))
         return sysobj_format_from_fn(obj->path, "name", fmt_opts);
+    return simple_format(obj, fmt_opts);
+}
+
+static const struct { gchar *item; gchar *lbl; int extra_flags; func_format f_func; } gpu_prop_items[] = {
+    //TODO: labels
+    { "opp.khz_min",   NULL, OF_NONE, fmt_khz },
+    { "opp.khz_max",   NULL, OF_NONE, fmt_khz },
+    { "opp.clock_frequency",   NULL, OF_NONE, fmt_khz },
+    { "opp.clock_latency_ns",  NULL, OF_NONE, fmt_nanoseconds },
+    { NULL, NULL, 0 }
+};
+
+int gpu_prop_lookup(const gchar *key) {
+    int i = 0;
+    while(gpu_prop_items[i].item) {
+        if (SEQ(key, gpu_prop_items[i].item))
+            return i;
+        i++;
+    }
+    return -1;
+}
+
+const gchar *gpu_prop_label(sysobj *obj) {
+    int i = gpu_prop_lookup(obj->name);
+    if (i != -1)
+        return _(gpu_prop_items[i].lbl);
+    return NULL;
+}
+
+static gboolean gpu_prop_verify(sysobj *obj) {
+    if (verify_lblnum_child(obj, "gpu")) {
+        int i = gpu_prop_lookup(obj->name);
+        if (i != -1)
+            return TRUE;
+    }
+    return FALSE;
+}
+
+static gchar *gpu_prop_format(sysobj *obj, int fmt_opts) {
+    int i = gpu_prop_lookup(obj->name);
+    if (i != -1) {
+        if (gpu_prop_items[i].f_func)
+            return gpu_prop_items[i].f_func(obj, fmt_opts);
+    }
     return simple_format(obj, fmt_opts);
 }
 

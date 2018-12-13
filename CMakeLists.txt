@@ -50,11 +50,11 @@ add_library(sysobj STATIC
         sysobj/src/class_any_utf8.c
 
 # still mixed
-        sysobj/src/class_dt.c
         sysobj/src/class_pci.c
         sysobj/src/class_usb.c
 
 # class only
+        sysobj/src/class_dt.c
         sysobj/src/class_sysfs.c
         sysobj/src/class_os_release.c
         sysobj/src/class_mobo.c
@@ -69,6 +69,7 @@ add_library(sysobj STATIC
         sysobj/src/class_hwmon.c
         sysobj/src/class_devfreq.c
 # gen only
+        sysobj/src/gen_dt.c
         sysobj/src/gen_sysobj.c
         sysobj/src/gen_usb_ids.c
         sysobj/src/gen_pci_ids.c
@@ -86,6 +87,7 @@ add_library(sysobj STATIC
         sysobj/src/x86_data.c
 #src/riscv_data.c
 
+        sysobj/src/util_dt.c
         sysobj/src/util_pci.c
         sysobj/src/util_usb.c
         sysobj/src/vendor.c

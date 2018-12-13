@@ -79,8 +79,27 @@ static const char *sensor_types[] = {
     "in", "temp", "cpu", "fan", "pwm", "temp", "curr", "power", "energy", "humidity", "intrusion"
 };
 
+static const struct { const gchar *type, *attrib; }
+    vpair_tab[] = {
+        { "in",   "input" },
+        { "fan",  "input" },
+        { "temp", "input" },
+        { "power","average" },
+        { "pwm", NULL },
+    };
+
+/* export */
+gchar *hwmon_attr_encode_name(const gchar *type, int index, const gchar *attrib) {
+    if (!type) return NULL;
+    if (attrib)
+        return g_strdup_printf("%s%d_%s", type, index, attrib);
+    else
+        return g_strdup_printf("%s%d", type, index);
+}
+
+/* export */
 /* temp4_crit -> "temp", 4, "crit" */
-static gboolean hwmon_attr_decode_name(const gchar *name, gchar **type, int *index, gchar **attrib) {
+gboolean hwmon_attr_decode_name(const gchar *name, gchar **type, int *index, gchar **attrib, gboolean *is_value) {
     if (!name) return FALSE;
 
     /* split at first _ */
@@ -120,12 +139,20 @@ static gboolean hwmon_attr_decode_name(const gchar *name, gchar **type, int *ind
         if (*attrib) g_free(*attrib);
             *attrib = g_strdup(a);
     }
+    if (is_value) {
+        *is_value = FALSE;
+        for (int n = 0; n<(int)G_N_ELEMENTS(vpair_tab); n++)
+            if (SEQ(t, vpair_tab[n].type) && SEQ(a, vpair_tab[n].attrib) ) {
+                *is_value = TRUE;
+                break;
+            }
+    }
     return TRUE;
 }
 
 static gboolean hwmon_attr_verify(sysobj *obj) {
     if ( verify_lblnum_child(obj, "hwmon") ) {
-        if (hwmon_attr_decode_name(obj->name, NULL, NULL, NULL) ) {
+        if (hwmon_attr_decode_name(obj->name, NULL, NULL, NULL, NULL) ) {
             return TRUE;
         }
     }
@@ -219,7 +246,7 @@ static gchar *hwmon_attr_format(sysobj *obj, int fmt_opts) {
     gboolean temp_is_mv = FALSE; //TODO:
     gchar *type = NULL, *attrib = NULL;
     int i = -1;
-    if (hwmon_attr_decode_name(obj->name, &type, &i, &attrib) ) {
+    if (hwmon_attr_decode_name(obj->name, &type, &i, &attrib, NULL) ) {
         gchar *ret = NULL;
         if (SEQ(type, "in") ) {
             if (   SEQ(attrib, "min")
