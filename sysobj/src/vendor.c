@@ -83,24 +83,24 @@ static int read_from_vendor_ids(const char *path) {
 
         if (VEN_CHK("match_string ")) {
             Vendor *v = g_new0(Vendor, 1);
-            v->match_string = strdup(p+tl);
+            v->match_string = g_strdup(p+tl);
             v->match_case = 0;
-            v->name = strdup(name);
-            v->name_short = strdup(name_short);
-            v->url = strdup(url);
-            v->url_support = strdup(url_support);
+            v->name = g_strdup(name);
+            v->name_short = g_strdup(name_short);
+            v->url = g_strdup(url);
+            v->url_support = g_strdup(url_support);
             vendor_list = g_slist_prepend(vendor_list, v);
             count++;
         }
 
         if (VEN_CHK("match_string_case ")) {
             Vendor *v = g_new0(Vendor, 1);
-            v->match_string = strdup(p+tl);
+            v->match_string = g_strdup(p+tl);
             v->match_case = 1;
-            v->name = strdup(name);
-            v->name_short = strdup(name_short);
-            v->url = strdup(url);
-            v->url_support = strdup(url_support);
+            v->name = g_strdup(name);
+            v->name_short = g_strdup(name_short);
+            v->url = g_strdup(url);
+            v->url_support = g_strdup(url_support);
             vendor_list = g_slist_prepend(vendor_list, v);
             count++;
         }
@@ -166,12 +166,12 @@ void vendor_cleanup() {
 
 void vendor_free(Vendor *v) {
     if (v) {
-        free(v->name);
-        free(v->name_short);
-        free(v->url);
-        free(v->url_support);
-        free(v->match_string);
-        free(v);
+        g_free(v->name);
+        g_free(v->name_short);
+        g_free(v->url);
+        g_free(v->url_support);
+        g_free(v->match_string);
+        g_free(v);
     }
 }
 
