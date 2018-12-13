@@ -23,18 +23,60 @@
  */
 
 #include "sysobj.h"
+#include "gg_file.h"
 
 #define PROC_MEMINFO "/proc/meminfo"
 
+static gchar *meminfo_path_fs = NULL;
+static gchar *meminfo_scan(const gchar *path);
+static gchar *meminfo_read(const gchar *path);
+
 static sysobj_virt vol[] = {
     { .path = ":/meminfo", .str = "*",
-      .type = VSO_TYPE_DIR | VSO_TYPE_CONST },
+      .f_get_data = meminfo_scan,
+      .type = VSO_TYPE_DIR | VSO_TYPE_CONST | VSO_TYPE_CLEANUP },
 };
 
-gchar *meminfo_read(const gchar *path) {
-    if (!path) return NULL; /* cleanup not needed */
-    gchar *ret = NULL;
-    gchar *data = sysobj_raw_from_fn(PROC_MEMINFO, NULL);
+static gchar *meminfo_scan(const gchar *path) {
+    if (!path) {
+        /* cleanup */
+        g_free(meminfo_path_fs);
+        meminfo_path_fs = NULL;
+        return NULL;
+    }
+
+    if (!meminfo_path_fs) {
+        /* init */
+        sysobj *obj = sysobj_new_fast(PROC_MEMINFO);
+        if (!obj->exists) return NULL;
+        meminfo_path_fs = g_strdup(obj->path_fs);
+        sysobj_read(obj, FALSE);
+        gchar **lines = g_strsplit(obj->data.str, "\n", -1);
+        for(int i = 0; lines[i]; i++) {
+            gchar *c = strchr(lines[i], ':');
+            if (c) {
+                *c = 0;
+                g_strchomp(lines[i]);
+                sysobj_virt *vo = sysobj_virt_new();
+                vo->path = g_strdup_printf(":/meminfo/%s", lines[i]);
+                vo->f_get_data = meminfo_read;
+                sysobj_virt_add(vo);
+            }
+        }
+        g_strfreev(lines);
+
+        sysobj_free(obj);
+        return NULL;
+    }
+
+    return NULL; /* auto dir */
+}
+
+static gchar *meminfo_read(const gchar *path) {
+    /* normal request */
+    if (!meminfo_path_fs) return NULL;
+    gchar *ret = NULL, *data = NULL;
+    gg_file_get_contents_non_blocking(meminfo_path_fs, &data, NULL, NULL);
     gchar *name = g_path_get_basename(path);
     if (data && name) {
         g_strchomp(name);
@@ -45,30 +87,11 @@ gchar *meminfo_read(const gchar *path) {
     return ret;
 }
 
-void meminfo_scan() {
-    gchar *data = sysobj_raw_from_fn(PROC_MEMINFO, NULL);
-    if (!data) return;
-
-    gchar **lines = g_strsplit(data, "\n", -1);
-    for(int i = 0; lines[i]; i++) {
-        gchar *c = strchr(lines[i], ':');
-        if (c) {
-            *c = 0;
-            g_strchomp(lines[i]);
-            sysobj_virt *vo = sysobj_virt_new();
-            vo->path = g_strdup_printf(":/meminfo/%s", lines[i]);
-            vo->f_get_data = meminfo_read;
-            sysobj_virt_add(vo);
-        }
-    }
-    g_strfreev(lines);
-    g_free(data);
-}
-
 void gen_meminfo() {
     /* add virtual sysobj */
     for (int i = 0; i < (int)G_N_ELEMENTS(vol); i++)
         sysobj_virt_add(&vol[i]);
 
-    meminfo_scan();
+    /* to initialize */
+    meminfo_scan("");
 }
