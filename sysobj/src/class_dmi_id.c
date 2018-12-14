@@ -24,7 +24,7 @@
 gboolean dmi_id_verify(sysobj *obj);
 const gchar *dmi_id_label(sysobj *obj);
 gchar *dmi_id_format(sysobj *obj, int fmt_opts);
-guint dmi_id_flags(sysobj *obj);
+guint dmi_id_flags(sysobj *obj, const sysobj_class *cls);
 
 static sysobj_class cls_dmi_id[] = {
   { SYSOBJ_CLASS_DEF
@@ -221,19 +221,17 @@ gchar *dmi_id_format(sysobj *obj, int fmt_opts) {
     return simple_format(obj, fmt_opts);
 }
 
-guint dmi_id_flags(sysobj *obj) {
+guint dmi_id_flags(sysobj *obj, const sysobj_class *cls) {
     if (obj) {
         int i = dmi_id_lookup(obj->name);
         if (i != -1)
-            return obj->cls->flags | dmi_id_items[i].extra_flags;
+            return cls->flags | dmi_id_items[i].extra_flags;
     }
-    return cls_dmi_id[0].flags; /* remember to handle obj == NULL */
+    return cls->flags;
 }
 
 void class_dmi_id() {
-    int i = 0;
     /* add classes */
-    for (i = 0; i < (int)G_N_ELEMENTS(cls_dmi_id); i++) {
+    for (int i = 0; i < (int)G_N_ELEMENTS(cls_dmi_id); i++)
         class_add(&cls_dmi_id[i]);
-    }
 }

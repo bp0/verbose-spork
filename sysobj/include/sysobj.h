@@ -74,10 +74,24 @@ enum {
 
 typedef struct sysobj sysobj;
 typedef struct sysobj_data sysobj_data;
+typedef struct sysobj_class sysobj_class;
 
 typedef gchar* (*func_format)(sysobj *obj, int fmt_opts);
 typedef int (*func_compare_sysobj_data)(const sysobj_data *a, const sysobj_data *b);
 typedef gboolean (*func_verify)(sysobj *obj);
+typedef guint (*func_class_flags)(sysobj *obj, const sysobj_class *cls); /* remember to handle obj == NULL */
+
+typedef const struct {
+    const gchar *attr_name;
+    const gchar *s_label; /* N_() */
+    int extra_flags;
+    func_format fmt_func;
+    double s_update_interval; /* -1 for UPDATE_INTERVAL_DEFAULT */
+} attr_tab;
+
+#define ATTR_TAB_LAST { NULL, NULL, 0, NULL, -1 }
+
+int attr_tab_lookup(const attr_tab *attributes, const gchar *name);
 
 /* can be used in a struct sysobj_class to provide debug information
  * sysobj_class my_class = { SYSOBJ_CLASS_DEF .pattern = "...", ... }
@@ -97,13 +111,17 @@ typedef struct sysobj_class {
     const gchar *s_suggest; /* suggest an alternate path */
     double s_update_interval;
 
+    /* will provide any of f_verify, f_format, f_label, f_flags
+     * that are not already provided */
+    attr_tab *attributes;
+
     func_verify f_verify;  /* verify the object is of this class */
     func_format f_format;  /* translated human-readable value */
     func_compare_sysobj_data f_compare;
+    func_class_flags f_flags; /* provide flags, result replaces flags */
 
     const gchar *(*f_label)  (sysobj *obj);  /* translated label */
     double (*f_update_interval) (sysobj *obj); /* time until the value might change, in seconds */
-    guint (*f_flags) (sysobj *obj); /* provide flags, result replaces flags */
     void (*f_cleanup) (void); /* shutdown/cleanup function */
     const gchar *(*f_halp) (sysobj *obj); /* markup text */
 
@@ -224,9 +242,10 @@ void class_free(sysobj_class *c);
 const sysobj_class *class_add(sysobj_class *c);
 const sysobj_class *class_add_full(sysobj_class *base,
     const gchar *tag, const gchar *pattern, const gchar *s_label, const gchar *s_halp, guint flags, double s_update_interval,
+    attr_tab *attributes,
     void *f_verify, void *f_label, void *f_halp,
     void *f_format, void *f_update_interval, void *f_compare, void *f_flags );
-const sysobj_class *class_add_simple(const gchar *pattern, const gchar *label, const gchar *tag, guint flags, double update_interval);
+const sysobj_class *class_add_simple(const gchar *pattern, const gchar *label, const gchar *tag, guint flags, double update_interval, attr_tab *attributes);
 gboolean class_has_flag(const sysobj_class *c, guint flag);
 void class_cleanup();
 

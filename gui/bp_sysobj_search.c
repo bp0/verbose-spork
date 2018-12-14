@@ -83,7 +83,7 @@ bp_sysobj_search_init(bpSysObjSearch *s)
 
     priv->search_result_path = g_strdup_printf(":app/search/0x%016llx", (long long unsigned)s);
     sysobj_virt_add_simple_mkpath(priv->search_result_path, NULL, "*", VSO_TYPE_DIR);
-    class_add_simple(priv->search_result_path, "Search result set", priv->search_result_path, OF_NONE, 1.0);
+    class_add_simple(priv->search_result_path, "Search result set", priv->search_result_path, OF_NONE, 1.0, NULL);
     priv->now_searching = FALSE;
 
     GSList *filters = NULL;

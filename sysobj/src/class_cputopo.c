@@ -25,7 +25,7 @@
 gboolean cputopo_verify(sysobj *obj);
 const gchar *cputopo_label(sysobj *obj);
 gchar *cputopo_format(sysobj *obj, int fmt_opts);
-guint cputopo_flags(sysobj *obj);
+guint cputopo_flags(sysobj *obj, const sysobj_class *cls);
 
 static sysobj_class cls_cputopo = { SYSOBJ_CLASS_DEF
     .tag = "cputopo", .pattern = "/sys/devices/system/cpu/cpu*/topology*", .flags = OF_GLOB_PATTERN | OF_CONST,
@@ -88,13 +88,13 @@ gchar *cputopo_format(sysobj *obj, int fmt_opts) {
     return simple_format(obj, fmt_opts);
 }
 
-guint cputopo_flags(sysobj *obj) {
+guint cputopo_flags(sysobj *obj, const sysobj_class *cls) {
     if (obj) {
         int i = cputopo_lookup(obj->name);
         if (i != -1)
-            return obj->cls->flags | cputopo_items[i].extra_flags;
+            return cls->flags | cputopo_items[i].extra_flags;
     }
-    return cls_cputopo.flags; /* remember to handle obj == NULL */
+    return cls->flags; /* remember to handle obj == NULL */
 }
 
 void class_cputopo() {

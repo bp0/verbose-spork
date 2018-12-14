@@ -389,6 +389,7 @@ const sysobj_class *class_add_full(sysobj_class *base,
     const gchar *tag, const gchar *pattern,
     const gchar *s_label, const gchar *s_halp, guint flags,
     double s_update_interval,
+    attr_tab *attributes,
     void *f_verify, void *f_label, void *f_halp,
     void *f_format, void *f_update_interval, void *f_compare,
     void *f_flags ) {
@@ -400,6 +401,7 @@ const sysobj_class *class_add_full(sysobj_class *base,
     CLASS_PROVIDE_OR_INHERIT(s_label);
     CLASS_PROVIDE_OR_INHERIT(s_halp);
     CLASS_PROVIDE_OR_INHERIT(s_update_interval);
+    CLASS_PROVIDE_OR_INHERIT(attributes);
     CLASS_PROVIDE_OR_INHERIT(flags);
     CLASS_PROVIDE_OR_INHERIT(f_verify);
     CLASS_PROVIDE_OR_INHERIT(f_label);
@@ -417,8 +419,8 @@ const sysobj_class *class_add_full(sysobj_class *base,
     return NULL;
 }
 
-const sysobj_class *class_add_simple(const gchar *pattern, const gchar *label, const gchar *tag, guint flags, double update_interval) {
-    return class_add_full(NULL, tag, pattern, label, NULL, flags, update_interval, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+const sysobj_class *class_add_simple(const gchar *pattern, const gchar *label, const gchar *tag, guint flags, double update_interval, attr_tab *attributes) {
+    return class_add_full(NULL, tag, pattern, label, NULL, flags, update_interval, attributes, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 }
 
 gboolean sysobj_has_flag(sysobj *s, guint flag) {
@@ -427,7 +429,12 @@ gboolean sysobj_has_flag(sysobj *s, guint flag) {
         if (c) {
             guint f = c->flags;
             if (c->f_flags)
-                f = c->f_flags(s);
+                f = c->f_flags(s, c);
+            else if (c->attributes) {
+                int i = attr_tab_lookup(c->attributes, s->name);
+                if (i != -1)
+                    f |= c->attributes[i].extra_flags;
+            }
             if (f & flag)
                 return TRUE;
         }
@@ -439,7 +446,7 @@ gboolean class_has_flag(const sysobj_class *c, guint flag) {
     if (c) {
         guint f = c->flags;
         if (c->f_flags)
-            f = c->f_flags(NULL);
+            f = c->f_flags(NULL, c);
         if (f & flag)
             return TRUE;
     }
@@ -531,6 +538,10 @@ void sysobj_classify(sysobj *s) {
 
             if (match && c->f_verify)
                 match = c->f_verify(s);
+            else if (match && c->attributes) {
+                int i = attr_tab_lookup(c->attributes, s->name);
+                match = (i != -1) ? TRUE : FALSE;
+            }
 
             if (match) {
                 if (class_has_flag(c, OF_BLAST) ) {
@@ -708,10 +719,20 @@ void sysobj_unread_data(sysobj *s) {
 
 double sysobj_update_interval(sysobj *s) {
     if (s) {
-        if (s->cls && s->cls->f_update_interval)
-            return s->cls->f_update_interval(s);
-        if (s->cls && s->cls->s_update_interval)
-            return s->cls->s_update_interval;
+        if (s->cls) {
+            if (s->cls->f_update_interval)
+                return s->cls->f_update_interval(s);
+            if (s->cls->s_update_interval)
+                return s->cls->s_update_interval;
+            if (s->cls->attributes) {
+                int i = attr_tab_lookup(s->cls->attributes, s->name);
+                if (i != -1) {
+                    double ui = s->cls->attributes[i].s_update_interval;
+                    if (ui >= 0)
+                        return ui;
+                }
+            }
+        }
         return UPDATE_INTERVAL_DEFAULT;
     }
     return UPDATE_INTERVAL_NEVER;
@@ -961,26 +982,39 @@ gchar *sysobj_parent_name_ex(const sysobj *s, gboolean req) {
 }
 
 const gchar *sysobj_label(sysobj *s) {
-        if (s && s->cls && s->cls->f_label) {
+    if (s && s->cls) {
+        if (s->cls->f_label)
             return s->cls->f_label(s);
+        if (s->cls->attributes) {
+            int i = attr_tab_lookup(s->cls->attributes, s->name);
+            if (i != -1)
+                if (s->cls->attributes[i].s_label)
+                    return _(s->cls->attributes[i].s_label);
         }
-        return simple_label(s);
+    }
+    return simple_label(s);
 }
 
 const gchar *sysobj_halp(sysobj *s) {
-        if (s && s->cls && s->cls->f_halp) {
-            return s->cls->f_halp(s);
-        }
-        return simple_halp(s);
+    if (s && s->cls && s->cls->f_halp) {
+        return s->cls->f_halp(s);
+    }
+    return simple_halp(s);
 }
 
 gchar *sysobj_format(sysobj *s, int fmt_opts) {
     if (s) {
         sysobj_read(s, FALSE);
-        if (s->cls && s->cls->f_format)
-            return s->cls->f_format(s, fmt_opts);
-        else
-            return simple_format(s, fmt_opts);
+        if (s->cls)
+            if (s->cls->f_format)
+                return s->cls->f_format(s, fmt_opts);
+            else if (s->cls->attributes) {
+                int i = attr_tab_lookup(s->cls->attributes, s->name);
+                if (i != -1)
+                    if (s->cls->attributes[i].fmt_func)
+                        return s->cls->attributes[i].fmt_func(s, fmt_opts);
+            }
+        return simple_format(s, fmt_opts);
     }
     return NULL;
 }
@@ -1386,8 +1420,9 @@ gboolean sysobj_data_expired(sysobj *s) {
         double ui = sysobj_update_interval(s);
         if (ui == UPDATE_INTERVAL_NEVER)
             return !s->data.was_read; /* once read, never expires */
-
-        if ( (sysobj_elapsed() - s->data.stamp) >=  ui ) {
+        if (ui < 0)
+            ui = UPDATE_INTERVAL_DEFAULT;
+        if ( (sysobj_elapsed() - s->data.stamp) >= ui ) {
             return TRUE;
         }
     }
@@ -1400,4 +1435,11 @@ int class_count() {
 
 int sysobj_virt_count() {
     return g_slist_length(vo_list);
+}
+
+int attr_tab_lookup(const attr_tab *attributes, const gchar *name) {
+    for(int i = 0; attributes[i].attr_name; i++)
+        if (SEQ(name, attributes[i].attr_name))
+            return i;
+    return -1;
 }

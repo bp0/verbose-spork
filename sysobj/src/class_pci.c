@@ -36,15 +36,30 @@ const gchar pci_ids_reference_markup_text[] =
 
 static gchar *pci_ids_format(sysobj *obj, int fmt_opts);
 static gchar *pci_format(sysobj *obj, int fmt_opts);
-
-static gboolean pci_verify_idcomp(sysobj *obj);
 static gchar *pci_format_idcomp(sysobj *obj, int fmt_opts);
-static guint pci_flags_idcomp(sysobj *obj);
-
 static gchar *pci_format_device(sysobj *obj, int fmt_opts);
 
 static const double pci_update_interval = 6.0;
 static const double pci_ids_update_interval = 4.0;
+
+attr_tab pci_idcomp_items[] = {
+    //TODO: labels
+    { "vendor", NULL, OF_IS_VENDOR, NULL, -1 },
+    { "device", NULL, OF_NONE, NULL, -1 },
+    { "subsystem_vendor", NULL, OF_IS_VENDOR, NULL, -1 },
+    { "subsystem_device", NULL, OF_NONE, NULL, -1 },
+    { "class", NULL, OF_NONE, NULL, -1 },
+    ATTR_TAB_LAST
+};
+
+attr_tab pcie_items[] = {
+    //TODO: labels
+    { "max_link_speed", NULL, OF_NONE, NULL, 4.0 },
+    { "max_link_width", NULL, OF_NONE, NULL, 4.0 },
+    { "current_link_speed", NULL, OF_NONE, NULL, 0.2 },
+    { "current_link_width", NULL, OF_NONE, NULL, 0.2 },
+    ATTR_TAB_LAST
+};
 
 static sysobj_class cls_pci[] = {
   /* all under :/pci */
@@ -60,8 +75,10 @@ static sysobj_class cls_pci[] = {
     .f_format = pci_format_device, .s_update_interval = pci_update_interval },
   { SYSOBJ_CLASS_DEF
     .tag = "pci:device_id", .pattern = "/sys/devices*/????:??:??.?/*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .f_verify = pci_verify_idcomp,
-    .f_format = pci_format_idcomp, .f_flags = pci_flags_idcomp, .s_update_interval = pci_update_interval },
+    .attributes = pci_idcomp_items, .f_format = pci_format_idcomp },
+  { SYSOBJ_CLASS_DEF
+    .tag = "pci:pcie", .pattern = "/sys/devices*/????:??:??.?/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .attributes = pcie_items },
 
   { SYSOBJ_CLASS_DEF
     .tag = "pci.ids", .pattern = ":/pci/pci.ids", .flags = OF_CONST,
@@ -117,30 +134,6 @@ static gchar *pci_format(sysobj *obj, int fmt_opts) {
         return ret;
     }
     return simple_format(obj, fmt_opts);
-}
-
-static const gchar *pci_idcomps[] =
-{ "vendor", "device", "subsystem_vendor", "subsystem_device", "class" };
-
-static guint pci_flags_idcomp(sysobj *obj) {
-    /* replacing flags, so need to include these */
-    int def_flags = OF_GLOB_PATTERN | OF_CONST;
-    if (obj) {
-        if (SEQ(obj->name, "vendor")
-            || SEQ(obj->name, "subsystem_vendor") ) {
-                return def_flags | OF_IS_VENDOR;
-        }
-    }
-    return def_flags;
-}
-
-static gboolean pci_verify_idcomp(sysobj *obj) {
-    int i = 0;
-    for (i = 0; i < (int)G_N_ELEMENTS(pci_idcomps); i++ ) {
-        if (SEQ(obj->name, pci_idcomps[i]) )
-            return TRUE;
-    }
-    return FALSE;
 }
 
 util_pci_id *get_pci_id(gchar *dev_path) {
@@ -214,9 +207,7 @@ void class_pci() {
     for (i = 0; i < (int)G_N_ELEMENTS(vol); i++)
         sysobj_virt_add(&vol[i]);
 
-
     /* add classes */
     for (i = 0; i < (int)G_N_ELEMENTS(cls_pci); i++)
         class_add(&cls_pci[i]);
-
 }

@@ -33,17 +33,20 @@ const gchar usb_ids_reference_markup_text[] =
     "\n";
 
 static gchar *usb_format(sysobj *obj, int fmt_opts);
-static guint usb_flags(sysobj *obj);
-static double usb_update_interval(sysobj *obj);
-static double usb_ids_update_interval(sysobj *obj);
-static gboolean usb_verify_idcomp(sysobj *obj);
 static gchar *usb_format_idcomp(sysobj *obj, int fmt_opts);
 static gboolean usb_verify_device(sysobj *obj) { return (obj) ? verify_usb_device(obj->name) : FALSE; }
 static gchar *usb_format_device(sysobj *obj, int fmt_opts);
 static gboolean usb_verify_bus(sysobj *obj) { return (obj) ? verify_usb_bus(obj->name) : FALSE; }
 static gchar *usb_format_bus(sysobj *obj, int fmt_opts);
 
-#define CLS_USB_FLAGS OF_GLOB_PATTERN | OF_CONST
+static const double usb_update_interval = 10.0;
+
+attr_tab usb_idcomp_items[] = {
+    //TODO: labels
+    { "idVendor", NULL, OF_IS_VENDOR, NULL, -1 },
+    { "idProduct", NULL, OF_NONE, NULL, -1 },
+    ATTR_TAB_LAST
+};
 
 /*
  * usbN and usbNportM
@@ -52,36 +55,35 @@ static gchar *usb_format_bus(sysobj *obj, int fmt_opts);
 static sysobj_class cls_usb[] = {
   /* all under :/usb */
   { SYSOBJ_CLASS_DEF
-    .tag = "usb", .pattern = ":/usb*", .flags = CLS_USB_FLAGS,
-    .f_format = usb_format, .f_flags = usb_flags, .f_update_interval = usb_update_interval },
+    .tag = "usb", .pattern = ":/usb*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .f_format = usb_format, .s_update_interval = usb_update_interval },
   { SYSOBJ_CLASS_DEF
-    .tag = "usb:device_list", .pattern = "/sys/bus/usb/devices", .flags = CLS_USB_FLAGS,
-    .f_format = usb_format, .f_flags = usb_flags, .f_update_interval = usb_update_interval },
+    .tag = "usb:device_list", .pattern = "/sys/bus/usb/devices", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .f_format = usb_format, .s_update_interval = usb_update_interval },
   { SYSOBJ_CLASS_DEF
-    .tag = "usb:bus", .pattern = "/sys/devices*/usb*", .flags = CLS_USB_FLAGS,
+    .tag = "usb:bus", .pattern = "/sys/devices*/usb*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_verify = usb_verify_bus,
-    .f_format = usb_format_bus, .f_flags = usb_flags, .f_update_interval = usb_update_interval },
+    .f_format = usb_format_bus, .s_update_interval = usb_update_interval },
   { SYSOBJ_CLASS_DEF
-    .tag = "usb:device", .pattern = "/sys/devices*/*-*", .flags = CLS_USB_FLAGS,
+    .tag = "usb:device", .pattern = "/sys/devices*/*-*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_verify = usb_verify_device,
-    .f_format = usb_format_device, .f_flags = usb_flags, .f_update_interval = usb_update_interval },
+    .f_format = usb_format_device, .s_update_interval = usb_update_interval },
   { SYSOBJ_CLASS_DEF
-    .tag = "usb:device_id", .pattern = "/sys/devices*/*-*/*", .flags = CLS_USB_FLAGS,
-    .f_verify = usb_verify_idcomp,
-    .f_format = usb_format_idcomp, .f_flags = usb_flags, .f_update_interval = usb_update_interval },
+    .tag = "usb:device_id", .pattern = "/sys/devices*/*-*/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .attributes = usb_idcomp_items, .f_format = usb_format_idcomp },
 /*  { SYSOBJ_CLASS_DEF
-    .tag = "usb:iface", .pattern = "/sys/devices*<<<<>>>>/*-*:*.*", .flags = CLS_USB_FLAGS,
+    .tag = "usb:iface", .pattern = "/sys/devices*<<<<>>>>/*-*:*.*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_verify = usb_verify_idcomp,
-    .f_format = usb_format_idcomp, .f_flags = usb_flags, .f_update_interval = usb_update_interval }, */
+    .f_format = usb_format_idcomp, .s_update_interval = usb_update_interval }, */
 /*  { SYSOBJ_CLASS_DEF
-    .tag = "usb:iface_id", .pattern = "/sys/devices*<<<<>>>>/*-*:*.*<<<<>>>>/*", .flags = CLS_USB_FLAGS,
+    .tag = "usb:iface_id", .pattern = "/sys/devices*<<<<>>>>/*-*:*.*<<<<>>>>/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_verify = usb_verify_idcomp,
-    .f_format = usb_format_idcomp, .f_flags = usb_flags, .f_update_interval = usb_update_interval }, */
+    .f_format = usb_format_idcomp, .s_update_interval = usb_update_interval }, */
 
   { SYSOBJ_CLASS_DEF
     .tag = "usb.ids", .pattern = ":/usb/usb.ids", .flags = OF_CONST,
     .s_halp = usb_ids_reference_markup_text, .s_label = "usb.ids lookup virtual tree",
-    .f_update_interval = usb_ids_update_interval },
+    .s_update_interval = 10.0 },
   { SYSOBJ_CLASS_DEF
     .tag = "usb.ids:id", .pattern = ":/usb/usb.ids/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .s_halp = usb_ids_reference_markup_text, .s_label = "usb.ids lookup result" },
@@ -130,33 +132,6 @@ static gchar *usb_format(sysobj *obj, int fmt_opts) {
         return ret;
     }
     return simple_format(obj, fmt_opts);
-}
-
-static guint usb_flags(sysobj *obj) {
-    PARAM_NOT_UNUSED(obj);
-    return CLS_USB_FLAGS;
-}
-
-static double usb_update_interval(sysobj *obj) {
-    PARAM_NOT_UNUSED(obj);
-    return 10.0;
-}
-
-static double usb_ids_update_interval(sysobj *obj) {
-    PARAM_NOT_UNUSED(obj);
-    return 10.0;
-}
-
-static const gchar *usb_idcomps[] =
-{ "idVendor", "idProduct" };
-
-static gboolean usb_verify_idcomp(sysobj *obj) {
-    int i = 0;
-    for (i = 0; i < (int)G_N_ELEMENTS(usb_idcomps); i++ ) {
-        if (SEQ(obj->name, usb_idcomps[i]) )
-            return TRUE;
-    }
-    return FALSE;
 }
 
 util_usb_id *get_usb_id(gchar *dev_path) {
@@ -216,13 +191,10 @@ void class_usb() {
     int i = 0;
 
     /* add virtual sysobj */
-    for (i = 0; i < (int)G_N_ELEMENTS(vol); i++) {
+    for (i = 0; i < (int)G_N_ELEMENTS(vol); i++)
         sysobj_virt_add(&vol[i]);
-    }
 
     /* add classes */
-    for (i = 0; i < (int)G_N_ELEMENTS(cls_usb); i++) {
+    for (i = 0; i < (int)G_N_ELEMENTS(cls_usb); i++)
         class_add(&cls_usb[i]);
-    }
-
 }
