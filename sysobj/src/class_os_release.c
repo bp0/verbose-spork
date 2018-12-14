@@ -81,6 +81,7 @@ static sysobj_class cls_os_release[] = {
 
   { SYSOBJ_CLASS_DEF
     .tag = "os_release", .pattern = ":/os/os_release", .flags = OF_CONST,
+    .s_halp = os_release_reference_markup_text,
     .attributes = os_items, .f_format = os_format, .s_update_interval = 39.0 },
   { SYSOBJ_CLASS_DEF
     .tag = "os_release:item", .pattern = ":/os/os_release/*", .flags = OF_GLOB_PATTERN | OF_CONST,
@@ -90,6 +91,7 @@ static sysobj_class cls_os_release[] = {
 
   { SYSOBJ_CLASS_DEF
     .tag = "lsb_release", .pattern = ":/os/lsb_release", .flags = OF_CONST,
+    .s_halp = lsb_release_reference_markup_text,
     .attributes = os_items, .f_format = os_format, .s_update_interval = 39.0 },
   { SYSOBJ_CLASS_DEF
     .tag = "lsb_release:item", .pattern = ":/os/lsb_release/*", .flags = OF_GLOB_PATTERN | OF_CONST,
