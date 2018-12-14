@@ -288,6 +288,21 @@ static void gpu_pci_hwmon(gpud *g) {
     g_free(gpu_path);
 }
 
+static void gpu_intel(gpud *g) {
+    if (!g->name || !g->drm_card) return;
+    gchar *gpu_path = util_build_fn(":/gpu", g->name);
+
+    sysobj *max_freq = sysobj_new_from_printf("/sys/class/drm/%s/%s", g->drm_card, "gt_max_freq_mhz");
+    sysobj *act_freq = sysobj_new_from_printf("/sys/class/drm/%s/%s", g->drm_card, "gt_act_freq_mhz");
+    if (max_freq->exists)
+        sysobj_virt_add_simple(gpu_path, "intel.max_freq", max_freq->path, VSO_TYPE_SYMLINK );
+    if (act_freq->exists)
+        sysobj_virt_add_simple(gpu_path, "intel.actual_freq", act_freq->path, VSO_TYPE_SYMLINK );
+    sysobj_free(max_freq);
+    sysobj_free(act_freq);
+    g_free(gpu_path);
+}
+
 static void gpu_pcie(gpud *g) {
     if (!g->name || !g->pci_addy) return;
 
@@ -413,12 +428,14 @@ static void gpu_scan() {
             sysobj_virt_add_simple(gpu_path, NULL, "*", VSO_TYPE_DIR);
             if (g->drm_card) {
                 gchar *lt = g_strdup_printf(":/gpu/found/" PFX_DRM "%s", g->drm_card);
-                sysobj_virt_add_simple(gpu_path, g->drm_card, lt, VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_AUTOLINK );
+                sysobj_virt_add_simple(gpu_path, "drm", lt, VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_AUTOLINK );
                 g_free(lt);
+                /* extra stuff */
+                gpu_intel(g);
             }
             if (g->pci_addy) {
                 gchar *lt = g_strdup_printf(":/gpu/found/" PFX_PCI "%s", g->pci_addy);
-                sysobj_virt_add_simple(gpu_path, g->pci_addy, lt, VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_AUTOLINK );
+                sysobj_virt_add_simple(gpu_path, "pci", lt, VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_AUTOLINK );
                 /* name by pci.ids */
                 gchar *v_str = sysobj_raw_from_printf("%s/%s", lt, "vendor");
                 gchar *d_str = sysobj_raw_from_printf("%s/%s", lt, "device");
@@ -440,7 +457,7 @@ static void gpu_scan() {
                 /* still no device? link the dt node */
                 if (!g->device_path) {
                     gchar *lt = g_strdup_printf(":/gpu/found/" PFX_DT "%s", g->dt_name);
-                    sysobj_virt_add_simple(gpu_path, g->dt_name, lt, VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_AUTOLINK );
+                    sysobj_virt_add_simple(gpu_path, "of_node", lt, VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_AUTOLINK );
                     g_free(lt);
                 }
                 /* name by dt.ids */
@@ -454,7 +471,7 @@ static void gpu_scan() {
             if (g->device_path) {
                 sysobj *dev = sysobj_new_fast(g->device_path);
                 if (!g->drm_card && !g->pci_addy)
-                    sysobj_virt_add_simple(gpu_path, dev->name, dev->path, VSO_TYPE_SYMLINK | VSO_TYPE_AUTOLINK | VSO_TYPE_DYN );
+                    sysobj_virt_add_simple(gpu_path, "device", dev->path, VSO_TYPE_SYMLINK | VSO_TYPE_AUTOLINK | VSO_TYPE_DYN );
 
                 /* devfreq */
                 gchar *devfreq_path = g_strdup_printf("%s/devfreq/%s", dev->path, dev->name);
