@@ -26,18 +26,7 @@ const gchar *dmi_id_label(sysobj *obj);
 gchar *dmi_id_format(sysobj *obj, int fmt_opts);
 guint dmi_id_flags(sysobj *obj, const sysobj_class *cls);
 
-static sysobj_class cls_dmi_id[] = {
-  { SYSOBJ_CLASS_DEF
-    .tag = "dmi:id", .pattern = "/sys/devices/virtual/dmi/id*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .f_verify = dmi_id_verify, .f_label = dmi_id_label, .f_flags = dmi_id_flags,
-    .f_format = dmi_id_format },
-
-  { SYSOBJ_CLASS_DEF
-    .tag = "dmidecode:string", .pattern = ":/dmidecode/--string/*", .flags = OF_GLOB_PATTERN | OF_REQ_ROOT | OF_CONST,
-    .s_label = N_("Result of `dmidecode --string {}`") },
-};
-
-static const struct { gchar *rp; gchar *lbl; int extra_flags; } dmi_id_items[] = {
+attr_tab dmi_id_items[] = {
     { "id",  N_("Desktop Management Interface (DMI) product information"), OF_NONE },
     { "bios_vendor",       N_("BIOS Vendor"), OF_IS_VENDOR },
     { "bios_version",      N_("BIOS Version"), OF_NONE },
@@ -58,7 +47,18 @@ static const struct { gchar *rp; gchar *lbl; int extra_flags; } dmi_id_items[] =
     { "chassis_version",   N_("Chassis Version"), OF_NONE },
     { "chassis_serial",    N_("Chassis Serial"), OF_REQ_ROOT },
     { "chassis_asset_tag", N_("Chassis Asset Tag"), OF_NONE },
-    { NULL, NULL, 0 }
+    ATTR_TAB_LAST
+};
+
+static sysobj_class cls_dmi_id[] = {
+  { SYSOBJ_CLASS_DEF
+    .tag = "dmi:id", .pattern = "/sys/devices/virtual/dmi/id*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .s_update_interval = UPDATE_INTERVAL_NEVER,
+    .attributes = dmi_id_items, .f_verify = dmi_id_verify, .f_format = dmi_id_format },
+
+  { SYSOBJ_CLASS_DEF
+    .tag = "dmidecode:string", .pattern = ":/dmidecode/--string/*", .flags = OF_GLOB_PATTERN | OF_REQ_ROOT | OF_CONST,
+    .s_label = N_("Result of `dmidecode --string {}`") },
 };
 
 static const gchar *chassis_types[] = {
@@ -102,16 +102,6 @@ static const gchar *chassis_types[] = {
     NULL,
 };
 
-int dmi_id_lookup(const gchar *key) {
-    int i = 0;
-    while(dmi_id_items[i].rp) {
-        if (SEQ(key, dmi_id_items[i].rp))
-            return i;
-        i++;
-    }
-    return -1;
-}
-
 gboolean dmi_value_is_placeholder(sysobj *obj) {
     gboolean ret = FALSE;
     gchar *v = NULL, *chk = NULL, *p = NULL;
@@ -137,7 +127,7 @@ gboolean dmi_value_is_placeholder(sysobj *obj) {
     };
 
     /* only consider known items */
-    i = dmi_id_lookup(obj->name);
+    i = attr_tab_lookup(dmi_id_items, obj->name);
     if (i == -1)
         return FALSE;
 
@@ -179,7 +169,7 @@ dmi_ignore_no:
 
 gboolean dmi_id_verify(sysobj *obj) {
 /*
-    int i = dmi_id_lookup(obj->name);
+    int i = attr_tab_lookup(dmi_id_items, obj->name);
     if (i != -1)
         return TRUE;
 */
@@ -189,13 +179,6 @@ gboolean dmi_id_verify(sysobj *obj) {
     } else if (verify_parent(obj, "/dmi/id"))
         return TRUE;
     return FALSE;
-}
-
-const gchar *dmi_id_label(sysobj *obj) {
-    int i = dmi_id_lookup(obj->name);
-    if (i != -1)
-        return _(dmi_id_items[i].lbl);
-    return NULL;
 }
 
 gchar *dmi_id_format(sysobj *obj, int fmt_opts) {
@@ -219,15 +202,6 @@ gchar *dmi_id_format(sysobj *obj, int fmt_opts) {
         }
     }
     return simple_format(obj, fmt_opts);
-}
-
-guint dmi_id_flags(sysobj *obj, const sysobj_class *cls) {
-    if (obj) {
-        int i = dmi_id_lookup(obj->name);
-        if (i != -1)
-            return cls->flags | dmi_id_items[i].extra_flags;
-    }
-    return cls->flags;
 }
 
 void class_dmi_id() {
