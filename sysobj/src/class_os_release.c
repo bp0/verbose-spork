@@ -20,6 +20,8 @@
 
 #include "sysobj.h"
 
+static gboolean verify_true(sysobj *obj) { return TRUE; }
+
 static gchar *os_format(sysobj *obj, int fmt_opts);
 static const gchar *os_release_label(sysobj *obj);
 static gchar *os_release_format(sysobj *obj, int fmt_opts);
@@ -38,6 +40,23 @@ const gchar lsb_release_reference_markup_text[] =
 
 static char gen_raw_label[] = N_("Raw operating system release information");
 
+/* incomplete need .f_verify/verify_true() */
+attr_tab os_items[] = {
+    { "os_release",  N_("operating system identification (/usr/lib/os-release)") },
+    { "lsb_release",  N_("operating system identification (/etc/lsb-release)") },
+    ATTR_TAB_LAST
+};
+
+/* incomplete need .f_verify/verify_true() */
+attr_tab os_release_items[] = {
+    ATTR_TAB_LAST
+};
+
+/* incomplete need .f_verify/verify_true() */
+attr_tab lsb_release_items[] = {
+    ATTR_TAB_LAST
+};
+
 static sysobj_class cls_os_release[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "os_release:raw", .pattern = "/usr/lib/os-release", .flags = OF_CONST,
@@ -55,25 +74,28 @@ static sysobj_class cls_os_release[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "os", .pattern = ":/os", .flags = OF_CONST,
     .f_format = os_format, .s_update_interval = 62.0 },
+  { SYSOBJ_CLASS_DEF
+    .tag = "os:item", .pattern = ":/os/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .attributes = os_items, .f_verify = verify_true,
+    .f_format = os_format, .s_update_interval = 62.0 },
 
   { SYSOBJ_CLASS_DEF
     .tag = "os_release", .pattern = ":/os/os_release", .flags = OF_CONST,
-    .s_halp = os_release_reference_markup_text, .f_label = os_release_label,
-    .f_format = os_release_format, .s_update_interval = 60.0 },
+    .attributes = os_items, .f_format = os_format, .s_update_interval = 39.0 },
   { SYSOBJ_CLASS_DEF
     .tag = "os_release:item", .pattern = ":/os/os_release/*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .s_halp = os_release_reference_markup_text, .f_label = os_release_label,
+    .attributes = os_release_items, .f_verify = verify_true,
+    .s_halp = os_release_reference_markup_text,
     .f_format = os_release_format, .s_update_interval = 30.0 },
 
   { SYSOBJ_CLASS_DEF
     .tag = "lsb_release", .pattern = ":/os/lsb_release", .flags = OF_CONST,
-    .s_halp = lsb_release_reference_markup_text, .f_label = lsb_release_label,
-    .f_format = lsb_release_format, .s_update_interval = 60.0 },
+    .attributes = os_items, .f_format = os_format, .s_update_interval = 39.0 },
   { SYSOBJ_CLASS_DEF
     .tag = "lsb_release:item", .pattern = ":/os/lsb_release/*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .s_halp = lsb_release_reference_markup_text, .f_label = lsb_release_label,
+    .attributes = lsb_release_items, .f_verify = verify_true,
+    .s_halp = lsb_release_reference_markup_text,
     .f_format = lsb_release_format, .s_update_interval = 30.0 },
-
 };
 
 static gchar *os_format(sysobj *obj, int fmt_opts) {
@@ -90,33 +112,6 @@ static gchar *os_format(sysobj *obj, int fmt_opts) {
         return ret;
     }
     return g_strdup("Linux");
-}
-
-static const struct { gchar *rp; gchar *lbl; int extra_flags; } os_release_items[] = {
-    { "os_release",  N_("Operating system identification (/usr/lib/os-release)"), OF_NONE },
-    { NULL, NULL, 0 }
-};
-
-static const struct { gchar *rp; gchar *lbl; int extra_flags; } lsb_release_items[] = {
-    { "lsb_release",  N_("Operating system identification (/etc/lsb-release)"), OF_NONE },
-    { NULL, NULL, 0 }
-};
-
-int os_release_lookup(const gchar *key) {
-    int i = 0;
-    while(os_release_items[i].rp) {
-        if (SEQ(key, os_release_items[i].rp))
-            return i;
-        i++;
-    }
-    return -1;
-}
-
-const gchar *os_release_label(sysobj *obj) {
-    int i = os_release_lookup(obj->name);
-    if (i != -1)
-        return _(os_release_items[i].lbl);
-    return NULL;
 }
 
 static const gchar *color_lookup(gchar *ansi_color) {
@@ -225,23 +220,6 @@ static gchar *os_release_format(sysobj *obj, int fmt_opts) {
     return simple_format(obj, fmt_opts);
 }
 
-int lsb_release_lookup(const gchar *key) {
-    int i = 0;
-    while(lsb_release_items[i].rp) {
-        if (SEQ(key, lsb_release_items[i].rp))
-            return i;
-        i++;
-    }
-    return -1;
-}
-
-const gchar *lsb_release_label(sysobj *obj) {
-    int i = lsb_release_lookup(obj->name);
-    if (i != -1)
-        return _(lsb_release_items[i].lbl);
-    return NULL;
-}
-
 static gchar *lsb_release_format(sysobj *obj, int fmt_opts) {
     if (SEQ("lsb_release", obj->name)) {
         gchar *ret = NULL;
@@ -267,9 +245,7 @@ static gchar *lsb_release_format(sysobj *obj, int fmt_opts) {
 }
 
 void class_os_release() {
-    int i = 0;
     /* add classes */
-    for (i = 0; i < (int)G_N_ELEMENTS(cls_os_release); i++) {
+    for (int i = 0; i < (int)G_N_ELEMENTS(cls_os_release); i++)
         class_add(&cls_os_release[i]);
-    }
 }
