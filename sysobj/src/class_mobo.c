@@ -21,31 +21,23 @@
 #include "sysobj.h"
 
 static gchar *mobo_format(sysobj *obj, int fmt_opts);
-static double mobo_update_interval(sysobj *obj);
 
 static sysobj_class cls_mobo[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "mobo", .pattern = ":/mobo*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .f_format = mobo_format, .f_update_interval = mobo_update_interval },
+    .f_format = mobo_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
 };
 
 static gchar *mobo_format(sysobj *obj, int fmt_opts) {
-    if (SEQ("mobo", obj->name)) {
+    if (SEQ(":/mobo", obj->path)) {
         gchar *name = sysobj_raw_from_fn(":/mobo", "name");
         return name;
     }
     return simple_format(obj, fmt_opts);
 }
 
-static double mobo_update_interval(sysobj *obj) {
-    PARAM_NOT_UNUSED(obj);
-    return 0.0;
-}
-
 void class_mobo() {
-    int i = 0;
     /* add classes */
-    for (i = 0; i < (int)G_N_ELEMENTS(cls_mobo); i++) {
+    for (int i = 0; i < (int)G_N_ELEMENTS(cls_mobo); i++)
         class_add(&cls_mobo[i]);
-    }
 }
