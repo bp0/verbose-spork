@@ -29,9 +29,21 @@ const gchar devfreq_reference_markup_text[] =
 static gboolean devfreq_verify(sysobj *obj);
 static gboolean devfreq_dev_verify(sysobj *obj);
 static gboolean devfreq_item_verify(sysobj *obj);
-static const gchar *devfreq_label(sysobj *obj);
 static gchar *devfreq_format(sysobj *obj, int fmt_opts);
 static double devfreq_update_interval(sysobj *obj);
+
+attr_tab devfreq_items[] = {
+    { "governor",  N_("devfreq governor"), OF_NONE, NULL, -1 },
+    { "min_freq",  N_("minimum frequency requested"), OF_NONE, fmt_hz_to_mhz, 0.1 },
+    { "max_freq",  N_("maximum frequency requested"), OF_NONE, fmt_hz_to_mhz, 0.1 },
+    { "cur_freq",  N_("current frequency"), OF_NONE, fmt_hz_to_mhz, 0.1 },
+    { "target_freq",  N_("next governor-predicted target frequency"), OF_NONE, fmt_hz_to_mhz, 0.1 },
+    { "polling_interval",  N_("requested polling interval"), OF_NONE, fmt_milliseconds, 1.7 },
+    { "trans_stat",  N_("statistics of devfreq behavior"), OF_NONE, NULL, -1 },
+    { "available_frequencies",  N_("available frequencies"), OF_NONE, NULL, -1 },
+    { "available_governors",  N_("available devfreq governors"), OF_NONE, NULL, -1 },
+    { NULL, NULL, 0 }
+};
 
 static sysobj_class cls_devfreq[] = {
   { SYSOBJ_CLASS_DEF
@@ -44,41 +56,12 @@ static sysobj_class cls_devfreq[] = {
     .f_verify = devfreq_dev_verify, .f_format = devfreq_format },
   { SYSOBJ_CLASS_DEF
     .tag = "devfreq:dev:item", .pattern = "/sys/devices/*/devfreq/*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .s_halp = devfreq_reference_markup_text, .f_label = devfreq_label,
-    .f_verify = devfreq_item_verify, .f_format = devfreq_format, .f_update_interval = devfreq_update_interval },
+    .s_halp = devfreq_reference_markup_text,
+    .attributes = devfreq_items, .f_verify = devfreq_item_verify },
 };
-
-static const struct { gchar *item; gchar *lbl; int extra_flags; } devfreq_items[] = {
-    { "governor",  N_("devfreq governor"), OF_NONE },
-    { "min_freq",  N_("minimum frequency requested"), OF_NONE },
-    { "max_freq",  N_("maximum frequency requested"), OF_NONE },
-    { "cur_freq",  N_("current frequency"), OF_NONE },
-    { "target_freq",  N_("next governor-predicted target frequency"), OF_NONE },
-    { "polling_interval",  N_("requested polling interval"), OF_NONE },
-    { "trans_stat",  N_("statistics of devfreq behavior"), OF_NONE },
-    { "available_frequencies",  N_("available frequencies"), OF_NONE },
-    { "available_governors",  N_("available devfreq governors"), OF_NONE },
-    { NULL, NULL, 0 }
-};
-
-int devfreq_lookup(const gchar *key) {
-    int i = 0;
-    while(devfreq_items[i].item) {
-        if (SEQ(key, devfreq_items[i].item))
-            return i;
-        i++;
-    }
-    return -1;
-}
-
-const gchar *devfreq_label(sysobj *obj) {
-    int i = devfreq_lookup(obj->name);
-    if (i != -1)
-        return _(devfreq_items[i].lbl);
-    return NULL;
-}
 
 static gboolean devfreq_verify(sysobj *obj) {
+    //TODO: try harder, maybe check class devfreq for a link
     if (SEQ("devfreq", obj->name) )
         return TRUE;
     return FALSE;
@@ -103,7 +86,7 @@ static gboolean devfreq_item_verify(sysobj *obj) {
     g_free(chkpath);
     if (!ret) return FALSE;
 
-    int i = devfreq_lookup(obj->name);
+    int i = attr_tab_lookup(devfreq_items, obj->name);
     if (i != -1)
         return TRUE;
     return FALSE;
@@ -127,23 +110,7 @@ static gchar *devfreq_format(sysobj *obj, int fmt_opts) {
         g_free(cur);
         return ret;
     }
-
-    if ( SEQ(obj->cls->tag, "devfreq:dev:item") ) {
-        if ( g_str_has_suffix(obj->name, "_freq") )
-            return fmt_hz_to_mhz(obj, fmt_opts);
-        if ( SEQ(obj->name, "polling_interval") )
-            return fmt_milliseconds(obj, fmt_opts);
-    }
-
     return simple_format(obj, fmt_opts);
-}
-
-static double devfreq_update_interval(sysobj *obj) {
-    if ( SEQ(obj->cls->tag, "devfreq:dev:item") ) {
-        if ( g_str_has_suffix(obj->name, "_freq") )
-            return 0.1;
-    }
-    return 1.7;
 }
 
 void class_devfreq() {
