@@ -35,39 +35,38 @@ const gchar pci_ids_reference_markup_text[] =
     "\n";
 
 static gchar *pci_ids_format(sysobj *obj, int fmt_opts);
-
 static gchar *pci_format(sysobj *obj, int fmt_opts);
-static guint pci_flags(sysobj *obj);
-static double pci_update_interval(sysobj *obj);
+
 static gboolean pci_verify_idcomp(sysobj *obj);
 static gchar *pci_format_idcomp(sysobj *obj, int fmt_opts);
+static guint pci_flags_idcomp(sysobj *obj);
+
 static gchar *pci_format_device(sysobj *obj, int fmt_opts);
 
-static double pci_ids_update_interval(sysobj *obj);
-
-#define CLS_PCI_FLAGS OF_GLOB_PATTERN | OF_CONST
+static const double pci_update_interval = 6.0;
+static const double pci_ids_update_interval = 4.0;
 
 static sysobj_class cls_pci[] = {
   /* all under :/pci */
   { SYSOBJ_CLASS_DEF
-    .tag = "pci", .pattern = ":/pci*", .flags = CLS_PCI_FLAGS,
-    .f_format = pci_format, .f_flags = pci_flags, .f_update_interval = pci_update_interval },
+    .tag = "pci", .pattern = ":/pci*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .f_format = pci_format, .s_update_interval = pci_update_interval },
 
   { SYSOBJ_CLASS_DEF
-    .tag = "pci:device_list", .pattern = "/sys/bus/pci/devices", .flags = CLS_PCI_FLAGS,
-    .f_format = pci_format, .f_flags = pci_flags, .f_update_interval = pci_update_interval },
+    .tag = "pci:device_list", .pattern = "/sys/bus/pci/devices", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .f_format = pci_format, .s_update_interval = pci_update_interval },
   { SYSOBJ_CLASS_DEF
-    .tag = "pci:device", .pattern = "/sys/devices*/????:??:??.?", .flags = CLS_PCI_FLAGS,
-    .f_format = pci_format_device, .f_flags = pci_flags, .f_update_interval = pci_update_interval },
+    .tag = "pci:device", .pattern = "/sys/devices*/????:??:??.?", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .f_format = pci_format_device, .s_update_interval = pci_update_interval },
   { SYSOBJ_CLASS_DEF
-    .tag = "pci:device_id", .pattern = "/sys/devices*/????:??:??.?/*", .flags = CLS_PCI_FLAGS,
+    .tag = "pci:device_id", .pattern = "/sys/devices*/????:??:??.?/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_verify = pci_verify_idcomp,
-    .f_format = pci_format_idcomp, .f_flags = pci_flags, .f_update_interval = pci_update_interval },
+    .f_format = pci_format_idcomp, .f_flags = pci_flags_idcomp, .s_update_interval = pci_update_interval },
 
   { SYSOBJ_CLASS_DEF
     .tag = "pci.ids", .pattern = ":/pci/pci.ids", .flags = OF_CONST,
     .s_halp = pci_ids_reference_markup_text, .s_label = "pci.ids lookup virtual tree",
-    .f_update_interval = pci_ids_update_interval, .f_format = pci_ids_format },
+    .s_update_interval = pci_ids_update_interval, .f_format = pci_ids_format },
   { SYSOBJ_CLASS_DEF
     .tag = "pci.ids:id", .pattern = ":/pci/pci.ids/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .s_halp = pci_ids_reference_markup_text, .s_label = "pci.ids lookup result", .f_format = pci_ids_format },
@@ -75,11 +74,9 @@ static sysobj_class cls_pci[] = {
 
 static sysobj_virt vol[] = {
     { .path = ":/pci/bus", .str = SYSFS_PCI,
-      .type = VSO_TYPE_AUTOLINK | VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_CONST,
-      .f_get_data = NULL, .f_get_type = NULL },
+      .type = VSO_TYPE_AUTOLINK | VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_CONST },
     { .path = ":/pci", .str = "*",
-      .type = VSO_TYPE_DIR | VSO_TYPE_CONST,
-      .f_get_data = NULL, .f_get_type = NULL },
+      .type = VSO_TYPE_DIR | VSO_TYPE_CONST },
 };
 
 static gboolean name_is_0x04(gchar *name) {
@@ -122,23 +119,20 @@ static gchar *pci_format(sysobj *obj, int fmt_opts) {
     return simple_format(obj, fmt_opts);
 }
 
-static guint pci_flags(sysobj *obj) {
-    PARAM_NOT_UNUSED(obj);
-    return CLS_PCI_FLAGS;
-}
-
-static double pci_ids_update_interval(sysobj *obj) {
-    PARAM_NOT_UNUSED(obj);
-    return 10.0;
-}
-
-static double pci_update_interval(sysobj *obj) {
-    PARAM_NOT_UNUSED(obj);
-    return 10.0;
-}
-
 static const gchar *pci_idcomps[] =
 { "vendor", "device", "subsystem_vendor", "subsystem_device", "class" };
+
+static guint pci_flags_idcomp(sysobj *obj) {
+    /* replacing flags, so need to include these */
+    int def_flags = OF_GLOB_PATTERN | OF_CONST;
+    if (obj) {
+        if (SEQ(obj->name, "vendor")
+            || SEQ(obj->name, "subsystem_vendor") ) {
+                return def_flags | OF_IS_VENDOR;
+        }
+    }
+    return def_flags;
+}
 
 static gboolean pci_verify_idcomp(sysobj *obj) {
     int i = 0;
@@ -217,12 +211,12 @@ void class_pci() {
     int i = 0;
 
     /* add virtual sysobj */
-    for (i = 0; i < (int)G_N_ELEMENTS(vol); i++) {
+    for (i = 0; i < (int)G_N_ELEMENTS(vol); i++)
         sysobj_virt_add(&vol[i]);
-    }
+
 
     /* add classes */
-    for (i = 0; i < (int)G_N_ELEMENTS(cls_pci); i++) {
+    for (i = 0; i < (int)G_N_ELEMENTS(cls_pci); i++)
         class_add(&cls_pci[i]);
-    }
+
 }

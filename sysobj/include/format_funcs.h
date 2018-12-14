@@ -48,7 +48,6 @@ gchar *fmt_KiB(sysobj *obj, int fmt_opts);
 gchar *fmt_KiB_to_MiB(sysobj *obj, int fmt_opts);
 gchar *fmt_KiB_to_higher(sysobj *obj, int fmt_opts); /* up to MiB, GiB, etc */
 
-
 gchar *formatted_time_span(double real_seconds, gboolean short_version, gboolean include_seconds);
 
 /* table is null-terminated string list of null-terminated UNTRANSLATED strings
