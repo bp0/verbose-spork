@@ -20,46 +20,28 @@
 
 #include "sysobj.h"
 
-static const gchar *rpi_label(sysobj *s);
 static gchar *rpi_format(sysobj *obj, int fmt_opts);
-static double rpi_update_interval(sysobj *obj);
+
+attr_tab rpi_items[] = {
+    { "raspberry_pi",  N_("Raspberry Pi information"), OF_NONE },
+    { "board_name",    N_("model"), OF_NONE },
+    { "introduction",  N_("date of introduction"), OF_NONE },
+    { "manufacturer",  N_("manufacturer"), OF_IS_VENDOR },
+    { "overvolt",      N_("permanent over-volt bit"), OF_NONE },
+    { "pcb_revision",  N_("revision of printed circuit board"), OF_NONE },
+    { "r_code",        N_("r-code"), OF_NONE },
+    { "serial",        N_("serial number"), OF_NONE },
+    { "spec_mem",      N_("memory (spec)"), OF_NONE },
+    { "spec_soc",      N_("system-on-chip used (spec)"), OF_NONE },
+    ATTR_TAB_LAST
+};
 
 static sysobj_class cls_rpi[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "rpi", .pattern = ":/raspberry_pi*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .f_label = rpi_label, .f_format = rpi_format, .f_update_interval = rpi_update_interval },
+    .attributes = rpi_items,
+    .f_format = rpi_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
 };
-
-static const struct { gchar *rp; gchar *lbl; int extra_flags; } rpi_items[] = {
-    { "raspberry_pi",  N_("Raspberry Pi Information"), OF_NONE },
-    { "board_name",    N_("Model"), OF_NONE },
-    { "introduction",  N_("Introduction"), OF_NONE },
-    { "manufacturer",  N_("Manufacturer"), OF_NONE },
-    { "overvolt",      N_("Permanent Over-volt Bit"), OF_NONE },
-    { "pcb_revision",  N_("PCB Revision"), OF_NONE },
-    { "r_code",        N_("R-Code"), OF_NONE },
-    { "serial",        N_("Serial Number"), OF_NONE },
-    { "spec_mem",      N_("Memory (spec)"), OF_NONE },
-    { "spec_soc",      N_("SOC (spec)"), OF_NONE },
-    { NULL, NULL, 0 }
-};
-
-int rpi_lookup(const gchar *key) {
-    int i = 0;
-    while(rpi_items[i].rp) {
-        if (SEQ(key, rpi_items[i].rp))
-            return i;
-        i++;
-    }
-    return -1;
-}
-
-const gchar *rpi_label(sysobj *obj) {
-    int i = rpi_lookup(obj->name);
-    if (i != -1)
-        return _(rpi_items[i].lbl);
-    return NULL;
-}
 
 static gchar *rpi_format(sysobj *obj, int fmt_opts) {
     if (SEQ("raspberry_pi", obj->name)) {
@@ -79,15 +61,8 @@ static gchar *rpi_format(sysobj *obj, int fmt_opts) {
     return simple_format(obj, fmt_opts);
 }
 
-static double rpi_update_interval(sysobj *obj) {
-    PARAM_NOT_UNUSED(obj);
-    return 0.0;
-}
-
 void class_rpi() {
-    int i = 0;
     /* add classes */
-    for (i = 0; i < (int)G_N_ELEMENTS(cls_rpi); i++) {
+    for (int i = 0; i < (int)G_N_ELEMENTS(cls_rpi); i++)
         class_add(&cls_rpi[i]);
-    }
 }
