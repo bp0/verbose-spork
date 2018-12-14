@@ -96,11 +96,13 @@ GSList *vo_list = NULL;
 static GMutex free_lock;
 static GSList *free_list = NULL;
 static guint free_event_source = 0;
+static gboolean free_final = FALSE;
 
 typedef struct {
     gpointer ptr;
     GThread *thread;
     GDestroyNotify f_free;
+    double stamp;
 
     const char *file;
     int  line;
@@ -117,6 +119,7 @@ gpointer auto_free_ex_(gpointer p, GDestroyNotify f, const char *file, int line,
     z->file = file;
     z->line = line;
     z->func = func;
+    z->stamp = sysobj_elapsed();
     g_mutex_lock(&free_lock);
     free_list = g_slist_prepend(free_list, z);
     sysobj_stats.auto_free_len++;
@@ -138,10 +141,16 @@ static struct { GDestroyNotify fptr; char *name; }
     { NULL, "(null)" },
 };
 
+void free_auto_free_final() {
+    free_final = TRUE;
+    free_auto_free();
+}
+
 void free_auto_free() {
     GThread *this_thread = g_thread_self();
     GSList *l = NULL, *n = NULL;
     long long unsigned fc = 0;
+    double now = sysobj_elapsed();
 
     if (!free_list) return;
 
@@ -150,7 +159,8 @@ void free_auto_free() {
     for(l = free_list; l; l = n) {
         auto_free_item *z = (auto_free_item*)l->data;
         n = l->next;
-        if (z->thread == this_thread) {
+        double age = now - z->stamp;
+        if (free_final || (z->thread == this_thread && age > AF_DELAY_SECONDS) ) {
             if (DEBUG_AUTO_FREE) {
                 char fptr[128] = "", *fname;
                 for(int i = 0; i < (int)G_N_ELEMENTS(free_function_tab); i++)
@@ -161,9 +171,9 @@ void free_auto_free() {
                     fname = fptr;
                 }
                 if (z->file || z->func)
-                    DEBUG("free: %s(%p) from %s:%d %s()", fname, z->ptr, z->file, z->line, z->func);
+                    DEBUG("free: %s(%p) age:%lfs from %s:%d %s()", fname, z->ptr, age, z->file, z->line, z->func);
                 else
-                    DEBUG("free: %s(%p)", fname, z->ptr);
+                    DEBUG("free: %s(%p) age:%lfs", fname, z->ptr, age);
             }
 
             z->f_free(z->ptr);
@@ -1312,7 +1322,7 @@ double sysobj_elapsed() {
 }
 
 void sysobj_cleanup() {
-    free_auto_free();
+    free_auto_free_final();
     class_cleanup();
     sysobj_virt_cleanup();
     vendor_cleanup();
