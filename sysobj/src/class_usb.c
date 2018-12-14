@@ -39,7 +39,7 @@ static gchar *usb_format_device(sysobj *obj, int fmt_opts);
 static gboolean usb_verify_bus(sysobj *obj) { return (obj) ? verify_usb_bus(obj->name) : FALSE; }
 static gchar *usb_format_bus(sysobj *obj, int fmt_opts);
 
-static const double usb_update_interval = 10.0;
+#define usb_update_interval 10.0
 
 attr_tab usb_idcomp_items[] = {
     //TODO: labels

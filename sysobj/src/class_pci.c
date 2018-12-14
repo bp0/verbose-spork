@@ -39,8 +39,8 @@ static gchar *pci_format(sysobj *obj, int fmt_opts);
 static gchar *pci_format_idcomp(sysobj *obj, int fmt_opts);
 static gchar *pci_format_device(sysobj *obj, int fmt_opts);
 
-static const double pci_update_interval = 6.0;
-static const double pci_ids_update_interval = 4.0;
+#define pci_update_interval 6.0
+#define pci_ids_update_interval 4.0
 
 attr_tab pci_idcomp_items[] = {
     //TODO: labels

@@ -186,11 +186,11 @@ gchar *fmt_KiB(sysobj *obj, int fmt_opts) {
     return g_strdup_printf("%0.1f %s", v, _("KiB") );
 }
 
-static const double bytes_KiB = 1024.0;
-static const double bytes_MiB = bytes_KiB * 1024.0;
-static const double bytes_GiB = bytes_MiB * 1024.0;
-static const double bytes_TiB = bytes_GiB * 1024.0;
-static const double bytes_PiB = bytes_TiB * 1024.0;
+#define bytes_KiB (1024.0)
+#define bytes_MiB (bytes_KiB * 1024.0)
+#define bytes_GiB (bytes_MiB * 1024.0)
+#define bytes_TiB (bytes_GiB * 1024.0)
+#define bytes_PiB (bytes_TiB * 1024.0)
 
 gchar *fmt_KiB_to_MiB(sysobj *obj, int fmt_opts) {
     CHECK_OBJ();
