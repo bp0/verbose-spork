@@ -59,6 +59,9 @@ static sysobj_filter path_filters[] = {
     { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc/crypto", NULL },
     { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc/modules", NULL },
 
+    { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc/driver", NULL },
+    { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc/driver/*", NULL },
+
     /* files related to os version detection (:/os) */
     { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/etc/*-release", NULL },
     { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/etc/*_version", NULL },
@@ -1149,7 +1152,24 @@ gboolean sysobj_virt_add_simple(const gchar *base, const gchar *name, const gcha
     return sysobj_virt_add(vo);
 }
 
-void sysobj_virt_from_kv(gchar *base, const gchar *kv_data_in) {
+void sysobj_virt_from_lines(const gchar *base, const gchar *data_in) {
+    gchar **lines = g_strsplit(data_in, "\n", -1);
+    for(int i = 0; lines[i]; i++) {
+        gchar *c = g_utf8_strchr(lines[i], strlen(lines[i]), ':');
+        if (c) {
+            *c = 0;
+            g_strchomp(lines[i]);
+            sysobj_virt *vo = sysobj_virt_new();
+            //TODO: lines with /?
+            vo->path = util_build_fn(base, lines[i]);
+            vo->str = g_strdup(g_strstrip(c + 1));
+            sysobj_virt_add(vo);
+        }
+    }
+    g_strfreev(lines);
+}
+
+void sysobj_virt_from_kv(const gchar *base, const gchar *kv_data_in) {
     const gchar before_first_group[] = "THE_NO-GROUP________GRUOP";
     GKeyFile *key_file = NULL;
     gchar **groups = NULL, **keys = NULL;

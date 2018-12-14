@@ -222,7 +222,9 @@ void sysobj_virt_cleanup();
 /* using the glib key-value file parser, create a tree of
  * base/group/name=value virtual sysobj's. Items before a first
  * group are put in base/name=value. */
-void sysobj_virt_from_kv(gchar *base, const gchar *kv_data_in);
+void sysobj_virt_from_kv(const gchar *base, const gchar *kv_data_in);
+/* lines in the form "key: value" */
+void sysobj_virt_from_lines(const gchar *base, const gchar *data_in);
 
 /* to be called by sysobj_class::f_verify */
 gboolean verify_lblnum(sysobj *obj, const gchar *lbl);

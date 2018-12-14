@@ -20,6 +20,7 @@ zip -y -r "SS_$ZNAME.zip" \
 	/proc/uptime \
 	/proc/crypto \
 	/proc/modules \
+	/proc/driver \
 	/usr/lib/os-release \
 	/etc/issue \
 	/etc/*-release \

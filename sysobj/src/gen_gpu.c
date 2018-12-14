@@ -104,24 +104,6 @@ static void find_dt_gpu_devices() {
 
 static int gpu_next = 0;
 
-/* TODO: from /proc/driver/nvidia/gpus/%s/information, where %s is the pci addy
- * maybe it should just be added to the tree via kv? */
-typedef struct nvgpu {
-    char *model;
-    char *bios_version;
-    char *uuid;
-} nvgpu;
-
-#define nvgpu_new() g_new0(nvgpu, 1)
-void nvgpu_free(nvgpu *s) {
-    if (s) {
-        g_free(s->model);
-        g_free(s->bios_version);
-        g_free(s->uuid);
-        g_free(s);
-    }
-}
-
 typedef struct {
     int type;
     gchar *name; /* gpu<gpu_next> */
@@ -137,8 +119,7 @@ typedef struct {
     gchar *device_str;
     gchar *dt_compat; /* first item only */
 
-    nvgpu *nv_info;
-    /* ... */
+    gboolean nv_info; /* nvidia info was found in /proc/driver/nvidia/gpus */
 } gpud;
 
 #define gpud_new() (g_new0(gpud, 1))
@@ -168,20 +149,23 @@ static GMutex gpu_list_lock;
 /* TODO: In the future, when there is more vendor specific information available in
  * the gpu struct, then more precise names can be given to each gpu */
 static void make_nice_name(gpud *s) {
-    /* NV information available */
-    if (s->nv_info && s->nv_info->model) {
-        s->nice_name = g_strdup_printf("%s %s", "NVIDIA", s->nv_info->model);
-        return;
-    }
-
     static const gchar unk_v[] = "Unknown"; /* do not...    */
     static const gchar unk_d[] = "Device";  /* ...translate */
     const gchar *vendor_str = s->vendor_str;
     const gchar *device_str = s->device_str;
-
     /* try and a get a "short name" for the vendor */
     if (vendor_str)
         vendor_str = vendor_get_shortest_name(vendor_str);
+
+    /* NV information available */
+    if (s->nv_info) {
+        gchar *model = sysobj_raw_from_printf(":/gpu/%s/nvidia/Model", s->name);
+        if (model) {
+            s->nice_name = g_strdup_printf("%s %s", vendor_str, model);
+            g_free(model);
+            return;
+        }
+    }
 
     if (s->dt_compat) {
         if (!vendor_str && !device_str) {
@@ -285,6 +269,22 @@ static void gpu_pci_hwmon(gpud *g) {
     }
     sysobj_free(pcid);
     sysobj_free(hwmon_list);
+    g_free(gpu_path);
+}
+
+static void gpu_nv(gpud *g) {
+    if (!g->name || !g->pci_addy) return;
+    gchar *gpu_path = util_build_fn(":/gpu", g->name);
+    sysobj *nv = sysobj_new_from_printf("/proc/driver/nvidia/gpus/%s/information", g->pci_addy);
+    if (nv->exists) {
+        g->nv_info = TRUE;
+        gchar *nv_path = util_build_fn(gpu_path, "nvidia");
+        sysobj_virt_add_simple(nv_path, NULL, "*", VSO_TYPE_DIR);
+        sysobj_read(nv, FALSE);
+        sysobj_virt_from_lines(nv_path, nv->data.str);
+        g_free(nv_path);
+    }
+    sysobj_free(nv);
     g_free(gpu_path);
 }
 
@@ -449,6 +449,7 @@ static void gpu_scan() {
                 /* extra stuff */
                 gpu_pci_hwmon(g);
                 gpu_pcie(g);
+                gpu_nv(g);
             }
             if (g->dt_name) {
                 /* device path in platform */
