@@ -22,7 +22,18 @@
 #include "format_funcs.h"
 
 static gchar *meminfo_format(sysobj *obj, int fmt_opts);
-const gchar *mem_label(sysobj *obj);
+gboolean meminfo_verify(sysobj *obj) {
+    /* attr_tab not complete, so .f_verify is needed to let everyone in */
+    return TRUE;
+}
+
+attr_tab mem_items[] = {
+    { "MemTotal", N_("total memory available"), OF_NONE, fmt_KiB_to_higher },
+    { "SwapTotal", N_("total swap space available"), OF_NONE, fmt_KiB_to_higher },
+    { "SwapFree", N_("total swap space free"), OF_NONE, fmt_KiB_to_higher },
+    { "VmallocTotal", NULL, OF_NONE, fmt_KiB_to_higher },
+    ATTR_TAB_LAST
+};
 
 static sysobj_class cls_meminfo[] = {
   { SYSOBJ_CLASS_DEF
@@ -30,36 +41,18 @@ static sysobj_class cls_meminfo[] = {
     .f_format = meminfo_format },
   { SYSOBJ_CLASS_DEF
     .tag = "meminfo:stat", .pattern = ":/meminfo/*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .f_label = mem_label, .f_format = meminfo_format, .s_update_interval = 1.0 },
+    .attributes = mem_items, .f_verify = meminfo_verify,
+    .f_format = meminfo_format, .s_update_interval = 1.0 },
 };
-
-static const struct { gchar *item; gchar *lbl; int extra_flags; func_format f_func; } mem_items[] = {
-    { "MemTotal", "total memory available", OF_NONE, fmt_KiB_to_higher },
-    { NULL, NULL, 0 }
-};
-
-int mem_lookup(const gchar *key) {
-    for(int i = 0; mem_items[i].item; i++)
-        if (SEQ(key, mem_items[i].item))
-            return i;
-    return -1;
-}
-
-const gchar *mem_label(sysobj *obj) {
-    int i = mem_lookup(obj->name);
-    if (i != -1)
-        return _(mem_items[i].lbl);
-    return NULL;
-}
 
 static gchar *meminfo_format(sysobj *obj, int fmt_opts) {
     int64_t mkb = 0;
     if (SEQ(obj->name, "meminfo") ) {
         return sysobj_format_from_fn(obj->path, "MemTotal", fmt_opts);
     } else if (*obj->name != '_') {
-        int i = mem_lookup(obj->name);
-        if (i != -1 &&  mem_items[i].f_func)
-             return mem_items[i].f_func(obj, fmt_opts);
+        int i = attr_tab_lookup(mem_items, obj->name);
+        if (i != -1 &&  mem_items[i].fmt_func)
+             return mem_items[i].fmt_func(obj, fmt_opts);
         return fmt_KiB(obj, fmt_opts);
     }
     return simple_format(obj, fmt_opts);
