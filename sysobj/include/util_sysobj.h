@@ -48,6 +48,7 @@ gchar *util_escape_markup(gchar *v, gboolean replacing);
 int32_t util_get_did(gchar *str, const gchar *lbl); /* ("cpu6", "cpu") -> 6, returns -1 if error */
 int util_maybe_num(gchar *str); /* returns the guessed base, 0 for not num */
 gchar *util_find_line_value(gchar *data, gchar *key, gchar delim);
+gchar *util_strchomp_float(gchar* str_float); /* in-place, must use , or . for decimal sep */
 
 /* to quiet -Wunused-parameter nagging.  */
 #define PARAM_NOT_UNUSED(p) (void)p

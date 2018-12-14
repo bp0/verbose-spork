@@ -146,6 +146,30 @@ void util_strstrip_double_quotes_dumb(gchar *str) {
     str[nl] = 0;
 }
 
+/* "194.110 MHz" -> "194.11 MHz"
+ * "5,0 golden rings" -> "5 golden rings" */
+gchar *util_strchomp_float(gchar* str_float) {
+    if (!str_float) return NULL;
+    char *dot = strchr(str_float, '.');
+    char *comma = strchr(str_float, ',');
+    char *p = NULL, *dec = NULL, *src = NULL, *target = NULL;
+    if (!dot && !comma) return str_float;
+    if (dot > comma)
+        dec = dot;
+    else
+        dec = comma;
+    p = dec + 1;
+    while(isdigit(*p)) p++;
+    target = src = p;
+    p--;
+    while(*p == '0') { target = p; p--; };
+    if (target == dec + 1)
+        target = dec;
+    if (target != src)
+        memmove(target, src, strlen(src)+1);
+    return str_float;
+}
+
 /* resolve . and .., but not symlinks */
 gchar *util_normalize_path(const gchar *path, const gchar *relto) {
     gchar *resolved = NULL;
