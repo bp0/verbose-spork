@@ -23,34 +23,22 @@
 #include "cpubits.h"
 
 gboolean cputopo_verify(sysobj *obj);
-const gchar *cputopo_label(sysobj *obj);
 gchar *cputopo_format(sysobj *obj, int fmt_opts);
-guint cputopo_flags(sysobj *obj, const sysobj_class *cls);
+
+attr_tab cputopo_items[] = {
+    { "topology",            N_("CPU topology Information") },
+    { "physical_package_id", N_("processor/socket") },
+    { "core_id",             N_("CPU core") }, //TODO: of package?
+    ATTR_TAB_LAST
+};
 
 static sysobj_class cls_cputopo = { SYSOBJ_CLASS_DEF
     .tag = "cputopo", .pattern = "/sys/devices/system/cpu/cpu*/topology*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .f_verify = cputopo_verify, .f_label = cputopo_label, .f_format = cputopo_format,
-    .f_flags = cputopo_flags  };
-
-static const struct { gchar *rp; gchar *lbl; int extra_flags; } cputopo_items[] = {
-    { "topology",  N_("CPU Topology Information"), OF_NONE },
-    { "physical_package_id", N_("Processor/Socket"), OF_NONE },
-    { "core_id",             N_("CPU Core"), OF_NONE }, //TODO: of package?
-    { NULL, NULL, 0 }
-};
-
-int cputopo_lookup(const gchar *key) {
-    int i = 0;
-    while(cputopo_items[i].rp) {
-        if (SEQ(key, cputopo_items[i].rp))
-            return i;
-        i++;
-    }
-    return -1;
-}
+    .attributes = cputopo_items,
+    .f_verify = cputopo_verify, .f_format = cputopo_format };
 
 gboolean cputopo_verify(sysobj *obj) {
-    int i = cputopo_lookup(obj->name);
+    int i = attr_tab_lookup(cputopo_items, obj->name);
     if (i != -1)
         return TRUE;
     if (SEQ(obj->name, "topology")) {
@@ -62,13 +50,6 @@ gboolean cputopo_verify(sysobj *obj) {
         return TRUE;
 */
     return FALSE;
-}
-
-const gchar *cputopo_label(sysobj *obj) {
-    int i = cputopo_lookup(obj->name);
-    if (i != -1)
-        return _(cputopo_items[i].lbl);
-    return NULL;
 }
 
 gchar *topology_summary(sysobj *obj, int fmt_opts) {
@@ -86,15 +67,6 @@ gchar *cputopo_format(sysobj *obj, int fmt_opts) {
     if (SEQ(obj->name, "topology"))
         return topology_summary(obj, fmt_opts);
     return simple_format(obj, fmt_opts);
-}
-
-guint cputopo_flags(sysobj *obj, const sysobj_class *cls) {
-    if (obj) {
-        int i = cputopo_lookup(obj->name);
-        if (i != -1)
-            return cls->flags | cputopo_items[i].extra_flags;
-    }
-    return cls->flags; /* remember to handle obj == NULL */
 }
 
 void class_cputopo() {
