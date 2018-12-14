@@ -1052,6 +1052,10 @@ gboolean verify_parent_name(sysobj *obj, const gchar *parent_name) {
     return verified;
 }
 
+gboolean verify_in_attr_tab(sysobj *obj, attr_tab *attributes) {
+    return !(attr_tab_lookup(attributes, obj->name) == -1);
+}
+
 gboolean verify_lblnum(sysobj *obj, const gchar *lbl) {
     if (obj && obj->name
         && lbl && util_get_did(obj->name, lbl) >= 0)
