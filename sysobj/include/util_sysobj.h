@@ -52,9 +52,10 @@ gchar *util_find_line_value(gchar *data, gchar *key, gchar delim);
 /* to quiet -Wunused-parameter nagging.  */
 #define PARAM_NOT_UNUSED(p) (void)p
 
-/* appends an element to a string, adding a space if
- * the string is not empty.
- * ex: ret = appf(ret, "%s=%s\n", name, value); */
+/* appends an element to a string, adding a space (or sep)
+ * if the string is not empty.
+ * ex: ret = appf(ret, "%s", list_item);
+ * ex: ret = appfs(ret, "\n", "%s=%s", name, value); */
 gchar *appf(gchar *src, const gchar *fmt, ...)
     __attribute__ ((format (printf, 2, 3)));
 gchar *appfs(gchar *src, const gchar *sep, const gchar *fmt, ...)
