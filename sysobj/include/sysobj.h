@@ -229,6 +229,7 @@ gboolean verify_lblnum(sysobj *obj, const gchar *lbl);
 gboolean verify_lblnum_child(sysobj *obj, const gchar *lbl);
 gboolean verify_parent_name(sysobj *obj, const gchar *parent_name);
 gboolean verify_parent(sysobj *obj, const gchar *parent_path_suffix);
+gboolean verify_in_attr_tab(sysobj *obj, attr_tab *attributes);
 
 /* to be used by sysobj_class::f_compare */
 int compare_str_base10(const sysobj_data *a, const sysobj_data *b);

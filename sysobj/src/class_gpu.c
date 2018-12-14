@@ -33,9 +33,9 @@ static gchar *drm_card_attr_format(sysobj *obj, int fmt_opts);
 
 attr_tab gpu_prop_items[] = {
     { "name", NULL, OF_NONE, NULL, -1 },
-    { "opp.khz_min",   "operating-performance-points minimum frequency", OF_NONE, fmt_khz, -1 },
-    { "opp.khz_max",   "operating-performance-points maximum frequency", OF_NONE, fmt_khz, -1 },
-    { "opp.clock_frequency",  "devicetree-specified clock frequency", OF_NONE, fmt_khz, -1 },
+    { "opp.khz_min",   "operating-performance-points minimum frequency", OF_NONE, fmt_khz_to_mhz, -1 },
+    { "opp.khz_max",   "operating-performance-points maximum frequency", OF_NONE, fmt_khz_to_mhz, -1 },
+    { "opp.clock_frequency",  "devicetree-specified clock frequency", OF_NONE, fmt_khz_to_mhz, -1 },
     { "opp.clock_latency_ns", "transition latency", OF_NONE, fmt_nanoseconds, -1 },
     ATTR_TAB_LAST
 };

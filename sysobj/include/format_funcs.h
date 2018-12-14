@@ -25,7 +25,12 @@
 
 /* the input unit is specified, but the formatted
  * output maybe be some other unit
- * ex: fmt_khz() the input must be khz, but it may format as MHz. */
+ * ex: fmt_khz() the input must be khz, but it may format as MHz.
+ *
+ * fmt_opts:
+ * FMT_OPT_NO_UNIT : do not allow conversion
+ * FMT_OPT_PART | FMT_OPT_NO_UNIT : allow conversion, but don't include the unit
+ */
 
 gchar *fmt_nanoseconds(sysobj *obj, int fmt_opts);
 gchar *fmt_milliseconds(sysobj *obj, int fmt_opts);
@@ -33,7 +38,7 @@ gchar *fmt_seconds(sysobj *obj, int fmt_opts);
 gchar *fmt_seconds_to_span(sysobj *obj, int fmt_opts); /* [D days, ][H hours, ][M minutes, ]S seconds */
 gchar *fmt_hz(sysobj *obj, int fmt_opts);
 gchar *fmt_hz_to_mhz(sysobj *obj, int fmt_opts);
-gchar *fmt_khz(sysobj *obj, int fmt_opts);
+gchar *fmt_khz_to_mhz(sysobj *obj, int fmt_opts);
 gchar *fmt_mhz(sysobj *obj, int fmt_opts);
 gchar *fmt_millidegree_c(sysobj *obj, int fmt_opts);
 gchar *fmt_milliampere(sysobj *obj, int fmt_opts);

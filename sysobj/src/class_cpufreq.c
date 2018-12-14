@@ -26,94 +26,31 @@ const gchar cpufreq_reference_markup_text[] =
     BULLET REFLINK("https://www.kernel.org/doc/Documentation/cpu-freq/")
     "\n";
 
-typedef struct {
-    gchar *tag;
-    gchar *label; /* not yet translated */
-    gchar *desc;  /* not yet translated */
-} cpufreq_item;
+attr_tab cpufreq_items[] = {
+    { "scaling_min_freq", N_("minimum clock frequency (via scaling driver)"), OF_NONE, fmt_khz_to_mhz, 1.0 },
+    { "scaling_max_freq", N_("maximum clock frequency (via scaling driver)"), OF_NONE, fmt_khz_to_mhz, 1.0 },
+    { "scaling_cur_freq", N_("current clock frequency (via scaling driver)"), OF_NONE, fmt_khz_to_mhz, 0.25 },
 
-static const cpufreq_item cpufreq_items[] = {
-    { "scaling_min_freq", N_("Scaling Minimum"), N_("Minimum clock frequency (via scaling driver)") },
-    { "scaling_max_freq", N_("Scaling Maximum"), N_("Maximum clock frequency (via scaling driver)") },
-    { "scaling_cur_freq", N_("Scaling Current"), N_("Current clock frequency (via scaling driver)") },
+    { "bios_limit", N_("maximum clock frequency (via BIOS)"), OF_NONE, fmt_khz_to_mhz, -1 },
 
-    { "bios_limit", N_("BIOS-reported Maximum"), N_("Maximum clock frequency (via BIOS)") },
+    { "cpuinfo_min_freq", N_("minimum clock frequency (via cpuinfo)"), OF_NONE, fmt_khz_to_mhz, 1.0 },
+    { "cpuinfo_max_freq", N_("maximum clock frequency (via cpuinfo)"), OF_NONE, fmt_khz_to_mhz, 1.0 },
+    { "cpuinfo_cur_freq", N_("current clock frequency (via cpuinfo)"), OF_NONE, fmt_khz_to_mhz, 0.25 },
 
-    { "cpuinfo_min_freq", N_("Minimum"), N_("Minimum clock frequency (via cpuinfo)") },
-    { "cpuinfo_max_freq", N_("Maximum"), N_("Maximum clock frequency (via cpuinfo)") },
-    { "cpuinfo_cur_freq", N_("Current"), N_("Current clock frequency (via cpuinfo)") },
+    { "cpuinfo_transition_latency", N_("transition latency"), OF_NONE, fmt_nanoseconds, 2.0 },
 
-    { "cpuinfo_transition_latency", N_("Transition Latency"), NULL },
-
-    { "freqdomain_cpus", NULL, N_("Logical CPUs that share the same base clock") },
-    { "affected_cpus",   NULL, N_("Logical CPUs affected by change to scaling_setspeed") },
-    { "related_cpus",    NULL, N_("Related logical CPUs") },
-    { NULL, NULL, NULL }
+    { "freqdomain_cpus", N_("logical CPUs that share the same base clock") },
+    { "affected_cpus",   N_("logical CPUs affected by change to scaling_setspeed") },
+    { "related_cpus",    N_("related logical CPUs") },
+    ATTR_TAB_LAST
 };
 
-int cpufreq_item_find(gchar *tag) {
-    int i = 0;
-    while(cpufreq_items[i].tag) {
-        if ( strcmp(cpufreq_items[i].tag, tag) == 0 )
-            return i;
-        i++;
-    }
-    return -1;
-}
-
 gboolean cpufreq_verify(sysobj *obj) {
-    /* child of "policy%d" or "cpufreq" */
-    if (obj) {
-        gboolean verified =
-            verify_lblnum_child(obj, "policy")
-            | verify_parent_name(obj, "cpufreq");
-        if (verified && cpufreq_item_find(obj->name) != -1)
-            return TRUE;
-    }
+    /* child of "policy%d" */
+    if (verify_lblnum_child(obj, "policy")
+        && verify_in_attr_tab(obj, cpufreq_items) )
+        return TRUE;
     return FALSE;
-}
-
-const gchar *cpufreq_label(sysobj *obj) {
-    if (obj) {
-        int i = cpufreq_item_find(obj->name);
-        return _(cpufreq_items[i].label);
-    }
-    return NULL;
-}
-
-//TODO:
-const gchar *cpufreq_desc(sysobj *obj) {
-    if (obj) {
-        int i = cpufreq_item_find(obj->name);
-        return _(cpufreq_items[i].desc);
-    }
-    return NULL;
-}
-
-double cpufreq_update_interval_for_khz(sysobj *obj) {
-    if (obj) {
-        if (g_strrstr(obj->name, "_cur_"))
-            return 0.25;
-        if (g_str_has_prefix(obj->name, "policy"))
-            return 0.5;
-    }
-    return 0;
-}
-
-static void cpufreq_class_for_hz(sysobj_class *c) {
-    c->f_verify = cpufreq_verify;
-    c->f_format = fmt_khz;
-    c->f_label = cpufreq_label;
-    c->f_update_interval = cpufreq_update_interval_for_khz;
-    c->f_compare = compare_str_base10;
-}
-
-static void cpufreq_class_for_ns(sysobj_class *c) {
-    c->f_verify = cpufreq_verify;
-    c->f_format = fmt_nanoseconds;
-    c->f_label = cpufreq_label;
-    c->f_update_interval = NULL;
-    c->f_compare = compare_str_base10;
 }
 
 gboolean cpufreq_verify_policy(sysobj *obj) {
@@ -139,7 +76,7 @@ gchar *cpufreq_format_policy(sysobj *obj, int fmt_opts) {
             ret = g_strdup_printf("%s", scl_cur );
         else
             ret = g_strdup_printf("%s %s (%s - %s) [ %s ]",
-                    scl_drv, scl_gov, scl_min, scl_max, scl_cur );
+                    scl_drv, scl_gov, util_strchomp_float(scl_min), util_strchomp_float(scl_max), scl_cur );
 
         g_free(scl_min);
         g_free(scl_max);
@@ -151,32 +88,19 @@ gchar *cpufreq_format_policy(sysobj *obj, int fmt_opts) {
     return simple_format(obj, fmt_opts);
 }
 
+static sysobj_class cls_cpufreq[] = {
+  { SYSOBJ_CLASS_DEF
+    .tag = "cpufreq:policy", .pattern = "/sys/devices/system/cpu/cpufreq/policy*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .s_halp = cpufreq_reference_markup_text, .s_label = N_("frequency scaling policy"),
+    .f_verify = cpufreq_verify_policy, .f_format = cpufreq_format_policy, .s_update_interval = 0.25 },
+  { SYSOBJ_CLASS_DEF
+    .tag = "cpufreq:item", .pattern = "/sys/devices/system/cpu/cpufreq/policy*/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .s_halp = cpufreq_reference_markup_text,
+    .f_verify = cpufreq_verify, .attributes = cpufreq_items },
+};
+
 void class_cpufreq() {
-    sysobj_class *c = NULL;
-
-    c = g_new0(sysobj_class, 1);
-    c->pattern = "/sys/devices/system/cpu/cpufreq/policy*";
-    c->tag = "cpufreq:policy";
-    c->flags = OF_GLOB_PATTERN;
-    c->f_verify = cpufreq_verify_policy;
-    c->s_label = _("Frequency Scaling Policy");
-    c->s_halp = cpufreq_reference_markup_text;
-    c->f_format = cpufreq_format_policy;
-    c->f_update_interval = cpufreq_update_interval_for_khz;
-    class_add(c);
-
-//TODO: re-work into one class
-#define CLS_PLZ(t, pat, unit)       \
-    c = g_new0(sysobj_class, 1); \
-    c->tag = "cpufreq:" t;          \
-    c->pattern = pat;            \
-    c->flags = OF_GLOB_PATTERN;  \
-    c->s_halp = cpufreq_reference_markup_text; \
-    cpufreq_class_for_##unit (c); \
-    class_add(c);
-
-    CLS_PLZ("sfreq", "*/cpufreq/policy*/scaling_???_freq", hz);
-    CLS_PLZ("cfreq", "*/cpufreq/policy*/cpuinfo_???_freq", hz);
-    CLS_PLZ("ctl", "*/cpufreq/policy*/cpuinfo_transition_latency", ns);
-    CLS_PLZ("bios-limit", "*/cpufreq/policy*/bios_limit", hz);
+    /* add classes */
+    for (int i = 0; i < (int)G_N_ELEMENTS(cls_cpufreq); i++)
+        class_add(&cls_cpufreq[i]);
 }

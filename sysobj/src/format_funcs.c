@@ -26,11 +26,15 @@
         return simple_format(obj, fmt_opts);
 #define PREP_RAW() \
     gchar *raw = g_strstrip(g_strdup(obj->data.str));    \
-    if (fmt_opts & FMT_OPT_NO_UNIT)                      \
+    if (fmt_opts & FMT_OPT_NO_UNIT                       \
+        && (!fmt_opts & FMT_OPT_PART) )                  \
         return raw;
 #define PREP_RAW_RJ(reject) \
     gchar *raw = g_strstrip(g_strdup(obj->data.str));    \
-    if (fmt_opts & (FMT_OPT_NO_UNIT | reject))           \
+    if (fmt_opts & FMT_OPT_NO_UNIT                       \
+        && (!fmt_opts & FMT_OPT_PART) )                  \
+        return raw;                                      \
+    if (fmt_opts & reject)                               \
         return raw;
 #define FINISH_RAW() g_free(raw);
 
@@ -39,16 +43,20 @@ gchar *fmt_nanoseconds(sysobj *obj, int fmt_opts) {
     PREP_RAW();
     double ns = strtod(raw, NULL);
     FINISH_RAW();
-    return g_strdup_printf("%.1lf %s", ns, _("ns"));
+    return fmt_opts & FMT_OPT_NO_UNIT
+        ? g_strdup_printf("%.1lf", ns)
+        : g_strdup_printf("%.1lf %s", ns, _("ns"));
 }
 
-gchar *fmt_khz(sysobj *obj, int fmt_opts) {
+gchar *fmt_khz_to_mhz(sysobj *obj, int fmt_opts) {
     CHECK_OBJ();
     PREP_RAW();
     double mhz = strtod(raw, NULL);
     mhz /= 1000; /* raw is khz */
     FINISH_RAW();
-    return g_strdup_printf("%.3f %s", mhz, _("MHz"));
+    return fmt_opts & FMT_OPT_NO_UNIT
+        ? g_strdup_printf("%.3f", mhz)
+        : g_strdup_printf("%.3f %s", mhz, _("MHz"));
 }
 
 gchar *fmt_mhz(sysobj *obj, int fmt_opts) {
@@ -56,7 +64,9 @@ gchar *fmt_mhz(sysobj *obj, int fmt_opts) {
     PREP_RAW();
     double mhz = strtod(raw, NULL);
     FINISH_RAW();
-    return g_strdup_printf("%.3f %s", mhz, _("MHz"));
+    return fmt_opts & FMT_OPT_NO_UNIT
+        ? g_strdup_printf("%.3f", mhz)
+        : g_strdup_printf("%.3f %s", mhz, _("MHz"));
 }
 
 gchar *fmt_millidegree_c(sysobj *obj, int fmt_opts) {
@@ -128,7 +138,9 @@ gchar *fmt_hz_to_mhz(sysobj *obj, int fmt_opts) {
     double mhz = strtod(raw, NULL);
     mhz /= 1000000;
     FINISH_RAW();
-    return g_strdup_printf("%.3lf %s", mhz, _("MHz") );
+    return fmt_opts & FMT_OPT_NO_UNIT
+        ? g_strdup_printf("%.3f", mhz)
+        : g_strdup_printf("%.3f %s", mhz, _("MHz"));
 }
 
 gchar *fmt_hz(sysobj *obj, int fmt_opts) {
@@ -136,7 +148,9 @@ gchar *fmt_hz(sysobj *obj, int fmt_opts) {
     PREP_RAW();
     double hz = strtod(raw, NULL);
     FINISH_RAW();
-    return g_strdup_printf("%.1lf %s", hz, _("Hz") );
+    return fmt_opts & FMT_OPT_NO_UNIT
+        ? g_strdup_printf("%.1f", hz)
+        : g_strdup_printf("%.1f %s", hz, _("Hz"));
 }
 
 gchar *fmt_millivolt(sysobj *obj, int fmt_opts) {
