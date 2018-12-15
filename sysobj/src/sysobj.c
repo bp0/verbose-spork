@@ -1152,18 +1152,20 @@ gboolean sysobj_virt_add_simple(const gchar *base, const gchar *name, const gcha
     return sysobj_virt_add(vo);
 }
 
-void sysobj_virt_from_lines(const gchar *base, const gchar *data_in) {
+void sysobj_virt_from_lines(const gchar *base, const gchar *data_in, gboolean safe_names) {
     gchar **lines = g_strsplit(data_in, "\n", -1);
     for(int i = 0; lines[i]; i++) {
         gchar *c = g_utf8_strchr(lines[i], strlen(lines[i]), ':');
         if (c) {
             *c = 0;
             g_strchomp(lines[i]);
+            gchar *key = (safe_names) ? util_safe_name(lines[i]) : g_strdup(lines[i]);
+            gchar *value = g_strdup(g_strstrip(c + 1));
             sysobj_virt *vo = sysobj_virt_new();
-            //TODO: lines with /?
-            vo->path = util_build_fn(base, lines[i]);
-            vo->str = g_strdup(g_strstrip(c + 1));
+            vo->path = util_build_fn(base, key);
+            vo->str = value;
             sysobj_virt_add(vo);
+            g_free(key);
         }
     }
     g_strfreev(lines);

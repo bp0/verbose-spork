@@ -224,7 +224,7 @@ void sysobj_virt_cleanup();
  * group are put in base/name=value. */
 void sysobj_virt_from_kv(const gchar *base, const gchar *kv_data_in);
 /* lines in the form "key: value" */
-void sysobj_virt_from_lines(const gchar *base, const gchar *data_in);
+void sysobj_virt_from_lines(const gchar *base, const gchar *data_in, gboolean safe_names);
 
 /* to be called by sysobj_class::f_verify */
 gboolean verify_lblnum(sysobj *obj, const gchar *lbl);

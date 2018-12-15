@@ -175,7 +175,7 @@ static void make_nice_name(gpud *s) {
 
     /* NV information available */
     if (s->nv_info) {
-        gchar *model = sysobj_raw_from_printf(":/gpu/%s/nvidia/Model", s->name);
+        gchar *model = sysobj_raw_from_printf(":/gpu/%s/nvidia/model", s->name);
         if (model) {
             s->nice_name = g_strdup_printf("%s %s", vendor_str, model);
             g_free(model);
@@ -310,7 +310,7 @@ static void gpu_nv(gpud *g) {
         gchar *nv_path = util_build_fn(gpu_path, "nvidia");
         sysobj_virt_add_simple(nv_path, NULL, "*", VSO_TYPE_DIR);
         sysobj_read(nv, FALSE);
-        sysobj_virt_from_lines(nv_path, nv->data.str);
+        sysobj_virt_from_lines(nv_path, nv->data.str, TRUE);
         g_free(nv_path);
     }
     sysobj_free(nv);

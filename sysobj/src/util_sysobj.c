@@ -256,6 +256,21 @@ int util_maybe_num(gchar *str) {
     return r;
 }
 
+gchar *util_safe_name(const gchar *name) {
+    if (!name) return NULL;
+    const gchar *p = name;
+    gchar *buff = g_new0(gchar, strlen(name) + 1);
+    gchar *t = buff;
+    while(*p) {
+        *t = g_ascii_isalnum(*p) ? *p : '_';
+        t++;
+        p = g_utf8_next_char(p);
+    }
+    gchar *ret = g_ascii_strdown(buff, -1);
+    g_free(buff);
+    return ret;
+}
+
 gchar *util_find_line_value(gchar *data, gchar *key, gchar delim) {
     gchar *ret = NULL;
     gchar **lines = g_strsplit(data, "\n", -1);
