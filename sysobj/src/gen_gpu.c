@@ -61,7 +61,7 @@ static void find_pci_vga_devices() {
         sysobj_read(drm_obj, FALSE);
         for(GSList *l = drm_obj->data.childs; l; l = l->next) {
             sysobj *card_obj = sysobj_new_from_fn(drm_obj->path, (gchar*)l->data);
-            if (verify_pci_device(card_obj->name) ) {
+            if (verify_pci_addy(card_obj->name) ) {
                 gchar *class_str = sysobj_raw_from_fn(card_obj->path, "class");
                 if (class_str) {
                     int pci_class = strtol(class_str, NULL, 16);

@@ -20,12 +20,30 @@
 
 #include <stdlib.h> /* for strtol() */
 #include <string.h> /* for strchr() */
+#include <ctype.h>  /* for isxdigit() */
 #include "util_pci.h"
 
 /* ????:??:??.? */
-gboolean verify_pci_device(gchar *str) {
-    /* TODO:!! */
-    return TRUE;
+gboolean verify_pci_addy(gchar *str) {
+    if (!str) return FALSE;
+    /* may not be needed, won't isxdigit(0) fail
+     * and short-circuit the check? */
+    if (strlen(str) != 12) return FALSE;
+    if (  isxdigit(str[0])
+        && isxdigit(str[1])
+        && isxdigit(str[2])
+        && isxdigit(str[3])
+        && str[4] == ':'
+        && isxdigit(str[5])
+        && isxdigit(str[6])
+        && str[7] == ':'
+        && isxdigit(str[8])
+        && isxdigit(str[9])
+        && str[10] == '.'
+        && isxdigit(str[11])
+        && str[12] == 0 )
+            return TRUE;
+    return FALSE;
 }
 
 void util_pci_id_free(util_pci_id *s) {

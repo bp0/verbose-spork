@@ -99,7 +99,7 @@ static void pci_scan() {
     GSList *devs = sysobj_children(obj, NULL, NULL, TRUE);
     for(l = devs; l; l = l->next) {
         gchar *dev = (gchar*)l->data;
-        if (verify_pci_device(dev) ) {
+        if (verify_pci_addy(dev) ) {
             util_pci_id *pid = g_new0(util_pci_id, 1);
             gchar *dev_path = g_strdup_printf("%s/%s", obj->path, dev);
             pid->address = g_strdup(dev);
