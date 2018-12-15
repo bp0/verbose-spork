@@ -146,6 +146,22 @@ static GSList *gpu_list = NULL;
 
 static GMutex gpu_list_lock;
 
+gboolean str_shorten(gchar *str, const gchar *find, const gchar *replace) {
+    if (!str || !find || !replace) return FALSE;
+    long unsigned lf = strlen(find);
+    long unsigned lr = strlen(replace);
+    gchar *p = strstr(str, find);
+    if (p) {
+        if (lr > lf) lr = lf;
+        gchar *buff = g_strnfill(lf, ' ');
+        strncpy(buff, replace, lr);
+        strncpy(p, buff, lf);
+        g_free(buff);
+        return TRUE;
+    }
+    return FALSE;
+}
+
 /* TODO: In the future, when there is more vendor specific information available in
  * the gpu struct, then more precise names can be given to each gpu */
 static void make_nice_name(gpud *s) {
@@ -200,6 +216,18 @@ static void make_nice_name(gpud *s) {
         /* Intel Graphics may have very long names, like "Intel Corporation Seventh Generation Something Core Something Something Integrated Graphics Processor Revision Ninety-four"
          * but for now at least shorten "Intel Corporation" to just "Intel" */
         // s->nice_name = g_strdup_printf("%s %s", "Intel", device_str);
+    if (strstr(vendor_str, "Intel")) {
+        gchar *full_name = strdup(device_str);
+        str_shorten(full_name, "Integrated Graphics Controller", "Integrated Graphics");
+        str_shorten(full_name, "Generation", "Gen");
+        str_shorten(full_name, "Core Processor", "Core");
+        str_shorten(full_name, "Atom Processor", "Atom");
+        util_compress_space(full_name);
+        g_strstrip(full_name);
+        s->nice_name = g_strdup_printf("%s %s", vendor_str, full_name);
+        g_free(full_name);
+        return;
+    }
 
     if (strstr(vendor_str, "AMD")) {
         /* AMD PCI strings are crazy stupid because they use the exact same
@@ -208,7 +236,8 @@ static void make_nice_name(gpud *s) {
         /* Try and shorten it to the chip code name only, at least */
         char *b = strchr(full_name, '[');
         if (b) *b = 0;
-        s->nice_name = g_strdup_printf("%s %s", "AMD/ATI", g_strstrip(full_name));
+        g_strstrip(full_name);
+        s->nice_name = g_strdup_printf("%s %s", vendor_str, full_name);
         g_free(full_name);
         return;
     }
@@ -514,7 +543,7 @@ static gchar *gpu_data(const gchar *path) {
          * auto ("*" or NULL) so that "found" and
          * "list" may be hidden from listing */
         #define HIDE_STUFF 1
-        gchar *ret = HIDE_STUFF ? NULL : g_strdup("found\n" "list\n");
+        gchar *ret = HIDE_STUFF ? g_strdup("") : g_strdup("found\n" "list\n");
         for(GSList *l = gpu_list; l; l = l->next) {
             gpud *g = (gpud*)l->data;
             ret = appfs(ret, "\n", "%s", g->name);
@@ -533,6 +562,8 @@ static gchar *gpu_summary(const gchar *path) {
         gpud *g = (gpud*)l->data;
         ret = appfs(ret, " + ", "%s", g->nice_name);
     }
+    if (!ret)
+        ret = g_strdup(_("(Unknown)"));
     return ret;
 }
 

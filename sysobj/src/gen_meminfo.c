@@ -48,7 +48,10 @@ static gchar *meminfo_scan(const gchar *path) {
     if (!meminfo_path_fs) {
         /* init */
         sysobj *obj = sysobj_new_fast(PROC_MEMINFO);
-        if (!obj->exists) return NULL;
+        if (!obj->exists) {
+            sysobj_free(obj);
+            return NULL;
+        }
         meminfo_path_fs = g_strdup(obj->path_fs);
         sysobj_read(obj, FALSE);
         gchar **lines = g_strsplit(obj->data.str, "\n", -1);
