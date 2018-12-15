@@ -388,42 +388,15 @@ const sysobj_class *class_add(sysobj_class *c) {
     return c;
 }
 
-const sysobj_class *class_add_full(sysobj_class *base,
-    const gchar *tag, const gchar *pattern,
-    const gchar *s_label, const gchar *s_halp, guint flags,
-    double s_update_interval,
-    attr_tab *attributes,
-    void *f_verify, void *f_label, void *f_halp,
-    void *f_format, void *f_update_interval, void *f_compare,
-    void *f_flags ) {
-
-    sysobj_class *nc = g_new0(sysobj_class, 1);
-#define CLASS_PROVIDE_OR_INHERIT(M) nc->M = M ? M : (base ? base->M : 0 )
-    CLASS_PROVIDE_OR_INHERIT(tag);
-    CLASS_PROVIDE_OR_INHERIT(pattern);
-    CLASS_PROVIDE_OR_INHERIT(s_label);
-    CLASS_PROVIDE_OR_INHERIT(s_halp);
-    CLASS_PROVIDE_OR_INHERIT(s_update_interval);
-    CLASS_PROVIDE_OR_INHERIT(attributes);
-    CLASS_PROVIDE_OR_INHERIT(flags);
-    CLASS_PROVIDE_OR_INHERIT(f_verify);
-    CLASS_PROVIDE_OR_INHERIT(f_label);
-    CLASS_PROVIDE_OR_INHERIT(f_halp);
-    CLASS_PROVIDE_OR_INHERIT(f_format);
-    CLASS_PROVIDE_OR_INHERIT(f_update_interval);
-    CLASS_PROVIDE_OR_INHERIT(f_compare);
-    CLASS_PROVIDE_OR_INHERIT(f_flags);
-
-    if (nc->pattern)
-        return class_add(nc);
-    else
-        g_free(nc);
-
-    return NULL;
-}
-
 const sysobj_class *class_add_simple(const gchar *pattern, const gchar *label, const gchar *tag, guint flags, double update_interval, attr_tab *attributes) {
-    return class_add_full(NULL, tag, pattern, label, NULL, flags, update_interval, attributes, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    sysobj_class *nc = class_new();
+    nc->tag = tag;
+    nc->pattern = pattern;
+    nc->flags = flags;
+    nc->s_label = label;
+    nc->s_update_interval = update_interval;
+    nc->attributes = attributes;
+    return class_add(nc);
 }
 
 gboolean sysobj_has_flag(sysobj *s, guint flag) {

@@ -245,11 +245,6 @@ int class_count();
 #define class_new() g_new0(sysobj_class, 1)
 void class_free(sysobj_class *c);
 const sysobj_class *class_add(sysobj_class *c);
-const sysobj_class *class_add_full(sysobj_class *base,
-    const gchar *tag, const gchar *pattern, const gchar *s_label, const gchar *s_halp, guint flags, double s_update_interval,
-    attr_tab *attributes,
-    void *f_verify, void *f_label, void *f_halp,
-    void *f_format, void *f_update_interval, void *f_compare, void *f_flags );
 const sysobj_class *class_add_simple(const gchar *pattern, const gchar *label, const gchar *tag, guint flags, double update_interval, attr_tab *attributes);
 gboolean class_has_flag(const sysobj_class *c, guint flag);
 void class_cleanup();
