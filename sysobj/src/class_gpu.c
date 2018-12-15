@@ -31,6 +31,11 @@ static gchar *drm_card_format(sysobj *obj, int fmt_opts);
 static gboolean drm_card_attr_verify(sysobj *obj);
 static gchar *drm_card_attr_format(sysobj *obj, int fmt_opts);
 
+static gboolean drm_conn_verify(sysobj *obj);
+static gchar *drm_conn_format(sysobj *obj, int fmt_opts);
+
+static gboolean drm_conn_attr_verify(sysobj *obj);
+
 attr_tab gpu_prop_items[] = {
     { "name", NULL, OF_NONE, NULL, -1 },
     { "opp.khz_min",   "operating-performance-points minimum frequency", OF_NONE, fmt_khz_to_mhz, -1 },
@@ -53,6 +58,15 @@ attr_tab drm_items[] = {
     ATTR_TAB_LAST
 };
 
+attr_tab drm_conn_items[] = {
+    { "status" },
+    { "enabled" },
+    { "modes" },
+    { "edid" },
+    { "dpms" },
+    ATTR_TAB_LAST
+};
+
 static sysobj_class cls_gpu[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "gpu", .pattern = ":/gpu*", .flags = OF_GLOB_PATTERN | OF_CONST,
@@ -69,6 +83,13 @@ static sysobj_class cls_gpu[] = {
     .tag = "drm:card:attr", .pattern = "/sys/devices/*/drm/card*/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_verify = drm_card_attr_verify, .f_format = drm_card_attr_format,
     .attributes = drm_items },
+  { SYSOBJ_CLASS_DEF
+    .tag = "drm:link", .pattern = "/sys/devices/*/drm/card*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .s_label = N_("DRM connection"),
+    .f_verify = drm_conn_verify, .f_format = drm_conn_format },
+  { SYSOBJ_CLASS_DEF
+    .tag = "drm:link:attr", .pattern = "/sys/devices/*/drm/card*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .f_verify = drm_conn_attr_verify, .attributes = drm_conn_items },
 };
 
 static gboolean gpu_verify(sysobj *obj) {
@@ -86,16 +107,6 @@ static gchar *gpu_format(sysobj *obj, int fmt_opts) {
     if (verify_lblnum(obj, "gpu"))
         return sysobj_format_from_fn(obj->path, "name", fmt_opts);
     return simple_format(obj, fmt_opts);
-}
-
-static gboolean drm_card_verify(sysobj *obj) {
-    gboolean ret = FALSE;
-    gchar *pn = sysobj_parent_name(obj);
-    if (SEQ(pn, "drm")
-        && verify_lblnum(obj, "card") )
-        ret = TRUE;
-    g_free(pn);
-    return ret;
 }
 
 static gboolean drm_card_attr_verify(sysobj *obj) {
@@ -121,6 +132,16 @@ static gchar *drm_card_attr_format(sysobj *obj, int fmt_opts) {
     return simple_format(obj, fmt_opts);
 }
 
+static gboolean drm_card_verify(sysobj *obj) {
+    gboolean ret = FALSE;
+    gchar *pn = sysobj_parent_name(obj);
+    if (SEQ(pn, "drm")
+        && verify_lblnum(obj, "card") )
+        ret = TRUE;
+    g_free(pn);
+    return ret;
+}
+
 static gchar *drm_card_format(sysobj *obj, int fmt_opts) {
     gchar *device_name = sysobj_format_from_fn(obj->path, "device", fmt_opts | FMT_OPT_NULL_IF_SIMPLE_DIR);
     if (device_name)
@@ -137,6 +158,41 @@ static gchar *drm_card_format(sysobj *obj, int fmt_opts) {
         sysobj_free(dt_compat_obj);
 
     return simple_format(obj, fmt_opts);
+}
+
+static gboolean drm_conn_verify(sysobj *obj) {
+    gboolean ret = FALSE;
+    if (verify_lblnum_child(obj, "card") ) {
+        sysobj *pobj = sysobj_parent(obj, FALSE);
+        if (g_str_has_prefix(obj->name, pobj->name) ) {
+            ret = TRUE;
+        }
+        sysobj_free(pobj);
+    }
+    return ret;
+}
+
+static gchar *drm_conn_format(sysobj *obj, int fmt_opts) {
+    gchar *ret = NULL;
+    gchar *status = sysobj_format_from_fn(obj->path, "status", fmt_opts);
+    gchar *enabled = sysobj_format_from_fn(obj->path, "enabled", fmt_opts);
+    if (status && enabled)
+        ret = g_strdup_printf("%s; %s", enabled, status);
+    g_free(status);
+    g_free(enabled);
+    if (ret)
+        return ret;
+    return simple_format(obj, fmt_opts);
+}
+
+static gboolean drm_conn_attr_verify(sysobj *obj) {
+    gboolean ret = FALSE;
+    sysobj *pobj = sysobj_parent(obj, FALSE);
+    if (pobj->cls)
+        if (SEQ(pobj->cls->tag, "drm:link") )
+            ret = verify_in_attr_tab(obj, drm_conn_items);
+    sysobj_free(pobj);
+    return ret;
 }
 
 void class_gpu() {
