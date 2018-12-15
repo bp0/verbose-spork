@@ -20,8 +20,6 @@
 
 #include "sysobj.h"
 
-static gboolean verify_true(sysobj *obj) { return TRUE; }
-
 static gchar *os_format(sysobj *obj, int fmt_opts);
 static const gchar *os_release_label(sysobj *obj);
 static gchar *os_release_format(sysobj *obj, int fmt_opts);

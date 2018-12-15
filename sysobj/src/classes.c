@@ -124,25 +124,37 @@ gchar *class_flags_format(sysobj *obj, int fmt_opts) {
     return simple_format(obj, fmt_opts);
 }
 
+static attr_tab sysobj_items[] = {
+    { "elapsed", N_("seconds since sysobj_init()"), OF_NONE, fmt_seconds_to_span, 0.2 },
+    { "class_count", N_("number of sysobj classes defined"), OF_NONE, NULL, 0.5 },
+    { "virt_count", N_("number of objects in the sysobj virtual fs tree"), OF_NONE, NULL, 0.5 },
+    { "root", N_("the alternate filesystem root, if any") },
+    { "free_expected", N_("seconds until next free_auto_free()"), OF_NONE, fmt_seconds, 0.2 },
+    { "freed_count", N_("memory objects freed via auto_free()"), OF_NONE, NULL, 0.5 },
+    { "free_queue", N_("memory objects waiting to be freed via auto_free()"), OF_NONE, NULL, 0.5 },
+    { "sysobj_new", N_("sysobj created with sysobj_new()") },
+    { "sysobj_new_fast", N_("sysobj created without sysobj_classify()") },
+    { "sysobj_clean", N_("sysobj cleared") },
+    { "sysobj_free", N_("sysobj freed") },
+    ATTR_TAB_LAST
+};
+
 static sysobj_class cls_internal[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "vsfs", .pattern = ":", .flags = OF_CONST,
     .s_label = N_("Virtual sysfs root"), .s_update_interval = 60.0 },
   { SYSOBJ_CLASS_DEF
     .tag = "sysobj:stat", .pattern = ":sysobj/*", .flags = OF_CONST | OF_GLOB_PATTERN,
-    .s_update_interval = 0.5 },
-  { SYSOBJ_CLASS_DEF
-    .tag = "sysobj:elapsed", .pattern = ":sysobj/elapsed", .flags = OF_CONST,
-    .s_label = N_("Seconds since sysobj_init()"), .s_update_interval = 0.2, .f_format = fmt_seconds_to_span },
-  { SYSOBJ_CLASS_DEF
-    .tag = "sysobj:free_expected", .pattern = ":sysobj/free_expected", .flags = OF_CONST,
-    .s_label = N_("Seconds until next free_auto_free()"), .s_update_interval = 0.2, .f_format = fmt_seconds },
+    .attributes = sysobj_items, .s_update_interval = 0.5 },
   { SYSOBJ_CLASS_DEF
     .tag = "sysobj:class", .pattern = ":sysobj/classes/*", .flags = OF_CONST | OF_GLOB_PATTERN,
     .f_verify = class_verify, .f_format = class_format },
   { SYSOBJ_CLASS_DEF
-    .tag = "sysobj:class_flags", .pattern = ":sysobj/classes/*/.flags", .flags = OF_CONST | OF_GLOB_PATTERN,
+    .tag = "sysobj:class:flags", .pattern = ":sysobj/classes/*/.flags", .flags = OF_CONST | OF_GLOB_PATTERN,
     .f_format = class_flags_format },
+  { SYSOBJ_CLASS_DEF
+    .tag = "sysobj:class:hits", .pattern = ":sysobj/classes/*/hits", .flags = OF_CONST | OF_GLOB_PATTERN,
+    .s_update_interval = 0.5 },
 };
 
 void class_internal() {

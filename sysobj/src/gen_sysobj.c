@@ -67,6 +67,7 @@ static gchar *get_item(const gchar *path) {
 }
 
 static const gchar class_item_list[] =
+  ".attributes\n"
   ".def_file\n"
   ".def_line\n"
   ".pattern\n"
@@ -83,7 +84,15 @@ static const gchar class_item_list[] =
   ".f_flags\n"
   ".f_cleanup\n"
   ".f_halp\n"
+  "self\n"
   "hits\n";
+
+static const gchar attr_item_list[] =
+    ".attr_name\n"
+    ".s_label\n"
+    ".extra_flags\n"
+    ".fmt_func\n"
+    ".s_update_interval\n";
 
 static gchar *get_class_info(const gchar *path) {
     if (!path) return NULL;
@@ -119,6 +128,12 @@ static gchar *get_class_info(const gchar *path) {
     }
 
     if (match) {
+        const gchar *after_match = path + crsz + 1 + ml;
+
+        if (SEQ(name, "self") )
+            return g_strdup_printf("%p", match);
+        if (SEQ(name, ".attributes") )
+            return g_strdup_printf("%p", match->attributes);
         if (SEQ(name, ".def_file") )
             return g_strdup(match->def_file);
         if (SEQ(name, ".def_line") ) {
@@ -171,6 +186,11 @@ static int get_class_info_type(const gchar *path) {
 
     if (SEQ(path, ":sysobj/classes") )
         return VSO_TYPE_DIR | VSO_TYPE_DYN;
+
+    /*
+    if (g_str_has_suffix(path, "/.attributes") )
+        return VSO_TYPE_DIR;
+    */
 
     int ret = VSO_TYPE_DIR; //assume
     gchar **il = g_strsplit(class_item_list, "\n", -1);

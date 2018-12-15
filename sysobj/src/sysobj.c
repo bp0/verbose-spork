@@ -1055,6 +1055,8 @@ gboolean verify_parent_name(sysobj *obj, const gchar *parent_name) {
     return verified;
 }
 
+gboolean verify_true(sysobj *obj) { return TRUE; }
+
 gboolean verify_in_attr_tab(sysobj *obj, attr_tab *attributes) {
     return !(attr_tab_lookup(attributes, obj->name) == -1);
 }

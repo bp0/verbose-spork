@@ -41,9 +41,10 @@ enum {
     OF_CONST         = 1<<1,
     OF_BLAST         = 1<<2,  /* match as late as possible */
 
-    /* used in "simple" classes */
-    OF_REQ_ROOT      = 1<<16,
-    OF_IS_VENDOR     = 1<<17,
+    /* used in "simple" classes and attr_tabs
+     * use sysobj_has_flag() to check */
+    OF_REQ_ROOT      = 1<<16, /* expected to require root */
+    OF_IS_VENDOR     = 1<<17, /* additional vendor information may be available through vendor_match() */
 };
 
 enum {
@@ -227,6 +228,7 @@ void sysobj_virt_from_kv(const gchar *base, const gchar *kv_data_in);
 void sysobj_virt_from_lines(const gchar *base, const gchar *data_in, gboolean safe_names);
 
 /* to be called by sysobj_class::f_verify */
+gboolean verify_true(sysobj *obj);
 gboolean verify_lblnum(sysobj *obj, const gchar *lbl);
 gboolean verify_lblnum_child(sysobj *obj, const gchar *lbl);
 gboolean verify_parent_name(sysobj *obj, const gchar *parent_name);
@@ -299,7 +301,7 @@ sysobj_data *sysobj_data_dup(const sysobj_data *src);
 void sysobj_data_free(sysobj_data *d, gboolean and_self);
 
 #define DEBUG_AUTO_FREE 0
-#define AF_SECONDS 68
+#define AF_SECONDS 31
 #define AF_DELAY_SECONDS 20
 #ifdef DEBUG_AUTO_FREE
 #define auto_free(p) auto_free_(p, __FILE__, __LINE__, __FUNCTION__)
