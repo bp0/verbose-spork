@@ -32,10 +32,15 @@ const gchar power_reference_markup_text[] =
 static gboolean subsystem_verify(sysobj *s);
 static gchar *subsystem_format(sysobj *obj, int fmt_opts);
 
-static gboolean power_verify(sysobj *s);
-static const gchar *power_label(sysobj *s);
 static gchar *power_format(sysobj *obj, int fmt_opts);
-static double power_update_interval(sysobj *obj);
+
+static gboolean power_attr_verify(sysobj *s);
+
+static attr_tab power_items[] = {
+    { "async",   N_("allow multi-threaded system-wide power transitions") },
+    { "control", N_("run-time power management control setting") },
+    ATTR_TAB_LAST
+};
 
 static sysobj_class cls_power[] = {
   { SYSOBJ_CLASS_DEF
@@ -58,12 +63,12 @@ static sysobj_class cls_power[] = {
 
   { SYSOBJ_CLASS_DEF
     .tag = "device_power", .pattern = "/sys/devices/*/power", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .s_halp = power_reference_markup_text,
-    .f_label = power_label, .f_format = power_format, .f_update_interval = power_update_interval },
+    .s_halp = power_reference_markup_text, .s_label = N_("Device power management information"),
+    .f_format = power_format, .s_update_interval = 1.0 },
   { SYSOBJ_CLASS_DEF
     .tag = "device_power:attribute", .pattern = "/sys/devices/*/power/*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .f_verify = power_verify, .s_halp = power_reference_markup_text,
-    .f_label = power_label, .f_format = power_format, .f_update_interval = power_update_interval },
+    .f_verify = power_attr_verify, .s_halp = power_reference_markup_text,
+    .attributes = power_items, .s_update_interval = 1.0 },
 };
 
 static gboolean subsystem_verify(sysobj *obj) {
@@ -95,38 +100,14 @@ static gchar *subsystem_format(sysobj *obj, int fmt_opts) {
     return simple_format(obj, fmt_opts);
 }
 
-static const struct { gchar *item; gchar *lbl; int extra_flags; } power_items[] = {
-    { "power",         N_("Device power management information"), OF_NONE },
-    { "async",         N_("Allow multi-threaded system-wide power transitions"), OF_NONE },
-    { "control",       N_("Run-time power management control setting"), OF_NONE },
-    { NULL, NULL, 0 }
-};
-
-static int power_lookup(const gchar *key) {
-    int i = 0;
-    while(power_items[i].item) {
-        if (SEQ(key, power_items[i].item))
-            return i;
-        i++;
-    }
-    return -1;
-}
-
-static gboolean power_verify(sysobj *obj) {
+/* power/ children */
+static gboolean power_attr_verify(sysobj *obj) {
     gboolean ret = FALSE;
     gchar *pn = sysobj_parent_name(obj);
     if (SEQ("power", pn) )
         ret = TRUE;
-
     g_free(pn);
     return ret;
-}
-
-const gchar *power_label(sysobj *obj) {
-    int i = power_lookup(obj->name);
-    if (i != -1)
-        return _(power_items[i].lbl);
-    return NULL;
 }
 
 static gchar *power_format(sysobj *obj, int fmt_opts) {
@@ -144,15 +125,8 @@ static gchar *power_format(sysobj *obj, int fmt_opts) {
     return simple_format(obj, fmt_opts);
 }
 
-static double power_update_interval(sysobj *obj) {
-    PARAM_NOT_UNUSED(obj);
-    return 1.0;
-}
-
 void class_power() {
-    int i = 0;
     /* add classes */
-    for (i = 0; i < (int)G_N_ELEMENTS(cls_power); i++) {
+    for (int i = 0; i < (int)G_N_ELEMENTS(cls_power); i++)
         class_add(&cls_power[i]);
-    }
 }
