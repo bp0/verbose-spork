@@ -178,6 +178,16 @@ gchar *fmt_1yes0no(sysobj *obj, int fmt_opts) {
     return g_strdup_printf("[%d] %s", value, value ? _("Yes") : _("No") );
 }
 
+gchar *fmt_megabitspersecond(sysobj *obj, int fmt_opts) {
+    CHECK_OBJ();
+    PREP_RAW();
+    double mbps = strtod(raw, NULL);
+    FINISH_RAW();
+    return fmt_opts & FMT_OPT_NO_UNIT
+        ? g_strdup_printf("%.1f", mbps)
+        : g_strdup_printf("%.1f %s", mbps, _("Mbps"));
+}
+
 gchar *fmt_KiB(sysobj *obj, int fmt_opts) {
     CHECK_OBJ();
     PREP_RAW();

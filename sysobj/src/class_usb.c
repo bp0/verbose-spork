@@ -20,6 +20,7 @@
 
 #include "sysobj.h"
 #include "util_usb.h"
+#include "format_funcs.h"
 
 #define SYSFS_USB "/sys/bus/usb"
 
@@ -43,8 +44,31 @@ static gchar *usb_format_bus(sysobj *obj, int fmt_opts);
 
 attr_tab usb_idcomp_items[] = {
     //TODO: labels
-    { "idVendor", NULL, OF_IS_VENDOR, NULL, -1 },
-    { "idProduct", NULL, OF_NONE, NULL, -1 },
+    { "idVendor", N_("usb.ids-provided vendor name"), OF_IS_VENDOR, NULL, -1 },
+    { "idProduct", N_("usb.ids-provided product name"), OF_NONE, NULL, -1 },
+    ATTR_TAB_LAST
+};
+
+static gchar *fmt_bcddevice(sysobj *obj, int fmt_opts) {
+    if (obj->data.str) {
+        uint32_t rev = strtol(obj->data.str, NULL, 10);
+        return g_strdup_printf("%02d.%02d", rev / 100, rev % 100);
+    }
+    return simple_format(obj, fmt_opts);
+}
+
+attr_tab usb_dev_items[] = {
+    { "manufacturer", N_("device-provided vendor name"), OF_IS_VENDOR, NULL, -1 },
+    { "product",   N_("device-provided product name"), OF_NONE, NULL, -1 },
+    { "version",   N_("USB version"), OF_NONE, NULL, -1 },
+    { "speed",     N_("bitrate"), OF_NONE, fmt_megabitspersecond, -1 },
+    { "removable", N_("device is removable or fixed"), OF_NONE, NULL, -1 },
+    { "urbnum",    N_("number of URBs submitted for the whole device"), OF_NONE, NULL, 0.2 },
+    { "tx_lanes",  N_("transmit lanes"), OF_NONE, NULL, 0.5 },
+    { "rx_lanes",  N_("receive lanes"), OF_NONE, NULL, 0.5 },
+    { "bMaxPower", N_("maximum power consumption"), OF_NONE, fmt_milliampere, -1 },
+    { "bcdDevice", N_("device revision"), OF_NONE, fmt_bcddevice, -1 },
+    { "serial",    N_("serial number"), OF_NONE, NULL, -1 },
     ATTR_TAB_LAST
 };
 
@@ -71,6 +95,9 @@ static sysobj_class cls_usb[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "usb:device_id", .pattern = "/sys/devices*/*-*/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .attributes = usb_idcomp_items, .f_format = usb_format_idcomp },
+  { SYSOBJ_CLASS_DEF
+    .tag = "usb:device:attr", .pattern = "/sys/devices*/*-*/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .attributes = usb_dev_items },
 /*  { SYSOBJ_CLASS_DEF
     .tag = "usb:iface", .pattern = "/sys/devices*<<<<>>>>/*-*:*.*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_verify = usb_verify_idcomp,
