@@ -39,6 +39,7 @@ static gboolean usb_verify_device(sysobj *obj) { return (obj) ? verify_usb_devic
 static gchar *usb_format_device(sysobj *obj, int fmt_opts);
 static gboolean usb_verify_bus(sysobj *obj) { return (obj) ? verify_usb_bus(obj->name) : FALSE; }
 static gchar *usb_format_bus(sysobj *obj, int fmt_opts);
+static gchar *usb_ids_format(sysobj *obj, int fmt_opts);
 
 #define usb_update_interval 10.0
 
@@ -113,8 +114,17 @@ static sysobj_class cls_usb[] = {
     .s_update_interval = 10.0 },
   { SYSOBJ_CLASS_DEF
     .tag = "usb.ids:id", .pattern = ":/usb/usb.ids/*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .s_halp = usb_ids_reference_markup_text, .s_label = "usb.ids lookup result" },
+    .s_halp = usb_ids_reference_markup_text, .s_label = "usb.ids lookup result",
+    .f_format = usb_ids_format },
 };
+
+static gboolean name_is_0x04(gchar *name) {
+    gchar *p = name;
+    while(isxdigit(*p)) p++;
+    if (strlen(name) == 4 && p-name == 4 )
+        return TRUE;
+    return FALSE;
+}
 
 static sysobj_virt vol[] = {
     { .path = ":/usb/bus", .str = SYSFS_USB,
@@ -124,6 +134,15 @@ static sysobj_virt vol[] = {
       .type = VSO_TYPE_DIR | VSO_TYPE_CONST,
       .f_get_data = NULL, .f_get_type = NULL },
 };
+
+static gchar *usb_ids_format(sysobj *obj, int fmt_opts) {
+    if ( name_is_0x04(obj->name) ) {
+        gchar *ret = sysobj_raw_from_fn(obj->path, "name");
+        if (ret)
+            return ret;
+    }
+    return simple_format(obj, fmt_opts);
+}
 
 static int usb_device_count() {
     int ret = 0;
