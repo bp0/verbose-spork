@@ -30,6 +30,7 @@
 #include "gettext.h"
 #include "term_color.h" /* used in formatting output */
 #include "util_sysobj.h"
+#include "sysobj_virt.h"
 #include "sysobj_filter.h"
 
 #define UPDATE_INTERVAL_DEFAULT  10.0   /* in seconds */
@@ -178,27 +179,6 @@ struct sysobj {
     const sysobj_class *cls;
 };
 
-enum {
-    VSO_TYPE_NONE     = 0, /* an error */
-    VSO_TYPE_DIR      = 1,
-    VSO_TYPE_STRING   = 1<<1,
-
-    VSO_TYPE_REQ_ROOT = 1<<15,
-    VSO_TYPE_SYMLINK  = 1<<16,
-    VSO_TYPE_DYN      = 1<<17, /* any path beyond that doesn't match a non-dyn path */
-    VSO_TYPE_AUTOLINK = 1<<18,
-    VSO_TYPE_CLEANUP  = 1<<19, /* will get a call f_get_data(NULL) to signal cleanup */
-    VSO_TYPE_CONST    = 1<<30, /* don't free */
-};
-
-typedef struct sysobj_virt {
-    gchar *path;
-    int type;
-    gchar *str; /* default f_get_data() uses str; */
-    gchar *(*f_get_data)(const gchar *path); /* f_get_data(NULL) is called for cleanup */
-    int (*f_get_type)(const gchar *path);
-} sysobj_virt;
-
 gboolean sysobj_root_set(const gchar *alt_root);
 const gchar *sysobj_root_get();
 #define sysobj_using_alt_root() (strlen(sysobj_root_get())!=0)
@@ -208,27 +188,8 @@ void sysobj_init(const gchar *alt_root);
 void sysobj_cleanup();
 double sysobj_elapsed(); /* time since sysobj_init(), in seconds */
 
-#define sysobj_virt_new() g_new0(sysobj_virt, 1)
-void sysobj_virt_free(sysobj_virt *s);
-gboolean sysobj_virt_add(sysobj_virt *vo); /* TRUE if added, FALSE if exists (was overwritten) or error */
-gboolean sysobj_virt_add_simple(const gchar *base, const gchar *name, const gchar *data, int type);
-gboolean sysobj_virt_add_simple_mkpath(const gchar *base, const gchar *name, const gchar *data, int type);
-void sysobj_virt_remove(gchar *glob);
-sysobj_virt *sysobj_virt_find(const gchar *path);
-gchar *sysobj_virt_get_data(const sysobj_virt *vo, const gchar *req);
-int sysobj_virt_get_type(const sysobj_virt *vo, const gchar *req);
-GSList *sysobj_virt_all_paths();
-int sysobj_virt_count();
-void sysobj_virt_cleanup();
-/* using the glib key-value file parser, create a tree of
- * base/group/name=value virtual sysobj's. Items before a first
- * group are put in base/name=value. */
-void sysobj_virt_from_kv(const gchar *base, const gchar *kv_data_in);
-/* lines in the form "key: value" */
-void sysobj_virt_from_lines(const gchar *base, const gchar *data_in, gboolean safe_names);
-
 /* to be called by sysobj_class::f_verify */
-gboolean verify_true(sysobj *obj);
+gboolean verify_true(sysobj *obj); /* return TRUE; */
 gboolean verify_lblnum(sysobj *obj, const gchar *lbl);
 gboolean verify_lblnum_child(sysobj *obj, const gchar *lbl);
 gboolean verify_parent_name(sysobj *obj, const gchar *parent_name);
