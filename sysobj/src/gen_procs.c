@@ -28,8 +28,10 @@
 
 static sysobj_virt vol[] = {
     { .path = PROCS_ROOT, .str = "*",
-      .type = VSO_TYPE_DIR | VSO_TYPE_CONST,
-      .f_get_data = NULL, .f_get_type = NULL },
+      .type = VSO_TYPE_DIR | VSO_TYPE_CONST },
+    { .path = PROCS_ROOT "/vulnerabilities",
+      .str = "/sys/devices/system/cpu/vulnerabilities",
+      .type = VSO_TYPE_SYMLINK | VSO_TYPE_AUTOLINK | VSO_TYPE_DYN | VSO_TYPE_CONST },
 };
 
 gboolean cpu_x86_vfms(int logical, gchar **vendor_id, int *family, int *model, int *stepping) {
@@ -120,7 +122,8 @@ static void procs_scan() {
     int packs = 0, cores = 0, threads = 0, clocks = 0;
     GSList *uniq_clocks = NULL;
 
-    sysobj_virt_remove(PROCS_ROOT "/*");
+    sysobj_virt_remove(PROCS_ROOT "/package*");
+    sysobj_virt_remove(PROCS_ROOT "/freq_domain*");
 
     sysobj *obj = sysobj_new_from_fn("/sys/devices/system/cpu", NULL);
     GSList *cpu_list = sysobj_children(obj, "cpu*", NULL, TRUE);
@@ -229,11 +232,9 @@ void find_soc() {
 }
 
 void gen_procs() {
-    int i = 0;
     /* add virtual sysobj */
-    for (i = 0; i < (int)G_N_ELEMENTS(vol); i++) {
+    for (int i = 0; i < (int)G_N_ELEMENTS(vol); i++)
         sysobj_virt_add(&vol[i]);
-    }
 
     procs_scan();
     find_soc();

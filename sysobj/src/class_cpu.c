@@ -72,23 +72,21 @@ static sysobj_class cls_cpu[] = {
 
   { SYSOBJ_CLASS_DEF
     .tag = "cpu", .pattern = "/sys/devices/system/cpu/cpu*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .s_label = N_("Logical CPU"), .s_halp = cpu_reference_markup_text,
+    .s_label = N_("logical CPU"), .s_halp = cpu_reference_markup_text,
     .f_verify = cpu_verify, .f_format = cpu_format, .f_update_interval = cpu_update_interval },
 
   { SYSOBJ_CLASS_DEF
     .tag = "cpu:isonline", .pattern = "/sys/devices/system/cpu/cpu*/online", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .s_label = N_("Is Online"), .s_halp = cpu_reference_markup_text,
+    .s_label = N_("is online"), .s_halp = cpu_reference_markup_text,
     .f_verify = cpu_verify_child, .f_format = fmt_1yes0no, .f_update_interval = cpu_update_interval },
 
   { SYSOBJ_CLASS_DEF
     .tag = "cpu:microcode_version", .pattern = "/sys/devices/system/cpu/cpu*/microcode/version", OF_GLOB_PATTERN | OF_CONST | OF_REQ_ROOT,
-    .s_label = N_("Version"), .s_halp = cpu_reference_markup_text },
+    .s_label = N_("microcode version"), .s_halp = cpu_reference_markup_text },
 };
 
 void class_cpu() {
-    int i = 0;
     /* add classes */
-    for (i = 0; i < (int)G_N_ELEMENTS(cls_cpu); i++) {
+    for (int i = 0; i < (int)G_N_ELEMENTS(cls_cpu); i++)
         class_add(&cls_cpu[i]);
-    }
 }

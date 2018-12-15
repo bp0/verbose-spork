@@ -26,7 +26,7 @@ gboolean cputopo_verify(sysobj *obj);
 gchar *cputopo_format(sysobj *obj, int fmt_opts);
 
 attr_tab cputopo_items[] = {
-    { "topology",            N_("CPU topology Information") },
+    { "topology",            N_("CPU topology information") },
     { "physical_package_id", N_("processor/socket") },
     { "core_id",             N_("CPU core") }, //TODO: of package?
     ATTR_TAB_LAST
