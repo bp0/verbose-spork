@@ -54,6 +54,8 @@ int main(int argc, char **argv) {
     }
 
     gchar *config_dir = util_build_fn(g_get_user_config_dir(), "sysobj");
+    sysobj_append_data_path("/usr/share/misc/");
+    sysobj_append_data_path("/usr/share/hwdata/");
     sysobj_append_data_path(config_dir);
     g_free(config_dir);
     sysobj_init(altroot);
