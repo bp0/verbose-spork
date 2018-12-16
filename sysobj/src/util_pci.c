@@ -21,6 +21,7 @@
 #include <stdlib.h> /* for strtol() */
 #include <string.h> /* for strchr() */
 #include <ctype.h>  /* for isxdigit() */
+#include "sysobj.h"
 #include "util_pci.h"
 
 /* ????:??:??.? */
@@ -105,7 +106,14 @@ int util_pci_ids_lookup_list(GSList *items) {
 
     GSList *tmp = NULL, *l = NULL;
 
-    pci_dot_ids = fopen("pci.ids", "r");
+    gchar *pcids_file = sysobj_find_data_file("pci.ids");
+    if (!pcids_file) {
+        //_msg("pci.ids file not found");
+        return 0;
+    }
+
+    pci_dot_ids = fopen(pcids_file, "r");
+    g_free(pcids_file);
     if (!pci_dot_ids) return -1;
 
     tmp = g_slist_copy(items);

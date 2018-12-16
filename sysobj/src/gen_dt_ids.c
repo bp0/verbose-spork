@@ -39,8 +39,6 @@
 
 #define ALLOW_WILDCARD 0
 
-static const char dtids_file[] = "dt.ids";
-
 #define dt_msg(...) fprintf (stderr, __VA_ARGS__)
 
 typedef struct {
@@ -73,7 +71,14 @@ static dt_id *scan_dtids_file(const char *compat_elem) {
 
     dt_id *ret = NULL;
 
+    gchar *dtids_file = sysobj_find_data_file("dt.ids");
+    if (!dtids_file) {
+        dt_msg("dt.ids file not found");
+        return ret;
+    }
+
     fd = fopen(dtids_file, "r");
+    g_free(dtids_file);
     if (!fd) {
         dt_msg("dt.ids file could not be read\n");
         return NULL;

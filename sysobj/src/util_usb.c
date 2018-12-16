@@ -20,6 +20,7 @@
 
 #include <stdlib.h> /* for strtol() */
 #include <string.h> /* for strchr() */
+#include "sysobj.h"
 #include "util_sysobj.h" /* for util_get_did() */
 #include "util_usb.h"
 
@@ -106,7 +107,14 @@ gboolean util_usb_ids_lookup_list(GSList *items) {
 
     GSList *tmp = NULL, *l = NULL;
 
-    usb_dot_ids = fopen("usb.ids", "r");
+    gchar *usbids_file = sysobj_find_data_file("usb.ids");
+    if (!usbids_file) {
+        //_msg("usb.ids file not found");
+        return 0;
+    }
+
+    usb_dot_ids = fopen(usbids_file, "r");
+    g_free(usbids_file);
     if (!usb_dot_ids) return -1;
 
     tmp = g_slist_copy(items);

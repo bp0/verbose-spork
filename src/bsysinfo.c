@@ -53,6 +53,9 @@ int main(int argc, char **argv) {
         query = argv[2];
     }
 
+    gchar *config_dir = util_build_fn(g_get_user_config_dir(), "sysobj");
+    sysobj_append_data_path(config_dir);
+    g_free(config_dir);
     sysobj_init(altroot);
 
     if (SYSOB_DEBUG_BUILD)

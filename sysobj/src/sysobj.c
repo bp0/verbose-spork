@@ -25,6 +25,18 @@
 #include "vendor.h"
 
 so_stats sysobj_stats = {};
+GSList *sysobj_data_paths = NULL;
+
+gchar *sysobj_find_data_file(const gchar *file) {
+    for (GSList *l = sysobj_data_paths; l; l = l->next) {
+        gchar *chk = util_build_fn(l->data, file);
+        DEBUG("checking: %s", chk);
+        if (g_file_test(chk, G_FILE_TEST_EXISTS) )
+            return chk;
+        g_free(chk);
+    }
+    return NULL;
+}
 
 gchar sysobj_root[1024] = "";
 #define USING_ALT_ROOT (*sysobj_root != 0)
@@ -1050,6 +1062,7 @@ void sysobj_init(const gchar *alt_root) {
     sysobj_global_timer = g_timer_new();
     g_timer_start(sysobj_global_timer);
 
+    sysobj_append_data_path(".");
     vendor_init();
     class_init();
 
@@ -1072,6 +1085,7 @@ void sysobj_cleanup() {
     sysobj_virt_cleanup();
     vendor_cleanup();
     g_timer_destroy(sysobj_global_timer);
+    g_slist_free_full(sysobj_data_paths, (GDestroyNotify)g_free);
 }
 
 sysobj *sysobj_parent(sysobj *s, gboolean req) {

@@ -179,6 +179,17 @@ struct sysobj {
     const sysobj_class *cls;
 };
 
+/* list of paths to search for data files,
+ * in search order.
+ * Add paths *before* sysobj_init().
+ * All strings will be freed with g_free()
+ * at sysobj_cleanup() */
+extern GSList *sysobj_data_paths;
+#define sysobj_prepend_data_path(p) (sysobj_data_paths = g_slist_prepend(sysobj_data_paths, g_strdup(p)))
+#define sysobj_append_data_path(p) (sysobj_data_paths = g_slist_append(sysobj_data_paths, g_strdup(p)))
+/* returns a path including the file name, g_free() when done */
+gchar *sysobj_find_data_file(const gchar *file);
+
 gboolean sysobj_root_set(const gchar *alt_root);
 const gchar *sysobj_root_get();
 #define sysobj_using_alt_root() (strlen(sysobj_root_get())!=0)

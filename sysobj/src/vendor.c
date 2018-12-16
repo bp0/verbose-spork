@@ -27,7 +27,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
-#include "sysobj_config.h"
+#include "sysobj.h"
 #include "vendor.h"
 
 static GSList *vendor_list = NULL;
@@ -114,34 +114,18 @@ static int read_from_vendor_ids(const char *path) {
 }
 
 void vendor_init(void) {
-    gchar *path = NULL;
-
     /* already initialized */
     if (vendor_list) return;
 
     DEBUG("initializing vendor list");
 
-    gchar *file_search_order[] = {
-        g_strdup("./vendor.ids"),
-        NULL
-    };
-
-    int n = 0;
-    while (file_search_order[n]) {
-        DEBUG("searching for vendor data at %s ...", file_search_order[n]);
-        if (!access(file_search_order[n], R_OK)) {
-            path = file_search_order[n];
-            DEBUG("... file exists.");
-            break;
-        }
-        n++;
-    }
-
+    gchar *path = sysobj_find_data_file("vendor.ids");
     int fail = 1;
 
     if (path && strstr(path, "vendor.ids")) {
         fail = !read_from_vendor_ids(path);
     }
+    g_free(path);
 
     if (fail)
         DEBUG("vendor data not found");
@@ -150,13 +134,6 @@ void vendor_init(void) {
      * less likely to incorrectly match.
      * example: ST matches ASUSTeK but SEAGATE is not ASUS */
     vendor_list = g_slist_sort(vendor_list, vendor_sort);
-
-    /* free search location strings */
-    n = 0;
-    while (file_search_order[n]) {
-        g_free(file_search_order[n]);
-        n++;
-    }
 }
 
 void vendor_cleanup() {

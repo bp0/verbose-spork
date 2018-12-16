@@ -101,7 +101,7 @@ set_target_properties(sysobj PROPERTIES COMPILE_FLAGS "-Werror=implicit-function
 #set_target_properties(sysobj PROPERTIES COMPILE_FLAGS "-Wall -Wextra -Werror")
 
 set_source_files_properties(
-        src/x86_data.c
+        sysobj/src/x86_data.c
         PROPERTIES
         COMPILE_FLAGS "-Wno-unused-function"
 )
@@ -110,6 +110,7 @@ add_executable(bsysinfo
         src/bsysinfo.c
 )
 target_link_libraries(bsysinfo
+        ${SYSOB_GLIB_LIBRARIES}
         sysobj
 )
 

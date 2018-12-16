@@ -101,6 +101,9 @@ void about_init() {
 }
 
 static int app_init(void) {
+    gchar *config_dir = util_build_fn(g_get_user_config_dir(), "sysobj");
+    sysobj_append_data_path(config_dir);
+    g_free(config_dir);
     sysobj_init(NULL);
     uri_set_function((uri_handler)uri_sysobj);
     about_init();
