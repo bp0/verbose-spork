@@ -84,14 +84,12 @@ gboolean sysobj_virt_add(sysobj_virt *vo) {
 
 gboolean sysobj_virt_add_simple_mkpath(const gchar *base, const gchar *name, const gchar *data, int type) {
     gchar *tp = NULL, *tpp = NULL;
-    if (name)
-        tp = g_strdup_printf("%s/%s", base, name);
-    else
-        tp = g_strdup(base);
-
+    tp = util_build_fn(base, name);
     tpp = g_path_get_dirname(tp);
-    if (strlen(tpp) > 1)
-        sysobj_virt_add_simple_mkpath(tpp, NULL, "*", VSO_TYPE_DIR);
+    if (strlen(tpp) > 1) {
+        if (!sysobj_virt_find(tpp) )
+            sysobj_virt_add_simple_mkpath(tpp, NULL, "*", VSO_TYPE_DIR);
+    }
     g_free(tp);
     g_free(tpp);
     return sysobj_virt_add_simple(base, name, data, type);
@@ -99,10 +97,7 @@ gboolean sysobj_virt_add_simple_mkpath(const gchar *base, const gchar *name, con
 
 gboolean sysobj_virt_add_simple(const gchar *base, const gchar *name, const gchar *data, int type) {
     sysobj_virt *vo = g_new0(sysobj_virt, 1);
-    if (name)
-        vo->path = g_strdup_printf("%s/%s", base, name);
-    else
-        vo->path = g_strdup(base);
+    vo->path = util_build_fn(base, name);
     vo->type = type;
     vo->str = g_strdup(data);
     return sysobj_virt_add(vo);

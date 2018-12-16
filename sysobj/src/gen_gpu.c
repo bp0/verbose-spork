@@ -192,10 +192,8 @@ static void make_nice_name(gpud *s) {
         }
         if (!device_str) {
             char *comma = strchr(s->dt_compat, ',');
-            if (comma)
-                device_str = g_strdup(comma + 1);
-            else {
-                s->nice_name = g_strdup_printf("%s %s", vendor_str, device_str);
+            if (comma) {
+                s->nice_name = g_strdup_printf("%s %s", vendor_str, comma + 1);
                 return;
             }
         }
@@ -496,8 +494,24 @@ static void gpu_scan() {
                 /* extra stuff */
                 gpu_dt_opp(g);
             }
+
+            /* device name strings */
             make_nice_name(g);
-            sysobj_virt_add_simple(gpu_path, "name", g->nice_name, VSO_TYPE_STRING );
+            sysobj_virt_add_simple_mkpath(gpu_path, "name/nice_name", g->nice_name, VSO_TYPE_STRING );
+            gchar *full_name = NULL;
+            if (g->vendor_str) {
+                sysobj_virt_add_simple(gpu_path, "name/vendor", g->vendor_str, VSO_TYPE_STRING );
+                full_name = appf(full_name, "%s", g->vendor_str);
+            }
+            if (g->device_str) {
+                sysobj_virt_add_simple(gpu_path, "name/device", g->device_str, VSO_TYPE_STRING );
+                full_name = appf(full_name, "%s", g->device_str);
+            }
+            if (full_name) {
+                sysobj_virt_add_simple(gpu_path, "name/full_name", full_name, VSO_TYPE_STRING );
+                g_free(full_name);
+            }
+
             if (g->device_path) {
                 sysobj *dev = sysobj_new_fast(g->device_path);
                 if (!g->drm_card && !g->pci_addy)
