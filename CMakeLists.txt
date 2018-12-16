@@ -13,15 +13,19 @@ include(FindPkgConfig)
 pkg_check_modules(GLIB REQUIRED glib-2.0>=2.10)
 pkg_check_modules(GTK gtk+-3.0>=3.12)
 
+add_definitions("-std=gnu99")
+message("sysobj source dir: ${CMAKE_CURRENT_SOURCE_DIR}")
+message("sysobj binary dir: ${CMAKE_CURRENT_BINARY_DIR}")
+
 include_directories(
-        ${CMAKE_SOURCE_DIR}
-        ${CMAKE_SOURCE_DIR}/include
-        ${CMAKE_SOURCE_DIR}/include/sysobj
-        ${CMAKE_SOURCE_DIR}/gui
-        ${CMAKE_SOURCE_DIR}/uber-graph
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/sysobj
+        ${CMAKE_CURRENT_SOURCE_DIR}/gui
+        ${CMAKE_CURRENT_SOURCE_DIR}/uber-graph
         ${GLIB_INCLUDE_DIRS}
         ${GTK_INCLUDE_DIRS}
-        ${CMAKE_BINARY_DIR}
+        ${CMAKE_CURRENT_BINARY_DIR}
 )
 link_directories(
         ${GLIB_LIBRARY_DIRS}
@@ -155,8 +159,8 @@ else()
 message(STATUS "GTK3 libs not found, skipping GUI")
 endif()
 
-configure_file(sysobj_config.h.cmake ${CMAKE_BINARY_DIR}/sysobj_config.h @ONLY)
-configure_file("data/pci.ids" ${CMAKE_BINARY_DIR}/ COPYONLY)
-configure_file("data/usb.ids" ${CMAKE_BINARY_DIR}/ COPYONLY)
-configure_file("data/dt.ids" ${CMAKE_BINARY_DIR}/ COPYONLY)
-configure_file("data/vendor.ids" ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(sysobj_config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/sysobj_config.h @ONLY)
+configure_file("data/pci.ids" ${CMAKE_CURRENT_BINARY_DIR}/ COPYONLY)
+configure_file("data/usb.ids" ${CMAKE_CURRENT_BINARY_DIR}/ COPYONLY)
+configure_file("data/dt.ids" ${CMAKE_CURRENT_BINARY_DIR}/ COPYONLY)
+configure_file("data/vendor.ids" ${CMAKE_CURRENT_BINARY_DIR}/ COPYONLY)
