@@ -11,7 +11,7 @@ add_definitions(-DSRC_ROOT="${CMAKE_SOURCE_DIR}")
 
 include(FindPkgConfig)
 pkg_check_modules(GLIB REQUIRED glib-2.0>=2.10)
-pkg_check_modules(GTK gtk+-3.0>=3.12)
+pkg_check_modules(GTK3 gtk+-3.0>=3.12)
 
 add_definitions("-std=gnu99")
 message("sysobj source dir: ${CMAKE_CURRENT_SOURCE_DIR}")
@@ -24,12 +24,12 @@ include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/gui
         ${CMAKE_CURRENT_SOURCE_DIR}/uber-graph
         ${GLIB_INCLUDE_DIRS}
-        ${GTK_INCLUDE_DIRS}
+        ${GTK3_INCLUDE_DIRS}
         ${CMAKE_CURRENT_BINARY_DIR}
 )
 link_directories(
         ${GLIB_LIBRARY_DIRS}
-        ${GTK_LIBRARY_DIRS}
+        ${GTK3_LIBRARY_DIRS}
 )
 
 add_library(sysobj STATIC
@@ -140,7 +140,7 @@ add_library(sysobj_widgets STATIC
 )
 target_link_libraries(sysobj_widgets
         ${GLIB_LIBRARIES}
-        ${GTK_LIBRARIES}
+        ${GTK3_LIBRARIES}
         sysobj
 )
 set_target_properties(sysobj_widgets PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations")
@@ -150,7 +150,7 @@ add_executable(bsysinfo-gtk
 set_target_properties(bsysinfo-gtk PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations")
 target_link_libraries(bsysinfo-gtk
         ${GLIB_LIBRARIES}
-        ${GTK_LIBRARIES}
+        ${GTK3_LIBRARIES}
         sysobj
         sysobj_widgets
         m
