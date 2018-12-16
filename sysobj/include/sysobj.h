@@ -98,7 +98,7 @@ int attr_tab_lookup(const attr_tab *attributes, const gchar *name);
 /* can be used in a struct sysobj_class to provide debug information
  * sysobj_class my_class = { SYSOBJ_CLASS_DEF .pattern = "...", ... }
  * The define can be removed for "reproducible" builds. */
-#define SYSOBJ_CLASS_DEF .def_file = __FILE__ + sizeof(SRC_ROOT), .def_line = __LINE__,
+#define SYSOBJ_CLASS_DEF .def_file = __FILE__ + sizeof(SYSOB_SRC_ROOT), .def_line = __LINE__,
 
 /* "halp" is like help. Reference text or
  * explaination for an object.

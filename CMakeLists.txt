@@ -2,16 +2,16 @@ project(bsysinfo C)
 cmake_minimum_required(VERSION 2.6)
 
 if(${CMAKE_BUILD_TYPE} MATCHES [Dd]ebug)
-        message("Debug build")
-        add_definitions(-DDEBUG_BUILD=1)
+        message("sysobj debug build")
+        add_definitions(-DSYSOB_DEBUG_BUILD=1)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address")
 endif()
 
-add_definitions(-DSRC_ROOT="${CMAKE_SOURCE_DIR}")
+add_definitions(-DSYSOB_SRC_ROOT="${CMAKE_CURRENT_SOURCE_DIR}")
 
 include(FindPkgConfig)
-pkg_check_modules(GLIB REQUIRED glib-2.0>=2.10)
-pkg_check_modules(GTK3 gtk+-3.0>=3.12)
+pkg_check_modules(SYSOB_GLIB REQUIRED glib-2.0>=2.10)
+pkg_check_modules(SYSOB_GTK3 gtk+-3.0>=3.12)
 
 add_definitions("-std=gnu99")
 message("sysobj source dir: ${CMAKE_CURRENT_SOURCE_DIR}")
@@ -23,13 +23,13 @@ include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/include/sysobj
         ${CMAKE_CURRENT_SOURCE_DIR}/gui
         ${CMAKE_CURRENT_SOURCE_DIR}/uber-graph
-        ${GLIB_INCLUDE_DIRS}
-        ${GTK3_INCLUDE_DIRS}
+        ${SYSOB_GLIB_INCLUDE_DIRS}
+        ${SYSOB_GTK3_INCLUDE_DIRS}
         ${CMAKE_CURRENT_BINARY_DIR}
 )
 link_directories(
-        ${GLIB_LIBRARY_DIRS}
-        ${GTK3_LIBRARY_DIRS}
+        ${SYSOB_GLIB_LIBRARY_DIRS}
+        ${SYSOB_GTK3_LIBRARY_DIRS}
 )
 
 add_library(sysobj STATIC
@@ -94,7 +94,7 @@ add_library(sysobj STATIC
         sysobj/src/vendor.c
 )
 target_link_libraries(sysobj
-        ${GLIB_LIBRARIES}
+        ${SYSOB_GLIB_LIBRARIES}
 )
 set_target_properties(sysobj PROPERTIES COMPILE_FLAGS "-Werror=implicit-function-declaration")
 
@@ -139,8 +139,8 @@ add_library(sysobj_widgets STATIC
         gui/uri_handler.c
 )
 target_link_libraries(sysobj_widgets
-        ${GLIB_LIBRARIES}
-        ${GTK3_LIBRARIES}
+        ${SYSOB_GLIB_LIBRARIES}
+        ${SYSOB_GTK3_LIBRARIES}
         sysobj
 )
 set_target_properties(sysobj_widgets PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations")
@@ -149,8 +149,8 @@ add_executable(bsysinfo-gtk
 )
 set_target_properties(bsysinfo-gtk PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations")
 target_link_libraries(bsysinfo-gtk
-        ${GLIB_LIBRARIES}
-        ${GTK3_LIBRARIES}
+        ${SYSOB_GLIB_LIBRARIES}
+        ${SYSOB_GTK3_LIBRARIES}
         sysobj
         sysobj_widgets
         m

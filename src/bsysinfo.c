@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
 
     sysobj_init(altroot);
 
-    if (DEBUG_BUILD)
+    if (SYSOB_DEBUG_BUILD)
         class_dump_list();
 
     sysobj *ex_obj = sysobj_new_from_fn(query, NULL);

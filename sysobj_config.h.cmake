@@ -1,22 +1,22 @@
-#ifndef __CONFIG_H__
-#define __CONFIG_H__
+#ifndef __SYSOB_CONFIG_H__
+#define __SYSOB_CONFIG_H__
 
-#ifndef SRC_ROOT
-#define SRC_ROOT ""
+#ifndef SYSOB_SRC_ROOT
+#define SYSOB_SRC_ROOT ""
 #endif
 
-#if !defined DEBUG_BUILD
-#define DEBUG_BUILD 0
+#if !defined SYSOB_DEBUG_BUILD
+#define SYSOB_DEBUG_BUILD 0
 #endif
 
-#if (DEBUG_BUILD == 1)
+#if (SYSOB_DEBUG_BUILD == 1)
 #   define DEBUG(msg,...) fprintf(stderr, "*** %s:%d (%s) *** " msg "\n", \
-        __FILE__ + sizeof(SRC_ROOT), __LINE__, __FUNCTION__, ##__VA_ARGS__)
+        __FILE__ + sizeof(SYSOB_SRC_ROOT), __LINE__, __FUNCTION__, ##__VA_ARGS__)
 #else
 #   define DEBUG(msg,...)
-#endif  /* DEBUG_BUILD */
+#endif  /* SYSOB_DEBUG_BUILD */
 
 #define DBPING printf("*** %s:%d (%s) PING ***\n", __FILE__, __LINE__, __FUNCTION__);
 
-#endif  /* __CONFIG_H__ */
+#endif  /* __SYSOB_CONFIG_H__ */
 
