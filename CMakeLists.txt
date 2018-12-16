@@ -28,10 +28,6 @@ link_directories(
         ${GTK_LIBRARY_DIRS}
 )
 
-add_library(gettext STATIC
-        src/gettext.c
-)
-
 add_library(sysobj STATIC
         sysobj/src/sysobj.c
         sysobj/src/sysobj_virt.c
@@ -94,7 +90,7 @@ add_library(sysobj STATIC
         sysobj/src/vendor.c
 )
 target_link_libraries(sysobj
-        gettext
+        ${GLIB_LIBRARIES}
 )
 set_target_properties(sysobj PROPERTIES COMPILE_FLAGS "-Werror=implicit-function-declaration")
 
@@ -110,8 +106,6 @@ add_executable(bsysinfo
         src/bsysinfo.c
 )
 target_link_libraries(bsysinfo
-        ${GLIB_LIBRARIES}
-        gettext
         sysobj
 )
 
@@ -143,7 +137,6 @@ add_library(sysobj_widgets STATIC
 target_link_libraries(sysobj_widgets
         ${GLIB_LIBRARIES}
         ${GTK_LIBRARIES}
-        gettext
         sysobj
 )
 set_target_properties(sysobj_widgets PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations")
@@ -154,7 +147,6 @@ set_target_properties(bsysinfo-gtk PROPERTIES COMPILE_FLAGS "-Wno-deprecated-dec
 target_link_libraries(bsysinfo-gtk
         ${GLIB_LIBRARIES}
         ${GTK_LIBRARIES}
-        gettext
         sysobj
         sysobj_widgets
         m
