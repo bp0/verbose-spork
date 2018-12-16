@@ -133,13 +133,22 @@ add_library(uber-graph STATIC
 )
 set_target_properties(uber-graph PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations")
 endif()
-add_executable(bsysinfo-gtk
-        gui/bsysinfo-gtk.c
+add_library(sysobj_widgets STATIC
         gui/bp_sysobj_search.c
         gui/bp_sysobj_browser.c
         gui/bp_sysobj_view.c
         gui/bp_pin_inspect.c
         gui/uri_handler.c
+)
+target_link_libraries(sysobj_widgets
+        ${GLIB_LIBRARIES}
+        ${GTK_LIBRARIES}
+        gettext
+        sysobj
+)
+set_target_properties(sysobj_widgets PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations")
+add_executable(bsysinfo-gtk
+        gui/bsysinfo-gtk.c
 )
 set_target_properties(bsysinfo-gtk PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations")
 target_link_libraries(bsysinfo-gtk
@@ -147,13 +156,14 @@ target_link_libraries(bsysinfo-gtk
         ${GTK_LIBRARIES}
         gettext
         sysobj
+        sysobj_widgets
         m
 )
 else()
 message(STATUS "GTK3 libs not found, skipping GUI")
 endif()
 
-configure_file(config.h.cmake ${CMAKE_BINARY_DIR}/config.h @ONLY)
+configure_file(sysobj_config.h.cmake ${CMAKE_BINARY_DIR}/sysobj_config.h @ONLY)
 configure_file("data/pci.ids" ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file("data/usb.ids" ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file("data/dt.ids" ${CMAKE_BINARY_DIR}/ COPYONLY)

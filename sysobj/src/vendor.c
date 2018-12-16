@@ -27,7 +27,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
-#include "config.h"
+#include "sysobj_config.h"
 #include "vendor.h"
 
 static GSList *vendor_list = NULL;

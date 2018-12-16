@@ -26,7 +26,7 @@
 #include <stdlib.h>
 #include <stdint.h>  /* for *int*_t types */
 #include <ctype.h>   /* for isxdigit(), etc. */
-#include "config.h"
+#include "sysobj_config.h"
 #include "gettext.h"
 #include "term_color.h" /* used in formatting output */
 #include "util_sysobj.h"
