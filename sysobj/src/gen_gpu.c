@@ -119,6 +119,7 @@ typedef struct {
     gchar *device_str;
     gchar *dt_compat; /* first item only */
 
+    const Vendor *vendor;
     gboolean nv_info; /* nvidia info was found in /proc/driver/nvidia/gpus */
 } gpud;
 
@@ -137,6 +138,7 @@ static void gpud_free(gpud *s) {
         g_free(s->vendor_str);
         g_free(s->device_str);
         g_free(s->dt_compat);
+
         g_free(s);
     }
 }
@@ -145,106 +147,6 @@ static GSList *gpu_list = NULL;
 #define gpu_list_free() g_slist_free_full(gpu_list, (GDestroyNotify)gpud_free)
 
 static GMutex gpu_list_lock;
-
-gboolean str_shorten(gchar *str, const gchar *find, const gchar *replace) {
-    if (!str || !find || !replace) return FALSE;
-    long unsigned lf = strlen(find);
-    long unsigned lr = strlen(replace);
-    gchar *p = strstr(str, find);
-    if (p) {
-        if (lr > lf) lr = lf;
-        gchar *buff = g_strnfill(lf, ' ');
-        strncpy(buff, replace, lr);
-        strncpy(p, buff, lf);
-        g_free(buff);
-        return TRUE;
-    }
-    return FALSE;
-}
-
-/* TODO: In the future, when there is more vendor specific information available in
- * the gpu struct, then more precise names can be given to each gpu */
-static void make_nice_name(gpud *s) {
-    static const gchar unk_v[] = "Unknown"; /* do not...    */
-    static const gchar unk_d[] = "Device";  /* ...translate */
-    const gchar *vendor_str = s->vendor_str;
-    const gchar *device_str = s->device_str;
-    /* try and a get a "short name" for the vendor */
-    if (vendor_str)
-        vendor_str = vendor_get_shortest_name(vendor_str);
-
-    /* NV information available */
-    if (s->nv_info) {
-        gchar *model = sysobj_raw_from_printf(":/gpu/%s/nvidia/model", s->name);
-        if (model) {
-            s->nice_name = g_strdup_printf("%s %s", vendor_str, model);
-            g_free(model);
-            return;
-        }
-    }
-
-    if (s->dt_compat) {
-        if (!vendor_str && !device_str) {
-            s->nice_name = g_strdup(s->dt_compat);
-            char *comma = strchr(s->nice_name, ',');
-            if (comma) *comma = ' ';  /* "brcm,bcm2835-vc4" -> "brcm bcm2835-vc4" */
-            return;
-        }
-        if (!device_str) {
-            char *comma = strchr(s->dt_compat, ',');
-            if (comma) {
-                s->nice_name = g_strdup_printf("%s %s", vendor_str, comma + 1);
-                return;
-            }
-        }
-        if (!vendor_str) {
-            s->nice_name = g_strdup_printf("%s", device_str);
-            return;
-        }
-    }
-
-    if (!vendor_str) vendor_str = unk_v;
-    if (!device_str) device_str = unk_d;
-
-    /* These two former special cases are currently handled by the vendor_get_shortest_name()
-     * function well enough, but the notes are preserved here. */
-        /* nvidia PCI strings are pretty nice already,
-         * just shorten the company name */
-        // s->nice_name = g_strdup_printf("%s %s", "nVidia", device_str);
-        /* Intel Graphics may have very long names, like "Intel Corporation Seventh Generation Something Core Something Something Integrated Graphics Processor Revision Ninety-four"
-         * but for now at least shorten "Intel Corporation" to just "Intel" */
-        // s->nice_name = g_strdup_printf("%s %s", "Intel", device_str);
-    if (strstr(vendor_str, "Intel")) {
-        gchar *full_name = strdup(device_str);
-        str_shorten(full_name, "Integrated Graphics Controller", "Integrated Graphics");
-        str_shorten(full_name, "Generation", "Gen");
-        str_shorten(full_name, "Core Processor", "Core");
-        str_shorten(full_name, "Atom Processor", "Atom");
-        util_compress_space(full_name);
-        g_strstrip(full_name);
-        s->nice_name = g_strdup_printf("%s %s", vendor_str, full_name);
-        g_free(full_name);
-        return;
-    }
-
-    if (strstr(vendor_str, "AMD")) {
-        /* AMD PCI strings are crazy stupid because they use the exact same
-         * chip and device id for a zillion "different products" */
-        gchar *full_name = strdup(device_str);
-        /* Try and shorten it to the chip code name only, at least */
-        char *b = strchr(full_name, '[');
-        if (b) *b = 0;
-        g_strstrip(full_name);
-        s->nice_name = g_strdup_printf("%s %s", vendor_str, full_name);
-        g_free(full_name);
-        return;
-    }
-
-    /* nothing nicer */
-
-nice_is_over:
-    s->nice_name = g_strdup_printf("%s %s", vendor_str, device_str);
-}
 
 static void gpu_pci_hwmon(gpud *g) {
     /* for hwmon_attr_decode_name */
@@ -378,6 +280,20 @@ static void find_dev_by_of_node(gpud *g) {
     sysobj_foreach_from("/sys/devices/platform", NULL, (f_sysobj_foreach)_dev_by_of_node_callback, g, SO_FOREACH_NORMAL);
 }
 
+void sysobj_virt_add_vendor_match(gchar *base, gchar *name, const Vendor *vendor) {
+    if (!vendor) return;
+    gchar *path = util_build_fn(base, name);
+    sysobj_virt_add_simple_mkpath(path, "name", vendor->name, VSO_TYPE_STRING);
+    if (vendor->name_short && strlen(vendor->name_short) )
+        sysobj_virt_add_simple(path, "name_short", vendor->name_short, VSO_TYPE_STRING);
+    if (vendor->url && strlen(vendor->url) )
+        sysobj_virt_add_simple(path, "url", vendor->url, VSO_TYPE_STRING);
+    if (vendor->url_support && strlen(vendor->url_support) )
+        sysobj_virt_add_simple(path, "url_support", vendor->url_support, VSO_TYPE_STRING);
+    if (vendor->ansi_color && strlen(vendor->ansi_color) )
+        sysobj_virt_add_simple(path, "ansi_color", vendor->ansi_color, VSO_TYPE_STRING);
+}
+
 static void gpu_scan() {
     g_mutex_lock(&gpu_list_lock);
     /* look through all found and if something new is there, create a gpud */
@@ -496,21 +412,14 @@ static void gpu_scan() {
             }
 
             /* device name strings */
-            make_nice_name(g);
-            sysobj_virt_add_simple_mkpath(gpu_path, "name/nice_name", g->nice_name, VSO_TYPE_STRING );
-            gchar *full_name = NULL;
             if (g->vendor_str) {
-                sysobj_virt_add_simple(gpu_path, "name/vendor", g->vendor_str, VSO_TYPE_STRING );
-                full_name = appf(full_name, "%s", g->vendor_str);
+                sysobj_virt_add_simple_mkpath(gpu_path, "name/vendor_name", g->vendor_str, VSO_TYPE_STRING );
+                g->vendor = vendor_match(g->vendor_str, NULL);
+                if (g->vendor)
+                    sysobj_virt_add_vendor_match(gpu_path, "name/vendor", g->vendor);
             }
-            if (g->device_str) {
-                sysobj_virt_add_simple(gpu_path, "name/device", g->device_str, VSO_TYPE_STRING );
-                full_name = appf(full_name, "%s", g->device_str);
-            }
-            if (full_name) {
-                sysobj_virt_add_simple(gpu_path, "name/full_name", full_name, VSO_TYPE_STRING );
-                g_free(full_name);
-            }
+            if (g->device_str)
+                sysobj_virt_add_simple_mkpath(gpu_path, "name/device_name", g->device_str, VSO_TYPE_STRING );
 
             if (g->device_path) {
                 sysobj *dev = sysobj_new_fast(g->device_path);
@@ -554,8 +463,8 @@ static gchar *gpu_data(const gchar *path) {
         gpu_scan();
 
         /* use manual dir creation instead of
-         * auto ("*" or NULL) so that "found" and
-         * "list" may be hidden from listing */
+         * auto ("*" or NULL) so that "found"
+         * may be hidden from listing */
         #define HIDE_STUFF 1
         gchar *ret = HIDE_STUFF ? g_strdup("") : g_strdup("found\n" "list\n");
         for(GSList *l = gpu_list; l; l = l->next) {
@@ -568,24 +477,9 @@ static gchar *gpu_data(const gchar *path) {
     return NULL;
 }
 
-static gchar *gpu_summary(const gchar *path) {
-    if (!path) return NULL; /* no cleanup */
-
-    gchar *ret = NULL;
-    for(GSList *l = gpu_list; l; l = l->next) {
-        gpud *g = (gpud*)l->data;
-        ret = appfs(ret, " + ", "%s", g->nice_name);
-    }
-    if (!ret)
-        ret = g_strdup(_("(Unknown)"));
-    return ret;
-}
-
 static sysobj_virt vol[] = {
     { .path = ":/gpu", .f_get_data = gpu_data, /* note: manual dir creation */
       .type = VSO_TYPE_DIR | VSO_TYPE_CONST | VSO_TYPE_CLEANUP },
-    { .path = ":/gpu/list", .f_get_data = gpu_summary,
-      .type = VSO_TYPE_STRING | VSO_TYPE_CONST },
     { .path = ":/gpu/found", .str = "*",
       .type = VSO_TYPE_DIR | VSO_TYPE_CONST },
 };

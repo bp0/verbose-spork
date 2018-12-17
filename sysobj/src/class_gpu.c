@@ -22,8 +22,12 @@
 #include "sysobj_extras.h" /* for dtr_compat_decode() */
 #include "format_funcs.h"
 
+static gboolean gpu_list_verify(sysobj *obj);
+static gchar *gpu_list_format(sysobj *obj, int fmt_opts);
+
 static gboolean gpu_verify(sysobj *obj);
-static gchar *gpu_format(sysobj *obj, int fmt_opts);
+static gchar* gpu_format_nice_name(sysobj *gpu, int fmt_opts);
+static gboolean gpu_prop_verify(sysobj *obj);
 
 static gboolean drm_card_verify(sysobj *obj);
 static gchar *drm_card_format(sysobj *obj, int fmt_opts);
@@ -69,11 +73,14 @@ attr_tab drm_conn_items[] = {
 
 static sysobj_class cls_gpu[] = {
   { SYSOBJ_CLASS_DEF
-    .tag = "gpu", .pattern = ":/gpu*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .f_verify = gpu_verify, .f_format = gpu_format },
+    .tag = "gpu:list", .pattern = ":/gpu", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .f_verify = gpu_list_verify, .f_format = gpu_list_format },
+  { SYSOBJ_CLASS_DEF
+    .tag = "gpu", .pattern = ":/gpu/gpu*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .f_verify = gpu_verify, .f_format = gpu_format_nice_name },
   { SYSOBJ_CLASS_DEF
     .tag = "gpu:prop", .pattern = ":/gpu/gpu*/*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .attributes = gpu_prop_items },
+    .f_verify = gpu_prop_verify, .attributes = gpu_prop_items },
 
   { SYSOBJ_CLASS_DEF
     .tag = "drm:card", .pattern = "/sys/devices/*/drm/card*", .flags = OF_GLOB_PATTERN | OF_CONST,
@@ -92,21 +99,37 @@ static sysobj_class cls_gpu[] = {
     .f_verify = drm_conn_attr_verify, .attributes = drm_conn_items },
 };
 
-static gboolean gpu_verify(sysobj *obj) {
+static gboolean gpu_list_verify(sysobj *obj) {
     if (SEQ(":/gpu", obj->path))
         return TRUE;
+    return FALSE;
+}
+
+static gchar *gpu_list_format(sysobj *obj, int fmt_opts) {
+    if (SEQ(":/gpu", obj->path)) {
+        gchar *ret = NULL;
+        GSList *childs = sysobj_children(obj, "gpu*", NULL, TRUE);
+        for(GSList *l = childs; l; l = l->next) {
+            gchar *gpu = sysobj_format_from_fn(obj->path, l->data, fmt_opts);
+            if (gpu)
+                ret = appfs(ret, " + ", "%s", gpu);
+            g_free(gpu);
+        }
+        if (ret)
+            return ret;
+    }
+    return simple_format(obj, fmt_opts);
+}
+
+static gboolean gpu_verify(sysobj *obj) {
     if (verify_lblnum(obj, "gpu"))
         return TRUE;
     return FALSE;
 }
 
-static gchar *gpu_format(sysobj *obj, int fmt_opts) {
-    if (SEQ(":/gpu", obj->path)) {
-        return sysobj_format_from_fn(obj->path, "list", fmt_opts);
-    }
-    if (verify_lblnum(obj, "gpu"))
-        return sysobj_format_from_fn(obj->path, "name/nice_name", fmt_opts);
-    return simple_format(obj, fmt_opts);
+static gboolean gpu_prop_verify(sysobj *obj) {
+    return (verify_lblnum_child(obj, "gpu") &&
+        verify_in_attr_tab(obj, gpu_prop_items) );
 }
 
 static gboolean drm_card_attr_verify(sysobj *obj) {
@@ -193,6 +216,124 @@ static gboolean drm_conn_attr_verify(sysobj *obj) {
             ret = verify_in_attr_tab(obj, drm_conn_items);
     sysobj_free(pobj);
     return ret;
+}
+
+static gboolean str_shorten(gchar *str, const gchar *find, const gchar *replace) {
+    if (!str || !find || !replace) return FALSE;
+    long unsigned lf = strlen(find);
+    long unsigned lr = strlen(replace);
+    gchar *p = strstr(str, find);
+    if (p) {
+        if (lr > lf) lr = lf;
+        gchar *buff = g_strnfill(lf, ' ');
+        strncpy(buff, replace, lr);
+        strncpy(p, buff, lf);
+        g_free(buff);
+        return TRUE;
+    }
+    return FALSE;
+}
+
+/* TODO: In the future, when there is more vendor specific information available in
+ * the gpu struct, then more precise names can be given to each gpu */
+static gchar* gpu_format_nice_name(sysobj *gpu, int fmt_opts) {
+    static const gchar unk_v[] = "Unknown"; /* do not...    */
+    static const gchar unk_d[] = "Device";  /* ...translate */
+
+    gchar *nice_name = NULL;
+
+    gchar *vendor_str = sysobj_raw_from_fn(gpu->path, "name/vendor_name");
+    gchar *vendor_short = sysobj_raw_from_fn(gpu->path, "name/vendor/name_short");
+    gchar *device_str = sysobj_raw_from_fn(gpu->path, "name/device_name");
+    gchar *ansi_color = sysobj_raw_from_fn(gpu->path, "name/vendor/ansi_color");
+    gchar *dt_compat = sysobj_raw_from_fn(gpu->path, "/device/of_node/compatible");
+
+    if (ansi_color)
+        ansi_color = safe_ansi_color_ex(ansi_color, TRUE);
+    if (vendor_short) {
+        g_free(vendor_str);
+        vendor_str = vendor_short;
+        vendor_short = NULL;
+    }
+    if (vendor_str && ansi_color) {
+        gchar *color_ven = format_with_ansi_color(vendor_str, ansi_color, fmt_opts);
+        g_free(vendor_str);
+        vendor_str = color_ven;
+    }
+    gchar *nv_model = sysobj_raw_from_fn(gpu->path, "/nvidia/model");
+    /* NV information available */
+    if (nv_model) {
+        nice_name = g_strdup_printf("%s %s", vendor_str, nv_model);
+        goto nice_is_over;
+    }
+
+    if (dt_compat) {
+        if (!vendor_str && !device_str) {
+            nice_name = g_strdup(dt_compat);
+            char *comma = strchr(nice_name, ',');
+            if (comma) *comma = ' ';  /* "brcm,bcm2835-vc4" -> "brcm bcm2835-vc4" */
+            goto nice_is_over;
+        }
+        if (!device_str) {
+            char *comma = strchr(dt_compat, ',');
+            if (comma) {
+                nice_name = g_strdup_printf("%s %s", vendor_str, comma + 1);
+                goto nice_is_over;
+            }
+        }
+        if (!vendor_str) {
+            nice_name = g_strdup_printf("%s", device_str);
+            goto nice_is_over;
+        }
+    }
+
+    if (!vendor_str) vendor_str = g_strdup(unk_v);
+    if (!device_str) device_str = g_strdup(unk_d);
+
+    /* These two former special cases are currently handled by the vendor_get_shortest_name()
+     * function well enough, but the notes are preserved here. */
+        /* nvidia PCI strings are pretty nice already,
+         * just shorten the company name */
+        // s->nice_name = g_strdup_printf("%s %s", "nVidia", device_str);
+        /* Intel Graphics may have very long names, like "Intel Corporation Seventh Generation Something Core Something Something Integrated Graphics Processor Revision Ninety-four"
+         * but for now at least shorten "Intel Corporation" to just "Intel" */
+        // s->nice_name = g_strdup_printf("%s %s", "Intel", device_str);
+    if (strstr(vendor_str, "Intel")) {
+        gchar *full_name = strdup(device_str);
+        str_shorten(full_name, "Integrated Graphics Controller", "Integrated Graphics");
+        str_shorten(full_name, "Generation", "Gen");
+        str_shorten(full_name, "Core Processor", "Core");
+        str_shorten(full_name, "Atom Processor", "Atom");
+        util_compress_space(full_name);
+        g_strstrip(full_name);
+        nice_name = g_strdup_printf("%s %s", vendor_str, full_name);
+        g_free(full_name);
+        goto nice_is_over;
+    }
+
+    if (strstr(vendor_str, "AMD")) {
+        /* AMD PCI strings are crazy stupid because they use the exact same
+         * chip and device id for a zillion "different products" */
+        gchar *full_name = strdup(device_str);
+        /* Try and shorten it to the chip code name only, at least */
+        char *b = strchr(full_name, '[');
+        if (b) *b = 0;
+        g_strstrip(full_name);
+        nice_name = g_strdup_printf("%s %s", vendor_str, full_name);
+        g_free(full_name);
+        goto nice_is_over;
+    }
+
+    /* nothing nicer */
+    nice_name = g_strdup_printf("%s %s", vendor_str, device_str);
+
+nice_is_over:
+    g_free(nv_model);
+    g_free(device_str);
+    g_free(vendor_str);
+    g_free(dt_compat);
+    g_free(ansi_color);
+    return nice_name;
 }
 
 void class_gpu() {

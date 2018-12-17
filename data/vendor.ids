@@ -6,6 +6,7 @@
 #    name_short <shorter name>
 #    url <url>
 #    url_support <url>
+#    ansi_color <fg>[|<bg>]
 #    [match_string|match_string_case] <match>
 #    ...
 #    [match_string|match_string_case] <match>
@@ -39,6 +40,7 @@ name Advanced Micro Devices
 name Advanced Micro Devices (formerly ATI)
     name_short AMD/ATI
     url www.amd.com
+    ansi_color 1;37|0;41
     match_string ATI Technologies
     match_string Advanced Micro Devices, Inc. [AMD/ATI]
     match_string_case AMD/ATI
@@ -47,6 +49,7 @@ name Advanced Micro Devices (formerly ATI)
 name nVidia Corporation
     name_short nVidia
     url www.nvidia.com
+    ansi_color 1;37|0;42
     match_string nVidia
 
 name G.Skill International Enterprise
@@ -62,6 +65,7 @@ name 3Com
 name Intel Corporation
     name_short Intel
     url www.intel.com
+    ansi_color 1;37|0;44
     match_string Intel
 
 name Cirrus Logic

@@ -53,6 +53,7 @@ static int read_from_vendor_ids(const char *path) {
     char name_short[VEN_BUFF_SIZE] = "";
     char url[VEN_BUFF_SIZE] = "";
     char url_support[VEN_BUFF_SIZE] = "";
+    char ansi_color[VEN_BUFF_SIZE] = "";
     int count = 0;
     FILE *fd;
     char *p, *b;
@@ -73,6 +74,7 @@ static int read_from_vendor_ids(const char *path) {
             strcpy(name_short, "");
             strcpy(url, "");
             strcpy(url_support, "");
+            strcpy(ansi_color, "");
         }
         if (VEN_CHK("name_short "))
             strncpy(name_short, p + tl, VEN_BUFF_SIZE - 1);
@@ -80,6 +82,8 @@ static int read_from_vendor_ids(const char *path) {
             strncpy(url, p + tl, VEN_BUFF_SIZE - 1);
         if (VEN_CHK("url_support "))
             strncpy(url_support, p + tl, VEN_BUFF_SIZE - 1);
+        if (VEN_CHK("ansi_color "))
+            strncpy(ansi_color, p + tl, VEN_BUFF_SIZE - 1);
 
         if (VEN_CHK("match_string ")) {
             Vendor *v = g_new0(Vendor, 1);
@@ -89,6 +93,7 @@ static int read_from_vendor_ids(const char *path) {
             v->name_short = g_strdup(name_short);
             v->url = g_strdup(url);
             v->url_support = g_strdup(url_support);
+            v->ansi_color = g_strdup(ansi_color);
             vendor_list = g_slist_prepend(vendor_list, v);
             count++;
         }
@@ -101,6 +106,7 @@ static int read_from_vendor_ids(const char *path) {
             v->name_short = g_strdup(name_short);
             v->url = g_strdup(url);
             v->url_support = g_strdup(url_support);
+            v->ansi_color = g_strdup(ansi_color);
             vendor_list = g_slist_prepend(vendor_list, v);
             count++;
         }
@@ -147,6 +153,7 @@ void vendor_free(Vendor *v) {
         g_free(v->name_short);
         g_free(v->url);
         g_free(v->url_support);
+        g_free(v->ansi_color);
         g_free(v->match_string);
         g_free(v);
     }

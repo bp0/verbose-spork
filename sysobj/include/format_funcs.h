@@ -54,6 +54,16 @@ gchar *fmt_KiB(sysobj *obj, int fmt_opts);
 gchar *fmt_KiB_to_MiB(sysobj *obj, int fmt_opts);
 gchar *fmt_KiB_to_higher(sysobj *obj, int fmt_opts); /* up to MiB, GiB, etc */
 
+/* returns formatted <self>/name */
+gchar *fmt_node_name(sysobj *obj, int fmt_opts);
+
+gchar *safe_ansi_color(gchar *ansi_color, gboolean free_in); /* verify the ansi color */
+gchar *safe_ansi_color_ex(gchar *ansi_color, gboolean free_in); /* <fg>|<bg> */
+const gchar *color_lookup(const gchar *ansi_color); /* ansi_color (fg) to html color */
+const gchar *color_lookup_bg(const gchar *ansi_color); /* ansi_color (bg) to html color */
+/* wrap the input str with color based on fmt_opts (none,term,html,pango) */
+gchar *format_with_ansi_color(const gchar *str, const gchar *ansi_color, int fmt_opts);
+
 gchar *formatted_time_span(double real_seconds, gboolean short_version, gboolean include_seconds);
 
 /* table is null-terminated string list of null-terminated UNTRANSLATED strings

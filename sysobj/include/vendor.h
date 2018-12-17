@@ -31,6 +31,7 @@ typedef struct {
   char *name_short;
   char *url;
   char *url_support;
+  char *ansi_color;
 } Vendor;
 
 void vendor_init(void);
