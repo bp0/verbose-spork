@@ -218,7 +218,8 @@ static gboolean drm_conn_attr_verify(sysobj *obj) {
     return ret;
 }
 
-static gboolean str_shorten(gchar *str, const gchar *find, const gchar *replace) {
+/* export */
+gboolean str_shorten(gchar *str, const gchar *find, const gchar *replace) {
     if (!str || !find || !replace) return FALSE;
     long unsigned lf = strlen(find);
     long unsigned lr = strlen(replace);
@@ -300,6 +301,7 @@ static gchar* gpu_format_nice_name(sysobj *gpu, int fmt_opts) {
         // s->nice_name = g_strdup_printf("%s %s", "Intel", device_str);
     if (strstr(vendor_str, "Intel")) {
         gchar *full_name = strdup(device_str);
+        str_shorten(full_name, "(R)", ""); /* Intel(R) -> Intel */
         str_shorten(full_name, "Integrated Graphics Controller", "Integrated Graphics");
         str_shorten(full_name, "Generation", "Gen");
         str_shorten(full_name, "Core Processor", "Core");

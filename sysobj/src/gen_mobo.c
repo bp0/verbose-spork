@@ -22,18 +22,25 @@
  *  :/mobo
  */
 #include "sysobj.h"
+#include "sysobj_extras.h"
 #include "vendor.h"
 
-#define dt_get_model() sysobj_format_from_fn("/sys/firmware/devicetree/base", "model", FMT_OPT_OR_NULL );
+void link_name_dmi(const gchar *k) {
+    gchar *lt = util_build_fn(":/dmidecode/best_available", k);
+    sysobj_virt_add_simple_mkpath(":/mobo/name", k, lt, VSO_TYPE_SYMLINK);
+}
+
+#define dt_get_model() sysobj_format_from_fn("/sys/firmware/devicetree/base/model", NULL, FMT_OPT_OR_NULL );
 #define dmi_get_str(k) sysobj_format_from_fn(":/dmidecode/best_available", k, FMT_OPT_NO_JUNK | FMT_OPT_OR_NULL );
 static gchar *mobo_get_name(const gchar *path) {
+    if (!path) return NULL; /* no cleanup needed */
+
     gchar *board_name, *board_vendor, *board_version;
     gchar *product_name, *product_vendor, *product_version;
     gchar *board_part = NULL, *product_part = NULL;
+
     const gchar *tmp;
     int b = 0, p = 0;
-
-    if (!path) return NULL; /* cleanup not needed */
 
     gchar *ret = NULL;
 
@@ -41,6 +48,7 @@ static gchar *mobo_get_name(const gchar *path) {
     ret = dt_get_model();
     if (ret) {
         util_strstrip_double_quotes_dumb(ret);
+        sysobj_virt_add_simple(":/mobo/name/model", NULL, "/sys/firmware/devicetree/base/model", VSO_TYPE_SYMLINK);
         goto got_mobo_ok;
     }
 
@@ -49,11 +57,16 @@ static gchar *mobo_get_name(const gchar *path) {
     board_version = dmi_get_str("baseboard-version");
     board_vendor = dmi_get_str("baseboard-manufacturer");
     if (board_vendor) {
-        /* attempt to shorten */
-        tmp = vendor_get_shortest_name(board_vendor);
-        if (tmp && tmp != board_vendor) {
-            g_free(board_vendor);
-            board_vendor = g_strdup(tmp);
+        const Vendor *v = vendor_match(board_vendor, NULL);
+        if (v) {
+            sysobj_virt_add_vendor_match(":/mobo/name/board_vendor", NULL, v);
+            /* attempt to shorten */
+            tmp = vendor_get_shortest_name(board_vendor);
+            sysobj_virt_add_simple(":/mobo/name/board_vendor_str", NULL, tmp, VSO_TYPE_STRING);
+            if (tmp && tmp != board_vendor) {
+                g_free(board_vendor);
+                board_vendor = g_strdup(tmp);
+            }
         }
     }
 
@@ -61,11 +74,16 @@ static gchar *mobo_get_name(const gchar *path) {
     product_version = dmi_get_str("system-version");
     product_vendor = dmi_get_str("system-manufacturer");
     if (product_vendor) {
-        /* attempt to shorten */
-        tmp = vendor_get_shortest_name(product_vendor);
-        if (tmp && tmp != product_vendor) {
-            g_free(product_vendor);
-            product_vendor = g_strdup(tmp);
+        const Vendor *v = vendor_match(product_vendor, NULL);
+        if (v) {
+            sysobj_virt_add_vendor_match(":/mobo/name/system_vendor", NULL, v);
+            /* attempt to shorten */
+            tmp = vendor_get_shortest_name(product_vendor);
+            sysobj_virt_add_simple(":/mobo/name/system_vendor_str", NULL, tmp, VSO_TYPE_STRING);
+            if (tmp && tmp != product_vendor) {
+                g_free(product_vendor);
+                product_vendor = g_strdup(tmp);
+            }
         }
     }
 
@@ -172,21 +190,16 @@ got_mobo_ok:
 }
 
 static sysobj_virt vol[] = {
-    { .path = ":/mobo", .str = "*", .f_get_data = NULL, .f_get_type = NULL,
+    { .path = ":/mobo", .str = "*",
       .type = VSO_TYPE_DIR | VSO_TYPE_CONST },
-    { .path = ":/mobo/name", .str = "", .f_get_data = mobo_get_name, .f_get_type = NULL,
+    { .path = ":/mobo/name", .str = "*",
+      .type = VSO_TYPE_DIR | VSO_TYPE_CONST },
+    { .path = ":/mobo/nice_name", .str = "", .f_get_data = mobo_get_name,
       .type = VSO_TYPE_STRING | VSO_TYPE_CONST },
-/* handy links to information sources */
-    { .path = ":/mobo/dmi_id", .str = "/sys/devices/virtual/dmi/id", .f_get_data = NULL, .f_get_type = NULL,
-      .type = VSO_TYPE_AUTOLINK | VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_CONST },
-    { .path = ":/mobo/dt_model", .str = "/sys/firmware/devicetree/base/model", .f_get_data = NULL, .f_get_type = NULL,
-      .type = VSO_TYPE_SYMLINK | VSO_TYPE_CONST },
 };
 
 void gen_mobo() {
     /* add virtual sysobj */
-    int i;
-    for (i = 0; i < (int)G_N_ELEMENTS(vol); i++) {
+    for (int i = 0; i < (int)G_N_ELEMENTS(vol); i++)
         sysobj_virt_add(&vol[i]);
-    }
 }

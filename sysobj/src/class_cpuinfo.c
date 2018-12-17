@@ -19,24 +19,24 @@
  */
 
 #include "sysobj.h"
+#include "sysobj_extras.h"
 #include "arm_data.h"
 #include "x86_data.h"
 
 static gchar *cpuinfo_feature_format(sysobj *obj, int fmt_opts);
 static gchar *cpuinfo_format(sysobj *obj, int fmt_opts);
-static double cpuinfo_update_interval(sysobj *obj);
 
 static sysobj_class cls_cpuinfo[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "cpuinfo", .pattern = ":/cpuinfo*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .f_format = cpuinfo_format, .f_update_interval = cpuinfo_update_interval },
+    .f_format = cpuinfo_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
 
   { SYSOBJ_CLASS_DEF
     .tag = "cpuinfo:feature", .pattern = ":/cpuinfo/*/flags/*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .f_format = cpuinfo_feature_format, .f_update_interval = cpuinfo_update_interval },
+    .f_format = cpuinfo_feature_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
   { SYSOBJ_CLASS_DEF
     .tag = "cpuinfo:featurelist", .pattern = ":/cpuinfo/*/flags", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .f_format = cpuinfo_format, .f_update_interval = cpuinfo_update_interval },
+    .f_format = cpuinfo_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
 };
 
 static gchar *cpuinfo_feature_format(sysobj *obj, int fmt_opts) {
@@ -56,16 +56,13 @@ static gchar *cpuinfo_feature_format(sysobj *obj, int fmt_opts) {
     return g_strdup("");
 }
 
-static gchar *cpuinfo_describe_models() {
-    sysobj *obj = sysobj_new_from_fn(":/cpuinfo", NULL);
+static gchar *cpuinfo_describe_models(sysobj *obj, int fmt_opts) {
     gchar *ret = NULL;
     GSList *models = NULL, *l = NULL;
     GSList *childs = sysobj_children(obj, "logical_cpu*", NULL, FALSE);
     if (!childs) return NULL;
     for (l = childs; l; l = l->next) {
-        sysobj *co = sysobj_new_from_fn(obj->path, (gchar *)l->data);
-        models = g_slist_append(models, sysobj_raw_from_fn(co->path, "model_name") );
-        sysobj_free(co);
+        models = g_slist_append(models, sysobj_format_from_fn(obj->path, (gchar*)l->data, fmt_opts) );
     }
     g_slist_free_full(childs, g_free);
     models = g_slist_sort(models, (GCompareFunc)g_strcmp0);
@@ -87,30 +84,38 @@ static gchar *cpuinfo_describe_models() {
     }
     ret = appfs(ret, " + ", "%dx %s", cur_count, cur_str);
     g_slist_free_full(models, g_free);
-    sysobj_free(obj);
     return ret;
 }
 
 static gchar *cpuinfo_format(sysobj *obj, int fmt_opts) {
-    if (verify_lblnum(obj, "logical_cpu") )
-        return sysobj_raw_from_fn(obj->path, "model_name");
+    if (verify_lblnum(obj, "logical_cpu") ) {
+        gchar *name = sysobj_raw_from_fn(obj->path, "model_name");
+        str_shorten(name, "Intel(R)", "Intel");
+        util_compress_space(name);
+        gchar *vac = sysobj_raw_from_fn(obj->path, "vendor/ansi_color");
+        if (vac) {
+            gchar *vs = sysobj_raw_from_fn(obj->path, "vendor/name_short");
+            if (!vs)
+                vs = sysobj_raw_from_fn(obj->path, "vendor/name");
+            if (vs) {
+                tag_vendor(&name, 0, vs, vac, fmt_opts);
+                g_free(vs);
+            }
+        }
+        g_free(vac);
+        return name;
+    }
     if (SEQ(obj->name, "cpuinfo") ) {
-        gchar *ret = cpuinfo_describe_models();
-        if (ret) return ret;
+        gchar *ret = cpuinfo_describe_models(obj, fmt_opts);
+        if (ret)
+            return ret;
         return g_strdup(_("(Unknown)"));
     }
     return simple_format(obj, fmt_opts);
 }
 
-static double cpuinfo_update_interval(sysobj *obj) {
-    PARAM_NOT_UNUSED(obj);
-    return 0.0;
-}
-
 void class_cpuinfo() {
-    int i = 0;
     /* add classes */
-    for (i = 0; i < (int)G_N_ELEMENTS(cls_cpuinfo); i++) {
+    for (int i = 0; i < (int)G_N_ELEMENTS(cls_cpuinfo); i++)
         class_add(&cls_cpuinfo[i]);
-    }
 }

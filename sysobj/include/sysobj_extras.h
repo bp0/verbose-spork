@@ -21,6 +21,8 @@
 #ifndef _SYSOBJ_EXTRAS_H_
 #define _SYSOBJ_EXTRAS_H_
 
+#include "vendor.h"
+
 /* in gen_procs.c */
 /* obj points to a cpuN/topology */
 void cpu_pct(sysobj *obj, int *logical, int *pack, int *core_of_pack, int *thread_of_core);
@@ -35,5 +37,16 @@ gboolean cpu_verify_child(sysobj *obj);
 /* in class_hwmon.c */
 gchar *hwmon_attr_encode_name(const gchar *type, int index, const gchar *attrib);
 gboolean hwmon_attr_decode_name(const gchar *name, gchar **type, int *index, gchar **attrib, gboolean *is_value);
+
+/* in gen_gpu.c */
+void sysobj_virt_add_vendor_match(gchar *base, gchar *name, const Vendor *vendor);
+
+/* in class_gpu.c */
+/* replaces the extra chars with spaces, then when done with a series of
+ * str_shorten()s, use util_compress_space() to squeeze. */
+gboolean str_shorten(gchar *str, const gchar *find, const gchar *replace);
+
+/* in class_mobo.c */
+void tag_vendor(gchar **str, guint offset, const gchar *vendor_str, const char *ansi_color, int fmt_opts);
 
 #endif

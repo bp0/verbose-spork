@@ -26,6 +26,7 @@ name Lenovo Group
 name ASUSTeK Computer
     name_short ASUS
     url www.asus.com
+    ansi_color 0;30|0;47
     match_string ASUSTek
     match_string ASUS
 
@@ -33,10 +34,11 @@ name ASUSTeK Computer
 name Advanced Micro Devices
     name_short AMD
     url www.amd.com
+    ansi_color 1;37|0;41
     match_string Advanced Micro Devices
     match_string_case AMD
 
-# PCI Vendor 1002
+# PCI Vendor 1002 (used for GPUs)
 name Advanced Micro Devices (formerly ATI)
     name_short AMD/ATI
     url www.amd.com
@@ -88,6 +90,7 @@ name Toshiba Corporation
 # styled in all-caps
     name_short TOSHIBA
     url www.toshiba.com
+    ansi_color 1;31|0;47
     match_string Toshiba
 
 name LITE-ON
@@ -187,6 +190,7 @@ name D-Link
 name Gigabyte Technology
     name_short Gigabyte
     url www.gigabyte.com.tw
+    ansi_color 1;34|0;47
     match_string Giga-byte
     match_string Gigabyte
 
@@ -202,6 +206,7 @@ name ZOTAC International
     name_short ZOTAC
     url www.zotac.com
     url_support www.zotac.com/support/
+    ansi_color 1;30|0;43
     match_string ZOTAC
 
 name C-Media Electronics
@@ -329,6 +334,7 @@ name Phoenix Technologies
 name Advanced Micro Devices
     name_short AMD
     url www.amd.com
+    ansi_color 1;37|0;41
     match_string AMDisbetter!
     match_string AuthenticAMD
 
@@ -336,6 +342,7 @@ name Intel Corporation
     name_short Intel
     url www.intel.com
     url_support http://ark.intel.com/search.aspx?q=
+    ansi_color 1;37|0;44
     match_string GenuineIntel
 
 name VIA Technologies

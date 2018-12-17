@@ -280,6 +280,7 @@ static void find_dev_by_of_node(gpud *g) {
     sysobj_foreach_from("/sys/devices/platform", NULL, (f_sysobj_foreach)_dev_by_of_node_callback, g, SO_FOREACH_NORMAL);
 }
 
+/* export */
 void sysobj_virt_add_vendor_match(gchar *base, gchar *name, const Vendor *vendor) {
     if (!vendor) return;
     gchar *path = util_build_fn(base, name);

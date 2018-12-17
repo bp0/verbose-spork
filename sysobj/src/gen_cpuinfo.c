@@ -23,6 +23,8 @@
  */
 
 #include "sysobj.h"
+#include "sysobj_extras.h"
+#include "vendor.h"
 #include "arm_data.h"
 #include "x86_data.h"
 
@@ -78,6 +80,8 @@ typedef struct {
     gchar *cpu_mhz;
     gchar *cache_size;
     gchar *bogomips;
+
+    const Vendor *vendor;
 } lcpu;
 
 void lcpu_free(lcpu *s) {
@@ -268,8 +272,11 @@ void cpuinfo_scan_arm_x86(gchar **lines, gsize line_count) {
 
         /* guess what we've got */
 
-        if (this_lcpu->stepping)
+        if (this_lcpu->stepping) {
             this_lcpu->type = CPU_TYPE_X86;
+            if (this_lcpu->vendor_id)
+                this_lcpu->vendor = vendor_match(this_lcpu->vendor_id, NULL);
+        }
 
         if (this_lcpu->cpu_architecture) {
             this_lcpu->type = CPU_TYPE_ARM;
@@ -350,6 +357,9 @@ void cpuinfo_scan() {
         EASY_VOM(cache_size);
         EASY_VOM(cpu_mhz);
         EASY_VOM(bogomips);
+
+        if (this_lcpu->vendor)
+            sysobj_virt_add_vendor_match(base, "vendor", this_lcpu->vendor);
 
         g_free(base);
         l = l->next;
