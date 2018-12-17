@@ -156,11 +156,13 @@ name Apple
 
 name IBM
     url www.ibm.com
+    ansi_color 1;34|1;47
     match_string_case IBM
 
 name Dell Computer
     name_short Dell
     url www.dell.com
+    ansi_color 1;37|0;44
     match_string Dell
 
 name Logitech International
