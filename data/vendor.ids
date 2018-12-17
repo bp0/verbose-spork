@@ -232,6 +232,7 @@ name Siemens AG
 name Hewlett-Packard
     name_short HP
     url www.hp.com
+    ansi_color 1;37|0;46
     match_string Hewlett-Packard
     match_string_case HP
 
