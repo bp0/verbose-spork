@@ -146,15 +146,19 @@ name Silicon Image
     match_string Silicon Image
     match_string Silicon Integrated Image
 
-name Broadcom
+name Broadcom Corporation
+    name_short Broadcom
     url www.broadcom.com
+    ansi_color 0;30|1;41
     match_string Broadcom
 
-name Apple
+name Apple Inc
+    name_short Apple
     url www.apple.com
     match_string Apple
 
-name IBM
+name International Business Machines Corporation
+    name_short IBM
     url www.ibm.com
     ansi_color 1;34|1;47
     match_string_case IBM
@@ -325,6 +329,19 @@ name Fuzhou Rockchip Electronics
     url www.rock-chips.com
     ansi_color 0;34|1;43
     match_string Rockchip
+
+name Qualcomm Incorporated
+    name_short Qualcomm
+    url www.qualcomm.com
+    ansi_color 1;34|0;47
+    match_string Qualcomm
+
+name Arm Holdings
+# styled lower-case "arm"
+    name_short arm
+    url arm.com
+    ansi_color 1;36|0;47
+    match_string ARM
 
 #
 # BIOS manufacturers
