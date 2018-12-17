@@ -312,6 +312,20 @@ name Silicon Integrated Systems Corporation
     match_string Silicon Integrated Systems
     match_string_case SIS
 
+name S3 Graphics
+    name_short VIA/S3
+    url www.s3graphics.com
+    url_support www.s3graphics.com/en/drivers
+    ansi_color 0;30|1;43
+    match_string S3 Graphics
+    match_string_case VIA/S3
+
+name Fuzhou Rockchip Electronics
+    name_short Rockchip
+    url www.rock-chips.com
+    ansi_color 0;34|1;43
+    match_string Rockchip
+
 #
 # BIOS manufacturers
 #
