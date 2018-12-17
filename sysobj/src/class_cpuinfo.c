@@ -23,12 +23,17 @@
 #include "arm_data.h"
 #include "x86_data.h"
 
+static gboolean cpuinfo_lcpu_verify(sysobj *obj);
 static gchar *cpuinfo_feature_format(sysobj *obj, int fmt_opts);
 static gchar *cpuinfo_format(sysobj *obj, int fmt_opts);
 
 static sysobj_class cls_cpuinfo[] = {
   { SYSOBJ_CLASS_DEF
-    .tag = "cpuinfo", .pattern = ":/cpuinfo*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .tag = "cpuinfo", .pattern = ":/cpuinfo", .flags = OF_CONST,
+    .f_format = cpuinfo_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
+  { SYSOBJ_CLASS_DEF
+    .tag = "cpuinfo:lcpu", .pattern = ":/cpuinfo/logical_cpu*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .f_verify = cpuinfo_lcpu_verify,
     .f_format = cpuinfo_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
 
   { SYSOBJ_CLASS_DEF
@@ -38,6 +43,10 @@ static sysobj_class cls_cpuinfo[] = {
     .tag = "cpuinfo:featurelist", .pattern = ":/cpuinfo/*/flags", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_format = cpuinfo_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
 };
+
+static gboolean cpuinfo_lcpu_verify(sysobj *obj) {
+    return verify_lblnum(obj, "logical_cpu");
+}
 
 static gchar *cpuinfo_feature_format(sysobj *obj, int fmt_opts) {
     const gchar *meaning = NULL;

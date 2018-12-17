@@ -25,7 +25,7 @@ static gchar *mobo_format(sysobj *obj, int fmt_opts);
 
 static sysobj_class cls_mobo[] = {
   { SYSOBJ_CLASS_DEF
-    .tag = "mobo", .pattern = ":/mobo*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .tag = "mobo", .pattern = ":/mobo", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_format = mobo_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
 };
 

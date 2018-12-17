@@ -471,7 +471,7 @@ gchar *format_with_ansi_color(const gchar *str, const gchar *ansi_color, int fmt
     } else if (fmt_opts & FMT_OPT_PANGO)
         ret = g_strdup_printf("<span background=\"%s\" color=\"%s\"> %s </span>", html_color_bg, html_color_fg, str);
     else if (fmt_opts & FMT_OPT_HTML)
-        ret = g_strdup_printf("<span style=\"background-color: %s; color: %s;\"> %s </span>", html_color_bg, html_color_fg, str);
+        ret = g_strdup_printf("<span style=\"background-color: %s; color: %s;\">&nbsp;%s&nbsp;</span>", html_color_bg, html_color_fg, str);
 
 format_with_ansi_color_end:
     g_free(safe_color);

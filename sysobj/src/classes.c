@@ -139,6 +139,20 @@ static attr_tab sysobj_items[] = {
     ATTR_TAB_LAST
 };
 
+static gboolean verify_ansi_color(sysobj *obj) {
+    sysobj_read(obj, FALSE);
+    gchar *sf = safe_ansi_color_ex(obj->data.str, FALSE);
+    if (sf) {
+        g_free(sf);
+        return TRUE;
+    }
+    return FALSE;
+}
+
+static gchar *format_ansi_color(sysobj *obj, int fmt_opts) {
+    return format_with_ansi_color(obj->data.str, obj->data.str, fmt_opts);
+}
+
 static sysobj_class cls_internal[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "vsfs", .pattern = ":", .flags = OF_CONST,
@@ -155,6 +169,9 @@ static sysobj_class cls_internal[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "sysobj:class:hits", .pattern = ":sysobj/classes/*/hits", .flags = OF_CONST | OF_GLOB_PATTERN,
     .s_update_interval = 0.5 },
+  { SYSOBJ_CLASS_DEF
+    .tag = "ansi_color", .pattern = "*/ansi_color", .flags = OF_CONST | OF_GLOB_PATTERN,
+    .f_verify = verify_ansi_color, .f_format = format_ansi_color },
 };
 
 void class_internal() {
