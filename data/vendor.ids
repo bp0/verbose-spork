@@ -149,7 +149,7 @@ name Silicon Image
 name Broadcom Corporation
     name_short Broadcom
     url www.broadcom.com
-    ansi_color 0;30|1;41
+    ansi_color 0;30|0;41
     match_string Broadcom
 
 name Apple Inc
@@ -327,7 +327,7 @@ name S3 Graphics
 name Fuzhou Rockchip Electronics
     name_short Rockchip
     url www.rock-chips.com
-    ansi_color 0;34|1;43
+    ansi_color 0;34|0;43
     match_string Rockchip
 
 name Qualcomm Incorporated
@@ -340,7 +340,7 @@ name Arm Holdings
 # styled lower-case "arm"
     name_short arm
     url arm.com
-    ansi_color 1;36|0;47
+    ansi_color 0;36|1;47
     match_string ARM
 
 #
