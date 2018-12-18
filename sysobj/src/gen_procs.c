@@ -34,12 +34,12 @@ static sysobj_virt vol[] = {
       .type = VSO_TYPE_SYMLINK | VSO_TYPE_AUTOLINK | VSO_TYPE_DYN | VSO_TYPE_CONST },
 };
 
-gboolean cpu_x86_vfms(int logical, gchar **vendor_id, int *family, int *model, int *stepping) {
+static gboolean cpu_x86_vfms(int logical, gchar **vendor_id, int *family, int *model, int *stepping) {
     gchar *cpuinfo_path = g_strdup_printf(":/cpuinfo/logical_cpu%d", logical);
     gchar *type_str =
-        sysobj_raw_from_fn(cpuinfo_path, "_type");
+        sysobj_raw_from_fn(cpuinfo_path, "arch_family");
 
-    if (g_strcmp0(type_str, "x86") != 0) {
+    if (!SEQ(type_str, "x86")) {
         g_free(type_str);
         return FALSE;
     }
@@ -146,7 +146,7 @@ static void procs_scan() {
             if ( sysobj_virt_add_simple(c_path, NULL, "*", VSO_TYPE_DIR ) ) cores++;
             if ( sysobj_virt_add_simple(t_path, NULL, "*", VSO_TYPE_DIR ) ) threads++;
             sysobj_virt_add_simple(t_path, cpu_obj->name, cpu_obj->path, VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_AUTOLINK );
-            sysobj_virt_add_simple(t_path, "_cpuinfo", cpuinfo_path, VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_AUTOLINK );
+            sysobj_virt_add_simple(t_path, "cpuinfo", cpuinfo_path, VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_AUTOLINK );
             sysobj_virt_add_simple(p_path, "model_name", model, VSO_TYPE_STRING);
 
             g_free(t_path);

@@ -318,8 +318,8 @@ void cpuinfo_scan() {
         gchar *base = g_strdup_printf(":/cpuinfo/logical_cpu%d", this_lcpu->id);
         //printf("%s\n", base);
         sysobj_virt_add_simple(base, NULL, "*", VSO_TYPE_DIR);
-        sysobj_virt_add_simple(base, "_sysfs", sysfs, VSO_TYPE_SYMLINK | VSO_TYPE_AUTOLINK | VSO_TYPE_DYN );
-        sysobj_virt_add_simple(base, "_type", type, VSO_TYPE_STRING );
+        sysobj_virt_add_simple(base, "cpu", sysfs, VSO_TYPE_SYMLINK | VSO_TYPE_AUTOLINK | VSO_TYPE_DYN );
+        sysobj_virt_add_simple(base, "arch_family", type, VSO_TYPE_STRING );
         EASY_VOM(model_name);
 
         gchar *base_flags = g_strdup_printf("%s/%s", base, "flags");
