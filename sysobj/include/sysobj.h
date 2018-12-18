@@ -32,6 +32,7 @@
 #include "util_sysobj.h"
 #include "sysobj_virt.h"
 #include "sysobj_filter.h"
+#include "vendor.h"
 
 #define UPDATE_INTERVAL_DEFAULT  10.0   /* in seconds */
 #define UPDATE_INTERVAL_NEVER     0.0   /* in seconds */
@@ -45,7 +46,9 @@ enum {
     /* used in "simple" classes and attr_tabs
      * use sysobj_has_flag() to check */
     OF_REQ_ROOT      = 1<<16, /* expected to require root */
-    OF_IS_VENDOR     = 1<<17, /* additional vendor information may be available through vendor_match() */
+    OF_IS_VENDOR     = 1<<17, /* additional vendor information may be available through sysobj_vendor() */
+                              /* TODO: rename to OF_HAS_VENDOR */
+
 };
 
 enum {
@@ -82,6 +85,7 @@ typedef gchar* (*func_format)(sysobj *obj, int fmt_opts);
 typedef int (*func_compare_sysobj_data)(const sysobj_data *a, const sysobj_data *b);
 typedef gboolean (*func_verify)(sysobj *obj);
 typedef guint (*func_class_flags)(sysobj *obj, const sysobj_class *cls); /* remember to handle obj == NULL */
+typedef const Vendor* (*func_get_vendor)(sysobj *obj);
 
 typedef const struct {
     const gchar *attr_name;
@@ -121,6 +125,7 @@ typedef struct sysobj_class {
     func_format f_format;  /* translated human-readable value */
     func_compare_sysobj_data f_compare;
     func_class_flags f_flags; /* provide flags, result replaces flags */
+    func_get_vendor f_vendor; /* called if if OF_IS_VENDOR, default vendor_match()'s the data string */
 
     const gchar *(*f_label)  (sysobj *obj);  /* translated label */
     double (*f_update_interval) (sysobj *obj); /* time until the value might change, in seconds */
@@ -243,6 +248,8 @@ void sysobj_unread_data(sysobj *s); /* frees data, but keeps is_utf8, len, lines
 const gchar *sysobj_label(sysobj *s);
 const gchar *sysobj_halp(sysobj *s);
 const gchar *sysobj_suggest(sysobj *s);
+const Vendor *sysobj_vendor(sysobj *s);
+const Vendor *sysobj_vendor_from_fn(const gchar *base, const gchar *name);
 gchar *sysobj_format(sysobj *s, int fmt_opts);
 gchar *sysobj_raw_from_fn(const gchar *base, const gchar *name);
 gchar *sysobj_raw_from_printf(gchar *path_fmt, ...)

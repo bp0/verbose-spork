@@ -1158,6 +1158,27 @@ int class_count() {
     return g_slist_length(class_list);
 }
 
+const Vendor *sysobj_vendor(sysobj *s) {
+    if (sysobj_has_flag(s, OF_IS_VENDOR) ) {
+        sysobj_read(s, FALSE);
+        if (s->cls && s->cls->f_vendor)
+            return s->cls->f_vendor(s);
+        else {
+            if (!s->data.is_utf8)
+                return NULL;
+            return vendor_match(s->data.str, NULL);
+        }
+    }
+    return NULL;
+}
+
+const Vendor *sysobj_vendor_from_fn(const gchar *base, const gchar *name) {
+    sysobj *t = sysobj_new_from_fn(base, name);
+    const Vendor *ret = sysobj_vendor(t);
+    sysobj_free(t);
+    return ret;
+}
+
 int attr_tab_lookup(const attr_tab *attributes, const gchar *name) {
     for(int i = 0; attributes[i].attr_name; i++)
         if (SEQ(name, attributes[i].attr_name))

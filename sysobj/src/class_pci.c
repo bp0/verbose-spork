@@ -39,6 +39,9 @@ static gchar *pci_format(sysobj *obj, int fmt_opts);
 static gchar *pci_format_idcomp(sysobj *obj, int fmt_opts);
 static gchar *pci_format_device(sysobj *obj, int fmt_opts);
 
+const Vendor *pci_vendor_lookup(sysobj *obj);
+const Vendor *pci_vendor_dev(sysobj *obj) { return sysobj_vendor_from_fn(obj->path, "vendor"); }
+
 #define pci_update_interval 6.0
 #define pci_ids_update_interval 4.0
 
@@ -71,11 +74,11 @@ static sysobj_class cls_pci[] = {
     .tag = "pci:device_list", .pattern = "/sys/bus/pci/devices", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_format = pci_format, .s_update_interval = pci_update_interval },
   { SYSOBJ_CLASS_DEF
-    .tag = "pci:device", .pattern = "/sys/devices*/????:??:??.?", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .f_format = pci_format_device, .s_update_interval = pci_update_interval },
+    .tag = "pci:device", .pattern = "/sys/devices*/????:??:??.?", .flags = OF_GLOB_PATTERN | OF_CONST | OF_IS_VENDOR,
+    .f_format = pci_format_device, .s_update_interval = pci_update_interval, .f_vendor = pci_vendor_dev },
   { SYSOBJ_CLASS_DEF
     .tag = "pci:device_id", .pattern = "/sys/devices*/????:??:??.?/*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .attributes = pci_idcomp_items, .f_format = pci_format_idcomp },
+    .attributes = pci_idcomp_items, .f_format = pci_format_idcomp, .f_vendor = pci_vendor_lookup },
   { SYSOBJ_CLASS_DEF
     .tag = "pci:pcie", .pattern = "/sys/devices*/????:??:??.?/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .attributes = pcie_items },
@@ -137,6 +140,18 @@ static gchar *pci_format(sysobj *obj, int fmt_opts) {
         return ret;
     }
     return simple_format(obj, fmt_opts);
+}
+
+const Vendor *pci_vendor_lookup(sysobj *obj) {
+    gchar path[64] = "";
+    const Vendor *v = NULL;
+    if (obj->data.is_utf8) {
+        sprintf(path, ":/pci/pci.ids/%04lx", strtoul(obj->data.str, NULL, 16) );
+        gchar *vendor_str = sysobj_raw_from_fn(path, "name");
+        v = vendor_match(vendor_str, NULL);
+        g_free(vendor_str);
+    }
+    return v;
 }
 
 util_pci_id *get_pci_id(gchar *dev_path) {
