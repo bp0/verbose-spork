@@ -153,11 +153,12 @@ int util_pci_ids_lookup_list(GSList *items) {
                 case 2:  /* subvendor subdevice  subsystem_name */
                     if (! (d->vendor_str && d->device_str) ) break;
                     if (id == d->sub_vendor) {
+                        id2 = strtol(next_sp, NULL, 16);
                         next_sp = strchr(g_strstrip(next_sp), ' ');
-                        id2 = strtol(buffer, &next_sp, 16);
-                        if (id2 == d->sub_device)
+                        if (id2 == d->sub_device && next_sp) {
                             d->sub_device_str = g_strdup(g_strstrip(next_sp));
-                        else if (id2 > d->sub_device)
+                            continue;
+                        } else if (id2 > d->sub_device)
                             not_found = TRUE;
                     } else if (id > d->sub_vendor) not_found = TRUE;
                     break;
