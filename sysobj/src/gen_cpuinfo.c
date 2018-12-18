@@ -285,6 +285,10 @@ void cpuinfo_scan_arm_x86(gchar **lines, gsize line_count) {
                 this_lcpu->model_name = g_strdup("ARM Processor");
             }
             cpuinfo_arm_decoded_name(this_lcpu);
+
+            gchar *arm_imp = arm_implementer(this_lcpu->cpu_implementer);
+            this_lcpu->vendor = vendor_match(arm_imp, NULL);
+            g_free(arm_imp);
         }
 
         /* compress model name:

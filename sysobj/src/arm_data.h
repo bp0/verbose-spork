@@ -25,12 +25,12 @@
 const char *arm_arch(const char *cpuinfo_arch_str);
 const char *arm_arch_more(const char *cpuinfo_arch_str);
 
-/* cpu_implementer, cpu_part, cpu_variant, cpu_revision, cpu_architecture from /proc/cpuinfo
- * model_name is returned as a fallback if not enough data is known */
-char *arm_decoded_name(
-    const char *imp, const char *part,
-    const char *var, const char *rev,
-    const char *arch);
+gchar *arm_implementer(const gchar *imp);
+gchar *arm_part(const gchar *imp, const gchar *part);
+gchar *arm_decoded_name(
+    const gchar *imp, const gchar *part,
+    const gchar *var, const gchar *rev,
+    const gchar *arch);
 
 /* cpu flags from /proc/cpuinfo */
 const char *arm_flag_list(void);                  /* list of all known flags */

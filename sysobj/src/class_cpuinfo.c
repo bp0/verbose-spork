@@ -27,6 +27,43 @@ static gboolean cpuinfo_lcpu_verify(sysobj *obj);
 static gchar *cpuinfo_feature_format(sysobj *obj, int fmt_opts);
 static gchar *cpuinfo_format(sysobj *obj, int fmt_opts);
 
+static gboolean cpuinfo_lcpu_prop_verify(sysobj *obj);
+
+static gchar *fmt_arm_implementer(sysobj *obj, int fmt_opts) {
+    gchar *istr = auto_free( arm_implementer(obj->data.str) );
+    if (istr)
+        return g_strdup_printf("[%s] %s", obj->data.str, istr);
+    simple_format(obj, fmt_opts);
+}
+
+static gchar *fmt_arm_part(sysobj *obj, int fmt_opts) {
+    sysobj *obj_imp = sysobj_sibling(obj, "cpu_implementer", FALSE);
+    auto_free_ex(obj_imp, (GDestroyNotify)sysobj_free);
+    if (obj_imp->exists) {
+        sysobj_read(obj_imp, FALSE);
+        gchar *pstr = auto_free( arm_part(obj_imp->data.str, obj->data.str) );
+        if (pstr)
+            return g_strdup_printf("[%s] %s", obj->data.str, pstr);
+    }
+    simple_format(obj, fmt_opts);
+}
+
+static gchar *fmt_arm_arch(sysobj *obj, int fmt_opts) {
+    const gchar *aam = arm_arch_more(obj->data.str);
+    if (aam)
+        return g_strdup_printf("[%s] %s", obj->data.str, aam);
+    simple_format(obj, fmt_opts);
+}
+
+static attr_tab cpu_prop_items[] = {
+    { "cpu_implementer", NULL, OF_NONE, fmt_arm_implementer },
+    { "cpu_part", NULL, OF_NONE, fmt_arm_part },
+    { "cpu_architecture", NULL, OF_NONE, fmt_arm_arch },
+    { "cpu_variant" },
+    { "cpu_revision" },
+    ATTR_TAB_LAST
+};
+
 static sysobj_class cls_cpuinfo[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "cpuinfo", .pattern = ":/cpuinfo", .flags = OF_CONST,
@@ -36,6 +73,10 @@ static sysobj_class cls_cpuinfo[] = {
     .tag = "cpuinfo:lcpu", .pattern = ":/cpuinfo/logical_cpu*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_verify = cpuinfo_lcpu_verify,
     .f_format = cpuinfo_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
+  { SYSOBJ_CLASS_DEF
+    .tag = "cpuinfo:lcpu:prop", .pattern = ":/cpuinfo/logical_cpu*/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .f_verify = cpuinfo_lcpu_prop_verify, .attributes = cpu_prop_items,
+    .s_update_interval = UPDATE_INTERVAL_NEVER },
 
   { SYSOBJ_CLASS_DEF
     .tag = "cpuinfo:feature", .pattern = ":/cpuinfo/*/flags/*", .flags = OF_GLOB_PATTERN | OF_CONST,
@@ -47,6 +88,11 @@ static sysobj_class cls_cpuinfo[] = {
 
 static gboolean cpuinfo_lcpu_verify(sysobj *obj) {
     return verify_lblnum(obj, "logical_cpu");
+}
+
+static gboolean cpuinfo_lcpu_prop_verify(sysobj *obj) {
+    return (verify_lblnum_child(obj, "logical_cpu")
+            && verify_in_attr_tab(obj, cpu_prop_items) );
 }
 
 static gchar *cpuinfo_feature_format(sysobj *obj, int fmt_opts) {

@@ -18,9 +18,12 @@
  *
  */
 
+#include <glib.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
+#include "sysobj.h"
 #include "arm_data.h"
 
 #ifndef C_
@@ -142,31 +145,133 @@ const char *arm_arch_more(const char *cpuinfo_arch_str) {
     return cpuinfo_arch_str;
 }
 
-#include "arm_lscpu.c"
+#define arm_msg(...) fprintf (stderr, __VA_ARGS__)
 
-char *arm_decoded_name(const char *imp, const char *part, const char *var, const char *rev, const char *arch) {
+#define ARM_ILLEGAL_PART 0xffff
+
+#define ARM_ID_BUFF_SIZE 128
+typedef struct {
+    gchar strs[ARM_ID_BUFF_SIZE * 2];
+    gchar *implementer;
+    gchar *part;
+} arm_id;
+
+#define arm_id_new() g_new0(arm_id, 1)
+#define arm_id_free(aid) g_free(aid)
+
+static arm_id *scan_arm_ids_file(unsigned implementer, unsigned part) {
+    char buff[ARM_ID_BUFF_SIZE];
+    char imp[ARM_ID_BUFF_SIZE] = "", *prt = NULL, *p;
+    FILE *fd;
+    int tabs, imp_match = 0;
+    unsigned id;
+
+    arm_id *ret = NULL;
+
+    gchar *arm_ids_file = sysobj_find_data_file("arm.ids");
+    if (!arm_ids_file) {
+        arm_msg("arm.ids file not found\n");
+        return ret;
+    }
+
+    fd = fopen(arm_ids_file, "r");
+    g_free(arm_ids_file);
+    if (!fd) {
+        arm_msg("arm.ids file could not be read\n");
+        return NULL;
+    }
+
+    while (fgets(buff, ARM_ID_BUFF_SIZE, fd)) {
+        /* line ends at comment */
+        p = strchr(buff, '#');
+        if (p) *p = 0;
+
+        /* trim trailing white space */
+        p = buff + strlen(buff) - 1;
+        while(p > buff && isspace((unsigned char)*p)) p--;
+        *(p+1) = 0;
+
+        /* scan for fields */
+        tabs = 0;
+        p = buff;
+        while(*p == '\t') { tabs++; p++; }
+        id = strtol(p, &p, 16);
+        while(isspace((unsigned char)*p)) p++;
+        if (tabs == 0) {
+            /* implementer */
+            if (id == implementer) {
+                strcpy(imp, p);
+                imp_match = 1;
+            } else if (id > implementer)
+                goto scan_arm_id_done;
+        } else if (tabs == 1 && imp_match) {
+            /* part */
+            if (id == part) {
+                prt = p;
+                goto scan_arm_id_done;
+            } else if (id > part)
+                goto scan_arm_id_done;
+        }
+    }
+
+scan_arm_id_done:
+    fclose(fd);
+
+    if (imp_match) {
+        ret = arm_id_new();
+        ret->implementer = ret->strs;
+        ret->part = ret->strs + strlen(imp) + 1;
+        strcpy(ret->implementer, imp);
+        if (prt)
+            strcpy(ret->part, prt);
+    }
+    return ret;
+}
+
+gchar *arm_implementer(const gchar *imp) {
+    if (!imp) return NULL;
+    int i = strtol(imp, NULL, 16);
+    arm_id *aid = scan_arm_ids_file(i, ARM_ILLEGAL_PART);
+    if (aid)
+        return aid->implementer; /* g_free() will free all aid */
+    return NULL;
+}
+
+gchar *arm_part(const gchar *imp, const gchar *part) {
+    if (!imp || !part) return NULL;
+    int i = strtol(imp, NULL, 16);
+    int p = strtol(part, NULL, 16);
+    arm_id *aid = scan_arm_ids_file(i, p);
+    if (aid) {
+        gchar *ret = g_strdup(aid->part);
+        arm_id_free(aid);
+        if (ret)
+            return ret;
+    }
+    return NULL;
+}
+
+gchar *arm_decoded_name(const gchar *imp, const gchar *part, const gchar *var, const gchar *rev, const gchar *arch) {
     int i = 0, p = 0, v = 0, r = 0;
-    int n = 0, m = 0;
-    const char *a = arm_arch(arch);
+    const gchar *a = arm_arch(arch);
+    gchar *istr = NULL, *pstr = NULL;
 
-    i = strtol(imp, NULL, 0);
-    p = strtol(part, NULL, 0);
-    v = strtol(var, NULL, 0);
-    r = strtol(rev, NULL, 0);
+    i = strtol(imp, NULL, 16);
+    p = strtol(part, NULL, 16);
+    v = strtol(var, NULL, 16);
+    r = strtol(rev, NULL, 16);
 
-    while(hw_implementer[n].id != -1) {
-        if (hw_implementer[n].id == i)
-            break;
-        n++;
+    arm_id *aid = scan_arm_ids_file(i, p);
+    if (aid) {
+        istr = aid->implementer; /* g_free(istr) will free all aid */
+        pstr = g_strdup(aid->part);
     }
-    while(hw_implementer[n].parts[m].id != -1) {
-        if (hw_implementer[n].parts[m].id == p)
-            break;
-        m++;
-    }
+    if (!istr) istr = g_strdup_printf("impl:0x%02x", i);
+    if (!pstr) pstr = g_strdup_printf("part:0x%03x", p);
 
-    char *dnbuff = malloc(256);
-    snprintf(dnbuff, 255, "%s %s r%dp%d (%s)",
-        hw_implementer[n].name, hw_implementer[n].parts[m].name, v, r, a);
+    gchar *dnbuff = g_strdup_printf("%s %s r%dp%d (%s)", istr, pstr, v, r, a);
+
+    g_free(istr);
+    g_free(pstr);
     return dnbuff;
 }
