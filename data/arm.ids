@@ -4,17 +4,18 @@
 #
 #    Version: 2018.12.18
 #    Maintained by: Burt P. (pburt0@gmail.com)
-#    <some url>
+#    https://github.com/bp0/armids
 #
 # Syntax:
 # implementer  implementer_name
-#	part  part_name				<-- single tab
+#	part  part_name     <-- single tab
 #
 # <implementer> is two hex digits, <part> is three hex digits, keep in order.
 # Comments start with '#'.
 #
-# This file can be distributed under either the GNU General Public License
+# This file can be distributed under the GNU General Public License
 # (version 2 or higher).
+#
 # Based on lscpu-arm.c by Riku Voipio <riku.voipio@iki.fi>
 #
 # The information here is gathered from
