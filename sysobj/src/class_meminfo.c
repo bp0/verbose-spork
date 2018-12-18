@@ -38,7 +38,7 @@ attr_tab mem_items[] = {
 static sysobj_class cls_meminfo[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "meminfo", .pattern = ":/meminfo", .flags = OF_CONST,
-    .f_format = meminfo_format },
+    .f_format = meminfo_format, .s_label = N_("Memory information from /proc/meminfo") },
   { SYSOBJ_CLASS_DEF
     .tag = "meminfo:stat", .pattern = ":/meminfo/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .attributes = mem_items, .f_verify = meminfo_verify,

@@ -30,6 +30,7 @@ static gchar *cpuinfo_format(sysobj *obj, int fmt_opts);
 static sysobj_class cls_cpuinfo[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "cpuinfo", .pattern = ":/cpuinfo", .flags = OF_CONST,
+    .s_label = N_("CPU information from /proc/cpuinfo"),
     .f_format = cpuinfo_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
   { SYSOBJ_CLASS_DEF
     .tag = "cpuinfo:lcpu", .pattern = ":/cpuinfo/logical_cpu*", .flags = OF_GLOB_PATTERN | OF_CONST,
