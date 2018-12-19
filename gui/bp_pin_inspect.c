@@ -140,7 +140,7 @@ static void _create(bpPinInspect *s) {
     gtk_notebook_set_tab_pos(GTK_NOTEBOOK (value_notebook), GTK_POS_TOP);
     notebook_add_page("formatted", _("Formatted"), value_notebook, text_formatted, 5);
     notebook_add_page("raw", _("Raw"), value_notebook, text_raw, 5);
-    notebook_add_page("vendor", _("Vendor"), value_notebook, lbl_vendor, 5);
+    notebook_add_page("vendor", _("Vendors"), value_notebook, lbl_vendor, 5);
     notebook_add_page("debug", _("Debug"), value_notebook, lbl_debug, 5);
     gtk_widget_show(value_notebook);
 
