@@ -139,6 +139,7 @@ void util_strstrip_double_quotes_dumb(gchar *str) {
     if (!str) return;
     g_strstrip(str);
     gchar *front = str, *back = str + strlen(str) - 1;
+    if (back <= front) return;
     while(*front == '"') { *front = 'X'; front++; }
     while(*back == '"') { *back = 0; back--; }
     int nl = strlen(front);
