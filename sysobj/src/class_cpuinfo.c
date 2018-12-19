@@ -97,7 +97,7 @@ static gboolean cpuinfo_lcpu_prop_verify(sysobj *obj) {
 
 static gchar *cpuinfo_feature_format(sysobj *obj, int fmt_opts) {
     const gchar *meaning = NULL;
-    gchar *type_str = sysobj_format_from_fn(obj->path, "../../_type", FMT_OPT_PART);
+    gchar *type_str = sysobj_format_from_fn(obj->path, "../../arch_family", FMT_OPT_PART);
 
     PARAM_NOT_UNUSED(fmt_opts);
 
