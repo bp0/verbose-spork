@@ -85,7 +85,12 @@ typedef gchar* (*func_format)(sysobj *obj, int fmt_opts);
 typedef int (*func_compare_sysobj_data)(const sysobj_data *a, const sysobj_data *b);
 typedef gboolean (*func_verify)(sysobj *obj);
 typedef guint (*func_class_flags)(sysobj *obj, const sysobj_class *cls); /* remember to handle obj == NULL */
-typedef const Vendor* (*func_get_vendor)(sysobj *obj);
+typedef GSList* vendor_list;
+#define vendor_list_append(vl, v) g_slist_append(vl, (Vendor*)v)
+#define vendor_list_concat(vl, ext) g_slist_concat(vl, ext)
+#define vendor_list_free(vl) g_slist_free(vl)
+vendor_list vendor_list_remove_duplicates(vendor_list vl);
+typedef vendor_list (*func_get_vendors)(sysobj *obj);
 
 typedef const struct {
     const gchar *attr_name;
@@ -125,7 +130,7 @@ typedef struct sysobj_class {
     func_format f_format;  /* translated human-readable value */
     func_compare_sysobj_data f_compare;
     func_class_flags f_flags; /* provide flags, result replaces flags */
-    func_get_vendor f_vendor; /* called if if OF_IS_VENDOR, default vendor_match()'s the data string */
+    func_get_vendors f_vendors; /* called if if OF_IS_VENDOR, default vendor_match()'s the data string */
 
     const gchar *(*f_label)  (sysobj *obj);  /* translated label */
     double (*f_update_interval) (sysobj *obj); /* time until the value might change, in seconds */
@@ -248,8 +253,8 @@ void sysobj_unread_data(sysobj *s); /* frees data, but keeps is_utf8, len, lines
 const gchar *sysobj_label(sysobj *s);
 const gchar *sysobj_halp(sysobj *s);
 const gchar *sysobj_suggest(sysobj *s);
-const Vendor *sysobj_vendor(sysobj *s);
-const Vendor *sysobj_vendor_from_fn(const gchar *base, const gchar *name);
+vendor_list sysobj_vendors(sysobj *s);
+vendor_list sysobj_vendors_from_fn(const gchar *base, const gchar *name);
 gchar *sysobj_format(sysobj *s, int fmt_opts);
 gchar *sysobj_raw_from_fn(const gchar *base, const gchar *name);
 gchar *sysobj_raw_from_printf(gchar *path_fmt, ...)

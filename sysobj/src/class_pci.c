@@ -20,6 +20,7 @@
 
 #include "sysobj.h"
 #include "util_pci.h"
+#include "sysobj_extras.h"
 
 #define SYSFS_PCI "/sys/bus/pci"
 
@@ -39,8 +40,9 @@ static gchar *pci_format(sysobj *obj, int fmt_opts);
 static gchar *pci_format_idcomp(sysobj *obj, int fmt_opts);
 static gchar *pci_format_device(sysobj *obj, int fmt_opts);
 
-const Vendor *pci_vendor_lookup(sysobj *obj);
-const Vendor *pci_vendor_dev(sysobj *obj) { return sysobj_vendor_from_fn(obj->path, "vendor"); }
+static vendor_list pci_vendor_lookup(sysobj *obj);
+static vendor_list pci_vendor_dev(sysobj *obj);
+static vendor_list pci_all_vendors(sysobj *obj);
 
 #define pci_update_interval 6.0
 #define pci_ids_update_interval 4.0
@@ -67,18 +69,18 @@ attr_tab pcie_items[] = {
 static sysobj_class cls_pci[] = {
   /* all under :/pci */
   { SYSOBJ_CLASS_DEF
-    .tag = "pci", .pattern = ":/pci*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .f_format = pci_format, .s_update_interval = pci_update_interval },
+    .tag = "pci", .pattern = ":/pci*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_IS_VENDOR,
+    .f_format = pci_format, .s_update_interval = pci_update_interval, .f_vendors = pci_all_vendors },
 
   { SYSOBJ_CLASS_DEF
-    .tag = "pci:device_list", .pattern = "/sys/bus/pci/devices", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .f_format = pci_format, .s_update_interval = pci_update_interval },
+    .tag = "pci:device_list", .pattern = "/sys/bus/pci/devices", .flags = OF_GLOB_PATTERN | OF_CONST | OF_IS_VENDOR,
+    .f_format = pci_format, .s_update_interval = pci_update_interval, .f_vendors = pci_all_vendors },
   { SYSOBJ_CLASS_DEF
     .tag = "pci:device", .pattern = "/sys/devices*/????:??:??.?", .flags = OF_GLOB_PATTERN | OF_CONST | OF_IS_VENDOR,
-    .f_format = pci_format_device, .s_update_interval = pci_update_interval, .f_vendor = pci_vendor_dev },
+    .f_format = pci_format_device, .s_update_interval = pci_update_interval, .f_vendors = pci_vendor_dev },
   { SYSOBJ_CLASS_DEF
     .tag = "pci:device_id", .pattern = "/sys/devices*/????:??:??.?/*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .attributes = pci_idcomp_items, .f_format = pci_format_idcomp, .f_vendor = pci_vendor_lookup },
+    .attributes = pci_idcomp_items, .f_format = pci_format_idcomp, .f_vendors = pci_vendor_lookup },
   { SYSOBJ_CLASS_DEF
     .tag = "pci:pcie", .pattern = "/sys/devices*/????:??:??.?/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .attributes = pcie_items },
@@ -142,16 +144,37 @@ static gchar *pci_format(sysobj *obj, int fmt_opts) {
     return simple_format(obj, fmt_opts);
 }
 
-const Vendor *pci_vendor_lookup(sysobj *obj) {
-    gchar path[64] = "";
-    const Vendor *v = NULL;
+static vendor_list pci_vendor_lookup(sysobj *obj) {
     if (obj->data.is_utf8) {
-        sprintf(path, ":/pci/pci.ids/%04lx", strtoul(obj->data.str, NULL, 16) );
-        gchar *vendor_str = sysobj_raw_from_fn(path, "name");
-        v = vendor_match(vendor_str, NULL);
+        gchar *vendor_str = sysobj_raw_from_printf(
+            ":/pci/pci.ids/%04lx/name", strtoul(obj->data.str, NULL, 16) );
+        const Vendor *v  = vendor_match(vendor_str, NULL);
         g_free(vendor_str);
+        if (v)
+            return vendor_list_append(NULL, v);
     }
-    return v;
+    return NULL;
+}
+
+static vendor_list pci_vendor_dev(sysobj *obj) {
+    return vendor_list_concat(
+        sysobj_vendors_from_fn(obj->path, "vendor"),
+        sysobj_vendors_from_fn(obj->path, "subsystem_vendor") );
+}
+
+vendor_list pci_all_vendors(sysobj *obj) {
+    GSList *ret = NULL;
+    sysobj *lo = SEQ(obj->path, "/sys/bus/pci/devices")
+        ? obj
+        : sysobj_new_fast("/sys/bus/pci/devices");
+    sysobj_read(lo, FALSE);
+    GSList *childs = sysobj_children(lo, "????:??:??.?", NULL, TRUE);
+    for(GSList *l = childs; l; l = l->next)
+        ret = vendor_list_concat(ret, sysobj_vendors_from_fn(lo->path, l->data));
+    g_slist_free_full(childs, g_free);
+    if (lo != obj)
+        sysobj_free(lo);
+    return ret;
 }
 
 util_pci_id *get_pci_id(gchar *dev_path) {
@@ -209,9 +232,20 @@ static gchar *pci_format_device(sysobj *obj, int fmt_opts) {
     util_pci_id *d = get_pci_id(obj->path);
     gchar *ret = NULL;
     if (d) {
-        ret = g_strdup_printf("%s %s",
-            d->vendor_str ? d->vendor_str : "Unknown",
-            d->device_str ? d->device_str : "Device");
+        vendor_list vl = sysobj_vendors(obj);
+        const Vendor *v = vl ? vl->data : NULL;
+        if (v) {
+            gchar *ven_tag = v->name_short ? g_strdup(v->name_short) : g_strdup(v->name);
+            tag_vendor(&ven_tag, 0, ven_tag, v->ansi_color, fmt_opts);
+            ret = g_strdup_printf("%s %s",
+                ven_tag, d->device_str ? d->device_str : "Device");
+            g_free(ven_tag);
+        } else {
+            ret = g_strdup_printf("%s %s",
+                d->vendor_str ? d->vendor_str : "Unknown",
+                d->device_str ? d->device_str : "Device");
+        }
+        vendor_list_free(vl);
     }
     util_pci_id_free(d);
     if (ret) return ret;

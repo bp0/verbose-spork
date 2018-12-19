@@ -29,6 +29,9 @@ static gboolean gpu_verify(sysobj *obj);
 static gchar* gpu_format_nice_name(sysobj *gpu, int fmt_opts);
 static gboolean gpu_prop_verify(sysobj *obj);
 
+static vendor_list gpu_vendors(sysobj *obj);
+static vendor_list gpu_all_vendors(sysobj *obj);
+
 static gboolean drm_card_verify(sysobj *obj);
 static gchar *drm_card_format(sysobj *obj, int fmt_opts);
 
@@ -73,11 +76,13 @@ attr_tab drm_conn_items[] = {
 
 static sysobj_class cls_gpu[] = {
   { SYSOBJ_CLASS_DEF
-    .tag = "gpu:list", .pattern = ":/gpu", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .f_verify = gpu_list_verify, .f_format = gpu_list_format },
+    .tag = "gpu:list", .pattern = ":/gpu", .flags = OF_GLOB_PATTERN | OF_CONST | OF_IS_VENDOR,
+    .s_label = N_("list of discovered graphics processor devices"),
+    .f_verify = gpu_list_verify, .f_format = gpu_list_format, .f_vendors = gpu_all_vendors },
   { SYSOBJ_CLASS_DEF
-    .tag = "gpu", .pattern = ":/gpu/gpu*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .f_verify = gpu_verify, .f_format = gpu_format_nice_name },
+    .tag = "gpu", .pattern = ":/gpu/gpu*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_IS_VENDOR,
+    .s_label = N_("graphics device"),
+    .f_verify = gpu_verify, .f_format = gpu_format_nice_name, .f_vendors = gpu_vendors },
   { SYSOBJ_CLASS_DEF
     .tag = "gpu:prop", .pattern = ":/gpu/gpu*/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_verify = gpu_prop_verify, .attributes = gpu_prop_items },
@@ -99,6 +104,26 @@ static sysobj_class cls_gpu[] = {
     .f_verify = drm_conn_attr_verify, .attributes = drm_conn_items },
 };
 
+vendor_list gpu_vendors(sysobj *obj) {
+    gchar *vs = sysobj_raw_from_fn(obj->path, "name/vendor_name");
+    const Vendor *v = vendor_match(vs, NULL);
+    g_free(vs);
+    if (v)
+        return vendor_list_append(NULL, v);
+    return NULL;
+}
+
+static vendor_list gpu_all_vendors(sysobj *obj) {
+    GSList *ret = NULL;
+    if (SEQ(":/gpu", obj->path)) {
+        GSList *childs = sysobj_children(obj, "gpu*", NULL, TRUE);
+        for(GSList *l = childs; l; l = l->next)
+            ret = vendor_list_concat(ret, sysobj_vendors_from_fn(obj->path, l->data));
+        g_slist_free_full(childs, g_free);
+    }
+    return ret;
+}
+
 static gboolean gpu_list_verify(sysobj *obj) {
     if (SEQ(":/gpu", obj->path))
         return TRUE;
@@ -115,6 +140,7 @@ static gchar *gpu_list_format(sysobj *obj, int fmt_opts) {
                 ret = appfs(ret, " + ", "%s", gpu);
             g_free(gpu);
         }
+        g_slist_free_full(childs, g_free);
         if (ret)
             return ret;
     }

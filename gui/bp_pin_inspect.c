@@ -1,5 +1,6 @@
 
 #include "bp_pin_inspect.h"
+#include "sysobj_extras.h"
 #include <inttypes.h>
 
 /* Forward declarations */
@@ -23,6 +24,7 @@ struct _bpPinInspectPrivate {
     GtkTextBuffer *val_raw;
 
     GtkWidget *lbl_top;
+    GtkWidget *lbl_vendor;
     GtkWidget *lbl_debug;
 
     GtkWidget *help_container;
@@ -101,6 +103,16 @@ static void _create(bpPinInspect *s) {
     g_signal_connect(lbl_top, "activate-link", G_CALLBACK(_activate_link), NULL);
     gtk_widget_show(lbl_top);
 
+    GtkWidget *lbl_vendor = gtk_label_new("");
+    gtk_label_set_line_wrap(GTK_LABEL(lbl_vendor), TRUE);
+    gtk_label_set_justify(GTK_LABEL(lbl_vendor), GTK_JUSTIFY_LEFT);
+    gtk_widget_set_halign(lbl_vendor, GTK_ALIGN_START);
+    gtk_widget_set_valign(lbl_vendor, GTK_ALIGN_START);
+    gtk_widget_set_margin_start(lbl_vendor, 10);
+    //gtk_label_set_selectable(GTK_LABEL(lbl_vendor), TRUE);
+    g_signal_connect (lbl_vendor, "activate-link", G_CALLBACK(_activate_link), NULL);
+    gtk_widget_show(lbl_vendor);
+
     GtkWidget *lbl_debug = gtk_label_new("");
     gtk_label_set_line_wrap(GTK_LABEL(lbl_debug), TRUE);
     gtk_label_set_justify(GTK_LABEL(lbl_debug), GTK_JUSTIFY_LEFT);
@@ -128,6 +140,7 @@ static void _create(bpPinInspect *s) {
     gtk_notebook_set_tab_pos(GTK_NOTEBOOK (value_notebook), GTK_POS_TOP);
     notebook_add_page("formatted", _("Formatted"), value_notebook, text_formatted, 5);
     notebook_add_page("raw", _("Raw"), value_notebook, text_raw, 5);
+    notebook_add_page("vendor", _("Vendor"), value_notebook, lbl_vendor, 5);
     notebook_add_page("debug", _("Debug"), value_notebook, lbl_debug, 5);
     gtk_widget_show(value_notebook);
 
@@ -159,6 +172,7 @@ static void _create(bpPinInspect *s) {
     priv->val_formatted = val_formatted;
     priv->val_raw = val_raw;
     priv->lbl_top = lbl_top;
+    priv->lbl_vendor = lbl_vendor;
     priv->lbl_debug = lbl_debug;
     priv->help_container = help_scroll;
     priv->lbl_help = lbl_help;
@@ -217,8 +231,43 @@ void bp_pin_inspect_do(bpPinInspect *s, const pin *p, int fmt_opts) {
     gchar *update = g_strdup_printf("update_interval = %0.4lfs, last_update = %0.4lfs", p->update_interval, p->obj->data.stamp);
     gchar *pin_info = g_strdup_printf("hist_stat = %d, hist_len = %" PRIu64 "/%" PRIu64 ", hist_mem_size = %" PRIu64 " (%" PRIu64 " bytes)",
         p->history_status, p->history_len, p->history_max_len, p->history_mem, p->history_mem * sizeof(sysobj_data) );
-    const Vendor *v = sysobj_vendor(p->obj);
-    gchar *ven_str = v ? g_strdup_printf("vendor = %s", v->name) : g_strdup("no-vendor");
+
+    if (is_new) {
+        gchar *ven_mt = NULL;
+        GSList *l = NULL, *vl = sysobj_vendors(p->obj);
+        vl = vendor_list_remove_duplicates(vl);
+        if (vl) {
+            for(l = vl; l; l = l->next) {
+                const Vendor *v = l->data;
+                if (!v) continue;
+                gchar *full_link = NULL;
+                gchar *ven_tag = v->name_short ? g_strdup(v->name_short) : g_strdup(v->name);
+                tag_vendor(&ven_tag, 0, ven_tag, v->ansi_color, fmt_opts);
+                //ven_mt = appfs(ven_mt, "\n", "%p", v);
+                if (v->name_short)
+                    ven_mt = appfs(ven_mt, "\n", "%s", v->name);
+                ven_mt = appfs(ven_mt, "\n", "%s", ven_tag);
+                if (v->url) {
+                    if (!g_str_has_prefix(v->url, "http") )
+                        full_link = g_strdup_printf("http://%s", v->url);
+                    ven_mt = appfs(ven_mt, "\n", "<b>URL:</b> <a href=\"%s\">%s</a>", full_link ? full_link : v->url, v->url);
+                    g_free(full_link);
+                    full_link = NULL;
+                }
+                if (v->url_support) {
+                    if (!g_str_has_prefix(v->url_support, "http") )
+                        full_link = g_strdup_printf("http://%s", v->url_support);
+                    ven_mt = appfs(ven_mt, "\n", "<b>Support URL:</b> <a href=\"%s\">%s</a>", full_link ? full_link : v->url_support, v->url_support);
+                    g_free(full_link);
+                    full_link = NULL;
+                }
+                g_free(ven_tag);
+                ven_mt = appfs(ven_mt, "\n", " ");
+            }
+            vendor_list_free(vl);
+        }
+        gtk_label_set_markup(GTK_LABEL(priv->lbl_vendor), ven_mt ? ven_mt : "");
+    }
 
     if (!label)
         label = g_strdup("");
@@ -263,9 +312,8 @@ void bp_pin_inspect_do(bpPinInspect *s, const pin *p, int fmt_opts) {
     mt = g_strdup_printf("debug info:\n"
         /* data info */ "%s\n"
         /* pin info */ "%s\n"
-        /* update */ "%s\n"
-        /* vendor */ "%s",
-        data_info, pin_info, update, ven_str);
+        /* update */ "%s\n",
+        data_info, pin_info, update);
     gtk_label_set_markup(GTK_LABEL(priv->lbl_debug), mt);
 
     if (is_new) {

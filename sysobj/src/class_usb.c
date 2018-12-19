@@ -19,6 +19,7 @@
  */
 
 #include "sysobj.h"
+#include "sysobj_extras.h"
 #include "util_usb.h"
 #include "format_funcs.h"
 
@@ -40,6 +41,9 @@ static gchar *usb_format_device(sysobj *obj, int fmt_opts);
 static gboolean usb_verify_bus(sysobj *obj) { return (obj) ? verify_usb_bus(obj->name) : FALSE; }
 static gchar *usb_format_bus(sysobj *obj, int fmt_opts);
 static gchar *usb_ids_format(sysobj *obj, int fmt_opts);
+
+static vendor_list usb_vendor_lookup(sysobj *obj);
+static vendor_list usb_vendor_dev(sysobj *obj) { return sysobj_vendors_from_fn(obj->path, "idVendor"); }
 
 #define usb_update_interval 10.0
 
@@ -86,16 +90,22 @@ static sysobj_class cls_usb[] = {
     .tag = "usb:device_list", .pattern = "/sys/bus/usb/devices", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_format = usb_format, .s_update_interval = usb_update_interval },
   { SYSOBJ_CLASS_DEF
-    .tag = "usb:bus", .pattern = "/sys/devices*/usb*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .f_verify = usb_verify_bus,
+    .tag = "usb:bus", .pattern = "/sys/devices*/usb*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_IS_VENDOR,
+    .f_verify = usb_verify_bus, .f_vendors = usb_vendor_dev,
     .f_format = usb_format_bus, .s_update_interval = usb_update_interval },
   { SYSOBJ_CLASS_DEF
-    .tag = "usb:device", .pattern = "/sys/devices*/*-*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .f_verify = usb_verify_device,
+    .tag = "usb:bus:id", .pattern = "/sys/devices*/usb*/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .attributes = usb_idcomp_items, .f_format = usb_format_idcomp, .f_vendors = usb_vendor_lookup },
+  { SYSOBJ_CLASS_DEF
+    .tag = "usb:bus:attr", .pattern = "/sys/devices*/usb*/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .attributes = usb_dev_items },
+  { SYSOBJ_CLASS_DEF
+    .tag = "usb:device", .pattern = "/sys/devices*/*-*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_IS_VENDOR,
+    .f_verify = usb_verify_device, .f_vendors = usb_vendor_dev,
     .f_format = usb_format_device, .s_update_interval = usb_update_interval },
   { SYSOBJ_CLASS_DEF
-    .tag = "usb:device_id", .pattern = "/sys/devices*/*-*/*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .attributes = usb_idcomp_items, .f_format = usb_format_idcomp },
+    .tag = "usb:id", .pattern = "/sys/devices*/*-*/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .attributes = usb_idcomp_items, .f_format = usb_format_idcomp, .f_vendors = usb_vendor_lookup },
   { SYSOBJ_CLASS_DEF
     .tag = "usb:device:attr", .pattern = "/sys/devices*/*-*/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .attributes = usb_dev_items },
@@ -183,6 +193,18 @@ static gchar *usb_format(sysobj *obj, int fmt_opts) {
     return simple_format(obj, fmt_opts);
 }
 
+static vendor_list usb_vendor_lookup(sysobj *obj) {
+    if (obj->data.is_utf8) {
+        gchar *vendor_str = sysobj_raw_from_printf(
+            ":/usb/usb.ids/%04lx/name", strtoul(obj->data.str, NULL, 16) );
+        const Vendor *v = vendor_match(vendor_str, NULL);
+        g_free(vendor_str);
+        if (v)
+            return vendor_list_append(NULL, v);
+    }
+    return NULL;
+}
+
 util_usb_id *get_usb_id(gchar *dev_path) {
     util_usb_id *pid = g_new0(util_usb_id, 1);
     gchar path[64] = "";
@@ -223,9 +245,20 @@ static gchar *usb_format_device(sysobj *obj, int fmt_opts) {
     util_usb_id *d = get_usb_id(obj->path);
     gchar *ret = NULL;
     if (d) {
-        ret = g_strdup_printf("%s %s",
-            d->vendor_str ? d->vendor_str : "Unknown",
-            d->device_str ? d->device_str : "Device");
+        vendor_list vl = sysobj_vendors(obj);
+        const Vendor *v = vl ? vl->data : NULL;
+        if (v) {
+            gchar *ven_tag = v->name_short ? g_strdup(v->name_short) : g_strdup(v->name);
+            tag_vendor(&ven_tag, 0, ven_tag, v->ansi_color, fmt_opts);
+            ret = g_strdup_printf("%s %s",
+                ven_tag, d->device_str ? d->device_str : "Device");
+            g_free(ven_tag);
+        } else {
+            ret = g_strdup_printf("%s %s",
+                d->vendor_str ? d->vendor_str : "Unknown",
+                d->device_str ? d->device_str : "Device");
+        }
+        vendor_list_free(vl);
     }
     util_usb_id_free(d);
     if (ret) return ret;

@@ -49,6 +49,9 @@ static gchar *mobo_get_name(const gchar *path) {
     if (ret) {
         util_strstrip_double_quotes_dumb(ret);
         sysobj_virt_add_simple(":/mobo/name/model", NULL, "/sys/firmware/devicetree/base/model", VSO_TYPE_SYMLINK);
+
+        /* TODO: vendor: try dt.ids compat for class board */
+
         goto got_mobo_ok;
     }
 

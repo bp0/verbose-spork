@@ -22,12 +22,27 @@
 #include "format_funcs.h"
 
 static gchar *mobo_format(sysobj *obj, int fmt_opts);
+static vendor_list mobo_vendor(sysobj *obj);
 
 static sysobj_class cls_mobo[] = {
   { SYSOBJ_CLASS_DEF
-    .tag = "mobo", .pattern = ":/mobo", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .f_format = mobo_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
+    .tag = "mobo", .pattern = ":/mobo", .flags = OF_GLOB_PATTERN | OF_CONST | OF_IS_VENDOR,
+    .f_format = mobo_format, .s_update_interval = UPDATE_INTERVAL_NEVER,
+    .s_label = N_("main system board"),
+    .f_vendors = mobo_vendor },
 };
+
+static vendor_list mobo_vendor(sysobj *obj) {
+    gchar *vs = sysobj_raw_from_fn(obj->path, "name/board_vendor_str");
+    if (!vs)
+        vs = sysobj_raw_from_fn(obj->path, "name/model");
+    if (vs) {
+        const Vendor *v = vendor_match(vs, NULL);
+        g_free(vs);
+        return vendor_list_append(NULL, v);
+    }
+    return NULL;
+}
 
 /* export */
 void tag_vendor(gchar **str, guint offset, const gchar *vendor_str, const char *ansi_color, int fmt_opts) {
@@ -58,8 +73,10 @@ static gchar *mobo_format(sysobj *obj, int fmt_opts) {
             if (pac && pvs) {
                 gchar *p = name;
                 while(p) {
-                    if (g_str_has_prefix(p, pvs) )
+                    if (g_str_has_prefix(p, pvs) ) {
                         tag_vendor(&name, p-name, pvs, pac, fmt_opts);
+                        break;
+                    }
                     p = strchr(p, '(');
                     if (p) p++;
                 }

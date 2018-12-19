@@ -30,7 +30,7 @@
 #include "sysobj.h"
 #include "vendor.h"
 
-static GSList *vendor_list = NULL;
+static GSList *vendors = NULL;
 
 /* sort the vendor list by length of match_string,
  * LONGEST first */
@@ -96,7 +96,7 @@ static int read_from_vendor_ids(const char *path) {
             v->url = dup_if_not_empty(url);
             v->url_support = dup_if_not_empty(url_support);
             v->ansi_color = dup_if_not_empty(ansi_color);
-            vendor_list = g_slist_prepend(vendor_list, v);
+            vendors = g_slist_prepend(vendors, v);
             count++;
         }
 
@@ -109,7 +109,7 @@ static int read_from_vendor_ids(const char *path) {
             v->url = dup_if_not_empty(url);
             v->url_support = dup_if_not_empty(url_support);
             v->ansi_color = dup_if_not_empty(ansi_color);
-            vendor_list = g_slist_prepend(vendor_list, v);
+            vendors = g_slist_prepend(vendors, v);
             count++;
         }
     }
@@ -123,7 +123,7 @@ static int read_from_vendor_ids(const char *path) {
 
 void vendor_init(void) {
     /* already initialized */
-    if (vendor_list) return;
+    if (vendors) return;
 
     DEBUG("initializing vendor list");
 
@@ -141,12 +141,12 @@ void vendor_init(void) {
     /* sort the vendor list by length of match string so that short strings are
      * less likely to incorrectly match.
      * example: ST matches ASUSTeK but SEAGATE is not ASUS */
-    vendor_list = g_slist_sort(vendor_list, vendor_sort);
+    vendors = g_slist_sort(vendors, vendor_sort);
 }
 
 void vendor_cleanup() {
     DEBUG("cleanup vendor list");
-    g_slist_free_full(vendor_list, (GDestroyNotify)vendor_free);
+    g_slist_free_full(vendors, (GDestroyNotify)vendor_free);
 }
 
 void vendor_free(Vendor *v) {
@@ -192,7 +192,7 @@ const Vendor *vendor_match(const gchar *id_str, ...) {
 
     DEBUG("full id_str: %s", tmp);
 
-    for (vlp = vendor_list; vlp; vlp = vlp->next) {
+    for (vlp = vendors; vlp; vlp = vlp->next) {
         Vendor *v = (Vendor *)vlp->data;
 
         if (v)
