@@ -206,6 +206,7 @@ name Micro-Star International
     name_short MSI
     url www.msi.com
     url_support www.msi.com/support
+    ansi_color 1;37|0;40
     match_string Micro-Star Int'l Co.,Ltd.
     match_string Micro Star
     match_string_case MSI
