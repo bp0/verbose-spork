@@ -85,15 +85,17 @@ static int read_from_vendor_ids(const char *path) {
         if (VEN_CHK("ansi_color "))
             strncpy(ansi_color, p + tl, VEN_BUFF_SIZE - 1);
 
+#define dup_if_not_empty(s) (strlen(s) ? g_strdup(s) : NULL)
+
         if (VEN_CHK("match_string ")) {
             Vendor *v = g_new0(Vendor, 1);
             v->match_string = g_strdup(p+tl);
             v->match_case = 0;
             v->name = g_strdup(name);
-            v->name_short = g_strdup(name_short);
-            v->url = g_strdup(url);
-            v->url_support = g_strdup(url_support);
-            v->ansi_color = g_strdup(ansi_color);
+            v->name_short = dup_if_not_empty(name_short);
+            v->url = dup_if_not_empty(url);
+            v->url_support = dup_if_not_empty(url_support);
+            v->ansi_color = dup_if_not_empty(ansi_color);
             vendor_list = g_slist_prepend(vendor_list, v);
             count++;
         }
@@ -103,10 +105,10 @@ static int read_from_vendor_ids(const char *path) {
             v->match_string = g_strdup(p+tl);
             v->match_case = 1;
             v->name = g_strdup(name);
-            v->name_short = g_strdup(name_short);
-            v->url = g_strdup(url);
-            v->url_support = g_strdup(url_support);
-            v->ansi_color = g_strdup(ansi_color);
+            v->name_short = dup_if_not_empty(name_short);
+            v->url = dup_if_not_empty(url);
+            v->url_support = dup_if_not_empty(url_support);
+            v->ansi_color = dup_if_not_empty(ansi_color);
             vendor_list = g_slist_prepend(vendor_list, v);
             count++;
         }
