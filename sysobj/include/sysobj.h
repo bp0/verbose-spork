@@ -300,7 +300,8 @@ typedef struct {
         so_clean,
         so_free,
         auto_freed,
-        auto_free_len;
+        auto_free_len,
+        classify_none;
     double
         auto_free_next;
 } so_stats;

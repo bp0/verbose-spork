@@ -545,6 +545,7 @@ void sysobj_classify(sysobj *s) {
             s->cls = c_blast;
             return;
         }
+        sysobj_stats.classify_none++;
     }
 }
 

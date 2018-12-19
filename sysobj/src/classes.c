@@ -136,6 +136,7 @@ static attr_tab sysobj_items[] = {
     { "sysobj_new_fast", N_("sysobj created without sysobj_classify()") },
     { "sysobj_clean", N_("sysobj cleared") },
     { "sysobj_free", N_("sysobj freed") },
+    { "classify_none", N_("sysobj_classify() found none"), OF_NONE, NULL, 0.5 },
     ATTR_TAB_LAST
 };
 

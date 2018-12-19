@@ -31,6 +31,7 @@ static gchar *get_item_items[] = {
     "freed_count", "free_queue", "free_expected",
     "sysobj_new", "sysobj_new_fast",
     "sysobj_clean", "sysobj_free",
+    "classify_none",
 };
 
 static gchar *get_item(const gchar *path) {
@@ -56,6 +57,8 @@ static gchar *get_item(const gchar *path) {
         return g_strdup_printf("%llu", sysobj_stats.so_clean );
     if (SEQ(name, "sysobj_free") )
         return g_strdup_printf("%llu", sysobj_stats.so_free );
+    if (SEQ(name, "classify_none") )
+        return g_strdup_printf("%llu", sysobj_stats.classify_none );
 
     double elapsed = sysobj_elapsed();
     if (SEQ(name, "elapsed") )
