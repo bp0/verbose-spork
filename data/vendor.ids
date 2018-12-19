@@ -75,6 +75,7 @@ name Cirrus Logic
     match_string Cirrus Logic
 
 name VIA Technologies
+    name_short VIA
     url www.via.com.tw
     match_string_case VIA
 
@@ -170,6 +171,7 @@ name Dell Computer
     match_string Dell
 
 name Logitech International
+    name_short Logitech
     url www.logitech.com
     match_string Logitech
 
@@ -342,6 +344,19 @@ name Arm Holdings
     url arm.com
     ansi_color 0;36|1;47
     match_string ARM
+
+name Microchip Technology (formerly Standard Microsystems)
+    name_short SMC
+    match_string Standard Microsystems
+
+name Linux Foundation
+    name_short Linux
+    match_string Linux Foundation
+
+name ASMedia Technology
+    name_short ASMedia
+    url www.asmedia.com.tw
+    match_string_case ASMedia
 
 #
 # BIOS manufacturers
