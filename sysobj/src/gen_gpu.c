@@ -232,26 +232,25 @@ static void gpu_intel(gpud *g) {
     g_free(gpu_path);
 }
 
-static void gpu_pcie(gpud *g) {
+static void gpu_pci_var(gpud *g) {
     if (!g->name || !g->pci_addy) return;
 
+    static struct { const char *target, *name; } find_items[] = {
+        { "vbios_version", "vbios_version" },
+        { "boot_vga", "boot_vga" },
+        { "max_link_speed", "pcie.max_link_speed" },
+        { "current_link_speed", "pcie.current_link_speed" },
+        { "max_link_width", "pcie.max_link_width" },
+        { "current_link_width", "pcie.current_link_width" },
+    };
+
     gchar *gpu_path = util_build_fn(":/gpu", g->name);
-    sysobj *max_speed = sysobj_new_from_fn(g->device_path, "max_link_speed");
-    sysobj *cur_speed = sysobj_new_from_fn(g->device_path, "current_link_speed");
-    sysobj *max_width = sysobj_new_from_fn(g->device_path, "max_link_width");
-    sysobj *cur_width = sysobj_new_from_fn(g->device_path, "current_link_width");
-    if (max_speed->exists)
-        sysobj_virt_add_simple(gpu_path, "pcie.max_link_speed", max_speed->path, VSO_TYPE_SYMLINK );
-    if (max_width->exists)
-        sysobj_virt_add_simple(gpu_path, "pcie.max_link_width", max_width->path, VSO_TYPE_SYMLINK );
-    if (cur_speed->exists)
-        sysobj_virt_add_simple(gpu_path, "pcie.current_link_speed", cur_speed->path, VSO_TYPE_SYMLINK );
-    if (cur_width->exists)
-        sysobj_virt_add_simple(gpu_path, "pcie.current_link_width", cur_width->path, VSO_TYPE_SYMLINK );
-    sysobj_free(max_speed);
-    sysobj_free(cur_speed);
-    sysobj_free(max_width);
-    sysobj_free(cur_width);
+    for(int i = 0; i < (int)G_N_ELEMENTS(find_items); i++) {
+        sysobj *obj = sysobj_new_from_fn(g->device_path, find_items[i].target);
+        if (obj->exists)
+            sysobj_virt_add_simple(gpu_path, find_items[i].name, obj->path, VSO_TYPE_SYMLINK );
+        sysobj_free(obj);
+    }
     g_free(gpu_path);
 }
 
@@ -392,7 +391,7 @@ static void gpu_scan() {
                 g_free(lt);
                 /* extra stuff */
                 gpu_pci_hwmon(g);
-                gpu_pcie(g);
+                gpu_pci_var(g);
                 gpu_nv(g);
             }
             if (g->dt_name) {

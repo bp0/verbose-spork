@@ -21,6 +21,7 @@
 #include "sysobj.h"
 #include "util_pci.h"
 #include "sysobj_extras.h"
+#include "format_funcs.h"
 
 #define SYSFS_PCI "/sys/bus/pci"
 
@@ -47,7 +48,7 @@ static vendor_list pci_all_vendors(sysobj *obj);
 #define pci_update_interval 6.0
 #define pci_ids_update_interval 4.0
 
-attr_tab pci_idcomp_items[] = {
+static attr_tab pci_idcomp_items[] = {
     //TODO: labels
     { "vendor", NULL, OF_IS_VENDOR, NULL, -1 },
     { "device", NULL, OF_NONE, NULL, -1 },
@@ -57,8 +58,9 @@ attr_tab pci_idcomp_items[] = {
     ATTR_TAB_LAST
 };
 
-attr_tab pcie_items[] = {
+static attr_tab pcie_items[] = {
     //TODO: labels
+    { "boot_vga", N_("is the primary graphics device"), OF_NONE, fmt_1yes0no, 60.0 },
     { "max_link_speed", NULL, OF_NONE, NULL, 4.0 },
     { "max_link_width", NULL, OF_NONE, NULL, 4.0 },
     { "current_link_speed", NULL, OF_NONE, NULL, 0.2 },

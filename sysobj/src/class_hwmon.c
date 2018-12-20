@@ -163,7 +163,6 @@ static gchar *fmt_beep_channel(sysobj *obj, int fmt_opts) {
     static const char *beep[] = {
         N_("no beep (channel)"),
         N_("beep (channel)"),
-        NULL
     };
     return sysobj_format_table(obj, (gchar**)&beep, (int)G_N_ELEMENTS(beep), 10, fmt_opts);
 }
@@ -172,7 +171,6 @@ static gchar *fmt_alarm_channel(sysobj *obj, int fmt_opts) {
     static const char *alarm[] = {
         N_("no alarm (channel)"),
         N_("alarm (channel)"),
-        NULL
     };
     return sysobj_format_table(obj, (gchar**)&alarm, (int)G_N_ELEMENTS(alarm), 10, fmt_opts);
 }
@@ -181,7 +179,6 @@ static gchar *fmt_fault(sysobj *obj, int fmt_opts) {
     static const char *fault[] = {
         N_("no fault occurred"),
         N_("fault condition"),
-        NULL
     };
     return sysobj_format_table(obj, (gchar**)&fault, (int)G_N_ELEMENTS(fault), 10, fmt_opts);
 }
@@ -190,7 +187,6 @@ static gchar *fmt_enable(sysobj *obj, int fmt_opts) {
     static const char *disable_enable[] = {
         N_("disable"),
         N_("enable"),
-        NULL
     };
     return sysobj_format_table(obj, (gchar**)&disable_enable, (int)G_N_ELEMENTS(disable_enable), 10, fmt_opts);
 }
