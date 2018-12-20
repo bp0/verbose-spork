@@ -364,18 +364,47 @@ name ASMedia Technology
 #
 
 name American Megatrends
+    name_short AMI
     url www.ami.com
+    ansi_color 0;31|0;47
     match_string American Megatrends
 
 name Award Software International
     name_short Award
     url www.award-bios.com
+    ansi_color 1;33|0;44
     match_string Award
 
 name Phoenix Technologies
     name_short Phoenix
     url www.phoenix.com
+    ansi_color 0;31|0;47
     match_string Phoenix
+
+#
+# Linux
+#
+
+name Debian
+    url www.debian.org
+    ansi_color 0;31|1;47
+    match_string debian
+
+name Canonical
+    url www.canonical.com
+    ansi_color 1;37|0;45
+    match_string canonical
+
+name Ubuntu
+    url www.ubuntu.com
+    ansi_color 1;37|0;45
+    match_string ubuntu
+
+name Arch Linux
+    name_short Arch
+    url www.archlinux.org
+    ansi_color 0;36|1;47
+    match_string arch linux
 
 #
 # x86 vendor strings
