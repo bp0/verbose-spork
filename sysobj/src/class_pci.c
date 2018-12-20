@@ -69,7 +69,7 @@ attr_tab pcie_items[] = {
 static sysobj_class cls_pci[] = {
   /* all under :/pci */
   { SYSOBJ_CLASS_DEF
-    .tag = "pci", .pattern = ":/pci*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_IS_VENDOR,
+    .tag = "pci", .pattern = ":/pci", .flags = OF_CONST | OF_IS_VENDOR,
     .f_format = pci_format, .s_update_interval = pci_update_interval, .f_vendors = pci_all_vendors },
 
   { SYSOBJ_CLASS_DEF
@@ -163,7 +163,7 @@ static vendor_list pci_vendor_dev(sysobj *obj) {
 }
 
 vendor_list pci_all_vendors(sysobj *obj) {
-    GSList *ret = NULL;
+    vendor_list ret = NULL;
     sysobj *lo = SEQ(obj->path, "/sys/bus/pci/devices")
         ? obj
         : sysobj_new_fast("/sys/bus/pci/devices");

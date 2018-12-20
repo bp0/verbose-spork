@@ -155,13 +155,14 @@ static gchar *format_ansi_color(sysobj *obj, int fmt_opts) {
 }
 
 static vendor_list vsfs_vendors(sysobj *obj) {
-    return vendor_list_concat_va(6,
-        sysobj_vendors_from_fn(obj->path, "mobo"),
+    return vendor_list_concat_va(7,
         sysobj_vendors_from_fn(obj->path, "cpuinfo"),
+        sysobj_vendors_from_fn(obj->path, "gpu"),
+        sysobj_vendors_from_fn(obj->path, "mobo"),
+        sysobj_vendors_from_fn(obj->path, "os"),
         sysobj_vendors_from_fn(obj->path, "pci"),
         sysobj_vendors_from_fn(obj->path, "usb"),
-        sysobj_vendors_from_fn(obj->path, "gpu"),
-        sysobj_vendors_from_fn(obj->path, "os") );
+        sysobj_vendors_from_fn("/sys/devices/virtual/dmi/id", NULL) ); //TODO: get via mobo
 }
 
 static sysobj_class cls_internal[] = {

@@ -235,6 +235,7 @@ void class_cleanup();
 const gchar *simple_label(sysobj* obj);
 const gchar *simple_halp(sysobj* obj);
 gchar *simple_format(sysobj* obj, int fmt_opts);
+vendor_list simple_vendors(sysobj *s);
 
 sysobj *sysobj_new();
 sysobj *sysobj_new_fast(const gchar *path);  /* does not classify() */

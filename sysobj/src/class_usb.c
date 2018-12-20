@@ -44,6 +44,7 @@ static gchar *usb_ids_format(sysobj *obj, int fmt_opts);
 
 static vendor_list usb_vendor_lookup(sysobj *obj);
 static vendor_list usb_vendor_dev(sysobj *obj) { return sysobj_vendors_from_fn(obj->path, "idVendor"); }
+static vendor_list usb_all_vendors(sysobj *obj);
 
 #define usb_update_interval 10.0
 
@@ -84,11 +85,11 @@ attr_tab usb_dev_items[] = {
 static sysobj_class cls_usb[] = {
   /* all under :/usb */
   { SYSOBJ_CLASS_DEF
-    .tag = "usb", .pattern = ":/usb*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .f_format = usb_format, .s_update_interval = usb_update_interval },
+    .tag = "usb", .pattern = ":/usb", .flags = OF_CONST | OF_IS_VENDOR,
+    .f_format = usb_format, .s_update_interval = usb_update_interval, .f_vendors = usb_all_vendors },
   { SYSOBJ_CLASS_DEF
-    .tag = "usb:device_list", .pattern = "/sys/bus/usb/devices", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .f_format = usb_format, .s_update_interval = usb_update_interval },
+    .tag = "usb:device_list", .pattern = "/sys/bus/usb/devices", .flags = OF_GLOB_PATTERN | OF_CONST | OF_IS_VENDOR,
+    .f_format = usb_format, .s_update_interval = usb_update_interval, .f_vendors = usb_all_vendors },
   { SYSOBJ_CLASS_DEF
     .tag = "usb:bus", .pattern = "/sys/devices*/usb*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_IS_VENDOR,
     .f_verify = usb_verify_bus, .f_vendors = usb_vendor_dev,
@@ -203,6 +204,23 @@ static vendor_list usb_vendor_lookup(sysobj *obj) {
             return vendor_list_append(NULL, v);
     }
     return NULL;
+}
+
+vendor_list usb_all_vendors(sysobj *obj) {
+    vendor_list ret = NULL;
+    sysobj *lo = SEQ(obj->path, "/sys/bus/usb/devices")
+        ? obj
+        : sysobj_new_fast("/sys/bus/usb/devices");
+    sysobj_read(lo, FALSE);
+    GSList *childs = sysobj_children(lo, NULL, NULL, TRUE);
+    for(GSList *l = childs; l; l = l->next) {
+        if (verify_usb_device(l->data) || verify_usb_bus(l->data))
+            ret = vendor_list_concat(ret, sysobj_vendors_from_fn(lo->path, l->data));
+    }
+    g_slist_free_full(childs, g_free);
+    if (lo != obj)
+        sysobj_free(lo);
+    return ret;
 }
 
 util_usb_id *get_usb_id(gchar *dev_path) {

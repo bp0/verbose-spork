@@ -56,26 +56,51 @@ static gchar *fmt_arm_arch(sysobj *obj, int fmt_opts) {
 }
 
 static attr_tab cpu_prop_items[] = {
-    { "cpu_implementer", NULL, OF_NONE, fmt_arm_implementer },
+    { "cpu_implementer", NULL, OF_IS_VENDOR, fmt_arm_implementer },
     { "cpu_part", NULL, OF_NONE, fmt_arm_part },
     { "cpu_architecture", NULL, OF_NONE, fmt_arm_arch },
     { "cpu_variant" },
     { "cpu_revision" },
+    { "vendor_id", NULL, OF_IS_VENDOR },
     ATTR_TAB_LAST
 };
 
+static vendor_list cpuinfo_vendors(sysobj *obj) {
+    vendor_list ret = NULL;
+    GSList *childs = sysobj_children(obj, "logical_cpu*", NULL, TRUE);
+    for(GSList *l = childs; l; l = l->next)
+        ret = vendor_list_concat(ret, sysobj_vendors_from_fn(obj->path, l->data));
+    g_slist_free_full(childs, g_free);
+    return ret;
+}
+
+static vendor_list cpuinfo_lcpu_vendors(sysobj *obj) {
+    return vendor_list_concat(
+        /* x86 */ sysobj_vendors_from_fn(obj->path, "vendor_id"),
+        /* arm */ sysobj_vendors_from_fn(obj->path, "cpu_implementer") );
+}
+
+static vendor_list cpuinfo_lcpu_prop_vendors(sysobj *obj) {
+    if (SEQ(obj->name, "cpu_implementer") ) {
+        gchar *istr = auto_free( arm_implementer(obj->data.str) );
+        return vendor_list_append(NULL, vendor_match(istr, NULL) );
+    }
+    return simple_vendors(obj);
+}
+
 static sysobj_class cls_cpuinfo[] = {
   { SYSOBJ_CLASS_DEF
-    .tag = "cpuinfo", .pattern = ":/cpuinfo", .flags = OF_CONST,
+    .tag = "cpuinfo", .pattern = ":/cpuinfo", .flags = OF_CONST | OF_IS_VENDOR,
     .s_label = N_("CPU information from /proc/cpuinfo"),
+    .f_format = cpuinfo_format, .s_update_interval = UPDATE_INTERVAL_NEVER,
+    .f_vendors = cpuinfo_vendors },
+  { SYSOBJ_CLASS_DEF
+    .tag = "cpuinfo:lcpu", .pattern = ":/cpuinfo/logical_cpu*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_IS_VENDOR,
+    .f_verify = cpuinfo_lcpu_verify, .f_vendors = cpuinfo_lcpu_vendors,
     .f_format = cpuinfo_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
   { SYSOBJ_CLASS_DEF
-    .tag = "cpuinfo:lcpu", .pattern = ":/cpuinfo/logical_cpu*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .f_verify = cpuinfo_lcpu_verify,
-    .f_format = cpuinfo_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
-  { SYSOBJ_CLASS_DEF
-    .tag = "cpuinfo:lcpu:prop", .pattern = ":/cpuinfo/logical_cpu*/*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .f_verify = cpuinfo_lcpu_prop_verify, .attributes = cpu_prop_items,
+    .tag = "cpuinfo:lcpu:prop", .pattern = ":/cpuinfo/logical_cpu*/*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_IS_VENDOR,
+    .f_verify = cpuinfo_lcpu_prop_verify, .attributes = cpu_prop_items, .f_vendors = cpuinfo_lcpu_prop_vendors,
     .s_update_interval = UPDATE_INTERVAL_NEVER },
 
   { SYSOBJ_CLASS_DEF

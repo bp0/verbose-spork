@@ -1190,20 +1190,26 @@ vendor_list vendor_list_remove_duplicates(vendor_list vl) {
     return vl;
 }
 
-vendor_list sysobj_vendors(sysobj *s) {
+vendor_list simple_vendors(sysobj *s) {
     if (sysobj_has_flag(s, OF_IS_VENDOR) ) {
         sysobj_read(s, FALSE);
-        if (s->cls && s->cls->f_vendors)
-            return s->cls->f_vendors(s);
-        else {
-            if (!s->data.is_utf8)
-                return NULL;
-            const Vendor *v = vendor_match(s->data.str, NULL);
-            if (v)
-                return vendor_list_append(NULL, v);
-        }
+        if (!s->data.is_utf8)
+            return NULL;
+        const Vendor *v = vendor_match(s->data.str, NULL);
+        if (v)
+            return vendor_list_append(NULL, v);
     }
     return NULL;
+}
+
+vendor_list sysobj_vendors(sysobj *s) {
+    if (s->cls && s->cls->f_vendors) {
+        if (sysobj_has_flag(s, OF_IS_VENDOR) ) {
+            sysobj_read(s, FALSE);
+            return s->cls->f_vendors(s);
+        }
+    }
+    return simple_vendors(s);
 }
 
 vendor_list sysobj_vendors_from_fn(const gchar *base, const gchar *name) {

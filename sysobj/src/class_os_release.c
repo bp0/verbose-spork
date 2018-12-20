@@ -56,6 +56,11 @@ attr_tab lsb_release_items[] = {
     ATTR_TAB_LAST
 };
 
+static vendor_list os_vendors(sysobj *obj) {
+    gchar *os = auto_free( sysobj_format(obj, FMT_OPT_NONE) );
+    return vendor_list_append(NULL, vendor_match(os, NULL) );
+}
+
 static sysobj_class cls_os_release[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "os_release:raw", .pattern = "/usr/lib/os-release", .flags = OF_CONST,
@@ -71,8 +76,8 @@ static sysobj_class cls_os_release[] = {
     .s_label = gen_raw_label, .s_suggest = ":/os/lsb_release" },
 
   { SYSOBJ_CLASS_DEF
-    .tag = "os", .pattern = ":/os", .flags = OF_CONST,
-    .f_format = os_format, .s_update_interval = 62.0 },
+    .tag = "os", .pattern = ":/os", .flags = OF_CONST | OF_IS_VENDOR,
+    .f_vendors = os_vendors, .f_format = os_format, .s_update_interval = 62.0 },
   { SYSOBJ_CLASS_DEF
     .tag = "os:item", .pattern = ":/os/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .attributes = os_items, .f_verify = verify_true,
