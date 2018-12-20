@@ -154,10 +154,21 @@ static gchar *format_ansi_color(sysobj *obj, int fmt_opts) {
     return format_with_ansi_color(obj->data.str, obj->data.str, fmt_opts);
 }
 
+static vendor_list vsfs_vendors(sysobj *obj) {
+    return vendor_list_concat_va(6,
+        sysobj_vendors_from_fn(obj->path, "mobo"),
+        sysobj_vendors_from_fn(obj->path, "cpuinfo"),
+        sysobj_vendors_from_fn(obj->path, "pci"),
+        sysobj_vendors_from_fn(obj->path, "usb"),
+        sysobj_vendors_from_fn(obj->path, "gpu"),
+        sysobj_vendors_from_fn(obj->path, "os") );
+}
+
 static sysobj_class cls_internal[] = {
   { SYSOBJ_CLASS_DEF
-    .tag = "vsfs", .pattern = ":", .flags = OF_CONST,
-    .s_label = N_("Virtual sysfs root"), .s_update_interval = 60.0 },
+    .tag = "vsfs", .pattern = ":", .flags = OF_CONST | OF_IS_VENDOR,
+    .s_label = N_("Virtual sysfs root"), .s_update_interval = 60.0,
+    .f_vendors = vsfs_vendors },
   { SYSOBJ_CLASS_DEF
     .tag = "sysobj:stat", .pattern = ":sysobj/*", .flags = OF_CONST | OF_GLOB_PATTERN,
     .attributes = sysobj_items, .s_update_interval = 0.5 },

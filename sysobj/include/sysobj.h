@@ -88,6 +88,7 @@ typedef guint (*func_class_flags)(sysobj *obj, const sysobj_class *cls); /* reme
 typedef GSList* vendor_list;
 #define vendor_list_append(vl, v) g_slist_append(vl, (Vendor*)v)
 #define vendor_list_concat(vl, ext) g_slist_concat(vl, ext)
+vendor_list vendor_list_concat_va(int count, vendor_list vl, ...); /* count = -1 for NULL terminated list */
 #define vendor_list_free(vl) g_slist_free(vl)
 vendor_list vendor_list_remove_duplicates(vendor_list vl);
 typedef vendor_list (*func_get_vendors)(sysobj *obj);

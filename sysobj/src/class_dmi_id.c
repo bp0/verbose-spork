@@ -26,8 +26,7 @@ const gchar *dmi_id_label(sysobj *obj);
 gchar *dmi_id_format(sysobj *obj, int fmt_opts);
 guint dmi_id_flags(sysobj *obj, const sysobj_class *cls);
 
-attr_tab dmi_id_items[] = {
-    { "id",  N_("Desktop Management Interface (DMI) product information"), OF_NONE },
+static attr_tab dmi_id_items[] = {
     { "bios_vendor",       N_("BIOS Vendor"), OF_IS_VENDOR },
     { "bios_version",      N_("BIOS Version"), OF_NONE },
     { "bios_date",         N_("BIOS Date"), OF_NONE },
@@ -50,9 +49,22 @@ attr_tab dmi_id_items[] = {
     ATTR_TAB_LAST
 };
 
+static vendor_list dmi_id_vendors(sysobj *obj) {
+    return vendor_list_concat_va(4,
+        sysobj_vendors_from_fn(obj->path, "bios_vendor"),
+        sysobj_vendors_from_fn(obj->path, "sys_vendor"),
+        sysobj_vendors_from_fn(obj->path, "board_vendor"),
+        sysobj_vendors_from_fn(obj->path, "chassis_vendor") );
+}
+
 static sysobj_class cls_dmi_id[] = {
   { SYSOBJ_CLASS_DEF
-    .tag = "dmi:id", .pattern = "/sys/devices/virtual/dmi/id*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .tag = "dmi:id", .pattern = "/sys/devices/virtual/dmi/id", .flags = OF_CONST | OF_IS_VENDOR,
+    .s_label = N_("Desktop Management Interface (DMI) product information"),
+    .f_vendors = dmi_id_vendors },
+
+  { SYSOBJ_CLASS_DEF
+    .tag = "dmi:id:attr", .pattern = "/sys/devices/virtual/dmi/id/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .s_update_interval = UPDATE_INTERVAL_NEVER,
     .attributes = dmi_id_items, .f_verify = dmi_id_verify, .f_format = dmi_id_format },
 
