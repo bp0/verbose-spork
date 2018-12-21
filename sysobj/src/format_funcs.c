@@ -234,6 +234,34 @@ gchar *fmt_KiB_to_higher(sysobj *obj, int fmt_opts) {
     return g_strdup_printf("%0.1f %s", v / bytes_KiB, _("KiB") );
 }
 
+gchar *fmt_megatransferspersecond(sysobj *obj, int fmt_opts) {
+    CHECK_OBJ();
+    PREP_RAW();
+    double mbps = strtod(raw, NULL);
+    FINISH_RAW();
+    return fmt_opts & FMT_OPT_NO_UNIT
+        ? g_strdup_printf("%.1f", mbps)
+        : g_strdup_printf("%.1f %s", mbps, _("MT/s"));
+}
+
+gchar *fmt_gigatransferspersecond(sysobj *obj, int fmt_opts) {
+    CHECK_OBJ();
+    PREP_RAW();
+    double mbps = strtod(raw, NULL);
+    FINISH_RAW();
+    return fmt_opts & FMT_OPT_NO_UNIT
+        ? g_strdup_printf("%.1f", mbps)
+        : g_strdup_printf("%.1f %s", mbps, _("GT/s"));
+}
+
+gchar *fmt_lanes_x(sysobj *obj, int fmt_opts) {
+    CHECK_OBJ();
+    PREP_RAW();
+    double lanes = strtod(raw, NULL);
+    FINISH_RAW();
+    return util_strchomp_float(g_strdup_printf("x%.0lf", lanes));
+}
+
 gchar *fmt_node_name(sysobj *obj, int fmt_opts) {
     if (obj) {
         gchar *name = sysobj_format_from_fn(obj->path, "name", fmt_opts);

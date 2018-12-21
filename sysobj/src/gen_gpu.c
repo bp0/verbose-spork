@@ -242,6 +242,8 @@ static void gpu_pci_var(gpud *g) {
         { "current_link_speed", "pcie.current_link_speed" },
         { "max_link_width", "pcie.max_link_width" },
         { "current_link_width", "pcie.current_link_width" },
+        { "pp_dpm_mclk", "amd.pp_dpm_mclk" },
+        { "pp_dpm_sclk", "amd.pp_dpm_sclk" },
     };
 
     gchar *gpu_path = util_build_fn(":/gpu", g->name);

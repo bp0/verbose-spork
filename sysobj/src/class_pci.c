@@ -49,22 +49,27 @@ static vendor_list pci_all_vendors(sysobj *obj);
 #define pci_ids_update_interval 4.0
 
 static attr_tab pci_idcomp_items[] = {
-    //TODO: labels
-    { "vendor", NULL, OF_IS_VENDOR, NULL, -1 },
-    { "device", NULL, OF_NONE, NULL, -1 },
-    { "subsystem_vendor", NULL, OF_IS_VENDOR, NULL, -1 },
-    { "subsystem_device", NULL, OF_NONE, NULL, -1 },
+    { "vendor", N_("PCI-SIG-assigned vendor id"), OF_IS_VENDOR, NULL, -1 },
+    { "device", N_("vendor-specific device id"), OF_NONE, NULL, -1 },
+    { "subsystem_vendor", N_("PCI-assigned vendor id for sub-vendor"), OF_IS_VENDOR, NULL, -1 },
+    { "subsystem_device", N_("vendor-specific device id"), OF_NONE, NULL, -1 },
     { "class", NULL, OF_NONE, NULL, -1 },
+    ATTR_TAB_LAST
+};
+
+static attr_tab pci_var_items[] = {
+    { "boot_vga", N_("is the primary graphics device"), OF_NONE, fmt_1yes0no, 60.0 },
+    { "ari_enabled", N_("uses the alternative routing-ID interpretation"), OF_NONE, fmt_1yes0no, 60.0 },
+    { "enable", NULL, OF_NONE, fmt_1yes0no },
     ATTR_TAB_LAST
 };
 
 static attr_tab pcie_items[] = {
     //TODO: labels
-    { "boot_vga", N_("is the primary graphics device"), OF_NONE, fmt_1yes0no, 60.0 },
-    { "max_link_speed", NULL, OF_NONE, NULL, 4.0 },
-    { "max_link_width", NULL, OF_NONE, NULL, 4.0 },
-    { "current_link_speed", NULL, OF_NONE, NULL, 0.2 },
-    { "current_link_width", NULL, OF_NONE, NULL, 0.2 },
+    { "max_link_speed", NULL, OF_NONE, fmt_gigatransferspersecond, 4.0 },
+    { "max_link_width", NULL, OF_NONE, fmt_lanes_x, 4.0 },
+    { "current_link_speed", NULL, OF_NONE, fmt_gigatransferspersecond, 0.2 },
+    { "current_link_width", NULL, OF_NONE, fmt_lanes_x, 0.2 },
     ATTR_TAB_LAST
 };
 
@@ -86,6 +91,9 @@ static sysobj_class cls_pci[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "pci:pcie", .pattern = "/sys/devices*/????:??:??.?/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .attributes = pcie_items },
+  { SYSOBJ_CLASS_DEF
+    .tag = "pci:var", .pattern = "/sys/devices*/????:??:??.?/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .attributes = pci_var_items },
 
   { SYSOBJ_CLASS_DEF
     .tag = "pci.ids", .pattern = ":/pci/pci.ids", .flags = OF_CONST,

@@ -53,6 +53,9 @@ gchar *fmt_megabitspersecond(sysobj *obj, int fmt_opts);
 gchar *fmt_KiB(sysobj *obj, int fmt_opts);
 gchar *fmt_KiB_to_MiB(sysobj *obj, int fmt_opts);
 gchar *fmt_KiB_to_higher(sysobj *obj, int fmt_opts); /* up to MiB, GiB, etc */
+gchar *fmt_megatransferspersecond(sysobj *obj, int fmt_opts);
+gchar *fmt_gigatransferspersecond(sysobj *obj, int fmt_opts);
+gchar *fmt_lanes_x(sysobj *obj, int fmt_opts);
 
 /* returns formatted <self>/name */
 gchar *fmt_node_name(sysobj *obj, int fmt_opts);

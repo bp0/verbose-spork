@@ -74,6 +74,33 @@ attr_tab drm_conn_items[] = {
     ATTR_TAB_LAST
 };
 
+static gchar *fmt_amdgpu_val(sysobj *obj, int fmt_opts) {
+    gchar *ret = NULL;
+    gchar **list = g_strsplit(obj->data.str, "\n", -1);
+    for (int i = 0; list[i]; i++) {
+        if (strchr(list[i], '*') ||
+            fmt_opts & FMT_OPT_COMPLETE ) {
+                ret = appfs(ret, "\n", "%s", list[i]);
+        }
+    }
+    g_strfreev(list);
+    return ret;
+}
+
+static gchar *fmt_amdgpu_clk(sysobj *obj, int fmt_opts) {
+    //TODO: translate mhz label for values
+    return fmt_amdgpu_val(obj, fmt_opts);
+}
+
+static attr_tab pci_amdgpu_items[] = {
+    { "pp_dpm_mclk", N_("memory clock frequency"), OF_NONE, fmt_amdgpu_clk, 0.5 },
+    { "pp_dpm_sclk", N_("core clock frequency"), OF_NONE, fmt_amdgpu_clk, 0.5 },
+    { "pp_dpm_pcie", N_("target PCI-Express operating mode"), OF_NONE, fmt_amdgpu_val, 0.5 },
+    { "pp_sclk_od", N_("AMD OverDrive target core overclock"), OF_NONE, fmt_percent, 0.5 },
+    { "pp_mclk_od", N_("AMD OverDrive target memory overclock"), OF_NONE, fmt_percent, 0.5 },
+    ATTR_TAB_LAST
+};
+
 static sysobj_class cls_gpu[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "gpu:list", .pattern = ":/gpu", .flags = OF_GLOB_PATTERN | OF_CONST | OF_IS_VENDOR,
@@ -102,6 +129,9 @@ static sysobj_class cls_gpu[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "drm:link:attr", .pattern = "/sys/devices/*/drm/card*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_verify = drm_conn_attr_verify, .attributes = drm_conn_items },
+  { SYSOBJ_CLASS_DEF
+    .tag = "pci:amdgpu", .pattern = "/sys/devices*/????:??:??.?/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .attributes = pci_amdgpu_items },
 };
 
 vendor_list gpu_vendors(sysobj *obj) {
