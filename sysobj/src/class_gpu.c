@@ -95,7 +95,8 @@ static gchar *fmt_amdgpu_val(sysobj *obj, int fmt_opts) {
         }
     }
     g_strfreev(list);
-    return ret;
+    if (ret) return ret;
+    return simple_format(obj, fmt_opts);
 }
 
 /* format: "0: 300Mhz *" */
@@ -120,7 +121,8 @@ static gchar *fmt_amdgpu_clk(sysobj *obj, int fmt_opts) {
         }
     }
     g_strfreev(list);
-    return ret;
+    if (ret) return ret;
+    return simple_format(obj, fmt_opts);
 }
 
 /* format "0 NAME*: TABLE COLUMNS" */
