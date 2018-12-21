@@ -27,8 +27,10 @@ struct _bpPinInspectPrivate {
     GtkWidget *lbl_vendor;
     GtkWidget *lbl_debug;
 
+    GtkWidget *value_notebook;
     GtkWidget *help_container;
     GtkWidget *lbl_help;
+    GtkWidget *vendor_container; /* needed to change the label of the notebook tab */
 };
 
 G_DEFINE_TYPE(bpPinInspect, bp_pin_inspect, GTK_TYPE_PANED);
@@ -77,7 +79,7 @@ static void _cleanup(bpPinInspect *s) {
     bpPinInspectPrivate *priv = BP_PIN_INSPECT_PRIVATE(s);
 }
 
-static void notebook_add_page(const gchar *name, const gchar *label, GtkWidget *notebook, GtkWidget *page_widget, gint border) {
+static GtkWidget *notebook_add_page(const gchar *name, const gchar *label, GtkWidget *notebook, GtkWidget *page_widget, gint border) {
     GtkWidget *lbl = gtk_label_new (label);
     GtkWidget *scroll = gtk_scrolled_window_new(NULL, NULL);
     gtk_widget_set_size_request(scroll, 100, 100);
@@ -86,6 +88,7 @@ static void notebook_add_page(const gchar *name, const gchar *label, GtkWidget *
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), scroll, lbl);
     gtk_widget_show(page_widget);
     gtk_widget_show(scroll);
+    return scroll;
 }
 
 static void _create(bpPinInspect *s) {
@@ -140,7 +143,8 @@ static void _create(bpPinInspect *s) {
     gtk_notebook_set_tab_pos(GTK_NOTEBOOK (value_notebook), GTK_POS_TOP);
     notebook_add_page("formatted", _("Formatted"), value_notebook, text_formatted, 5);
     notebook_add_page("raw", _("Raw"), value_notebook, text_raw, 5);
-    notebook_add_page("vendor", _("Vendors"), value_notebook, lbl_vendor, 5);
+    GtkWidget *vendor_container =
+        notebook_add_page("vendor", _("Vendors"), value_notebook, lbl_vendor, 5);
     notebook_add_page("debug", _("Debug"), value_notebook, lbl_debug, 5);
     gtk_widget_show(value_notebook);
 
@@ -176,6 +180,8 @@ static void _create(bpPinInspect *s) {
     priv->lbl_debug = lbl_debug;
     priv->help_container = help_scroll;
     priv->lbl_help = lbl_help;
+    priv->value_notebook = value_notebook;
+    priv->vendor_container = vendor_container;
 }
 
 void bp_pin_inspect_do(bpPinInspect *s, const pin *p, int fmt_opts) {
@@ -234,6 +240,7 @@ void bp_pin_inspect_do(bpPinInspect *s, const pin *p, int fmt_opts) {
 
     if (is_new) {
         gchar *ven_mt = NULL;
+        int vcnt = 0;
         GSList *l = NULL, *vl = sysobj_vendors(p->obj);
         vl = vendor_list_remove_duplicates(vl);
         if (vl) {
@@ -250,23 +257,30 @@ void bp_pin_inspect_do(bpPinInspect *s, const pin *p, int fmt_opts) {
                 if (v->url) {
                     if (!g_str_has_prefix(v->url, "http") )
                         full_link = g_strdup_printf("http://%s", v->url);
-                    ven_mt = appfs(ven_mt, "\n", "<b>URL:</b> <a href=\"%s\">%s</a>", full_link ? full_link : v->url, v->url);
+                    ven_mt = appfs(ven_mt, "\n", "<b>%s:</b> <a href=\"%s\">%s</a>", _("URL"), full_link ? full_link : v->url, v->url);
                     g_free(full_link);
                     full_link = NULL;
                 }
                 if (v->url_support) {
                     if (!g_str_has_prefix(v->url_support, "http") )
                         full_link = g_strdup_printf("http://%s", v->url_support);
-                    ven_mt = appfs(ven_mt, "\n", "<b>Support URL:</b> <a href=\"%s\">%s</a>", full_link ? full_link : v->url_support, v->url_support);
+                    ven_mt = appfs(ven_mt, "\n", "<b>%s:</b> <a href=\"%s\">%s</a>", _("Support URL"), full_link ? full_link : v->url_support, v->url_support);
                     g_free(full_link);
                     full_link = NULL;
                 }
                 g_free(ven_tag);
                 ven_mt = appfs(ven_mt, "\n", " ");
+                vcnt++;
             }
             vendor_list_free(vl);
         }
         gtk_label_set_markup(GTK_LABEL(priv->lbl_vendor), ven_mt ? ven_mt : "");
+
+        /* show the count in the tab label */
+        const gchar *lbl_fmt = ngettext("Vendor (%d)", "Vendors (%d)", vcnt);
+        gchar *lbl_txt = g_strdup_printf(lbl_fmt, vcnt);
+        gtk_notebook_set_tab_label_text(GTK_NOTEBOOK(priv->value_notebook), priv->vendor_container, lbl_txt);
+        g_free(lbl_txt);
     }
 
     if (!label)
