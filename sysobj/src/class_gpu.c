@@ -74,22 +74,63 @@ attr_tab drm_conn_items[] = {
     ATTR_TAB_LAST
 };
 
+/* <id>: <value>[*] */
+/* ... or <id>[*]: <table columns> */
 static gchar *fmt_amdgpu_val(sysobj *obj, int fmt_opts) {
     gchar *ret = NULL;
+    gboolean want_complete = fmt_opts & FMT_OPT_COMPLETE;
     gchar **list = g_strsplit(obj->data.str, "\n", -1);
     for (int i = 0; list[i]; i++) {
-        if (strchr(list[i], '*') ||
-            fmt_opts & FMT_OPT_COMPLETE ) {
-                ret = appfs(ret, "\n", "%s", list[i]);
+        if (!strlen(list[i])) continue;
+        if (strchr(list[i], '*') || want_complete) {
+                gchar *c = strchr(list[i], ':');
+                gchar *a = strchr(list[i], '*');
+                if (c) {
+                    *c = 0;
+                    if (!want_complete && a > c) *a = 0;
+                    c = g_strstrip(c+1);
+                    ret = appfs(ret, "\n", "[%s] %s", list[i], c);
+                } else
+                    ret = appfs(ret, "\n", "%s", list[i]);
         }
     }
     g_strfreev(list);
     return ret;
 }
 
+/* format: "0: 300Mhz *" */
 static gchar *fmt_amdgpu_clk(sysobj *obj, int fmt_opts) {
-    //TODO: translate mhz label for values
-    return fmt_amdgpu_val(obj, fmt_opts);
+    gchar *ret = NULL;
+    gboolean want_complete = fmt_opts & FMT_OPT_COMPLETE;
+    gchar **list = g_strsplit(obj->data.str, "\n", -1);
+    for (int i = 0; list[i]; i++) {
+        if (!strlen(list[i])) continue;
+        if (strchr(list[i], '*') || want_complete) {
+                gchar *c = strchr(list[i], ':');
+                gchar *a = strchr(list[i], '*');
+                if (c) {
+                    *c = 0;
+                    c = g_strstrip(c+1);
+                    double mhz = c ? strtod(c, NULL) : 0.0;
+                    ret = (fmt_opts & FMT_OPT_NO_UNIT)
+                        ? appfs(ret, "\n", "%0.3lf", mhz)
+                        : appfs(ret, "\n", "[%s] %0.3lf %s%s", list[i], mhz, _("MHz"), (a && want_complete) ? " *" : "");
+                } else
+                    ret = appfs(ret, "\n", "%s", list[i]);
+        }
+    }
+    g_strfreev(list);
+    return ret;
+}
+
+/* format "0 NAME*: TABLE COLUMNS" */
+static gchar *fmt_amdgpu_pppp_mode(sysobj *obj, int fmt_opts) {
+    gchar *val = fmt_amdgpu_val(obj, fmt_opts);
+    if (!(fmt_opts & FMT_OPT_COMPLETE)) {
+        gchar *c = strchr(val, ']');
+        if (c) *(c+1) = 0;
+    }
+    return val;
 }
 
 static attr_tab pci_amdgpu_items[] = {
@@ -98,6 +139,7 @@ static attr_tab pci_amdgpu_items[] = {
     { "pp_dpm_pcie", N_("target PCI-Express operating mode"), OF_NONE, fmt_amdgpu_val, 0.5 },
     { "pp_sclk_od", N_("AMD OverDrive target core overclock"), OF_NONE, fmt_percent, 0.5 },
     { "pp_mclk_od", N_("AMD OverDrive target memory overclock"), OF_NONE, fmt_percent, 0.5 },
+    { "pp_power_profile_mode", N_("power profile mode"), OF_NONE, fmt_amdgpu_pppp_mode, 0.5 },
     ATTR_TAB_LAST
 };
 
