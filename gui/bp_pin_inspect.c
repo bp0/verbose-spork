@@ -28,6 +28,7 @@ struct _bpPinInspectPrivate {
     GtkWidget *lbl_debug;
 
     GtkWidget *value_notebook;
+    GtkWidget *raw_view;
     GtkWidget *help_container;
     GtkWidget *lbl_help;
     GtkWidget *vendor_container; /* needed to change the label of the notebook tab */
@@ -73,6 +74,15 @@ bp_pin_inspect_new()
 
 static gboolean _activate_link (GtkLabel *label, gchar *uri, gpointer user_data) {
     return uri_open(uri);
+}
+
+void _raw_wrap_toggled(GtkToggleButton *togglebutton, bpPinInspect *s) {
+    bpPinInspectPrivate *priv = BP_PIN_INSPECT_PRIVATE(s);
+    gboolean wrap = gtk_toggle_button_get_active(togglebutton);
+    if (wrap)
+        gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(priv->raw_view), GTK_WRAP_WORD_CHAR);
+    else
+        gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(priv->raw_view), GTK_WRAP_NONE);
 }
 
 static void _cleanup(bpPinInspect *s) {
@@ -132,6 +142,11 @@ static void _create(bpPinInspect *s) {
     gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(text_formatted), GTK_WRAP_WORD_CHAR);
     gtk_widget_show(text_formatted);
 
+    GtkWidget *btn_wrap = gtk_check_button_new_with_label(_("wrap text"));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn_wrap), TRUE);
+    g_signal_connect(btn_wrap, "toggled", G_CALLBACK(_raw_wrap_toggled), s);
+    gtk_widget_show(btn_wrap);
+
     GtkTextBuffer *val_raw = gtk_text_buffer_new(NULL);
     GtkWidget *text_raw = gtk_text_view_new_with_buffer(val_raw);
     gtk_text_view_set_editable(GTK_TEXT_VIEW(text_raw), FALSE);
@@ -139,10 +154,14 @@ static void _create(bpPinInspect *s) {
     gtk_text_view_set_monospace(GTK_TEXT_VIEW(text_raw), TRUE);
     gtk_widget_show(text_raw);
 
+    GtkWidget *box_raw = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+    gtk_box_pack_start(GTK_BOX(box_raw), btn_wrap, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(box_raw), text_raw, TRUE, TRUE, 0);
+
     GtkWidget *value_notebook = gtk_notebook_new();
     gtk_notebook_set_tab_pos(GTK_NOTEBOOK (value_notebook), GTK_POS_TOP);
     notebook_add_page("formatted", _("Formatted"), value_notebook, text_formatted, 5);
-    notebook_add_page("raw", _("Raw"), value_notebook, text_raw, 5);
+    notebook_add_page("raw", _("Raw"), value_notebook, box_raw, 5);
     GtkWidget *vendor_container =
         notebook_add_page("vendor", _("Vendors"), value_notebook, lbl_vendor, 5);
     notebook_add_page("debug", _("Debug"), value_notebook, lbl_debug, 5);
@@ -175,6 +194,7 @@ static void _create(bpPinInspect *s) {
 
     priv->val_formatted = val_formatted;
     priv->val_raw = val_raw;
+    priv->raw_view = text_raw;
     priv->lbl_top = lbl_top;
     priv->lbl_vendor = lbl_vendor;
     priv->lbl_debug = lbl_debug;
