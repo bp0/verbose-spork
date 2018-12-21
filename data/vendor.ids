@@ -359,6 +359,11 @@ name ASMedia Technology
     url www.asmedia.com.tw
     match_string_case ASMedia
 
+name Sapphire Technology
+    name_short SAPPHIRE
+    url www.sapphiretech.com
+    match_string sapphire tech
+
 #
 # BIOS manufacturers
 #
