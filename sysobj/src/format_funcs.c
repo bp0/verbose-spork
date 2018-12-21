@@ -98,6 +98,15 @@ gchar *fmt_microwatt(sysobj *obj, int fmt_opts) {
     return g_strdup_printf("%.3lf %s", mW, _("mW") );
 }
 
+gchar *fmt_microseconds_to_milliseconds(sysobj *obj, int fmt_opts) {
+    CHECK_OBJ();
+    PREP_RAW();
+    double ms = strtod(raw, NULL);
+    ms /= 1000;
+    FINISH_RAW();
+    return g_strdup_printf("%.1lf %s", ms, _("ms") );
+}
+
 gchar *fmt_milliseconds(sysobj *obj, int fmt_opts) {
     CHECK_OBJ();
     PREP_RAW();

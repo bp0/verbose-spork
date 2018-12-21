@@ -303,7 +303,11 @@ typedef struct {
         so_free,
         auto_freed,
         auto_free_len,
-        classify_none;
+        classify_none,
+        so_read_first,
+        so_read_force,
+        so_read_expired,
+        so_read_not_expired;
     double
         auto_free_next;
 } so_stats;

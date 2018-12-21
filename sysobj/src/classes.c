@@ -137,6 +137,11 @@ static attr_tab sysobj_items[] = {
     { "sysobj_clean", N_("sysobj cleared") },
     { "sysobj_free", N_("sysobj freed") },
     { "classify_none", N_("sysobj_classify() found none"), OF_NONE, NULL, 0.5 },
+    { "gg_file_total_wait", N_("time spent waiting for read() in gg_file_get_contents_non_blocking()"), OF_NONE, fmt_microseconds_to_milliseconds, 1.0 },
+    { "sysobj_read_first", NULL, OF_NONE, NULL, 2.0 },
+    { "sysobj_read_force", NULL, OF_NONE, NULL, 2.0 },
+    { "sysobj_read_expired", NULL, OF_NONE, NULL, 2.0 },
+    { "sysobj_read_not_expired", NULL, OF_NONE, NULL, 20.0 },
     ATTR_TAB_LAST
 };
 

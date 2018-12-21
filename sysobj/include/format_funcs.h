@@ -34,6 +34,7 @@
 
 gchar *fmt_nanoseconds(sysobj *obj, int fmt_opts);
 gchar *fmt_milliseconds(sysobj *obj, int fmt_opts);
+gchar *fmt_microseconds_to_milliseconds(sysobj *obj, int fmt_opts);
 gchar *fmt_seconds(sysobj *obj, int fmt_opts);
 gchar *fmt_seconds_to_span(sysobj *obj, int fmt_opts); /* [D days, ][H hours, ][M minutes, ]S seconds */
 gchar *fmt_hz(sysobj *obj, int fmt_opts);

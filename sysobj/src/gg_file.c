@@ -27,6 +27,9 @@
 #include <fcntl.h>
 #include "gg_file.h"
 
+static unsigned long long total_wait = 0;
+unsigned long long gg_file_get_total_wait() { return total_wait; }
+
 #define GFC_PAGE_SIZE 4096
 #define GFC_MAX_BLOCK_TIME_US 100000 /* 100000us = 100ms = 0.1s, right? */
 #define GFC_WAIT_US 1000
@@ -54,6 +57,7 @@ gboolean gg_file_get_contents_non_blocking(const gchar *file, gchar **contents, 
                 usleep(GFC_WAIT_US);
                 sleep += GFC_WAIT_US;
                 total_sleep += GFC_WAIT_US;
+                total_wait += GFC_WAIT_US;
                 continue;
             }
             break;

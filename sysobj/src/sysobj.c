@@ -677,9 +677,15 @@ gboolean sysobj_read_(sysobj *s, gboolean force, const char *call_func) {
     //printf("sysobj_read(%s, %s) from %s() fast:%s\n", s->path_req, force ? "true" : "false", call_func, s->fast_mode ? "true" : "false");
     if (s && s->path) {
         if (!force && s->data.was_read) {
-            if (!sysobj_data_expired(s) )
+            if (!sysobj_data_expired(s)) {
+                sysobj_stats.so_read_not_expired++;
                 return FALSE;
+            }
+            sysobj_stats.so_read_expired++;
         }
+
+        if (!s->data.was_read) sysobj_stats.so_read_first++;
+        if (force) sysobj_stats.so_read_force++;
 
         if (s->data.is_dir)
             sysobj_read_dir(s);

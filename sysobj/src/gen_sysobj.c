@@ -19,6 +19,7 @@
  */
 
 #include "sysobj.h"
+#include "gg_file.h"
 
 static void buff_basename(const gchar *path, gchar *buff, gsize n) {
     gchar *fname = g_path_get_basename(path);
@@ -32,6 +33,9 @@ static gchar *get_item_items[] = {
     "sysobj_new", "sysobj_new_fast",
     "sysobj_clean", "sysobj_free",
     "classify_none",
+    "sysobj_read_first", "sysobj_read_force",
+    "sysobj_read_expired", "sysobj_read_not_expired",
+    "gg_file_total_wait",
 };
 
 static gchar *get_item(const gchar *path) {
@@ -59,6 +63,18 @@ static gchar *get_item(const gchar *path) {
         return g_strdup_printf("%llu", sysobj_stats.so_free );
     if (SEQ(name, "classify_none") )
         return g_strdup_printf("%llu", sysobj_stats.classify_none );
+
+    if (SEQ(name, "sysobj_read_first") )
+        return g_strdup_printf("%llu", sysobj_stats.so_read_first );
+    if (SEQ(name, "sysobj_read_force") )
+        return g_strdup_printf("%llu", sysobj_stats.so_read_force );
+    if (SEQ(name, "sysobj_read_expired") )
+        return g_strdup_printf("%llu", sysobj_stats.so_read_expired );
+    if (SEQ(name, "sysobj_read_not_expired") )
+        return g_strdup_printf("%llu", sysobj_stats.so_read_not_expired );
+
+    if (SEQ(name, "gg_file_total_wait") )
+        return g_strdup_printf("%llu", gg_file_get_total_wait() );
 
     double elapsed = sysobj_elapsed();
     if (SEQ(name, "elapsed") )

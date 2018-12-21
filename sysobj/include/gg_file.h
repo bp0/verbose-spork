@@ -29,4 +29,6 @@
 /* a g_file_get_contents() work-alike that doesn't block (for more than 0.1s), err = errno */
 gboolean gg_file_get_contents_non_blocking(const gchar *file, gchar **contents, gsize *size, int *err);
 
+unsigned long long gg_file_get_total_wait(); /* total us spent waiting */
+
 #endif
