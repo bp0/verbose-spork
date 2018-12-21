@@ -114,7 +114,7 @@ target_link_libraries(bsysinfo
         sysobj
 )
 
-if(GTK_FOUND)
+if(SYSOB_GTK3_FOUND)
 add_definitions(-DGTK_DISABLE_SINGLE_INCLUDES)
 if(0)
 add_library(uber-graph STATIC
