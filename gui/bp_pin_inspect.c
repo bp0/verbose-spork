@@ -76,13 +76,36 @@ static gboolean _activate_link (GtkLabel *label, gchar *uri, gpointer user_data)
     return uri_open(uri);
 }
 
-void _raw_wrap_toggled(GtkToggleButton *togglebutton, bpPinInspect *s) {
-    bpPinInspectPrivate *priv = BP_PIN_INSPECT_PRIVATE(s);
-    gboolean wrap = gtk_toggle_button_get_active(togglebutton);
-    if (wrap)
-        gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(priv->raw_view), GTK_WRAP_WORD_CHAR);
-    else
-        gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(priv->raw_view), GTK_WRAP_NONE);
+void _wrap_toggled(GtkToggleButton *togglebutton, GtkWidget *target) {
+    if(GTK_IS_TEXT_VIEW(target)) {
+        gboolean wrap = gtk_toggle_button_get_active(togglebutton);
+        if (wrap)
+            gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(target), GTK_WRAP_WORD_CHAR);
+        else
+            gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(target), GTK_WRAP_NONE);
+    }
+}
+
+#define CLIP_COPY_ALL 0
+void _copy_to_clipboard(GtkButton *button, GtkWidget *target) {
+    GtkClipboard *clipboard = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
+    if(GTK_IS_TEXT_VIEW(target)) {
+        GtkTextBuffer* buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(target));
+        GtkTextIter start, end, old_start, old_end;
+        gboolean sel = gtk_text_buffer_get_has_selection(buffer);
+        if (sel && !CLIP_COPY_ALL) {
+            gtk_text_buffer_copy_clipboard(buffer, clipboard);
+        } else {
+            gtk_text_buffer_get_selection_bounds(buffer, &old_start, &old_end);
+            gtk_text_buffer_get_bounds(buffer, &start, &end);
+            gtk_text_buffer_select_range(buffer, &start, &end);
+            gtk_text_buffer_copy_clipboard(buffer, clipboard);
+            gtk_text_buffer_select_range(buffer, &old_start, &old_end);
+        }
+    }
+    if(GTK_IS_LABEL(target)) {
+        gtk_clipboard_set_text(clipboard, gtk_label_get_text(GTK_LABEL(target)), -1);
+    }
 }
 
 static void _cleanup(bpPinInspect *s) {
@@ -92,13 +115,37 @@ static void _cleanup(bpPinInspect *s) {
 static GtkWidget *notebook_add_page(const gchar *name, const gchar *label, GtkWidget *notebook, GtkWidget *page_widget, gint border) {
     GtkWidget *lbl = gtk_label_new (label);
     GtkWidget *scroll = gtk_scrolled_window_new(NULL, NULL);
+    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    GtkWidget *actions = gtk_action_bar_new();
+
     gtk_widget_set_size_request(scroll, 100, 100);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_ALWAYS);
     gtk_container_add(GTK_CONTAINER(scroll), page_widget);
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), scroll, lbl);
     gtk_widget_show(page_widget);
     gtk_widget_show(scroll);
-    return scroll;
+
+    if(GTK_IS_TEXT_VIEW(page_widget)) {
+        GtkWidget *btn_wrap = gtk_check_button_new_with_label(_("wrap text"));
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn_wrap), TRUE);
+        g_signal_connect(btn_wrap, "toggled", G_CALLBACK(_wrap_toggled), page_widget);
+        gtk_widget_show(btn_wrap);
+        gtk_action_bar_pack_start(GTK_ACTION_BAR(actions), btn_wrap);
+    }
+
+    GtkWidget *btn_copy = gtk_button_new_from_icon_name("edit-copy", GTK_ICON_SIZE_LARGE_TOOLBAR);
+    gtk_widget_set_tooltip_text(btn_copy, _("Copy to clipboard"));
+    g_signal_connect(btn_copy, "clicked", G_CALLBACK(_copy_to_clipboard), page_widget);
+    gtk_widget_show(btn_copy);
+    gtk_action_bar_pack_start(GTK_ACTION_BAR(actions), btn_copy);
+
+    gtk_widget_show(actions);
+
+    gtk_box_pack_start(GTK_BOX(box), scroll, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(box), actions, FALSE, FALSE, 0);
+    gtk_widget_show(box);
+
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), box, lbl);
+    return box;
 }
 
 static void _create(bpPinInspect *s) {
@@ -142,11 +189,6 @@ static void _create(bpPinInspect *s) {
     gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(text_formatted), GTK_WRAP_WORD_CHAR);
     gtk_widget_show(text_formatted);
 
-    GtkWidget *btn_wrap = gtk_check_button_new_with_label(_("wrap text"));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn_wrap), TRUE);
-    g_signal_connect(btn_wrap, "toggled", G_CALLBACK(_raw_wrap_toggled), s);
-    gtk_widget_show(btn_wrap);
-
     GtkTextBuffer *val_raw = gtk_text_buffer_new(NULL);
     GtkWidget *text_raw = gtk_text_view_new_with_buffer(val_raw);
     gtk_text_view_set_editable(GTK_TEXT_VIEW(text_raw), FALSE);
@@ -154,14 +196,10 @@ static void _create(bpPinInspect *s) {
     gtk_text_view_set_monospace(GTK_TEXT_VIEW(text_raw), TRUE);
     gtk_widget_show(text_raw);
 
-    GtkWidget *box_raw = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
-    gtk_box_pack_start(GTK_BOX(box_raw), btn_wrap, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(box_raw), text_raw, TRUE, TRUE, 0);
-
     GtkWidget *value_notebook = gtk_notebook_new();
     gtk_notebook_set_tab_pos(GTK_NOTEBOOK (value_notebook), GTK_POS_TOP);
     notebook_add_page("formatted", _("Formatted"), value_notebook, text_formatted, 5);
-    notebook_add_page("raw", _("Raw"), value_notebook, box_raw, 5);
+    notebook_add_page("raw", _("Raw"), value_notebook, text_raw, 5);
     GtkWidget *vendor_container =
         notebook_add_page("vendor", _("Vendors"), value_notebook, lbl_vendor, 5);
     notebook_add_page("debug", _("Debug"), value_notebook, lbl_debug, 5);
