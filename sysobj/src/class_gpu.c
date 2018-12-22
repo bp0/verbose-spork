@@ -147,11 +147,11 @@ static attr_tab pci_amdgpu_items[] = {
 
 static sysobj_class cls_gpu[] = {
   { SYSOBJ_CLASS_DEF
-    .tag = "gpu:list", .pattern = ":/gpu", .flags = OF_GLOB_PATTERN | OF_CONST | OF_IS_VENDOR,
+    .tag = "gpu:list", .pattern = ":/gpu", .flags = OF_GLOB_PATTERN | OF_CONST | OF_HAS_VENDOR,
     .s_label = N_("list of discovered graphics processor devices"),
     .f_verify = gpu_list_verify, .f_format = gpu_list_format, .f_vendors = gpu_all_vendors },
   { SYSOBJ_CLASS_DEF
-    .tag = "gpu", .pattern = ":/gpu/gpu*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_IS_VENDOR,
+    .tag = "gpu", .pattern = ":/gpu/gpu*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_HAS_VENDOR,
     .s_label = N_("graphics device"),
     .f_verify = gpu_verify, .f_format = gpu_format_nice_name, .f_vendors = gpu_vendors },
   { SYSOBJ_CLASS_DEF

@@ -50,7 +50,7 @@ static vendor_list usb_all_vendors(sysobj *obj);
 
 attr_tab usb_idcomp_items[] = {
     //TODO: labels
-    { "idVendor", N_("usb.ids-provided vendor name"), OF_IS_VENDOR, NULL, -1 },
+    { "idVendor", N_("usb.ids-provided vendor name"), OF_HAS_VENDOR, NULL, -1 },
     { "idProduct", N_("usb.ids-provided product name"), OF_NONE, NULL, -1 },
     ATTR_TAB_LAST
 };
@@ -64,7 +64,7 @@ static gchar *fmt_bcddevice(sysobj *obj, int fmt_opts) {
 }
 
 attr_tab usb_dev_items[] = {
-    { "manufacturer", N_("device-provided vendor name"), OF_IS_VENDOR, NULL, -1 },
+    { "manufacturer", N_("device-provided vendor name"), OF_HAS_VENDOR, NULL, -1 },
     { "product",   N_("device-provided product name"), OF_NONE, NULL, -1 },
     { "version",   N_("USB version"), OF_NONE, NULL, -1 },
     { "speed",     N_("bitrate"), OF_NONE, fmt_megabitspersecond, -1 },
@@ -85,13 +85,13 @@ attr_tab usb_dev_items[] = {
 static sysobj_class cls_usb[] = {
   /* all under :/usb */
   { SYSOBJ_CLASS_DEF
-    .tag = "usb", .pattern = ":/usb", .flags = OF_CONST | OF_IS_VENDOR,
+    .tag = "usb", .pattern = ":/usb", .flags = OF_CONST | OF_HAS_VENDOR,
     .f_format = usb_format, .s_update_interval = usb_update_interval, .f_vendors = usb_all_vendors },
   { SYSOBJ_CLASS_DEF
-    .tag = "usb:device_list", .pattern = "/sys/bus/usb/devices", .flags = OF_GLOB_PATTERN | OF_CONST | OF_IS_VENDOR,
+    .tag = "usb:device_list", .pattern = "/sys/bus/usb/devices", .flags = OF_GLOB_PATTERN | OF_CONST | OF_HAS_VENDOR,
     .f_format = usb_format, .s_update_interval = usb_update_interval, .f_vendors = usb_all_vendors },
   { SYSOBJ_CLASS_DEF
-    .tag = "usb:bus", .pattern = "/sys/devices*/usb*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_IS_VENDOR,
+    .tag = "usb:bus", .pattern = "/sys/devices*/usb*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_HAS_VENDOR,
     .f_verify = usb_verify_bus, .f_vendors = usb_vendor_dev,
     .f_format = usb_format_bus, .s_update_interval = usb_update_interval },
   { SYSOBJ_CLASS_DEF
@@ -101,7 +101,7 @@ static sysobj_class cls_usb[] = {
     .tag = "usb:bus:attr", .pattern = "/sys/devices*/usb*/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .attributes = usb_dev_items },
   { SYSOBJ_CLASS_DEF
-    .tag = "usb:device", .pattern = "/sys/devices*/*-*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_IS_VENDOR,
+    .tag = "usb:device", .pattern = "/sys/devices*/*-*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_HAS_VENDOR,
     .f_verify = usb_verify_device, .f_vendors = usb_vendor_dev,
     .f_format = usb_format_device, .s_update_interval = usb_update_interval },
   { SYSOBJ_CLASS_DEF

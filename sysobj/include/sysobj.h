@@ -46,7 +46,7 @@ enum {
     /* used in "simple" classes and attr_tabs
      * use sysobj_has_flag() to check */
     OF_REQ_ROOT      = 1<<16, /* expected to require root */
-    OF_IS_VENDOR     = 1<<17, /* additional vendor information may be available through sysobj_vendor() */
+    OF_HAS_VENDOR    = 1<<17, /* additional vendor information may be available through sysobj_vendor() */
                               /* TODO: rename to OF_HAS_VENDOR */
 
 };
@@ -131,7 +131,7 @@ typedef struct sysobj_class {
     func_format f_format;  /* translated human-readable value */
     func_compare_sysobj_data f_compare;
     func_class_flags f_flags; /* provide flags, result replaces flags */
-    func_get_vendors f_vendors; /* called if if OF_IS_VENDOR, default vendor_match()'s the data string */
+    func_get_vendors f_vendors; /* called if if OF_HAS_VENDOR, default vendor_match()'s the data string */
 
     const gchar *(*f_label)  (sysobj *obj);  /* translated label */
     double (*f_update_interval) (sysobj *obj); /* time until the value might change, in seconds */

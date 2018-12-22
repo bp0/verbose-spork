@@ -1197,7 +1197,7 @@ vendor_list vendor_list_remove_duplicates(vendor_list vl) {
 }
 
 vendor_list simple_vendors(sysobj *s) {
-    if (sysobj_has_flag(s, OF_IS_VENDOR) ) {
+    if (sysobj_has_flag(s, OF_HAS_VENDOR) ) {
         sysobj_read(s, FALSE);
         if (!s->data.is_utf8)
             return NULL;
@@ -1210,7 +1210,7 @@ vendor_list simple_vendors(sysobj *s) {
 
 vendor_list sysobj_vendors(sysobj *s) {
     if (s->cls && s->cls->f_vendors) {
-        if (sysobj_has_flag(s, OF_IS_VENDOR) ) {
+        if (sysobj_has_flag(s, OF_HAS_VENDOR) ) {
             sysobj_read(s, FALSE);
             return s->cls->f_vendors(s);
         }

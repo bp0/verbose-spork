@@ -27,22 +27,22 @@ gchar *dmi_id_format(sysobj *obj, int fmt_opts);
 guint dmi_id_flags(sysobj *obj, const sysobj_class *cls);
 
 static attr_tab dmi_id_items[] = {
-    { "bios_vendor",       N_("BIOS Vendor"), OF_IS_VENDOR },
+    { "bios_vendor",       N_("BIOS Vendor"), OF_HAS_VENDOR },
     { "bios_version",      N_("BIOS Version"), OF_NONE },
     { "bios_date",         N_("BIOS Date"), OF_NONE },
-    { "sys_vendor",        N_("Product Vendor"), OF_IS_VENDOR },
+    { "sys_vendor",        N_("Product Vendor"), OF_HAS_VENDOR },
     { "product_name",      N_("Product Name"), OF_NONE },
     { "product_version",   N_("Product Version"), OF_NONE },
     { "product_serial",    N_("Product Serial"), OF_REQ_ROOT },
     { "product_uuid",      N_("Product UUID"), OF_NONE },
     { "product_sku",       N_("Product SKU"), OF_NONE },
     { "product_family",    N_("Product Family"), OF_NONE },
-    { "board_vendor",      N_("Board Vendor"), OF_IS_VENDOR },
+    { "board_vendor",      N_("Board Vendor"), OF_HAS_VENDOR },
     { "board_name",        N_("Board Name"), OF_NONE },
     { "board_version",     N_("Board Version"), OF_NONE },
     { "board_serial",      N_("Board Serial"), OF_REQ_ROOT },
     { "board_asset_tag",   N_("Board Asset Tag"), OF_NONE },
-    { "chassis_vendor",    N_("Chassis Vendor"), OF_IS_VENDOR },
+    { "chassis_vendor",    N_("Chassis Vendor"), OF_HAS_VENDOR },
     { "chassis_version",   N_("Chassis Version"), OF_NONE },
     { "chassis_serial",    N_("Chassis Serial"), OF_REQ_ROOT },
     { "chassis_asset_tag", N_("Chassis Asset Tag"), OF_NONE },
@@ -59,7 +59,7 @@ static vendor_list dmi_id_vendors(sysobj *obj) {
 
 static sysobj_class cls_dmi_id[] = {
   { SYSOBJ_CLASS_DEF
-    .tag = "dmi:id", .pattern = "/sys/devices/virtual/dmi/id", .flags = OF_CONST | OF_IS_VENDOR,
+    .tag = "dmi:id", .pattern = "/sys/devices/virtual/dmi/id", .flags = OF_CONST | OF_HAS_VENDOR,
     .s_label = N_("Desktop Management Interface (DMI) product information"),
     .f_vendors = dmi_id_vendors },
 

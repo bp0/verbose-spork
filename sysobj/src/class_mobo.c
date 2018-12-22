@@ -26,7 +26,7 @@ static vendor_list mobo_vendor(sysobj *obj);
 
 static sysobj_class cls_mobo[] = {
   { SYSOBJ_CLASS_DEF
-    .tag = "mobo", .pattern = ":/mobo", .flags = OF_GLOB_PATTERN | OF_CONST | OF_IS_VENDOR,
+    .tag = "mobo", .pattern = ":/mobo", .flags = OF_GLOB_PATTERN | OF_CONST | OF_HAS_VENDOR,
     .f_format = mobo_format, .s_update_interval = UPDATE_INTERVAL_NEVER,
     .s_label = N_("main system board"),
     .f_vendors = mobo_vendor },

@@ -26,7 +26,7 @@ attr_tab rpi_items[] = {
     { "raspberry_pi",  N_("Raspberry Pi information"), OF_NONE },
     { "board_name",    N_("model"), OF_NONE },
     { "introduction",  N_("date of introduction"), OF_NONE },
-    { "manufacturer",  N_("manufacturer"), OF_IS_VENDOR },
+    { "manufacturer",  N_("manufacturer"), OF_HAS_VENDOR },
     { "overvolt",      N_("permanent over-volt bit"), OF_NONE },
     { "pcb_revision",  N_("revision of printed circuit board"), OF_NONE },
     { "r_code",        N_("r-code"), OF_NONE },

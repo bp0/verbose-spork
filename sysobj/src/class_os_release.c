@@ -76,7 +76,7 @@ static sysobj_class cls_os_release[] = {
     .s_label = gen_raw_label, .s_suggest = ":/os/lsb_release" },
 
   { SYSOBJ_CLASS_DEF
-    .tag = "os", .pattern = ":/os", .flags = OF_CONST | OF_IS_VENDOR,
+    .tag = "os", .pattern = ":/os", .flags = OF_CONST | OF_HAS_VENDOR,
     .f_vendors = os_vendors, .f_format = os_format, .s_update_interval = 62.0 },
   { SYSOBJ_CLASS_DEF
     .tag = "os:item", .pattern = ":/os/*", .flags = OF_GLOB_PATTERN | OF_CONST,

@@ -115,8 +115,8 @@ gchar *class_flags_format(sysobj *obj, int fmt_opts) {
 
     if (flags & OF_REQ_ROOT)
         flags_list = appfs(flags_list, " | ", "%s", "OF_REQ_ROOT");
-    if (flags & OF_IS_VENDOR)
-        flags_list = appfs(flags_list, " | ", "%s", "OF_IS_VENDOR");
+    if (flags & OF_HAS_VENDOR)
+        flags_list = appfs(flags_list, " | ", "%s", "OF_HAS_VENDOR");
 
     if (flags_list) {
         gchar *ret = g_strdup_printf("[%s] %s", obj->data.str, flags_list);
@@ -174,7 +174,7 @@ static vendor_list vsfs_vendors(sysobj *obj) {
 
 static sysobj_class cls_internal[] = {
   { SYSOBJ_CLASS_DEF
-    .tag = "vsfs", .pattern = ":", .flags = OF_CONST | OF_IS_VENDOR,
+    .tag = "vsfs", .pattern = ":", .flags = OF_CONST | OF_HAS_VENDOR,
     .s_label = N_("Virtual sysfs root"), .s_update_interval = 60.0,
     .f_vendors = vsfs_vendors },
   { SYSOBJ_CLASS_DEF

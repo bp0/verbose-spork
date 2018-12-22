@@ -49,9 +49,9 @@ static vendor_list pci_all_vendors(sysobj *obj);
 #define pci_ids_update_interval 4.0
 
 static attr_tab pci_idcomp_items[] = {
-    { "vendor", N_("PCI-SIG-assigned vendor id"), OF_IS_VENDOR, NULL, -1 },
+    { "vendor", N_("PCI-SIG-assigned vendor id"), OF_HAS_VENDOR, NULL, -1 },
     { "device", N_("vendor-specific device id"), OF_NONE, NULL, -1 },
-    { "subsystem_vendor", N_("PCI-assigned vendor id for sub-vendor"), OF_IS_VENDOR, NULL, -1 },
+    { "subsystem_vendor", N_("PCI-assigned vendor id for sub-vendor"), OF_HAS_VENDOR, NULL, -1 },
     { "subsystem_device", N_("vendor-specific device id"), OF_NONE, NULL, -1 },
     { "class", NULL, OF_NONE, NULL, -1 },
     ATTR_TAB_LAST
@@ -76,14 +76,14 @@ static attr_tab pcie_items[] = {
 static sysobj_class cls_pci[] = {
   /* all under :/pci */
   { SYSOBJ_CLASS_DEF
-    .tag = "pci", .pattern = ":/pci", .flags = OF_CONST | OF_IS_VENDOR,
+    .tag = "pci", .pattern = ":/pci", .flags = OF_CONST | OF_HAS_VENDOR,
     .f_format = pci_format, .s_update_interval = pci_update_interval, .f_vendors = pci_all_vendors },
 
   { SYSOBJ_CLASS_DEF
-    .tag = "pci:device_list", .pattern = "/sys/bus/pci/devices", .flags = OF_GLOB_PATTERN | OF_CONST | OF_IS_VENDOR,
+    .tag = "pci:device_list", .pattern = "/sys/bus/pci/devices", .flags = OF_GLOB_PATTERN | OF_CONST | OF_HAS_VENDOR,
     .f_format = pci_format, .s_update_interval = pci_update_interval, .f_vendors = pci_all_vendors },
   { SYSOBJ_CLASS_DEF
-    .tag = "pci:device", .pattern = "/sys/devices*/????:??:??.?", .flags = OF_GLOB_PATTERN | OF_CONST | OF_IS_VENDOR,
+    .tag = "pci:device", .pattern = "/sys/devices*/????:??:??.?", .flags = OF_GLOB_PATTERN | OF_CONST | OF_HAS_VENDOR,
     .f_format = pci_format_device, .s_update_interval = pci_update_interval, .f_vendors = pci_vendor_dev },
   { SYSOBJ_CLASS_DEF
     .tag = "pci:device_id", .pattern = "/sys/devices*/????:??:??.?/*", .flags = OF_GLOB_PATTERN | OF_CONST,

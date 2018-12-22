@@ -54,7 +54,7 @@ static sysobj_class cls_dtr[] = {
     .s_halp = dt_reference_markup_text, .s_update_interval = 0.0,
     .f_format = dtr_format },
   { SYSOBJ_CLASS_DEF
-    .tag = "devicetree:compat", .pattern = DTROOT "*/compatible", .flags = OF_GLOB_PATTERN | OF_CONST | OF_IS_VENDOR,
+    .tag = "devicetree:compat", .pattern = DTROOT "*/compatible", .flags = OF_GLOB_PATTERN | OF_CONST | OF_HAS_VENDOR,
     .s_halp = dt_reference_markup_text, .s_update_interval = 0.0,
     .f_format = dtr_format, .f_vendors = dt_compat_vendors },
 

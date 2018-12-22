@@ -57,12 +57,12 @@ static gchar *fmt_arm_arch(sysobj *obj, int fmt_opts) {
 }
 
 static attr_tab cpu_prop_items[] = {
-    { "cpu_implementer", NULL, OF_IS_VENDOR, fmt_arm_implementer },
+    { "cpu_implementer", NULL, OF_HAS_VENDOR, fmt_arm_implementer },
     { "cpu_part", NULL, OF_NONE, fmt_arm_part },
     { "cpu_architecture", NULL, OF_NONE, fmt_arm_arch },
     { "cpu_variant" },
     { "cpu_revision" },
-    { "vendor_id", NULL, OF_IS_VENDOR },
+    { "vendor_id", NULL, OF_HAS_VENDOR },
     ATTR_TAB_LAST
 };
 
@@ -91,16 +91,16 @@ static vendor_list cpuinfo_lcpu_prop_vendors(sysobj *obj) {
 
 static sysobj_class cls_cpuinfo[] = {
   { SYSOBJ_CLASS_DEF
-    .tag = "cpuinfo", .pattern = ":/cpuinfo", .flags = OF_CONST | OF_IS_VENDOR,
+    .tag = "cpuinfo", .pattern = ":/cpuinfo", .flags = OF_CONST | OF_HAS_VENDOR,
     .s_label = N_("CPU information from /proc/cpuinfo"),
     .f_format = cpuinfo_format, .s_update_interval = UPDATE_INTERVAL_NEVER,
     .f_vendors = cpuinfo_vendors },
   { SYSOBJ_CLASS_DEF
-    .tag = "cpuinfo:lcpu", .pattern = ":/cpuinfo/logical_cpu*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_IS_VENDOR,
+    .tag = "cpuinfo:lcpu", .pattern = ":/cpuinfo/logical_cpu*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_HAS_VENDOR,
     .f_verify = cpuinfo_lcpu_verify, .f_vendors = cpuinfo_lcpu_vendors,
     .f_format = cpuinfo_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
   { SYSOBJ_CLASS_DEF
-    .tag = "cpuinfo:lcpu:prop", .pattern = ":/cpuinfo/logical_cpu*/*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_IS_VENDOR,
+    .tag = "cpuinfo:lcpu:prop", .pattern = ":/cpuinfo/logical_cpu*/*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_HAS_VENDOR,
     .f_verify = cpuinfo_lcpu_prop_verify, .attributes = cpu_prop_items, .f_vendors = cpuinfo_lcpu_prop_vendors,
     .s_update_interval = UPDATE_INTERVAL_NEVER },
 
