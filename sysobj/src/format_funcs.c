@@ -272,7 +272,7 @@ gchar *fmt_lanes_x(sysobj *obj, int fmt_opts) {
 }
 
 gchar *fmt_node_name(sysobj *obj, int fmt_opts) {
-    if (obj) {
+    if (obj && obj->data.is_dir) {
         gchar *name = sysobj_format_from_fn(obj->path, "name", fmt_opts);
         if (name)
             return name;

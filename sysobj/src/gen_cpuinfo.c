@@ -286,9 +286,15 @@ void cpuinfo_scan_arm_x86(gchar **lines, gsize line_count) {
             }
             cpuinfo_arm_decoded_name(this_lcpu);
 
-            gchar *arm_imp = arm_implementer(this_lcpu->cpu_implementer);
-            this_lcpu->vendor = vendor_match(arm_imp, NULL);
-            g_free(arm_imp);
+            if (this_lcpu->cpu_implementer && this_lcpu->cpu_part) {
+                int imp = strtol(this_lcpu->cpu_implementer, NULL, 16);
+                int part = strtol(this_lcpu->cpu_part, NULL, 16);
+                gchar *part_str = sysobj_raw_from_printf(":/cpuinfo/arm.ids/%02x/%03x/name", imp, part);
+                gchar *imp_str = sysobj_raw_from_printf(":/cpuinfo/arm.ids/%02x/name", imp);
+                this_lcpu->vendor = vendor_match(imp_str, NULL);
+                g_free(part_str);
+                g_free(imp_str);
+            }
         }
 
         /* compress model name:

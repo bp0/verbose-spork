@@ -300,6 +300,17 @@ uint32_t sysobj_uint32_from_fn(const gchar *base, const gchar *name, int nbase) 
     return ret;
 }
 
+uint32_t sysobj_uint32_from_printf(int nbase, gchar *path_fmt, ...) {
+    gchar *path = NULL;
+    va_list args;
+    va_start(args, path_fmt);
+    path = g_strdup_vprintf(path_fmt, args);
+    va_end(args);
+    uint32_t ret = sysobj_uint32_from_fn(path, NULL, nbase);
+    g_free(path);
+    return ret;
+}
+
 gchar *simple_format(sysobj* obj, int fmt_opts) {
     const gchar *msg = NULL;
     gchar *text = NULL, *nice = NULL;

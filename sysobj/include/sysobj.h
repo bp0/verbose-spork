@@ -262,6 +262,8 @@ gchar *sysobj_raw_from_fn(const gchar *base, const gchar *name);
 gchar *sysobj_raw_from_printf(gchar *path_fmt, ...)
     __attribute__ ((format (printf, 1, 2)));
 uint32_t sysobj_uint32_from_fn(const gchar *base, const gchar *name, int nbase);
+uint32_t sysobj_uint32_from_printf(int nbase, gchar *path_fmt, ...)
+    __attribute__ ((format (printf, 2, 3)));
 gchar *sysobj_format_from_fn(const gchar *base, const gchar *name, int fmt_opts);
 double sysobj_update_interval(sysobj *s);
 void sysobj_free(sysobj *s);

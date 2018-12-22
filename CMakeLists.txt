@@ -72,6 +72,7 @@ add_library(sysobj STATIC
         sysobj/src/class_backlight.c
         sysobj/src/class_i2c.c
 # gen only
+        sysobj/src/gen_arm_ids.c
         sysobj/src/gen_dt.c
         sysobj/src/gen_sysobj.c
         sysobj/src/gen_usb_ids.c

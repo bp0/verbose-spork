@@ -147,19 +147,7 @@ const char *arm_arch_more(const char *cpuinfo_arch_str) {
 
 #define arm_msg(...) fprintf (stderr, __VA_ARGS__)
 
-#define ARM_ILLEGAL_PART 0xffff
-
-#define ARM_ID_BUFF_SIZE 128
-typedef struct {
-    gchar strs[ARM_ID_BUFF_SIZE * 2];
-    gchar *implementer;
-    gchar *part;
-} arm_id;
-
-#define arm_id_new() g_new0(arm_id, 1)
-#define arm_id_free(aid) g_free(aid)
-
-static arm_id *scan_arm_ids_file(unsigned implementer, unsigned part) {
+arm_id *scan_arm_ids_file(unsigned implementer, unsigned part) {
     char buff[ARM_ID_BUFF_SIZE];
     char imp[ARM_ID_BUFF_SIZE] = "", *prt = NULL, *p;
     FILE *fd;
@@ -219,11 +207,13 @@ scan_arm_id_done:
 
     if (imp_match) {
         ret = arm_id_new();
-        ret->implementer = ret->strs;
-        ret->part = ret->strs + strlen(imp) + 1;
-        strcpy(ret->implementer, imp);
+        ret->implementer = implementer;
+        ret->part = part;
+        ret->implementer_str = ret->strs;
+        ret->part_str = ret->strs + strlen(imp) + 1;
+        strcpy(ret->implementer_str, imp);
         if (prt)
-            strcpy(ret->part, prt);
+            strcpy(ret->part_str, prt);
     }
     return ret;
 }
@@ -233,7 +223,7 @@ gchar *arm_implementer(const gchar *imp) {
     int i = strtol(imp, NULL, 16);
     arm_id *aid = scan_arm_ids_file(i, ARM_ILLEGAL_PART);
     if (aid)
-        return aid->implementer; /* g_free() will free all aid */
+        return aid->implementer_str; /* g_free() will free all aid */
     return NULL;
 }
 
@@ -243,7 +233,7 @@ gchar *arm_part(const gchar *imp, const gchar *part) {
     int p = strtol(part, NULL, 16);
     arm_id *aid = scan_arm_ids_file(i, p);
     if (aid) {
-        gchar *ret = g_strdup(aid->part);
+        gchar *ret = g_strdup(aid->part_str);
         arm_id_free(aid);
         if (ret)
             return ret;
@@ -263,8 +253,8 @@ gchar *arm_decoded_name(const gchar *imp, const gchar *part, const gchar *var, c
 
     arm_id *aid = scan_arm_ids_file(i, p);
     if (aid) {
-        istr = aid->implementer; /* g_free(istr) will free all aid */
-        pstr = g_strdup(aid->part);
+        istr = aid->implementer_str; /* g_free(istr) will free all aid */
+        pstr = g_strdup(aid->part_str);
     }
     if (!istr) istr = g_strdup_printf("impl:0x%02x", i);
     if (!pstr) pstr = g_strdup_printf("part:0x%03x", p);

@@ -31,6 +31,7 @@ void gen_sysobj();
 void gen_dt();
 void gen_pci_ids();
 void gen_usb_ids();
+void gen_arm_ids(); /* creates in :/cpuinfo, before it exists */
 void gen_dt_ids();
 void gen_os_release();
 void gen_dmidecode();
@@ -47,6 +48,7 @@ void generators_init() {
     gen_dt();
     gen_pci_ids();
     gen_usb_ids();
+    gen_arm_ids();
     gen_dt_ids();
     gen_os_release();
     gen_dmidecode();

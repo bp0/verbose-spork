@@ -24,6 +24,15 @@
 #include "arm_data.h"
 #include "x86_data.h"
 
+const gchar arm_ids_reference_markup_text[] =
+    " Items are generated on-demand and cached.\n"
+    "\n"
+    " :/cpuinfo/arm.ids/{implementer}/name\n"
+    " :/cpuinfo/arm.ids/{implementer}/{part}/name\n"
+    "Reference:\n"
+    BULLET REFLINK("https://github.com/bp0/armids")
+    "\n";
+
 static gboolean cpuinfo_lcpu_verify(sysobj *obj);
 static gchar *cpuinfo_feature_format(sysobj *obj, int fmt_opts);
 static gchar *cpuinfo_format(sysobj *obj, int fmt_opts);
@@ -31,7 +40,8 @@ static gchar *cpuinfo_format(sysobj *obj, int fmt_opts);
 static gboolean cpuinfo_lcpu_prop_verify(sysobj *obj);
 
 static gchar *fmt_arm_implementer(sysobj *obj, int fmt_opts) {
-    gchar *istr = auto_free( arm_implementer(obj->data.str) );
+    int imp = strtol(obj->data.str, NULL, 16);
+    gchar *istr = auto_free( sysobj_raw_from_printf(":/cpuinfo/arm.ids/%02x/name", imp) );
     if (istr)
         return g_strdup_printf("[%s] %s", obj->data.str, istr);
     simple_format(obj, fmt_opts);
@@ -42,7 +52,9 @@ static gchar *fmt_arm_part(sysobj *obj, int fmt_opts) {
     auto_free_ex(obj_imp, (GDestroyNotify)sysobj_free);
     if (obj_imp->exists) {
         sysobj_read(obj_imp, FALSE);
-        gchar *pstr = auto_free( arm_part(obj_imp->data.str, obj->data.str) );
+        int imp = strtol(obj_imp->data.str, NULL, 16);
+        int part = strtol(obj->data.str, NULL, 16);
+        gchar *pstr = auto_free( sysobj_raw_from_printf(":/cpuinfo/arm.ids/%02x/%03x/name", imp, part) );
         if (pstr)
             return g_strdup_printf("[%s] %s", obj->data.str, pstr);
     }
@@ -83,7 +95,8 @@ static vendor_list cpuinfo_lcpu_vendors(sysobj *obj) {
 
 static vendor_list cpuinfo_lcpu_prop_vendors(sysobj *obj) {
     if (SEQ(obj->name, "cpu_implementer") ) {
-        gchar *istr = auto_free( arm_implementer(obj->data.str) );
+        int imp = strtol(obj->data.str, NULL, 16);
+        gchar *istr = auto_free( sysobj_raw_from_printf(":/cpuinfo/arm.ids/%02x/name", imp) );
         return vendor_list_append(NULL, vendor_match(istr, NULL) );
     }
     return simple_vendors(obj);
@@ -100,7 +113,7 @@ static sysobj_class cls_cpuinfo[] = {
     .f_verify = cpuinfo_lcpu_verify, .f_vendors = cpuinfo_lcpu_vendors,
     .f_format = cpuinfo_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
   { SYSOBJ_CLASS_DEF
-    .tag = "cpuinfo:lcpu:prop", .pattern = ":/cpuinfo/logical_cpu*/*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_HAS_VENDOR,
+    .tag = "cpuinfo:lcpu:prop", .pattern = ":/cpuinfo/logical_cpu*/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_verify = cpuinfo_lcpu_prop_verify, .attributes = cpu_prop_items, .f_vendors = cpuinfo_lcpu_prop_vendors,
     .s_update_interval = UPDATE_INTERVAL_NEVER },
 
@@ -110,6 +123,15 @@ static sysobj_class cls_cpuinfo[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "cpuinfo:featurelist", .pattern = ":/cpuinfo/*/flags", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_format = cpuinfo_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
+
+  { SYSOBJ_CLASS_DEF
+    .tag = "arm.ids", .pattern = ":/cpuinfo/arm.ids", .flags = OF_CONST,
+    .s_halp = arm_ids_reference_markup_text, .s_label = "arm.ids lookup virtual tree",
+    .s_update_interval = 4.0 },
+  { SYSOBJ_CLASS_DEF
+    .tag = "arm.ids:id", .pattern = ":/cpuinfo/arm.ids/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .s_halp = arm_ids_reference_markup_text, .s_label = "arm.ids lookup result",
+    .f_format = fmt_node_name },
 };
 
 static gboolean cpuinfo_lcpu_verify(sysobj *obj) {
