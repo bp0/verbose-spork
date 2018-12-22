@@ -83,8 +83,10 @@ name NEC Corporation
     url www.nec.com
     match_string_case NEC
 
-name Realtek
+name Realtek Semiconductor
+    name_short Realtek
     url www.realtek.com.tw
+    ansi_color 0;34|1;47
     match_string Realtek
 
 name Toshiba Corporation
@@ -171,7 +173,8 @@ name Dell Computer
     match_string Dell
 
 name Logitech International
-    name_short Logitech
+    name_short logitech
+    ansi_color 0;30|1;47
     url www.logitech.com
     match_string Logitech
 
@@ -293,8 +296,10 @@ name Quantum
     url www.quantum.com
     match_string QUANTUM
 
-name Kingston
+name Kingston Technology
+    name_short Kingston
     url www.kingston.com
+    ansi_color 0;31|0;40
     match_string Kingston
 
 name Chicony
@@ -309,9 +314,17 @@ name KYE Systems
     url www.genius-kye.com
     match_string_case KYE
 
+name STMicroelectronics
+    name_short ST
+    url www.st.com
+    ansi_color 1;37|1;44
+    match_string STMicroelectronics
+    match_string ST Micro
+
 name SEAGATE
     url www.seagate.com
-    match_string_case ST
+    match_string Seagate
+#    match_string_case ST
 
 name Silicon Integrated Systems Corporation
     name_short SIS
