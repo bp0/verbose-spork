@@ -76,4 +76,12 @@ gchar *formatted_time_span(double real_seconds, gboolean short_version, gboolean
  * fmt_opts, as usual */
 gchar *sysobj_format_table(sysobj *obj, gchar **table, int table_len, int nbase, int fmt_opts);
 
+typedef const struct {
+    const gchar *value;
+    const gchar *s_def; /* N_() */
+    const gchar *s_def_short; /* N_() */
+} lookup_tab;
+#define LOOKUP_TAB_LAST { NULL, NULL }
+gchar *sysobj_format_lookup_tab(sysobj *obj, lookup_tab *tab, int fmt_opts);
+
 #endif

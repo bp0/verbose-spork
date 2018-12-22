@@ -369,6 +369,27 @@ gchar *sysobj_format_table(sysobj *obj, gchar **table, int table_len, int nbase,
     return simple_format(obj, fmt_opts);
 }
 
+gchar *sysobj_format_lookup_tab(sysobj *obj, lookup_tab *tab, int fmt_opts) {
+    gchar *ret = NULL;
+    gchar *val = g_strstrip(g_strdup(obj->data.str));
+    for (int i = 0; tab[i].value; i++) {
+        if (SEQ(val, tab[i].value)) {
+            if (fmt_opts & FMT_OPT_SHORT || fmt_opts & FMT_OPT_PART) {
+                if (tab[i].s_def_short)
+                    ret = g_strdup(_(tab[i].s_def_short));
+                else
+                    ret = g_strdup_printf("%s", val);
+            } else {
+                if (tab[i].s_def)
+                    ret = g_strdup_printf("[%s] %s", val, _(tab[i].s_def) );
+                else
+                    ret = g_strdup_printf("[%s]", val);
+            }
+        }
+    }
+    return ret;
+}
+
 const gchar *color_lookup(const gchar *ansi_color) {
     static struct { char *ansi, *html; } tab[] = {
         { "0;30", "#010101" },
