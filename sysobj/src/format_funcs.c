@@ -537,3 +537,28 @@ format_with_ansi_color_end:
         ret = g_strdup(str);
     return ret;
 }
+
+void tag_vendor(gchar **str, guint offset, const gchar *vendor_str, const char *ansi_color, int fmt_opts) {
+    if (!str || !*str) return;
+    if (!vendor_str || !ansi_color) return;
+    gchar *work = *str, *new = NULL;
+    if (g_str_has_prefix(work + offset, vendor_str)
+        || strncasecmp(work + offset, vendor_str, strlen(vendor_str)) == 0) {
+        gchar *cvs = format_with_ansi_color(vendor_str, ansi_color, fmt_opts);
+        *(work+offset) = 0;
+        new = g_strdup_printf("%s%s%s", work, cvs, work + offset + strlen(vendor_str) );
+        g_free(work);
+        *str = new;
+        g_free(cvs);
+    }
+}
+
+gchar *vendor_match_tag(const gchar *vendor_str, int fmt_opts) {
+    const Vendor *v = vendor_match(vendor_str, NULL);
+    if (v) {
+        gchar *ven_tag = v->name_short ? g_strdup(v->name_short) : g_strdup(v->name);
+        tag_vendor(&ven_tag, 0, ven_tag, v->ansi_color, fmt_opts);
+        return ven_tag;
+    }
+    return NULL;
+}

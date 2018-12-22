@@ -19,6 +19,7 @@
  */
 
 #include "util_dt.h"
+#include "format_funcs.h"
 
 void dtr_msg(char *fmt, ...);
 int dtr_guess_type(sysobj *obj);
@@ -674,7 +675,7 @@ int dtr_guess_type(sysobj *obj) {
 }
 
 /* export */
-gchar *dtr_compat_decode(const gchar *compat_str_list, gsize len, gboolean show_class) {
+gchar *dtr_compat_decode(const gchar *compat_str_list, gsize len, gboolean show_class, int fmt_opts) {
     gchar *ret = NULL;
     if (compat_str_list) {
         const gchar *el = compat_str_list;
@@ -683,6 +684,12 @@ gchar *dtr_compat_decode(const gchar *compat_str_list, gsize len, gboolean show_
             gchar *cls = show_class ? sysobj_raw_from_fn(lookup_path, "class") : NULL;
             gchar *vendor = sysobj_raw_from_fn(lookup_path, "vendor");
             gchar *name = sysobj_raw_from_fn(lookup_path, "name");
+
+            gchar *vtag = vendor_match_tag(vendor, fmt_opts);
+            if (vtag) {
+                g_free(vendor);
+                vendor = vtag;
+            }
 
             if (vendor && name && cls)
                 ret = appfs(ret, ", ", "%s %s (%s)", vendor, name, cls);
@@ -709,6 +716,7 @@ gchar *dtr_format(sysobj *obj, int fmt_opts) {
     gchar *ret = NULL;
     const gchar *sym, *al;
     int type = dtr_guess_type(obj);
+    gboolean needs_escape = TRUE;
     switch(type) {
         case DT_NODE:
             sym = dtr_symbol_lookup_by_path(obj->path);
@@ -729,7 +737,7 @@ gchar *dtr_format(sysobj *obj, int fmt_opts) {
                 if (obj->data.len == 1 && *obj->data.str == 0)
                     return NULL;
             }
-            gchar *compat = dtr_compat_decode(obj->data.str, obj->data.len, TRUE);
+            gchar *compat = dtr_compat_decode(obj->data.str, obj->data.len, TRUE, fmt_opts);
             gchar *raw = dtr_list_str0(obj->data.str, obj->data.len);
             if (compat)
                 ret = g_strdup_printf("[%s] %s", raw, compat);
@@ -737,6 +745,7 @@ gchar *dtr_format(sysobj *obj, int fmt_opts) {
                 ret = g_strdup_printf("[%s]", raw);
             g_free(compat);
             g_free(raw);
+            needs_escape = FALSE;
             break;
         case DTP_STR:
             if (fmt_opts & FMT_OPT_NULL_IF_EMPTY) {
@@ -800,7 +809,8 @@ gchar *dtr_format(sysobj *obj, int fmt_opts) {
             break;
     }
     if (ret) {
-        if (fmt_opts & FMT_OPT_PANGO || fmt_opts & FMT_OPT_HTML)
+        if (needs_escape &&
+            (fmt_opts & FMT_OPT_PANGO || fmt_opts & FMT_OPT_HTML) )
             ret = util_escape_markup(ret, TRUE);
         return ret;
     }

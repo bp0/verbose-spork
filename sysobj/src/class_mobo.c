@@ -44,22 +44,6 @@ static vendor_list mobo_vendor(sysobj *obj) {
     return NULL;
 }
 
-/* export */
-void tag_vendor(gchar **str, guint offset, const gchar *vendor_str, const char *ansi_color, int fmt_opts) {
-    if (!str || !*str) return;
-    if (!vendor_str || !ansi_color) return;
-    gchar *work = *str, *new = NULL;
-    if (g_str_has_prefix(work + offset, vendor_str)
-        || strncasecmp(work + offset, vendor_str, strlen(vendor_str)) == 0) {
-        gchar *cvs = format_with_ansi_color(vendor_str, ansi_color, fmt_opts);
-        *(work+offset) = 0;
-        new = g_strdup_printf("%s%s%s", work, cvs, work + offset + strlen(vendor_str) );
-        g_free(work);
-        *str = new;
-        g_free(cvs);
-    }
-}
-
 static gchar *mobo_format(sysobj *obj, int fmt_opts) {
     if (SEQ(":/mobo", obj->path)) {
         gchar *name = sysobj_raw_from_fn(":/mobo", "nice_name");

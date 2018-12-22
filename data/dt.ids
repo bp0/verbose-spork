@@ -75,3 +75,4 @@ vendor ti          Texas Instruments
     soc ti,omap2*            OMAP2-family
     soc ti,omap1*            OMAP1-family
     board ti,omap3-beagleboard-xm         Beagleboard
+vendor snps         Synopsys

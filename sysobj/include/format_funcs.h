@@ -84,4 +84,7 @@ typedef const struct {
 #define LOOKUP_TAB_LAST { NULL, NULL }
 gchar *sysobj_format_lookup_tab(sysobj *obj, lookup_tab *tab, int fmt_opts);
 
+void tag_vendor(gchar **str, guint offset, const gchar *vendor_str, const char *ansi_color, int fmt_opts);
+gchar *vendor_match_tag(const gchar *vendor_str, int fmt_opts);
+
 #endif

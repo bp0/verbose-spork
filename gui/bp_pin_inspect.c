@@ -1,6 +1,7 @@
 
 #include "bp_pin_inspect.h"
 #include "sysobj_extras.h"
+#include "format_funcs.h"
 #include <inttypes.h>
 
 /* Forward declarations */

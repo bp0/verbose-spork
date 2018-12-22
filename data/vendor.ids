@@ -377,6 +377,11 @@ name Sapphire Technology
     url www.sapphiretech.com
     match_string sapphire tech
 
+name Synopsys
+    url www.synopsys.com
+    ansi_color 0;35|1;47
+    match_string Synopsys
+
 #
 # BIOS manufacturers
 #

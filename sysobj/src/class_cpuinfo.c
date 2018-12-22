@@ -20,6 +20,7 @@
 
 #include "sysobj.h"
 #include "sysobj_extras.h"
+#include "format_funcs.h"
 #include "arm_data.h"
 #include "x86_data.h"
 

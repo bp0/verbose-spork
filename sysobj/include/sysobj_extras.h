@@ -28,7 +28,7 @@
 void cpu_pct(sysobj *obj, int *logical, int *pack, int *core_of_pack, int *thread_of_core);
 
 /* in util_dt.c */
-gchar *dtr_compat_decode(const gchar *compat_str_list, gsize len, gboolean show_class);
+gchar *dtr_compat_decode(const gchar *compat_str_list, gsize len, gboolean show_class, int fmt_opts);
 gchar *dtr_get_opp_kv(const gchar *path, const gchar *key_prefix);
 
 /* in class_cpu.c */
@@ -45,8 +45,5 @@ void sysobj_virt_add_vendor_match(gchar *base, gchar *name, const Vendor *vendor
 /* replaces the extra chars with spaces, then when done with a series of
  * str_shorten()s, use util_compress_space() to squeeze. */
 gboolean str_shorten(gchar *str, const gchar *find, const gchar *replace);
-
-/* in class_mobo.c */
-void tag_vendor(gchar **str, guint offset, const gchar *vendor_str, const char *ansi_color, int fmt_opts);
 
 #endif

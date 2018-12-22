@@ -183,7 +183,7 @@ vendor_list gpu_vendors(sysobj *obj) {
     const Vendor *v = vendor_match(vs, NULL);
     g_free(vs);
     if (v)
-        return vendor_list_append(NULL, v);
+        return vendor_list_append(sysobj_vendors_from_fn(obj->path, "pci"), v);
     return NULL;
 }
 
@@ -273,7 +273,7 @@ static gchar *drm_card_format(sysobj *obj, int fmt_opts) {
     sysobj *dt_compat_obj = sysobj_new_from_fn(obj->path, "device/of_node/compatible");
     if (dt_compat_obj->exists) {
         sysobj_read(dt_compat_obj, FALSE);
-        gchar *dt_name = dtr_compat_decode(dt_compat_obj->data.any, dt_compat_obj->data.len, FALSE);
+        gchar *dt_name = dtr_compat_decode(dt_compat_obj->data.any, dt_compat_obj->data.len, FALSE, fmt_opts);
         sysobj_free(dt_compat_obj);
         if (dt_name)
             return dt_name;

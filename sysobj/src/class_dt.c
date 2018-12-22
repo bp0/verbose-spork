@@ -45,6 +45,7 @@ const gchar dt_ids_reference_markup_text[] =
     "\n";
 
 static gchar *dt_ids_format(sysobj *obj, int fmt_opts);
+static vendor_list dt_compat_vendors(sysobj *obj);
 
 static sysobj_class cls_dtr[] = {
   /* all else (first added is last tested for match) */
@@ -53,9 +54,9 @@ static sysobj_class cls_dtr[] = {
     .s_halp = dt_reference_markup_text, .s_update_interval = 0.0,
     .f_format = dtr_format },
   { SYSOBJ_CLASS_DEF
-    .tag = "devicetree:compat", .pattern = DTROOT "*/compatible", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .tag = "devicetree:compat", .pattern = DTROOT "*/compatible", .flags = OF_GLOB_PATTERN | OF_CONST | OF_IS_VENDOR,
     .s_halp = dt_reference_markup_text, .s_update_interval = 0.0,
-    .f_format = dtr_format },
+    .f_format = dtr_format, .f_vendors = dt_compat_vendors },
 
   { SYSOBJ_CLASS_DEF
     .tag = "dt.ids", .pattern = ":/devicetree/dt.ids", .flags = OF_CONST,
@@ -96,6 +97,28 @@ static gchar *dt_ids_format(sysobj *obj, int fmt_opts) {
             return ret;
     }
     return simple_format(obj, fmt_opts);
+}
+
+static vendor_list dt_compat_vendors(sysobj *obj) {
+    vendor_list ret = NULL;
+    gchar *compat_str_list = obj->data.str;
+    gsize len = obj->data.len;
+    if (compat_str_list) {
+        const gchar *el = compat_str_list;
+        while(el < compat_str_list + len) {
+            gchar *lookup_path = g_strdup_printf(":/devicetree/dt.ids/%s", el);
+            gchar *vendor = sysobj_raw_from_fn(lookup_path, "vendor");
+            if (vendor) {
+                const Vendor *v = vendor_match(vendor, NULL);
+                if (v)
+                    ret = vendor_list_append(ret, v);
+            }
+            g_free(vendor);
+            g_free(lookup_path);
+            el += strlen(el) + 1;
+        }
+    }
+    return ret;
 }
 
 void class_dt() {

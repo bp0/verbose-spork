@@ -32,7 +32,7 @@
 
 #define DTROOT "/sys/firmware/devicetree/base"
 
-gchar *dtr_compat_decode(const gchar *compat_str_list, gsize len, gboolean show_class);
+gchar *dtr_compat_decode(const gchar *compat_str_list, gsize len, gboolean show_class, int fmt_opts);
 gchar *dtr_get_opp_kv(const gchar *path, const gchar *key_prefix);
 
 /* operating-points v0,v1,v2 */
