@@ -411,6 +411,12 @@ name Phoenix Technologies
     ansi_color 0;31|0;47
     match_string Phoenix
 
+name Insyde Software
+    name_short Insyde
+    url www.insyde.com
+    ansi_color 0;30|0;42
+    match_string Insyde
+
 #
 # Linux
 #
