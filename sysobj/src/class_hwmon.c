@@ -79,6 +79,7 @@ static const char *sensor_types[] = {
     "in", "temp", "cpu", "fan", "pwm", "temp", "curr", "power", "energy", "humidity", "intrusion"
 };
 
+/* pairs that return is_value = TRUE */
 static const struct { const gchar *type, *attrib; }
     vpair_tab[] = {
         { "in",   "input" },
@@ -239,6 +240,7 @@ static gchar *fmt_temp_type(sysobj *obj, int fmt_opts) {
 }
 
 static gchar *hwmon_attr_format(sysobj *obj, int fmt_opts) {
+    if (!obj->data.len) return simple_format(obj, fmt_opts);
     gboolean temp_is_mv = FALSE; //TODO:
     gchar *type = NULL, *attrib = NULL;
     int i = -1;
