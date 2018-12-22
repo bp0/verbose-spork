@@ -27,6 +27,7 @@ GType bp_sysobj_browser_get_type(void) G_GNUC_CONST;
 GtkWidget *bp_sysobj_browser_new(void);
 
 void bp_sysobj_browser_navigate(bpSysObjBrowser *s, const gchar *new_location);
+void bp_sysobj_browser_watchlist_button_show(bpSysObjBrowser *s);
 
 G_END_DECLS
 

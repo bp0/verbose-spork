@@ -206,6 +206,7 @@ int main(int argc, char **argv) {
     //if (DEBUG_BUILD) class_dump_list();
 
     browser = bp_sysobj_browser_new();
+    bp_sysobj_browser_watchlist_button_show(BP_SYSOBJ_BROWSER(browser));
     watchlist = bp_sysobj_view_new();
     bp_sysobj_view_set_include_target(BP_SYSOBJ_VIEW(watchlist), FALSE);
     bp_sysobj_view_set_max_depth(BP_SYSOBJ_VIEW(watchlist), 1);

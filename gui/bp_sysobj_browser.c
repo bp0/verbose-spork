@@ -30,6 +30,7 @@ struct _bpSysObjBrowserPrivate {
     GSList *history;
     int h_pos; /* index into history */
     int h_len; /* g_slist_lenght(.history) */
+    gboolean watch_enable;
 };
 
 G_DEFINE_TYPE(bpSysObjBrowser, bp_sysobj_browser, GTK_TYPE_BOX);
@@ -58,6 +59,8 @@ bp_sysobj_browser_init(bpSysObjBrowser *s)
     bpSysObjBrowserPrivate *priv = BP_SYSOBJ_BROWSER_PRIVATE(s);
     memset(priv, sizeof(bpSysObjBrowserPrivate), 0);
 
+    priv->watch_enable = FALSE;
+
     _create(s);
 
     g_signal_connect(s, "destroy", G_CALLBACK(_cleanup), NULL);
@@ -68,6 +71,13 @@ GtkWidget *
 bp_sysobj_browser_new()
 {
     return GTK_WIDGET(g_object_new(bp_sysobj_browser_get_type(), NULL));
+}
+
+void bp_sysobj_browser_watchlist_button_show(bpSysObjBrowser *s) {
+    bpSysObjBrowserPrivate *priv = BP_SYSOBJ_BROWSER_PRIVATE(s);
+    priv->watch_enable = TRUE;
+    if (priv->btn_watch)
+        gtk_widget_show(priv->btn_watch);
 }
 
 void bp_sysobj_browser_navigate(bpSysObjBrowser *s, const gchar *new_location) {
@@ -196,7 +206,9 @@ void _create(bpSysObjBrowser *s) {
     gtk_box_pack_start (GTK_BOX (btns), btn_ref, FALSE, FALSE, 5); gtk_widget_show (btn_ref);
     gtk_box_pack_start (GTK_BOX (btns), priv->query, TRUE, TRUE, 0); gtk_widget_show (priv->query);
     gtk_box_pack_start (GTK_BOX (btns), btn_places, FALSE, FALSE, 5); gtk_widget_show (btn_places);
-    gtk_box_pack_start (GTK_BOX (btns), btn_watch, FALSE, FALSE, 5); gtk_widget_show (btn_watch);
+    gtk_box_pack_start (GTK_BOX (btns), btn_watch, FALSE, FALSE, 5);
+    if (priv->watch_enable)
+        gtk_widget_show (btn_watch);
 
     priv->sv = bp_sysobj_view_new();
     bp_sysobj_view_set_fmt_opts(BP_SYSOBJ_VIEW(priv->sv), FMT_OPT_PANGO | FMT_OPT_NO_JUNK);
