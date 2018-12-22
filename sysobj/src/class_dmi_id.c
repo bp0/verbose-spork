@@ -24,25 +24,26 @@
 gboolean dmi_id_verify(sysobj *obj);
 const gchar *dmi_id_label(sysobj *obj);
 gchar *dmi_id_format(sysobj *obj, int fmt_opts);
+gchar *dmi_id_format_vendor(sysobj *obj, int fmt_opts);
 guint dmi_id_flags(sysobj *obj, const sysobj_class *cls);
 
 static attr_tab dmi_id_items[] = {
-    { "bios_vendor",       N_("BIOS Vendor"), OF_HAS_VENDOR },
+    { "bios_vendor",       N_("BIOS Vendor"), OF_HAS_VENDOR, dmi_id_format_vendor },
     { "bios_version",      N_("BIOS Version"), OF_NONE },
     { "bios_date",         N_("BIOS Date"), OF_NONE },
-    { "sys_vendor",        N_("Product Vendor"), OF_HAS_VENDOR },
+    { "sys_vendor",        N_("Product Vendor"), OF_HAS_VENDOR, dmi_id_format_vendor },
     { "product_name",      N_("Product Name"), OF_NONE },
     { "product_version",   N_("Product Version"), OF_NONE },
     { "product_serial",    N_("Product Serial"), OF_REQ_ROOT },
     { "product_uuid",      N_("Product UUID"), OF_NONE },
     { "product_sku",       N_("Product SKU"), OF_NONE },
     { "product_family",    N_("Product Family"), OF_NONE },
-    { "board_vendor",      N_("Board Vendor"), OF_HAS_VENDOR },
+    { "board_vendor",      N_("Board Vendor"), OF_HAS_VENDOR, dmi_id_format_vendor },
     { "board_name",        N_("Board Name"), OF_NONE },
     { "board_version",     N_("Board Version"), OF_NONE },
     { "board_serial",      N_("Board Serial"), OF_REQ_ROOT },
     { "board_asset_tag",   N_("Board Asset Tag"), OF_NONE },
-    { "chassis_vendor",    N_("Chassis Vendor"), OF_HAS_VENDOR },
+    { "chassis_vendor",    N_("Chassis Vendor"), OF_HAS_VENDOR, dmi_id_format_vendor },
     { "chassis_version",   N_("Chassis Version"), OF_NONE },
     { "chassis_serial",    N_("Chassis Serial"), OF_REQ_ROOT },
     { "chassis_asset_tag", N_("Chassis Asset Tag"), OF_NONE },
@@ -214,6 +215,31 @@ gchar *dmi_id_format(sysobj *obj, int fmt_opts) {
         }
     }
     return simple_format(obj, fmt_opts);
+}
+
+gchar *dmi_id_format_vendor(sysobj *obj, int fmt_opts) {
+    gchar *ret = NULL;
+    if (fmt_opts & FMT_OPT_ATERM
+        || fmt_opts & FMT_OPT_PANGO
+        || fmt_opts & FMT_OPT_HTML ) {
+        gchar *val = g_strchomp(g_strdup(obj->data.str));
+        const Vendor *v = vendor_match(val, NULL);
+        if (v) {
+            gchar *ven_tag = v->name_short ? g_strdup(v->name_short) : g_strdup(v->name);
+            tag_vendor(&ven_tag, 0, ven_tag, v->ansi_color, fmt_opts);
+            if (fmt_opts & FMT_OPT_PART)
+                ret = g_strdup_printf("%s", ven_tag);
+            else if (fmt_opts & FMT_OPT_SHORT)
+                ret = g_strdup_printf("%s %s", ven_tag, v->name_short ? v->name_short : v->name);
+            else
+                ret = g_strdup_printf("%s %s", ven_tag, v->name);
+            g_free(ven_tag);
+        }
+        g_free(val);
+    }
+    if (ret)
+        return ret;
+    return dmi_id_format(obj, fmt_opts);
 }
 
 void class_dmi_id() {
