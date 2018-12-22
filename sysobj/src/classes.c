@@ -143,7 +143,7 @@ static attr_tab sysobj_items[] = {
     { "sysobj_read_first", NULL, OF_NONE, NULL, 2.0 },
     { "sysobj_read_force", NULL, OF_NONE, NULL, 2.0 },
     { "sysobj_read_expired", NULL, OF_NONE, NULL, 2.0 },
-    { "sysobj_read_not_expired", NULL, OF_NONE, NULL, 20.0 },
+    { "sysobj_read_not_expired", NULL, OF_NONE, NULL, 2.0 },
     ATTR_TAB_LAST
 };
 

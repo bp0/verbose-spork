@@ -708,13 +708,10 @@ void sysobj_unread_data(sysobj *s) {
     }
 }
 
+/* attributes.s_update_interval > cls->f_update_interval > s_update_interval > UPDATE_INTERVAL_DEFAULT  */
 double sysobj_update_interval(sysobj *s) {
     if (s) {
         if (s->cls) {
-            if (s->cls->f_update_interval)
-                return s->cls->f_update_interval(s);
-            if (s->cls->s_update_interval)
-                return s->cls->s_update_interval;
             if (s->cls->attributes) {
                 int i = attr_tab_lookup(s->cls->attributes, s->name);
                 if (i != -1) {
@@ -723,6 +720,10 @@ double sysobj_update_interval(sysobj *s) {
                         return ui;
                 }
             }
+            if (s->cls->f_update_interval)
+                return s->cls->f_update_interval(s);
+            if (s->cls->s_update_interval)
+                return s->cls->s_update_interval;
         }
         return UPDATE_INTERVAL_DEFAULT;
     }
@@ -982,18 +983,20 @@ const gchar *sysobj_halp(sysobj *s) {
     return simple_halp(s);
 }
 
+/* attributes.fmt_func > cls->f_format > simple_format */
 gchar *sysobj_format(sysobj *s, int fmt_opts) {
     if (s) {
         sysobj_read(s, FALSE);
-        if (s->cls)
-            if (s->cls->f_format)
-                return s->cls->f_format(s, fmt_opts);
-            else if (s->cls->attributes) {
+        if (s->cls) {
+            if (s->cls->attributes) {
                 int i = attr_tab_lookup(s->cls->attributes, s->name);
                 if (i != -1)
                     if (s->cls->attributes[i].fmt_func)
                         return s->cls->attributes[i].fmt_func(s, fmt_opts);
             }
+            if (s->cls->f_format)
+                return s->cls->f_format(s, fmt_opts);
+        }
         return simple_format(s, fmt_opts);
     }
     return NULL;
