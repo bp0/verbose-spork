@@ -179,12 +179,11 @@ static sysobj_class cls_gpu[] = {
 };
 
 vendor_list gpu_vendors(sysobj *obj) {
-    gchar *vs = sysobj_raw_from_fn(obj->path, "name/vendor_name");
-    const Vendor *v = vendor_match(vs, NULL);
-    g_free(vs);
-    if (v)
-        return vendor_list_append(sysobj_vendors_from_fn(obj->path, "pci"), v);
-    return NULL;
+    return vendor_list_concat_va( 4,
+        sysobj_vendors_from_fn(obj->path, "pci"),
+        sysobj_vendors_from_fn(obj->path, "drm/device/of_node/compatible"),
+        sysobj_vendors_from_fn(obj->path, "device/of_node/compatible"),
+        sysobj_vendors_from_fn(obj->path, "of_node/compatible") );
 }
 
 static vendor_list gpu_all_vendors(sysobj *obj) {
