@@ -183,7 +183,9 @@ name Fujitsu
     match_string FUJITSU
 
 name Sony
+    name_short SONY
     url www.sony.com
+    ansi_color 0;30|1;47
     match_string_case CDU
 
 name SanDisk
@@ -222,14 +224,17 @@ name ZOTAC International
     match_string ZOTAC
 
 name C-Media Electronics
+    name_short C-Media
     url www.cmedia.com.tw
     match_string C-Media
 
 name AVerMedia Technologies
+    name_short AVerMedia
     url www.aver.com
     match_string Avermedia
 
-name Philips
+name Koninklijke Philips
+    name_short PHILIPS
     url www.philips.com
     match_string Philips
 
@@ -238,6 +243,7 @@ name Ralink Technology
     match_string RaLink
 
 name Siemens AG
+    name_short Siemens
     url www.siemens.com
     match_string Siemens
 
@@ -311,6 +317,7 @@ name Genius
     match_string Genius
 
 name KYE Systems
+    name_short KYE
     url www.genius-kye.com
     match_string_case KYE
 
