@@ -57,7 +57,6 @@ gchar *fmt_KiB_to_higher(sysobj *obj, int fmt_opts); /* up to MiB, GiB, etc */
 gchar *fmt_megatransferspersecond(sysobj *obj, int fmt_opts);
 gchar *fmt_gigatransferspersecond(sysobj *obj, int fmt_opts);
 gchar *fmt_lanes_x(sysobj *obj, int fmt_opts);
-
 /* returns formatted <self>/name */
 gchar *fmt_node_name(sysobj *obj, int fmt_opts);
 
@@ -86,5 +85,13 @@ gchar *sysobj_format_lookup_tab(sysobj *obj, lookup_tab *tab, int fmt_opts);
 
 void tag_vendor(gchar **str, guint offset, const gchar *vendor_str, const char *ansi_color, int fmt_opts);
 gchar *vendor_match_tag(const gchar *vendor_str, int fmt_opts);
+
+typedef const struct {
+    const gpointer func;
+    const gchar *name;
+} fmt_func_tab;
+
+extern fmt_func_tab format_funcs[];
+const gchar *format_funcs_lookup(const gpointer fp);
 
 #endif

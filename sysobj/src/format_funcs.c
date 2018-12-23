@@ -562,3 +562,40 @@ gchar *vendor_match_tag(const gchar *vendor_str, int fmt_opts) {
     }
     return NULL;
 }
+
+#define STD_FORMAT_FUNC(f) { (gpointer)f ,  #f },
+fmt_func_tab format_funcs[] = {
+STD_FORMAT_FUNC(fmt_nanoseconds)
+STD_FORMAT_FUNC(fmt_milliseconds)
+STD_FORMAT_FUNC(fmt_microseconds_to_milliseconds)
+STD_FORMAT_FUNC(fmt_seconds)
+STD_FORMAT_FUNC(fmt_seconds_to_span)
+STD_FORMAT_FUNC(fmt_hz)
+STD_FORMAT_FUNC(fmt_hz_to_mhz)
+STD_FORMAT_FUNC(fmt_khz_to_mhz)
+STD_FORMAT_FUNC(fmt_mhz)
+STD_FORMAT_FUNC(fmt_millidegree_c)
+STD_FORMAT_FUNC(fmt_milliampere)
+STD_FORMAT_FUNC(fmt_microwatt)
+STD_FORMAT_FUNC(fmt_microjoule)
+STD_FORMAT_FUNC(fmt_percent)
+STD_FORMAT_FUNC(fmt_millepercent)
+STD_FORMAT_FUNC(fmt_millivolt)
+STD_FORMAT_FUNC(fmt_rpm)
+STD_FORMAT_FUNC(fmt_1yes0no)
+STD_FORMAT_FUNC(fmt_megabitspersecond)
+STD_FORMAT_FUNC(fmt_KiB)
+STD_FORMAT_FUNC(fmt_KiB_to_MiB)
+STD_FORMAT_FUNC(fmt_KiB_to_higher)
+STD_FORMAT_FUNC(fmt_megatransferspersecond)
+STD_FORMAT_FUNC(fmt_gigatransferspersecond)
+STD_FORMAT_FUNC(fmt_lanes_x)
+STD_FORMAT_FUNC(fmt_node_name)
+};
+
+const gchar *format_funcs_lookup(const gpointer fp) {
+    for(int i = 0; i<(int)G_N_ELEMENTS(format_funcs); i++)
+        if (format_funcs[i].func == fp)
+            return format_funcs[i].name;
+    return NULL;
+}

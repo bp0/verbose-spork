@@ -20,6 +20,7 @@
 
 #include "sysobj.h"
 #include "gg_file.h"
+#include "format_funcs.h"
 
 static void buff_basename(const gchar *path, gchar *buff, gsize n) {
     gchar *fname = g_path_get_basename(path);
@@ -178,8 +179,12 @@ static gchar *get_class_info(const gchar *path) {
             return g_strdup_printf("%p", match->f_verify);
         if (SEQ(name, ".f_label") )
             return g_strdup_printf("%p", match->f_label);
-        if (SEQ(name, ".f_format") )
+        if (SEQ(name, ".f_format") ) {
+            const gchar *fname = format_funcs_lookup(match->f_format);
+            if (fname)
+                return g_strdup_printf("%p %s", match->f_format, fname);
             return g_strdup_printf("%p", match->f_format);
+        }
         if (SEQ(name, ".f_update_interval") )
             return g_strdup_printf("%p", match->f_update_interval);
         if (SEQ(name, ".f_compare") )
