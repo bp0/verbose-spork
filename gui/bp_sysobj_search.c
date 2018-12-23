@@ -33,6 +33,7 @@ struct _bpSysObjSearchPrivate {
     GtkWidget *btn_stop;
     GtkWidget *spinner;
     gchar *search_result_path;
+    gchar *search_class_tag;
     gchar *search_query;
     gboolean now_searching;
     guint searched;
@@ -81,9 +82,10 @@ bp_sysobj_search_init(bpSysObjSearch *s)
     bpSysObjSearchPrivate *priv = BP_SYSOBJ_SEARCH_PRIVATE(s);
     memset(priv, sizeof(bpSysObjSearchPrivate), 0);
 
-    priv->search_result_path = g_strdup_printf(":app/search/0x%016llx", (long long unsigned)s);
+    priv->search_result_path = g_strdup_printf(":app/search/%p", s);
     sysobj_virt_add_simple_mkpath(priv->search_result_path, NULL, "*", VSO_TYPE_DIR);
-    class_add_simple(priv->search_result_path, "Search result set", priv->search_result_path, OF_NONE, 1.0, NULL);
+    priv->search_class_tag = g_strdup_printf("search,%p", s);
+    class_add_simple(priv->search_result_path, "Search result set", priv->search_class_tag, OF_NONE, 1.0, NULL);
     priv->now_searching = FALSE;
 
     GSList *filters = NULL;
@@ -190,6 +192,7 @@ static void _cleanup(bpSysObjSearch *s) {
     }
     sysobj_filter_free_list(priv->filters);
     g_free(priv->search_result_path);
+    g_free(priv->search_class_tag);
     g_free(priv->search_query);
 }
 
