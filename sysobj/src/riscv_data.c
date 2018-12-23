@@ -139,6 +139,7 @@ static int riscv_isa_next(const char *isap, char *flag) {
     }
 
     switch(*p) {
+        case 'Z': case 'z': /* multi-character standard extension */
         case 'S': case 's': /* supervisor extension */
         case 'X': case 'x': /* custom extension */
             /* custom supervisor extension (SX..) handled by S */
