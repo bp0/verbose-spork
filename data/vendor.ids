@@ -389,6 +389,13 @@ name Synopsys
     ansi_color 0;35|1;47
     match_string Synopsys
 
+name Raspberry Pi Foundation
+    name_short RaspberryPi
+    url www.raspberrypi.org
+    ansi_color 1;37|0;42
+    match_string RaspberryPi
+    match_string Raspberry Pi
+
 #
 # BIOS manufacturers
 #
