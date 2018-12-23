@@ -36,7 +36,6 @@ const gchar pci_ids_reference_markup_text[] =
     BULLET REFLINKT("<i>The PCI ID Repository</i>'s pci.ids", "https://pci-ids.ucw.cz")
     "\n";
 
-static gchar *pci_ids_format(sysobj *obj, int fmt_opts);
 static gchar *pci_format(sysobj *obj, int fmt_opts);
 static gchar *pci_format_idcomp(sysobj *obj, int fmt_opts);
 static gchar *pci_format_device(sysobj *obj, int fmt_opts);
@@ -98,10 +97,10 @@ static sysobj_class cls_pci[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "pci.ids", .pattern = ":/pci/pci.ids", .flags = OF_CONST,
     .s_halp = pci_ids_reference_markup_text, .s_label = "pci.ids lookup virtual tree",
-    .s_update_interval = pci_ids_update_interval, .f_format = pci_ids_format },
+    .s_update_interval = pci_ids_update_interval },
   { SYSOBJ_CLASS_DEF
     .tag = "pci.ids:id", .pattern = ":/pci/pci.ids/*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .s_halp = pci_ids_reference_markup_text, .s_label = "pci.ids lookup result", .f_format = pci_ids_format },
+    .s_halp = pci_ids_reference_markup_text, .s_label = "pci.ids lookup result", .f_format = fmt_node_name },
 };
 
 static sysobj_virt vol[] = {
@@ -110,26 +109,6 @@ static sysobj_virt vol[] = {
     { .path = ":/pci", .str = "*",
       .type = VSO_TYPE_DIR | VSO_TYPE_CONST },
 };
-
-static gboolean name_is_0x04(gchar *name) {
-    if (!name) return FALSE;
-    if (  isxdigit(name[0])
-        && isxdigit(name[1])
-        && isxdigit(name[2])
-        && isxdigit(name[3])
-        && name[4] == 0 )
-        return TRUE;
-    return FALSE;
-}
-
-static gchar *pci_ids_format(sysobj *obj, int fmt_opts) {
-    if ( name_is_0x04(obj->name) ) {
-        gchar *ret = sysobj_raw_from_fn(obj->path, "name");
-        if (ret)
-            return ret;
-    }
-    return simple_format(obj, fmt_opts);
-}
 
 static int pci_device_count() {
     int ret = 0;

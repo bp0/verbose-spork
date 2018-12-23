@@ -137,9 +137,12 @@ static void buff_basename(const gchar *path, gchar *buff, gsize n) {
 }
 
 static gboolean name_is_0x04(gchar *name) {
-    gchar *p = name;
-    while(isxdigit(*p)) p++;
-    if (strlen(name) == 4 && p-name == 4 )
+    if (!name) return FALSE;
+    if (  isxdigit(name[0])
+        && isxdigit(name[1])
+        && isxdigit(name[2])
+        && isxdigit(name[3])
+        && name[4] == 0 )
         return TRUE;
     return FALSE;
 }

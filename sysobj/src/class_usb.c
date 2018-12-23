@@ -40,7 +40,6 @@ static gboolean usb_verify_device(sysobj *obj) { return (obj) ? verify_usb_devic
 static gchar *usb_format_device(sysobj *obj, int fmt_opts);
 static gboolean usb_verify_bus(sysobj *obj) { return (obj) ? verify_usb_bus(obj->name) : FALSE; }
 static gchar *usb_format_bus(sysobj *obj, int fmt_opts);
-static gchar *usb_ids_format(sysobj *obj, int fmt_opts);
 
 static vendor_list usb_vendor_lookup(sysobj *obj);
 static vendor_list usb_vendor_dev(sysobj *obj) { return sysobj_vendors_from_fn(obj->path, "idVendor"); }
@@ -126,19 +125,8 @@ static sysobj_class cls_usb[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "usb.ids:id", .pattern = ":/usb/usb.ids/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .s_halp = usb_ids_reference_markup_text, .s_label = "usb.ids lookup result",
-    .f_format = usb_ids_format },
+    .f_format = fmt_node_name },
 };
-
-static gboolean name_is_0x04(gchar *name) {
-    if (!name) return FALSE;
-    if (  isxdigit(name[0])
-        && isxdigit(name[1])
-        && isxdigit(name[2])
-        && isxdigit(name[3])
-        && name[4] == 0 )
-        return TRUE;
-    return FALSE;
-}
 
 static sysobj_virt vol[] = {
     { .path = ":/usb/bus", .str = SYSFS_USB,
@@ -148,15 +136,6 @@ static sysobj_virt vol[] = {
       .type = VSO_TYPE_DIR | VSO_TYPE_CONST,
       .f_get_data = NULL, .f_get_type = NULL },
 };
-
-static gchar *usb_ids_format(sysobj *obj, int fmt_opts) {
-    if ( name_is_0x04(obj->name) ) {
-        gchar *ret = sysobj_raw_from_fn(obj->path, "name");
-        if (ret)
-            return ret;
-    }
-    return simple_format(obj, fmt_opts);
-}
 
 static int usb_device_count() {
     int ret = 0;
