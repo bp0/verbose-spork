@@ -90,7 +90,7 @@ typedef GSList* vendor_list;
 #define vendor_list_concat(vl, ext) g_slist_concat(vl, ext)
 vendor_list vendor_list_concat_va(int count, vendor_list vl, ...); /* count = -1 for NULL terminated list */
 #define vendor_list_free(vl) g_slist_free(vl)
-vendor_list vendor_list_remove_duplicates(vendor_list vl);
+#define vendor_list_remove_duplicates(vl) gg_slist_remove_duplicates(vl)
 typedef vendor_list (*func_get_vendors)(sysobj *obj);
 
 typedef const struct {

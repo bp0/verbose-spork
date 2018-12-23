@@ -1201,15 +1201,6 @@ vendor_list vendor_list_concat_va(int count, vendor_list vl, ...) {
     return ret;
 }
 
-vendor_list vendor_list_remove_duplicates(vendor_list vl) {
-    for (GSList *l = vl; l; l = l->next) {
-        GSList *d = NULL;
-        while(d = g_slist_find(l->next, l->data) )
-            vl = g_slist_delete_link(vl, d);
-    }
-    return vl;
-}
-
 vendor_list simple_vendors(sysobj *s) {
     if (sysobj_has_flag(s, OF_HAS_VENDOR) ) {
         sysobj_read(s, FALSE);
