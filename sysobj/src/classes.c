@@ -137,6 +137,7 @@ static attr_tab sysobj_items[] = {
     { "free_expected", N_("seconds until next free_auto_free()"), OF_NONE, fmt_seconds, 0.2 },
     { "freed_count", N_("memory objects freed via auto_free()"), OF_NONE, NULL, 0.5 },
     { "free_queue", N_("memory objects waiting to be freed via auto_free()"), OF_NONE, NULL, 0.5 },
+    { "free_delay", N_("minimum time until free() from auto_free()"), OF_NONE, fmt_seconds, UPDATE_INTERVAL_NEVER },
     { "sysobj_new", N_("sysobj created with sysobj_new()") },
     { "sysobj_new_fast", N_("sysobj created without sysobj_classify()") },
     { "sysobj_clean", N_("sysobj cleared") },
