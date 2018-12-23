@@ -85,6 +85,7 @@ void class_usb();
 void class_os_release();
 void class_proc_alts();
 void class_any_utf8();
+void class_extra();
 
 gboolean class_verify(sysobj *obj) {
     gboolean ret = FALSE;
@@ -164,14 +165,7 @@ static gchar *format_ansi_color(sysobj *obj, int fmt_opts) {
 }
 
 static vendor_list vsfs_vendors(sysobj *obj) {
-    return vendor_list_concat_va(7,
-        sysobj_vendors_from_fn("/sys/devices/virtual/dmi/id", NULL), //TODO: get via mobo
-        sysobj_vendors_from_fn(obj->path, "mobo"),
-        sysobj_vendors_from_fn(obj->path, "cpuinfo"),
-        sysobj_vendors_from_fn(obj->path, "gpu"),
-        sysobj_vendors_from_fn(obj->path, "os"),
-        sysobj_vendors_from_fn(obj->path, "pci"),
-        sysobj_vendors_from_fn(obj->path, "usb") );
+    return sysobj_vendors_from_fn(":/extra/vendor_ribbon", NULL);
 }
 
 static sysobj_class cls_internal[] = {
@@ -227,6 +221,9 @@ void class_init() {
     class_pci();
     class_usb();
     class_uptime();
+
+    class_extra();
+
 /* consumes every direct child, careful with order */
     class_dmi_id();
     class_dt();

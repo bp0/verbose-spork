@@ -49,6 +49,7 @@ add_library(sysobj STATIC
         sysobj/src/class_cpucache.c
         sysobj/src/class_cputopo.c
         sysobj/src/class_any_utf8.c
+        sysobj/src/class_extra.c
 
 # still mixed
         sysobj/src/class_pci.c
