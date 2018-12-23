@@ -23,6 +23,7 @@
 #include "format_funcs.h"
 #include "arm_data.h"
 #include "x86_data.h"
+#include "riscv_data.h"
 
 const gchar arm_ids_reference_markup_text[] =
     " Items are generated on-demand and cached.\n"
@@ -118,10 +119,22 @@ static sysobj_class cls_cpuinfo[] = {
     .s_update_interval = UPDATE_INTERVAL_NEVER },
 
   { SYSOBJ_CLASS_DEF
-    .tag = "cpuinfo:feature", .pattern = ":/cpuinfo/*/flags/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .tag = "cpuinfo:flag", .pattern = ":/cpuinfo/*/flags/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_format = cpuinfo_feature_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
   { SYSOBJ_CLASS_DEF
-    .tag = "cpuinfo:featurelist", .pattern = ":/cpuinfo/*/flags", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .tag = "cpuinfo:flag:list", .pattern = ":/cpuinfo/*/flags", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .f_format = cpuinfo_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
+  { SYSOBJ_CLASS_DEF
+    .tag = "cpuinfo:isa", .pattern = ":/cpuinfo/*/isa/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .f_format = cpuinfo_feature_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
+  { SYSOBJ_CLASS_DEF
+    .tag = "cpuinfo:isa:list", .pattern = ":/cpuinfo/*/isa", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .f_format = cpuinfo_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
+  { SYSOBJ_CLASS_DEF
+    .tag = "cpuinfo:feature", .pattern = ":/cpuinfo/*/features/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .f_format = cpuinfo_feature_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
+  { SYSOBJ_CLASS_DEF
+    .tag = "cpuinfo:feature:list", .pattern = ":/cpuinfo/*/features", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_format = cpuinfo_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
 
   { SYSOBJ_CLASS_DEF
@@ -154,6 +167,9 @@ static gchar *cpuinfo_feature_format(sysobj *obj, int fmt_opts) {
 
     if (SEQ(type_str, "arm"))
         meaning = arm_flag_meaning(obj->data.str); /* returns translated */
+
+    if (SEQ(type_str, "risc-v"))
+        meaning = riscv_ext_meaning(obj->data.str); /* returns translated */
 
     if (meaning)
         return g_strdup_printf("%s", meaning);

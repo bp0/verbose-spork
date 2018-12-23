@@ -89,7 +89,7 @@ add_library(sysobj STATIC
 
         sysobj/src/arm_data.c
         sysobj/src/x86_data.c
-#src/riscv_data.c
+        sysobj/src/riscv_data.c
 
         sysobj/src/util_dt.c
         sysobj/src/util_pci.c

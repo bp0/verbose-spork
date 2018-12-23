@@ -27,6 +27,7 @@
 #include "vendor.h"
 #include "arm_data.h"
 #include "x86_data.h"
+#include "riscv_data.h"
 
 #define PROC_CPUINFO "/proc/cpuinfo"
 
@@ -60,6 +61,7 @@ typedef struct {
     int id, type;
     gchar *model_name;
     GSList *flags; /* includes flags, bugs, pm, etc */
+    gchar *bogomips;
     /* arm */
     gchar *linux_name;
     gchar *cpu_implementer;
@@ -79,7 +81,8 @@ typedef struct {
     gchar *address_sizes;
     gchar *cpu_mhz;
     gchar *cache_size;
-    gchar *bogomips;
+    /* riscv */
+    gchar *isa;
 
     const Vendor *vendor;
 } lcpu;
@@ -87,6 +90,7 @@ typedef struct {
 void lcpu_free(lcpu *s) {
     if (!s) return;
     g_slist_free_full(s->flags, g_free);
+    g_free(s->bogomips);
     /* arm */
     g_free(s->linux_name);
     g_free(s->cpu_implementer);
@@ -110,7 +114,8 @@ void lcpu_free(lcpu *s) {
     g_free(s->apicid_initial);
     g_free(s->cpu_mhz);
     g_free(s->cache_size);
-    g_free(s->bogomips);
+    /* riscv */
+    g_free(s->isa);
     /* self */
     g_free(s);
 }
@@ -137,7 +142,11 @@ static void cpuinfo_append_flags(lcpu *p, gchar *prefix, gchar *flags_str) {
             tmp = g_strdup_printf("%s:%s", prefix, each[i]);
         else
             tmp = g_strdup(each[i]);
-        p->flags = g_slist_append(p->flags, tmp);
+        g_strstrip(tmp);
+        if (strlen(tmp))
+            p->flags = g_slist_append(p->flags, tmp);
+        else
+            g_free(tmp);
     }
     g_strfreev(each);
 }
@@ -159,7 +168,7 @@ static gchar *dumb_string_copy(gchar *src, gpointer *e) {
     return g_strdup(src);
 }
 
-void cpuinfo_scan_arm_x86(gchar **lines, gsize line_count) {
+void cpuinfo_scan_arm_x86_rv(gchar **lines, gsize line_count) {
     gchar rep_pname[256] = "";
     lcpu *this_lcpu = NULL;
     gsize i = 0;
@@ -176,7 +185,7 @@ void cpuinfo_scan_arm_x86(gchar **lines, gsize line_count) {
             continue;
         }
 
-        if (CHKFOR("processor")) {
+        if (CHKFOR("processor") || CHKFOR("hart")) {
             /* finish previous */
             if (this_lcpu) {
                 if (!this_lcpu->model_name)
@@ -230,6 +239,9 @@ void cpuinfo_scan_arm_x86(gchar **lines, gsize line_count) {
         CHKSETFOR("cpu MHz", cpu_mhz);
         CHKSETFOR("cache size", cache_size);
 
+        /* riscv */
+        CHKSETFOR_EZ(isa);
+
         CHKSETFOR("bogomips", bogomips);
         CHKSETFOR("BogoMips", bogomips);
         CHKSETFOR("BogoMIPS", bogomips);
@@ -250,6 +262,12 @@ void cpuinfo_scan_arm_x86(gchar **lines, gsize line_count) {
     GList *l = g_list_last(lcpus);
     while (l) {
         this_lcpu = l->data;
+        if (this_lcpu->isa) {
+            char *f = riscv_isa_to_flags(this_lcpu->isa);
+            cpuinfo_append_flags(this_lcpu, NULL, f);
+            free(f);
+        }
+
         if (this_lcpu->flags) {
             dlcpu = this_lcpu;
         } else if (dlcpu) {
@@ -297,6 +315,16 @@ void cpuinfo_scan_arm_x86(gchar **lines, gsize line_count) {
             }
         }
 
+        if (this_lcpu->isa) {
+            this_lcpu->type = CPU_TYPE_RV;
+
+            if (!this_lcpu->model_name
+                || *(this_lcpu->model_name) == 0) {
+                g_free(this_lcpu->model_name);
+                this_lcpu->model_name = g_strdup("RISC-V Processor");
+            }
+        }
+
         /* compress model name:
          * "Intel(R) Pentium(R) III CPU - S         1400MHz" -> "Intel(R) Pentium(R) III CPU - S 1400MHz"
          */
@@ -317,7 +345,7 @@ void cpuinfo_scan() {
     sysobj_read(obj, FALSE);
     gchar **cpuinfo = g_strsplit(obj->data.str, "\n", -1);
     gsize line_count = g_strv_length(cpuinfo);
-    cpuinfo_scan_arm_x86(cpuinfo, line_count);
+    cpuinfo_scan_arm_x86_rv(cpuinfo, line_count);
     g_strfreev(cpuinfo);
 
     GList *l = lcpus;
@@ -332,14 +360,26 @@ void cpuinfo_scan() {
         sysobj_virt_add_simple(base, "arch_family", type, VSO_TYPE_STRING );
         EASY_VOM(model_name);
 
-        gchar *base_flags = g_strdup_printf("%s/%s", base, "flags");
+        gchar *base_flags = NULL;
+
+        switch(this_lcpu->type) {
+            case CPU_TYPE_RV:
+                base_flags = g_strdup_printf("%s/%s", base, "isa");
+                break;
+            case CPU_TYPE_X86:
+                base_flags = g_strdup_printf("%s/%s", base, "flags");
+                break;
+            case CPU_TYPE_ARM:
+            default:
+                base_flags = g_strdup_printf("%s/%s", base, "features");
+                break;
+        }
+
         sysobj_virt_add_simple(base_flags, NULL, "*", VSO_TYPE_DIR);
         if (this_lcpu->flags) {
-            GSList *fl = this_lcpu->flags;
-            while(fl) {
+            for(GSList *fl = this_lcpu->flags; fl; fl = fl->next) {
                 gchar *flag = fl->data;
                 sysobj_virt_add_simple(base_flags, flag, flag, VSO_TYPE_STRING );
-                fl = fl->next;
             }
         }
         g_free(base_flags);
