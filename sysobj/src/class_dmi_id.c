@@ -52,10 +52,10 @@ static attr_tab dmi_id_items[] = {
 
 static vendor_list dmi_id_vendors(sysobj *obj) {
     return vendor_list_concat_va(4,
-        sysobj_vendors_from_fn(obj->path, "bios_vendor"),
         sysobj_vendors_from_fn(obj->path, "sys_vendor"),
+        sysobj_vendors_from_fn(obj->path, "chassis_vendor"),
         sysobj_vendors_from_fn(obj->path, "board_vendor"),
-        sysobj_vendors_from_fn(obj->path, "chassis_vendor") );
+        sysobj_vendors_from_fn(obj->path, "bios_vendor") );
 }
 
 static sysobj_class cls_dmi_id[] = {
