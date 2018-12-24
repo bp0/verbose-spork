@@ -349,7 +349,7 @@ static gchar* gpu_format_nice_name(sysobj *gpu, int fmt_opts) {
     gchar *dt_compat = sysobj_raw_from_fn(gpu->path, "/device/of_node/compatible");
 
     if (ansi_color)
-        ansi_color = safe_ansi_color_ex(ansi_color, TRUE);
+        ansi_color = safe_ansi_color(ansi_color, TRUE);
     if (vendor_short) {
         g_free(vendor_str);
         vendor_str = vendor_short;

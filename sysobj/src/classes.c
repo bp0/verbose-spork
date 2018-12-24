@@ -153,7 +153,7 @@ static attr_tab sysobj_items[] = {
 
 static gboolean verify_ansi_color(sysobj *obj) {
     sysobj_read(obj, FALSE);
-    gchar *sf = safe_ansi_color_ex(obj->data.str, FALSE);
+    gchar *sf = safe_ansi_color(obj->data.str, FALSE);
     if (sf) {
         g_free(sf);
         return TRUE;
