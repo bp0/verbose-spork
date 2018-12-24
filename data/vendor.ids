@@ -77,6 +77,7 @@ name Cirrus Logic
 name VIA Technologies
     name_short VIA
     url www.via.com.tw
+    ansi_color 0;36|1;47
     match_string_case VIA
 
 name NEC Corporation
@@ -198,6 +199,7 @@ name ExcelStor Technology
 
 name D-Link
     url www.dlink.com.tw
+    ansi_color 1;37|0;44
     match_string D-Link
 
 name Gigabyte Technology
@@ -239,7 +241,9 @@ name Koninklijke Philips
     match_string Philips
 
 name Ralink Technology
+    name_short Ralink
     url www.ralinktech.com
+    ansi_color 0;36|1;47
     match_string RaLink
 
 name Siemens AG
@@ -377,6 +381,7 @@ name Linux Foundation
 name ASMedia Technology
     name_short ASMedia
     url www.asmedia.com.tw
+    ansi_color 0;30|0;46
     match_string_case ASMedia
 
 name Sapphire Technology
@@ -470,16 +475,19 @@ name Intel Corporation
 name VIA Technologies
     name_short VIA
     url www.via.tw
+    ansi_color 0;36|1;47
     match_string VIA VIA VIA
 
 name VIA (formerly Centaur Technology)
     name_short VIA (Centaur)
     url www.via.tw
+    ansi_color 0;36|1;47
     match_string CentaurHauls
 
 name VIA (formerly Cyrix)
     name_short VIA (Cyrix)
     url www.via.tw
+    ansi_color 0;36|1;47
     match_string CyrixInstead
 
 name Transmeta Corporation
