@@ -205,4 +205,6 @@ void gen_mobo() {
     /* add virtual sysobj */
     for (int i = 0; i < (int)G_N_ELEMENTS(vol); i++)
         sysobj_virt_add(&vol[i]);
+
+    auto_free(mobo_get_name(":/mobo"));
 }

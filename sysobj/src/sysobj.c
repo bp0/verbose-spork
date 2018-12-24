@@ -1214,13 +1214,16 @@ vendor_list simple_vendors(sysobj *s) {
 }
 
 vendor_list sysobj_vendors(sysobj *s) {
+    vendor_list vl = NULL;
     if (s->cls && s->cls->f_vendors) {
         if (sysobj_has_flag(s, OF_HAS_VENDOR) ) {
             sysobj_read(s, FALSE);
-            return s->cls->f_vendors(s);
+            vl = s->cls->f_vendors(s);
         }
     }
-    return simple_vendors(s);
+    if (!vl)
+        vl = simple_vendors(s);
+    return gg_slist_remove_null(vl);
 }
 
 vendor_list sysobj_vendors_from_fn(const gchar *base, const gchar *name) {

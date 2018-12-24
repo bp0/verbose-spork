@@ -340,3 +340,13 @@ GSList *gg_slist_remove_duplicates_custom(GSList *sl, GCompareFunc func) {
     }
     return sl;
 }
+
+GSList *gg_slist_remove_null(GSList *sl) {
+    GSList *n = sl ? sl->next : NULL;
+    for (GSList *l = sl; l; l = n) {
+        n = l->next;
+        if (l->data == NULL)
+            sl = g_slist_delete_link(sl, l);
+    }
+    return sl;
+}

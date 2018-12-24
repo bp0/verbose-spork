@@ -33,15 +33,14 @@ static sysobj_class cls_mobo[] = {
 };
 
 static vendor_list mobo_vendor(sysobj *obj) {
-    gchar *vs = sysobj_raw_from_fn(obj->path, "name/board_vendor_str");
-    if (!vs)
-        vs = sysobj_raw_from_fn(obj->path, "name/model");
-    if (vs) {
+    vendor_list vl = sysobj_vendors_from_fn("/sys/class/dmi/id", NULL);
+    if (!vl) {
+        gchar *vs = sysobj_raw_from_fn("/sys/firmware/devicetree/base/model", NULL);
         const Vendor *v = vendor_match(vs, NULL);
         g_free(vs);
         return vendor_list_append(NULL, v);
     }
-    return NULL;
+    return vl;
 }
 
 static gchar *mobo_format(sysobj *obj, int fmt_opts) {
