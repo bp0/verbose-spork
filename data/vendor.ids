@@ -125,7 +125,13 @@ name Western Digital
     match_string_case WDC
 
 name LG Electronics
+    name_short LG
     url www.lge.com
+    match_string_case LG
+
+name Hitachi-LG Data Storage
+    name_short HLDS
+    url http://hlds.co.kr
     match_string_case HL-DT-ST
 
 name Lexmark
@@ -347,6 +353,11 @@ name Crucial (Micron)
     url www.crucial.com
     ansi_color 0;37;44
     match_string Crucial
+
+name Toshiba Samsung Storage Technology
+    name_short TSST
+    url www.tsst.co.kr
+    match_string_case TSST
 
 name SEAGATE
     url www.seagate.com
