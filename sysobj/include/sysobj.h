@@ -138,6 +138,11 @@ typedef struct sysobj_class {
     void (*f_cleanup) (void); /* shutdown/cleanup function */
     const gchar *(*f_halp) (sysobj *obj); /* markup text */
 
+    const gchar *v_subsystem_class;  /* verify that the obj's subsystem link points to a /sys/class/THIS */
+    const gchar *v_subsystem_bus;    /* verify that the obj's subsystem link points to a /sys/bus/THIS */
+    const gchar *v_lblnum;           /* verify that the obj's name is label0 ( verify_lblnum(THIS) ) */
+    const gchar *v_lblnum_child;     /* verify that the obj's parent is label0 ( verify_lblnum_child(THIS) ) */
+
     /* use SYSOBJ_CLASS_DEF for these */
     const gchar *def_file; /* __FILE__ */
     const int    def_line; /* __LINE__ */

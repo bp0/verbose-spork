@@ -534,6 +534,30 @@ void sysobj_classify(sysobj *s) {
             } else
                 match = g_str_has_suffix(s->path, c->pattern);
 
+            /* simple verifiers */
+            if (match && c->v_lblnum)
+                match = verify_lblnum(s, c->v_lblnum);
+            if (match && c->v_lblnum_child)
+                match = verify_lblnum_child(s, c->v_lblnum_child);
+            if (match && c->v_subsystem_class) {
+                match = FALSE;
+                gchar *ssl = util_build_fn(s->path, "subsystem");
+                sysobj *sso = sysobj_new_fast(ssl);
+                if (SEQ(sso->name, c->v_subsystem_class)
+                    && g_str_has_prefix(sso->path, "/sys/class") )
+                    match = TRUE;
+                sysobj_free(sso);
+            } else if (match && c->v_subsystem_bus) {
+                match = FALSE;
+                gchar *ssl = util_build_fn(s->path, "subsystem");
+                sysobj *sso = sysobj_new_fast(ssl);
+                if (SEQ(sso->name, c->v_subsystem_bus)
+                    && g_str_has_prefix(sso->path, "/sys/bus") )
+                    match = TRUE;
+                sysobj_free(sso);
+            }
+
+            /* verify function, or verify by existence in attributes */
             if (match && c->f_verify)
                 match = c->f_verify(s);
             else if (match && c->attributes) {
