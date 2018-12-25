@@ -101,14 +101,16 @@ static sysobj_class cls_usb[] = {
     .attributes = usb_dev_items },
   { SYSOBJ_CLASS_DEF
     .tag = "usb:device", .pattern = "/sys/devices*/*-*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_HAS_VENDOR,
+    .v_subsystem = "/sys/bus/usb",
     .f_verify = usb_verify_device, .f_vendors = usb_vendor_dev,
     .f_format = usb_format_device, .s_update_interval = usb_update_interval },
   { SYSOBJ_CLASS_DEF
     .tag = "usb:id", .pattern = "/sys/devices*/*-*/*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .attributes = usb_idcomp_items, .f_format = usb_format_idcomp, .f_vendors = usb_vendor_lookup },
+    .attributes = usb_idcomp_items, .v_subsystem_parent = "/sys/bus/usb",
+    .f_format = usb_format_idcomp, .f_vendors = usb_vendor_lookup },
   { SYSOBJ_CLASS_DEF
     .tag = "usb:device:attr", .pattern = "/sys/devices*/*-*/*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .attributes = usb_dev_items },
+    .attributes = usb_dev_items, .v_subsystem_parent = "/sys/bus/usb" },
 /*  { SYSOBJ_CLASS_DEF
     .tag = "usb:iface", .pattern = "/sys/devices*<<<<>>>>/*-*:*.*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_verify = usb_verify_idcomp,
