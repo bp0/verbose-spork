@@ -107,6 +107,7 @@ name Maxtor
 
 name Samsung
     url www.samsung.com
+    ansi_color 0;47;30
     match_string Samsung
 
 name Pioneer
@@ -118,7 +119,9 @@ name Plextor
     match_string Plextor
 
 name Western Digital
+    name_short WD
     url www.wdc.com
+    ansi_color 0;37;40
     match_string_case WDC
 
 name LG Electronics
@@ -191,6 +194,7 @@ name Sony
 
 name SanDisk
     url www.sandisk.com
+    ansi_color 0;31;40
     match_string SanDisk
 
 name ExcelStor Technology
@@ -331,6 +335,18 @@ name STMicroelectronics
     ansi_color 0;97;104
     match_string STMicroelectronics
     match_string ST Micro
+
+name Micron Technology
+    name_short Micron
+    url www.micron.com
+    ansi_color 0;34;47
+    match_string Micron
+
+name Crucial (Micron)
+    name_short Crucial
+    url www.crucial.com
+    ansi_color 0;37;44
+    match_string Crucial
 
 name SEAGATE
     url www.seagate.com
