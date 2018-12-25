@@ -21,20 +21,14 @@
 #include "sysobj.h"
 #include "format_funcs.h"
 
-static gboolean i2c_verify(sysobj *obj);
-
 static sysobj_class cls_i2c[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "i2c:adapter", .pattern = "/sys/devices*/i2c-*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .f_verify = i2c_verify, .f_format = fmt_node_name },
+    .v_lblnum = "i2c-", .v_subsystem = "/sys/bus/i2c", .f_format = fmt_node_name },
   { SYSOBJ_CLASS_DEF
     .tag = "i2c:dev", .pattern = "/sys/devices*/i2c-dev/i2c-*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .f_verify = i2c_verify, .f_format = fmt_node_name },
+    .v_lblnum = "i2c-", .v_subsystem = "/sys/class/i2c-dev", .f_format = fmt_node_name },
 };
-
-static gboolean i2c_verify(sysobj *obj) {
-    return verify_lblnum(obj, "i2c-");
-}
 
 void class_i2c() {
     /* add classes */

@@ -153,10 +153,10 @@ static sysobj_class cls_gpu[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "gpu", .pattern = ":/gpu/gpu*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_HAS_VENDOR,
     .s_label = N_("graphics device"),
-    .f_verify = gpu_verify, .f_format = gpu_format_nice_name, .f_vendors = gpu_vendors },
+    .v_lblnum = "gpu", .f_format = gpu_format_nice_name, .f_vendors = gpu_vendors },
   { SYSOBJ_CLASS_DEF
     .tag = "gpu:prop", .pattern = ":/gpu/gpu*/*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .f_verify = gpu_prop_verify, .attributes = gpu_prop_items },
+    .v_lblnum_child = "gpu", .attributes = gpu_prop_items },
 
   { SYSOBJ_CLASS_DEF
     .tag = "drm:card", .pattern = "/sys/devices/*/drm/card*", .flags = OF_GLOB_PATTERN | OF_CONST,
@@ -218,17 +218,6 @@ static gchar *gpu_list_format(sysobj *obj, int fmt_opts) {
             return ret;
     }
     return simple_format(obj, fmt_opts);
-}
-
-static gboolean gpu_verify(sysobj *obj) {
-    if (verify_lblnum(obj, "gpu"))
-        return TRUE;
-    return FALSE;
-}
-
-static gboolean gpu_prop_verify(sysobj *obj) {
-    return (verify_lblnum_child(obj, "gpu") &&
-        verify_in_attr_tab(obj, gpu_prop_items) );
 }
 
 static gboolean drm_card_attr_verify(sysobj *obj) {

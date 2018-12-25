@@ -111,11 +111,11 @@ static sysobj_class cls_cpuinfo[] = {
     .f_vendors = cpuinfo_vendors },
   { SYSOBJ_CLASS_DEF
     .tag = "cpuinfo:lcpu", .pattern = ":/cpuinfo/logical_cpu*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_HAS_VENDOR,
-    .f_verify = cpuinfo_lcpu_verify, .f_vendors = cpuinfo_lcpu_vendors,
+    .v_lblnum = "logical_cpu", .f_vendors = cpuinfo_lcpu_vendors,
     .f_format = cpuinfo_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
   { SYSOBJ_CLASS_DEF
     .tag = "cpuinfo:lcpu:prop", .pattern = ":/cpuinfo/logical_cpu*/*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .f_verify = cpuinfo_lcpu_prop_verify, .attributes = cpu_prop_items, .f_vendors = cpuinfo_lcpu_prop_vendors,
+    .v_lblnum_child = "logical_cpu", .attributes = cpu_prop_items, .f_vendors = cpuinfo_lcpu_prop_vendors,
     .s_update_interval = UPDATE_INTERVAL_NEVER },
 
   { SYSOBJ_CLASS_DEF
@@ -146,15 +146,6 @@ static sysobj_class cls_cpuinfo[] = {
     .s_halp = arm_ids_reference_markup_text, .s_label = "arm.ids lookup result",
     .f_format = fmt_node_name },
 };
-
-static gboolean cpuinfo_lcpu_verify(sysobj *obj) {
-    return verify_lblnum(obj, "logical_cpu");
-}
-
-static gboolean cpuinfo_lcpu_prop_verify(sysobj *obj) {
-    return (verify_lblnum_child(obj, "logical_cpu")
-            && verify_in_attr_tab(obj, cpu_prop_items) );
-}
 
 static gchar *cpuinfo_feature_format(sysobj *obj, int fmt_opts) {
     const gchar *meaning = NULL;

@@ -107,6 +107,9 @@ static const gchar class_item_list[] =
   ".f_cleanup\n"
   ".f_halp\n"
   ".f_vendors\n"
+  ".v_subsystem\n"
+  ".v_lblnum\n"
+  ".v_lblnum_child\n"
   "self\n"
   "hits\n";
 
@@ -170,11 +173,11 @@ static gchar *get_class_info(const gchar *path) {
         if (SEQ(name, ".flags") )
             return g_strdup_printf("0x%lx", (long unsigned)match->flags);
         if (SEQ(name, ".s_label") )
-            return g_strdup(match->s_label);
+            return g_strdup_printf("%s", match->s_label);
         if (SEQ(name, ".s_halp") )
-            return g_strdup(match->s_halp);
+            return g_strdup_printf("%s", match->s_halp);
         if (SEQ(name, ".s_suggest") )
-            return g_strdup(match->s_suggest);
+            return g_strdup_printf("%s", match->s_suggest);
         if (SEQ(name, ".s_update_interval") )
             return g_strdup_printf("%0.4lf", match->s_update_interval);
         if (SEQ(name, ".f_verify") )
@@ -199,6 +202,12 @@ static gchar *get_class_info(const gchar *path) {
             return g_strdup_printf("%p", match->f_halp);
         if (SEQ(name, ".f_vendors") )
             return g_strdup_printf("%p", match->f_vendors);
+        if (SEQ(name, ".v_subsystem") )
+            return g_strdup_printf("%s", match->v_subsystem);
+        if (SEQ(name, ".v_lblnum") )
+            return g_strdup_printf("%s", match->v_lblnum);
+        if (SEQ(name, ".v_lblnum_child") )
+            return g_strdup_printf("%s", match->v_lblnum_child);
         if (SEQ(name, "hits") )
             return g_strdup_printf("%llu", match->hits);
 

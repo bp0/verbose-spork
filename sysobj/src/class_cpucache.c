@@ -20,21 +20,12 @@
 
 #include <stdio.h> /* for sscanf() */
 #include "sysobj.h"
-#include "sysobj_extras.h" /* for cpu_verify_child() */
 
 const gchar cpucache_reference_markup_text[] =
     "Reference:\n"
     BULLET REFLINK("https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-devices-system-cpu") "\n"
     BULLET REFLINK("https://www.kernel.org/doc/Documentation/ABI/stable/sysfs-devices-system-cpu") "\n"
     "\n";
-
-gboolean cpucache_verify_index(sysobj *obj) {
-    return verify_lblnum(obj, "index");
-}
-
-gboolean cpucache_verify_index_child(sysobj *obj) {
-    return verify_lblnum_child(obj, "index");
-}
 
 gchar *cpucache_format_type(sysobj *obj, int fmt_opts) {
     static const struct {
@@ -146,28 +137,26 @@ static sysobj_class cls_cpucache[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "cache:part", .pattern = "/sys/*/cache/index*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .s_label = N_("Cache"), .s_halp = cpucache_reference_markup_text,
-    .f_verify = cpucache_verify_index, .f_format = cpucache_format_index },
+    .v_lblnum = "index", .f_format = cpucache_format_index },
 
   { SYSOBJ_CLASS_DEF
     .tag = "cache:size", .pattern = "/sys/*/cache/index*/size", .flags = OF_GLOB_PATTERN | OF_CONST,
     .s_label = N_("Cache Size"), .s_halp = cpucache_reference_markup_text,
-    .f_verify = cpucache_verify_index_child, .f_format = cpucache_format_size },
+    .v_lblnum_child = "index", .f_format = cpucache_format_size },
 
   { SYSOBJ_CLASS_DEF
     .tag = "cache:part", .pattern = "/sys/*/cache/index*/type", .flags = OF_GLOB_PATTERN | OF_CONST,
     .s_label = N_("Cache Type"), .s_halp = cpucache_reference_markup_text,
-    .f_verify = cpucache_verify_index_child, .f_format = cpucache_format_type },
+    .v_lblnum_child = "index", .f_format = cpucache_format_type },
 
   { SYSOBJ_CLASS_DEF
     .tag = "cache", .pattern = "/sys/*/cpu*/cache", .flags = OF_GLOB_PATTERN | OF_CONST,
     .s_label = N_("CPU Cache(s)"), .s_halp = cpucache_reference_markup_text,
-    .f_verify = cpu_verify_child, .f_format = cpucache_format_collection },
+    .v_lblnum_child = "cpu", .f_format = cpucache_format_collection },
 };
 
 void class_cpucache() {
-    int i = 0;
     /* add classes */
-    for (i = 0; i < (int)G_N_ELEMENTS(cls_cpucache); i++) {
+    for (int i = 0; i < (int)G_N_ELEMENTS(cls_cpucache); i++)
         class_add(&cls_cpucache[i]);
-    }
 }

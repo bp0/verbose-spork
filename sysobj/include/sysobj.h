@@ -138,8 +138,7 @@ typedef struct sysobj_class {
     void (*f_cleanup) (void); /* shutdown/cleanup function */
     const gchar *(*f_halp) (sysobj *obj); /* markup text */
 
-    const gchar *v_subsystem_class;  /* verify that the obj's subsystem link points to a /sys/class/THIS */
-    const gchar *v_subsystem_bus;    /* verify that the obj's subsystem link points to a /sys/bus/THIS */
+    const gchar *v_subsystem;  /* verify that the obj's subsystem link points to a THIS (ex: /sys/bus/pci, /sys/class/block)  */
     const gchar *v_lblnum;           /* verify that the obj's name is label0 ( verify_lblnum(THIS) ) */
     const gchar *v_lblnum_child;     /* verify that the obj's parent is label0 ( verify_lblnum_child(THIS) ) */
 
@@ -222,6 +221,7 @@ gboolean verify_lblnum_child(sysobj *obj, const gchar *lbl);
 gboolean verify_parent_name(sysobj *obj, const gchar *parent_name);
 gboolean verify_parent(sysobj *obj, const gchar *parent_path_suffix);
 gboolean verify_in_attr_tab(sysobj *obj, attr_tab *attributes);
+gboolean verify_subsystem(sysobj *obj, const gchar *target);
 
 /* to be used by sysobj_class::f_compare */
 int compare_str_base10(const sysobj_data *a, const sysobj_data *b);

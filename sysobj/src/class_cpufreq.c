@@ -45,18 +45,6 @@ attr_tab cpufreq_items[] = {
     ATTR_TAB_LAST
 };
 
-gboolean cpufreq_verify(sysobj *obj) {
-    /* child of "policy%d" */
-    if (verify_lblnum_child(obj, "policy")
-        && verify_in_attr_tab(obj, cpufreq_items) )
-        return TRUE;
-    return FALSE;
-}
-
-gboolean cpufreq_verify_policy(sysobj *obj) {
-    return verify_lblnum(obj, "policy");
-}
-
 gchar *cpufreq_format_policy(sysobj *obj, int fmt_opts) {
     if (obj) {
         gchar *ret = NULL;
@@ -92,11 +80,11 @@ static sysobj_class cls_cpufreq[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "cpufreq:policy", .pattern = "/sys/devices/system/cpu/cpufreq/policy*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .s_halp = cpufreq_reference_markup_text, .s_label = N_("frequency scaling policy"),
-    .f_verify = cpufreq_verify_policy, .f_format = cpufreq_format_policy, .s_update_interval = 0.25 },
+    .v_lblnum = "policy", .f_format = cpufreq_format_policy, .s_update_interval = 0.25 },
   { SYSOBJ_CLASS_DEF
     .tag = "cpufreq:item", .pattern = "/sys/devices/system/cpu/cpufreq/policy*/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .s_halp = cpufreq_reference_markup_text,
-    .f_verify = cpufreq_verify, .attributes = cpufreq_items },
+    .v_lblnum_child = "policy", .attributes = cpufreq_items },
 };
 
 void class_cpufreq() {

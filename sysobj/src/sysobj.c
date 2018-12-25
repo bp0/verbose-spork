@@ -539,23 +539,8 @@ void sysobj_classify(sysobj *s) {
                 match = verify_lblnum(s, c->v_lblnum);
             if (match && c->v_lblnum_child)
                 match = verify_lblnum_child(s, c->v_lblnum_child);
-            if (match && c->v_subsystem_class) {
-                match = FALSE;
-                gchar *ssl = util_build_fn(s->path, "subsystem");
-                sysobj *sso = sysobj_new_fast(ssl);
-                if (SEQ(sso->name, c->v_subsystem_class)
-                    && g_str_has_prefix(sso->path, "/sys/class") )
-                    match = TRUE;
-                sysobj_free(sso);
-            } else if (match && c->v_subsystem_bus) {
-                match = FALSE;
-                gchar *ssl = util_build_fn(s->path, "subsystem");
-                sysobj *sso = sysobj_new_fast(ssl);
-                if (SEQ(sso->name, c->v_subsystem_bus)
-                    && g_str_has_prefix(sso->path, "/sys/bus") )
-                    match = TRUE;
-                sysobj_free(sso);
-            }
+            if (match && c->v_subsystem)
+                match = verify_subsystem(s, c->v_subsystem);
 
             /* verify function, or verify by existence in attributes */
             if (match && c->f_verify)
@@ -1092,6 +1077,16 @@ gboolean verify_lblnum_child(sysobj *obj, const gchar *lbl) {
         g_free(parent_name);
     }
     return verified;
+}
+
+gboolean verify_subsystem(sysobj *obj, const gchar *target) {
+    gboolean ret = FALSE;
+    gchar *ssl = util_build_fn(obj->path, "subsystem");
+    sysobj *sso = sysobj_new_fast(ssl);
+    if (SEQ(sso->path, target))
+        ret = TRUE;
+    sysobj_free(sso);
+    return ret;
 }
 
 void sysobj_init(const gchar *alt_root) {
