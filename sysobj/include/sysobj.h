@@ -187,6 +187,7 @@ struct sysobj {
     gboolean root_can_write;
     gboolean others_can_read;
     gboolean others_can_write;
+    gboolean write_only;
     gboolean access_fail; /* permission denied */
 
     gboolean fast_mode;
@@ -316,7 +317,8 @@ typedef struct {
         so_read_first,
         so_read_force,
         so_read_expired,
-        so_read_not_expired;
+        so_read_not_expired,
+        so_read_wo;
     double
         auto_free_next;
 } so_stats;

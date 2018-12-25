@@ -37,6 +37,7 @@ static gchar *get_item_items[] = {
     "classify_none",
     "sysobj_read_first", "sysobj_read_force",
     "sysobj_read_expired", "sysobj_read_not_expired",
+    "sysobj_read_wo",
     "gg_file_total_wait",
 };
 
@@ -75,6 +76,8 @@ static gchar *get_item(const gchar *path) {
         return g_strdup_printf("%llu", sysobj_stats.so_read_expired );
     if (SEQ(name, "sysobj_read_not_expired") )
         return g_strdup_printf("%llu", sysobj_stats.so_read_not_expired );
+    if (SEQ(name, "sysobj_read_wo") )
+        return g_strdup_printf("%llu", sysobj_stats.so_read_wo );
 
     if (SEQ(name, "gg_file_total_wait") )
         return g_strdup_printf("%llu", gg_file_get_total_wait() );

@@ -323,6 +323,7 @@ gchar *simple_format(sysobj* obj, int fmt_opts) {
         fail   = obj->access_fail,
         utf8   = obj->data.is_utf8,
         dir    = obj->data.is_dir,
+        wo     = obj->write_only,
         empty  = (obj->data.len == 0)
             || (utf8 && strlen(text = g_strstrip(g_strdup(str ? str : ""))) == 0 );
     g_free(text);
@@ -331,6 +332,18 @@ gchar *simple_format(sysobj* obj, int fmt_opts) {
         msg = N_("{not found}");
         if (! (fmt_opts & FMT_OPT_NO_TRANSLATE) )
             msg = _(msg);
+        if (fmt_opts & FMT_OPT_NULL_IF_MISSING)
+            return NULL;
+        if (fmt_opts & FMT_OPT_ATERM)
+            return g_strdup_printf( ANSI_COLOR_RED "%s" ANSI_COLOR_RESET, msg );
+        return g_strdup( msg );
+    }
+    if (wo) {
+        msg = N_("{write-only}");
+        if (! (fmt_opts & FMT_OPT_NO_TRANSLATE) )
+            msg = _(msg);
+        if (fmt_opts & FMT_OPT_NULL_IF_EMPTY)
+            return NULL;
         if (fmt_opts & FMT_OPT_NULL_IF_MISSING)
             return NULL;
         if (fmt_opts & FMT_OPT_ATERM)
@@ -578,6 +591,7 @@ void sysobj_fscheck(sysobj *s) {
         s->root_can_write = FALSE;
         s->others_can_read = FALSE;
         s->others_can_write = FALSE;
+        s->write_only = FALSE;
         s->data.is_dir = FALSE;
 
         if (*(s->path) == ':') {
@@ -604,6 +618,8 @@ void sysobj_fscheck(sysobj *s) {
                 }
             }
         }
+        if (s->root_can_write && !s->root_can_read)
+            s->write_only = TRUE;
     }
 }
 
@@ -698,6 +714,11 @@ static void sysobj_read_data(sysobj *s) {
 gboolean sysobj_read_(sysobj *s, gboolean force, const char *call_func) {
     //printf("sysobj_read(%s, %s) from %s() fast:%s\n", s->path_req, force ? "true" : "false", call_func, s->fast_mode ? "true" : "false");
     if (s && s->path) {
+        if (s->write_only) {
+            sysobj_stats.so_read_wo++;
+            return FALSE;
+        }
+
         if (!force && s->data.was_read) {
             if (!sysobj_data_expired(s)) {
                 sysobj_stats.so_read_not_expired++;
