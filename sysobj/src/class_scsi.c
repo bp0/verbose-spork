@@ -27,6 +27,7 @@ const gchar scsi_reference_markup_text[] =
 
 static gchar *scsi_format(sysobj *obj, int fmt_opts);
 static gchar *scsi_dev_list_format(sysobj *obj, int fmt_opts);
+vendor_list scsi_all_vendors(sysobj *obj);
 static vendor_list scsi_dev_vendors(sysobj *obj);
 
 static attr_tab scsi_items[] = {
@@ -37,11 +38,8 @@ static attr_tab scsi_items[] = {
 
 static sysobj_class cls_scsi[] = {
   { SYSOBJ_CLASS_DEF
-    .tag = "scsi", .pattern = "/sys/bus/scsi", .flags = OF_CONST,
-    .f_format = scsi_format },
-  { SYSOBJ_CLASS_DEF
-    .tag = "scsi:dev_list", .pattern = "/sys/bus/scsi/devices", .flags = OF_CONST,
-    .f_format = scsi_dev_list_format },
+    .tag = "scsi:dev_list", .pattern = "/sys/bus/scsi/devices", .flags = OF_CONST | OF_HAS_VENDOR,
+    .f_format = scsi_dev_list_format, .f_vendors = scsi_all_vendors },
   { SYSOBJ_CLASS_DEF
     .tag = "scsi:dev", .pattern = "/sys/devices/*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_HAS_VENDOR,
     .v_subsystem = "/sys/bus/scsi", .f_format = scsi_format, .f_vendors = scsi_dev_vendors },
@@ -49,6 +47,21 @@ static sysobj_class cls_scsi[] = {
     .tag = "scsi:dev:attr", .pattern = "/sys/devices/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .v_subsystem_parent = "/sys/bus/scsi", .attributes = scsi_items },
 };
+
+vendor_list scsi_all_vendors(sysobj *obj) {
+    vendor_list ret = NULL;
+    sysobj *lo = SEQ(obj->path, "/sys/bus/scsi/devices")
+        ? obj
+        : sysobj_new_fast("/sys/bus/scsi/devices");
+    sysobj_read(lo, FALSE);
+    GSList *childs = sysobj_children(lo, NULL, NULL, TRUE);
+    for(GSList *l = childs; l; l = l->next)
+        ret = vendor_list_concat(ret, sysobj_vendors_from_fn(lo->path, l->data));
+    g_slist_free_full(childs, g_free);
+    if (lo != obj)
+        sysobj_free(lo);
+    return ret;
+}
 
 static vendor_list scsi_dev_vendors(sysobj *obj) {
     return vendor_list_concat(
