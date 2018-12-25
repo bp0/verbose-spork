@@ -87,6 +87,7 @@ static sysobj_class cls_pci[] = {
     .v_subsystem = "/sys/bus/pci" },
   { SYSOBJ_CLASS_DEF
     .tag = "pci:device_id", .pattern = "/sys/devices*/????:??:??.?/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .v_subsystem_parent = "/sys/bus/pci",
     .attributes = pci_idcomp_items, .f_format = pci_format_idcomp, .f_vendors = pci_vendor_lookup },
   { SYSOBJ_CLASS_DEF
     .tag = "pci:pcie", .pattern = "/sys/devices*/????:??:??.?/*", .flags = OF_GLOB_PATTERN | OF_CONST,
