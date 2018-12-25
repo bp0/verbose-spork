@@ -91,10 +91,10 @@ static sysobj_class cls_pci[] = {
     .attributes = pci_idcomp_items, .f_format = pci_format_idcomp, .f_vendors = pci_vendor_lookup },
   { SYSOBJ_CLASS_DEF
     .tag = "pci:pcie", .pattern = "/sys/devices*/????:??:??.?/*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .attributes = pcie_items },
+    .v_subsystem_parent = "/sys/bus/pci", .attributes = pcie_items },
   { SYSOBJ_CLASS_DEF
     .tag = "pci:var", .pattern = "/sys/devices*/????:??:??.?/*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .attributes = pci_var_items },
+    .v_subsystem_parent = "/sys/bus/pci", .attributes = pci_var_items },
 
   { SYSOBJ_CLASS_DEF
     .tag = "pci.ids", .pattern = ":/pci/pci.ids", .flags = OF_CONST,
