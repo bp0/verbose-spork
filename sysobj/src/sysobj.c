@@ -1089,6 +1089,16 @@ gboolean verify_subsystem(sysobj *obj, const gchar *target) {
     return ret;
 }
 
+gboolean verify_subsystem_parent(sysobj *obj, const gchar *target) {
+    gboolean ret = FALSE;
+    gchar *ssl = util_build_fn(obj->path, "../subsystem");
+    sysobj *sso = sysobj_new_fast(ssl);
+    if (SEQ(sso->path, target))
+        ret = TRUE;
+    sysobj_free(sso);
+    return ret;
+}
+
 void sysobj_init(const gchar *alt_root) {
     if (alt_root)
         sysobj_root_set(alt_root);
