@@ -471,6 +471,26 @@ format_with_ansi_color_end:
     return ret;
 }
 
+gchar *format_as_junk_value(const gchar *str, int fmt_opts) {
+    if (fmt_opts & FMT_OPT_NO_JUNK) {
+        if (fmt_opts & FMT_OPT_NULL_IF_EMPTY) {
+            return NULL;
+        } else {
+            gchar *ret = NULL, *v = g_strdup(str);
+            g_strchomp(v);
+            if (fmt_opts & FMT_OPT_HTML || fmt_opts & FMT_OPT_PANGO)
+                ret = g_strdup_printf("<s>%s</s>", v);
+            else if (fmt_opts & FMT_OPT_ATERM)
+                ret = g_strdup_printf(ANSI_COLOR_RED "%s" ANSI_COLOR_RESET, v);
+            else
+                ret = g_strdup_printf("[X] %s", v);
+            g_free(v);
+            return ret;
+        }
+    }
+    return g_strdup(str);
+}
+
 void tag_vendor(gchar **str, guint offset, const gchar *vendor_str, const char *ansi_color, int fmt_opts) {
     if (!str || !*str) return;
     if (!vendor_str || !ansi_color) return;

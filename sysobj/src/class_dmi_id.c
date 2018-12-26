@@ -198,22 +198,9 @@ gchar *dmi_id_format(sysobj *obj, int fmt_opts) {
     if (SEQ(obj->name, "chassis_type"))
         return sysobj_format_table(obj, (gchar**)&chassis_types, (int)G_N_ELEMENTS(chassis_types), 10, fmt_opts);
 
-    if ((fmt_opts & FMT_OPT_NO_JUNK) && dmi_value_is_placeholder(obj) ) {
-        if (fmt_opts & FMT_OPT_NULL_IF_EMPTY) {
-            return NULL;
-        } else {
-            gchar *ret = NULL, *v = g_strdup(obj->data.str);
-            g_strchomp(v);
-            if (fmt_opts & FMT_OPT_HTML || fmt_opts & FMT_OPT_PANGO)
-                ret = g_strdup_printf("<s>%s</s>", v);
-            else if (fmt_opts & FMT_OPT_ATERM)
-                ret = g_strdup_printf(ANSI_COLOR_RED "%s" ANSI_COLOR_RESET, v);
-            else
-                ret = g_strdup_printf("[X] %s", v);
-            g_free(v);
-            return ret;
-        }
-    }
+    if (dmi_value_is_placeholder(obj))
+        return format_as_junk_value(obj->data.str, fmt_opts);
+
     return simple_format(obj, fmt_opts);
 }
 

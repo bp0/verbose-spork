@@ -19,20 +19,17 @@
  */
 
 #include "sysobj.h"
-
-const gchar scsi_reference_markup_text[] =
-    "Reference:\n"
-    BULLET REFLINK("---")
-    "\n";
+#include "format_funcs.h"
 
 static gchar *scsi_format(sysobj *obj, int fmt_opts);
+static gchar *scsi_vendor_format(sysobj *obj, int fmt_opts);
 static gchar *scsi_dev_list_format(sysobj *obj, int fmt_opts);
 vendor_list scsi_all_vendors(sysobj *obj);
 static vendor_list scsi_dev_vendors(sysobj *obj);
 
 static attr_tab scsi_items[] = {
     { "model", NULL, OF_HAS_VENDOR },
-    { "vendor", NULL, OF_HAS_VENDOR },
+    { "vendor", NULL, OF_HAS_VENDOR, scsi_vendor_format },
     ATTR_TAB_LAST
 };
 
@@ -85,6 +82,16 @@ static gchar *scsi_dev_list_format(sysobj *obj, int fmt_opts) {
     const char *fmt = ngettext("%d device", "%d devices", c);
     ret = g_strdup_printf(fmt, c);
     return ret;
+}
+
+static gchar *scsi_vendor_format(sysobj *obj, int fmt_opts) {
+    if (obj->exists && obj->data.str) {
+        gchar *val = auto_free(g_strdup(obj->data.str));
+        g_strchomp(val);
+        if (SEQ(val, "ATA"))
+            return format_as_junk_value(val, fmt_opts);
+    }
+    return simple_format(obj, fmt_opts);
 }
 
 static gchar *scsi_format(sysobj *obj, int fmt_opts) {
