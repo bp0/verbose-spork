@@ -556,6 +556,8 @@ void sysobj_classify(sysobj *s) {
                 match = verify_subsystem(s, c->v_subsystem);
             if (match && c->v_subsystem_parent)
                 match = verify_subsystem_parent(s, c->v_subsystem_parent);
+            if (match && c->v_parent_path_suffix)
+                match = verify_parent(s, c->v_parent_path_suffix);
 
             /* verify function, or verify by existence in attributes */
             if (match && c->f_verify)

@@ -87,6 +87,7 @@ void class_usb();
 void class_os_release();
 void class_proc_alts();
 void class_any_utf8();
+void class_any_bus();
 void class_extra();
 
 gboolean class_verify(sysobj *obj) {
@@ -235,4 +236,7 @@ void class_init() {
 
 /* anything left that is human-readable */
     class_any_utf8(); /* OF_BLAST */
+
+/* any unclaimed /sys/bus/* */
+    class_any_bus(); /* OF_BLAST */
 }

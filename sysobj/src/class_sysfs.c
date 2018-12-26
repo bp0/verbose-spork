@@ -48,10 +48,6 @@ static sysobj_class cls_power[] = {
     .f_verify = subsystem_verify,
     .s_label = "sysfs sub-system", .f_format = subsystem_format, .s_update_interval = 0.0 },
   { SYSOBJ_CLASS_DEF
-    .tag = "subsystem:bus", .pattern = "/sys/bus/*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .f_verify = subsystem_verify,
-    .s_label = "sysfs sub-system", .f_format = subsystem_format, .s_update_interval = 0.0 },
-  { SYSOBJ_CLASS_DEF
     .tag = "subsystem:block", .pattern = "/sys/block/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_verify = subsystem_verify,
     .s_label = "sysfs sub-system", .f_format = subsystem_format, .s_update_interval = 0.0 },
@@ -63,7 +59,7 @@ static sysobj_class cls_power[] = {
 
   { SYSOBJ_CLASS_DEF
     .tag = "device_power", .pattern = "/sys/devices/*/power", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .s_halp = power_reference_markup_text, .s_label = N_("Device power management information"),
+    .s_halp = power_reference_markup_text, .s_label = N_("device power management information"),
     .f_format = power_format, .s_update_interval = 1.0 },
   { SYSOBJ_CLASS_DEF
     .tag = "device_power:attribute", .pattern = "/sys/devices/*/power/*", .flags = OF_GLOB_PATTERN | OF_CONST,
@@ -75,8 +71,6 @@ static gboolean subsystem_verify(sysobj *obj) {
     gboolean ret = FALSE;
     gchar *pp = sysobj_parent_path(obj);
     if (SEQ("/sys/class", pp) )
-        ret = TRUE;
-    if (SEQ("/sys/bus", pp) )
         ret = TRUE;
     if (SEQ("/sys/block", pp) )
         ret = TRUE;
@@ -90,8 +84,6 @@ static gchar *subsystem_format(sysobj *obj, int fmt_opts) {
     if (obj) {
         if (SEQ("subsystem:class", obj->cls->tag) )
             return g_strdup_printf("class:%s", obj->name);
-        if (SEQ("subsystem:bus", obj->cls->tag) )
-            return g_strdup_printf("bus:%s", obj->name);
         if (SEQ("subsystem:block", obj->cls->tag) )
             return g_strdup_printf("block:%s", obj->name);
         if (SEQ("kernel:module", obj->cls->tag) )

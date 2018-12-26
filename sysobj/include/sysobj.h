@@ -142,6 +142,7 @@ typedef struct sysobj_class {
     const gchar *v_subsystem_parent;  /* verify that the parent obj's subsystem link points to a THIS (ex: /sys/bus/pci, /sys/class/block)  */
     const gchar *v_lblnum;           /* verify that the obj's name is label0 ( verify_lblnum(THIS) ) */
     const gchar *v_lblnum_child;     /* verify that the obj's parent is label0 ( verify_lblnum_child(THIS) ) */
+    const gchar *v_parent_path_suffix;  /* verify by matching the end of the obj's parent path */
 
     /* use SYSOBJ_CLASS_DEF for these */
     const gchar *def_file; /* __FILE__ */
