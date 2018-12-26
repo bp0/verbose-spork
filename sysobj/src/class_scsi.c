@@ -39,7 +39,7 @@ static sysobj_class cls_scsi[] = {
     .f_format = scsi_dev_list_format, .f_vendors = scsi_all_vendors },
   { SYSOBJ_CLASS_DEF
     .tag = "scsi:dev", .pattern = "/sys/devices/*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_HAS_VENDOR,
-    .v_subsystem = "/sys/bus/scsi", .f_format = scsi_format, .f_vendors = scsi_dev_vendors },
+    .v_subsystem = "/sys/bus/scsi", .s_node_format = "{{vendor}}{{model}}", .f_vendors = scsi_dev_vendors },
   { SYSOBJ_CLASS_DEF
     .tag = "scsi:dev:attr", .pattern = "/sys/devices/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .v_subsystem_parent = "/sys/bus/scsi", .attributes = scsi_items },
@@ -90,21 +90,6 @@ static gchar *scsi_vendor_format(sysobj *obj, int fmt_opts) {
         g_strchomp(val);
         if (SEQ(val, "ATA"))
             return format_as_junk_value(val, fmt_opts);
-    }
-    return simple_format(obj, fmt_opts);
-}
-
-static gchar *scsi_format(sysobj *obj, int fmt_opts) {
-    if (SEQ(obj->cls->tag, "scsi:dev") ) {
-        gchar *vendor = sysobj_format_from_fn(obj->path, "vendor", fmt_opts | FMT_OPT_OR_NULL);
-        gchar *model = sysobj_format_from_fn(obj->path, "model", fmt_opts | FMT_OPT_OR_NULL);
-        gchar *ret = NULL;
-        if (vendor)
-            ret = appf(ret, "%s", vendor);
-        if (model)
-            ret = appf(ret, "%s", model);
-        if (ret)
-            return ret;
     }
     return simple_format(obj, fmt_opts);
 }

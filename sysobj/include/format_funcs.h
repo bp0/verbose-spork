@@ -60,13 +60,14 @@ gchar *fmt_lanes_x(sysobj *obj, int fmt_opts);
 /* returns formatted <self>/name */
 gchar *fmt_node_name(sysobj *obj, int fmt_opts);
 
+/* {{child}}{{sep|child}} */
+gchar *format_node_fmt_str(sysobj *obj, int fmt_opts, const gchar *comp_str);
+
 gchar *safe_ansi_color(gchar *ansi_color, gboolean free_in); /* verify the ansi color */
 const gchar *color_lookup(int ansi_color); /* ansi_color to html color */
 /* wrap the input str with color based on fmt_opts (none,term,html,pango) */
 gchar *format_with_ansi_color(const gchar *str, const gchar *ansi_color, int fmt_opts);
-
 gchar *format_as_junk_value(const gchar *str, int fmt_opts);
-
 gchar *formatted_time_span(double real_seconds, gboolean short_version, gboolean include_seconds);
 
 /* table is null-terminated string list of null-terminated UNTRANSLATED strings

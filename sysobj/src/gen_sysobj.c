@@ -101,6 +101,7 @@ static const gchar class_item_list[] =
   ".s_halp\n"
   ".s_suggest\n"
   ".s_update_interval\n"
+  ".s_node_format\n"
   ".f_verify\n"
   ".f_label\n"
   ".f_format\n"
@@ -183,6 +184,8 @@ static gchar *get_class_info(const gchar *path) {
             return g_strdup_printf("%s", match->s_halp);
         if (SEQ(name, ".s_suggest") )
             return g_strdup_printf("%s", match->s_suggest);
+        if (SEQ(name, ".s_node_format") )
+            return g_strdup_printf("%s", match->s_node_format);
         if (SEQ(name, ".s_update_interval") )
             return g_strdup_printf("%0.4lf", match->s_update_interval);
         if (SEQ(name, ".f_verify") )

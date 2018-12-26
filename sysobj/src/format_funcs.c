@@ -491,6 +491,54 @@ gchar *format_as_junk_value(const gchar *str, int fmt_opts) {
     return g_strdup(str);
 }
 
+/* {{child}}{{sep|child}} */
+gchar *format_node_fmt_str(sysobj *obj, int fmt_opts, const gchar *comp_str) {
+    if (!comp_str) return simple_format(obj, fmt_opts);
+
+    gchar sep[24] = " ";
+    gchar cpath[128] = "";
+    gchar comp[256] = "";
+    snprintf(comp, 255, "%s", comp_str);
+
+    gchar *ret = NULL, *p = comp, *s, *e, *b;
+    int state = 0;
+    while(p) {
+        /* leading literal bits */
+        s = strstr(p, "{{");
+        if (!s) {
+            ret = appfs(ret, "", "%s", p);
+            break;
+        }
+        b = s + 2;
+        /* skip literal {s */
+        while(*b == '{') b++;
+        *(b - 2) = 0;
+        ret = appfs(ret, "", "%s", p);
+        p = b;
+        /* p starts {{ }} section */
+        e = strstr(p, "}}");
+        if (e) *e = 0; else break;
+        b = strchr(p, '|');
+        if (b) {
+            *b = 0;
+            snprintf(sep, 23, "%s", p);
+            p = b + 1;
+        } else
+            strcpy(sep, " ");
+        snprintf(cpath, 127, "%s", p);
+        if (strlen(cpath)) {
+            gchar *fc = sysobj_format_from_fn(obj->path, cpath, fmt_opts | FMT_OPT_PART | FMT_OPT_OR_NULL);
+            if (fc) {
+                ret = appfs(ret, sep, "%s", fc);
+                g_free(fc);
+            }
+        }
+        p = e + 2;
+    }
+    return ret;
+}
+
+
 void tag_vendor(gchar **str, guint offset, const gchar *vendor_str, const char *ansi_color, int fmt_opts) {
     if (!str || !*str) return;
     if (!vendor_str || !ansi_color) return;

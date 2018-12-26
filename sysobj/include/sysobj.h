@@ -118,6 +118,7 @@ typedef struct sysobj_class {
     const gchar *tag;
     const gchar *pattern;
     guint flags;
+    const gchar *s_node_format; /* simple_format() will try format_node_fmt_str() for a node */
     const gchar *s_label; /* label for "simple" classes, not translated */
     const gchar *s_halp;  /* markup text. halp for "simple" classes */
     const gchar *s_suggest; /* suggest an alternate path */

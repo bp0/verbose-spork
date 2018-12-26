@@ -23,6 +23,7 @@
 #include "gg_file.h"
 #include "sysobj.h"
 #include "vendor.h"
+#include "format_funcs.h"
 
 so_stats sysobj_stats = {};
 GSList *sysobj_data_paths = NULL;
@@ -363,6 +364,11 @@ gchar *simple_format(sysobj* obj, int fmt_opts) {
         return g_strdup( msg );
     }
     if (dir) {
+        if (obj->cls && obj->cls->s_node_format) {
+            gchar *ret = format_node_fmt_str(obj, fmt_opts, obj->cls->s_node_format);
+            if (ret)
+                return ret;
+        }
         msg = N_("{node}");
         if (! (fmt_opts & FMT_OPT_NO_TRANSLATE) )
             msg = _(msg);
