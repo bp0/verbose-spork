@@ -4,6 +4,8 @@
 #include "format_funcs.h"
 #include <inttypes.h>
 
+#include "gtk_backports.c"
+
 /* Forward declarations */
 static void _create(bpPinInspect *s);
 static void _cleanup(bpPinInspect *s);

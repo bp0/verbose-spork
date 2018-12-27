@@ -11,7 +11,7 @@ add_definitions(-DSYSOB_SRC_ROOT="${CMAKE_CURRENT_SOURCE_DIR}")
 
 include(FindPkgConfig)
 pkg_check_modules(SYSOB_GLIB REQUIRED glib-2.0>=2.10)
-pkg_check_modules(SYSOB_GTK3 gtk+-3.0>=3.16)
+pkg_check_modules(SYSOB_GTK3 gtk+-3.0>=3.12)
 
 add_definitions("-std=gnu99")
 message("sysobj source dir: ${CMAKE_CURRENT_SOURCE_DIR}")
