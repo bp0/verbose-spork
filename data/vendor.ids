@@ -196,7 +196,8 @@ name Sony
     name_short SONY
     url www.sony.com
     ansi_color 0;30;107
-    match_string_case CDU
+    match_string Sony
+#   match_string_case CDU
 
 name SanDisk
     url www.sandisk.com
@@ -399,6 +400,7 @@ name Arm Holdings
 
 name Microchip Technology (formerly Standard Microsystems)
     name_short SMC
+    ansi_color 0;37;40
     match_string Standard Microsystems
 
 name Linux Foundation
@@ -464,6 +466,11 @@ name Debian
     url www.debian.org
     ansi_color 0;31;107
     match_string debian
+
+name Raspbian
+    url www.raspberrypi.org/downloads/raspbian/
+    ansi_color 0;97;101
+    match_string raspbian
 
 name Canonical
     url www.canonical.com
