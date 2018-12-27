@@ -256,9 +256,14 @@ static gboolean _check_row(GtkTreeModel *model, GtkTreePath *path, GtkTreeIter *
     if (up || full || !sysobj_exists(p->obj) ) {
         if (sysobj_exists(p->obj) ) {
             /* update value */
+            gboolean writable = p->obj->others_can_write || p->obj->root_can_write;
+            gchar *icon = "folder";
+            if (!p->obj->data.is_dir)
+                icon = writable ? "application-x-executable" : "text-x-generic";
+
             gchar *nice = sysobj_format(p->obj, priv->fmt_opts | FMT_OPT_LIST_ITEM);
             gtk_tree_store_set(GTK_TREE_STORE(model), iter,
-                KV_COL_ICON, (p->obj->data.is_dir) ? "folder" : "text-x-generic",
+                KV_COL_ICON, icon,
                 KV_COL_KEY, p->obj->name_req,
                 KV_COL_VALUE, nice,
                 KV_COL_LIVE, 0, -1);
