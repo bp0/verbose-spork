@@ -316,6 +316,15 @@ gchar *fmt_node_name(sysobj *obj, int fmt_opts) {
     return simple_format(obj, fmt_opts);
 }
 
+gchar *fmt_vendor_name_to_tag(sysobj *obj, int fmt_opts) {
+    if (obj && obj->data.str) {
+        gchar *vt = vendor_match_tag(obj->data.str, fmt_opts);
+        if (vt)
+            return vt;
+    }
+    return simple_format(obj, fmt_opts);
+}
+
 gchar *fmt_seconds(sysobj *obj, int fmt_opts) {
     CHECK_OBJ();
     PREP_RAW();
@@ -661,6 +670,7 @@ STD_FORMAT_FUNC(fmt_megatransferspersecond)
 STD_FORMAT_FUNC(fmt_gigatransferspersecond)
 STD_FORMAT_FUNC(fmt_lanes_x)
 STD_FORMAT_FUNC(fmt_node_name)
+STD_FORMAT_FUNC(fmt_vendor_name_to_tag)
 };
 
 const gchar *format_funcs_lookup(const gpointer fp) {

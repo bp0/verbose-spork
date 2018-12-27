@@ -215,10 +215,9 @@ void find_soc() {
                     gchar *name = sysobj_raw_from_fn(lookup_path, "name");
                     if (!vendor) vendor = g_strdup("Unknown");
                     if (!name) name = g_strdup("Device");
-                    sysobj_virt_add_simple(PROCS_ROOT "/soc_name", NULL, g_strdup_printf("%s %s", vendor, name), VSO_TYPE_STRING);
+                    sysobj_virt_add_simple(PROCS_ROOT "/soc_vendor", NULL, vendor, VSO_TYPE_STRING);
+                    sysobj_virt_add_simple(PROCS_ROOT "/soc_name", NULL, name, VSO_TYPE_STRING);
                     break;
-                    g_free(vendor);
-                    g_free(name);
                 }
                 g_free(lookup_path);
                 el += strlen(el) + 1;

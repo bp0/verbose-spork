@@ -19,9 +19,20 @@
  */
 
 #include "sysobj.h"
+#include "format_funcs.h"
 
 static gchar *procs_format(sysobj *obj, int fmt_opts);
 static vendor_list procs_vendors(sysobj *obj) { return sysobj_vendors_from_fn(obj->path, "cpuinfo"); }
+
+static attr_tab procs_items[] = {
+    { "packs", N_("number of sockets/packages/clusters discovered") },
+    { "cores", N_("number of cores discovered") },
+    { "threads", N_("number of hardware threads discovered") },
+    { "freq_domains", N_("number of scaling units discovered") },
+    { "soc_name", N_("model name of system-on-chip") },
+    { "soc_vendor", N_("vendor name of system-on-chip"), OF_HAS_VENDOR, fmt_vendor_name_to_tag },
+    ATTR_TAB_LAST
+};
 
 static sysobj_class cls_procs[] = {
   { SYSOBJ_CLASS_DEF
@@ -39,6 +50,10 @@ static sysobj_class cls_procs[] = {
     .tag = "procs:thread", .pattern = ":/cpu/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .v_lblnum = "thread", .v_lblnum_child = "core",
     .f_format = procs_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
+  { SYSOBJ_CLASS_DEF
+    .tag = "procs:attr", .pattern = ":/cpu/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .v_parent_path_suffix = ":/cpu", .attributes = procs_items,
+    .s_update_interval = UPDATE_INTERVAL_NEVER },
 };
 
 static gchar *procs_summarize_topology(int packs, int cores, int threads, int logical) {
@@ -125,13 +140,16 @@ static gchar *procs_format(sysobj *obj, int fmt_opts) {
         if (!threads)
             logical = count_children(":/cpu/cpuinfo", "logical_cpu*");
         gchar *tsum = procs_summarize_topology(packs, cores, threads, logical);
-        gchar *soc = sysobj_format_from_fn(obj->path, "soc_name", fmt_opts | FMT_OPT_PART | FMT_OPT_OR_NULL);
+        gchar *soc_vendor = sysobj_format_from_fn(obj->path, "soc_vendor", fmt_opts | FMT_OPT_PART | FMT_OPT_OR_NULL);
+        gchar *soc_name = sysobj_format_from_fn(obj->path, "soc_name", fmt_opts | FMT_OPT_PART | FMT_OPT_OR_NULL);
         gchar *msum = summarize_children_by_counting_uniq_format_strings(obj, fmt_opts, "package*", FALSE);
         gchar *cisum = sysobj_format_from_fn(":/cpu/cpuinfo", NULL, fmt_opts | FMT_OPT_PART | FMT_OPT_OR_NULL);
 
         if (fmt_opts & FMT_OPT_COMPLETE) {
-            if (soc)
-                ret = appfs(ret, "\n", "%s", soc);
+            if (soc_vendor) {
+                ret = appf(ret, "%s", soc_vendor);
+                ret = appf(ret, "%s", soc_name);
+            }
             if (msum)
                 ret = appfs(ret, "\n", "%s", msum);
             if (!threads && cisum)
@@ -139,8 +157,10 @@ static gchar *procs_format(sysobj *obj, int fmt_opts) {
             ret = appfs(ret, "\n", "%s", tsum);
         } else {
             /* not FMT_OPT_COMPLETE */
-            if (soc)
-                ret = appf(ret, "%s", soc);
+            if (soc_vendor) {
+                ret = appf(ret, "%s", soc_vendor);
+                ret = appf(ret, "%s", soc_name);
+            }
             else if (msum)
                 ret = appf(ret, "%s", msum);
             else if (!threads && cisum)
@@ -150,7 +170,8 @@ static gchar *procs_format(sysobj *obj, int fmt_opts) {
                 ret = appf(ret, "%s", tsum);
         }
 
-        g_free(soc);
+        g_free(soc_name);
+        g_free(soc_vendor);
         g_free(tsum);
         g_free(msum);
         g_free(cisum);
