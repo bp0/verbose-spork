@@ -51,6 +51,8 @@ gchar *fmt_millivolt(sysobj *obj, int fmt_opts);
 gchar *fmt_rpm(sysobj *obj, int fmt_opts);
 gchar *fmt_1yes0no(sysobj *obj, int fmt_opts);
 gchar *fmt_megabitspersecond(sysobj *obj, int fmt_opts);
+gchar *fmt_bytes(sysobj *obj, int fmt_opts);
+gchar *fmt_bytes_to_higher(sysobj *obj, int fmt_opts);
 gchar *fmt_KiB(sysobj *obj, int fmt_opts);
 gchar *fmt_KiB_to_MiB(sysobj *obj, int fmt_opts);
 gchar *fmt_KiB_to_higher(sysobj *obj, int fmt_opts); /* up to MiB, GiB, etc */

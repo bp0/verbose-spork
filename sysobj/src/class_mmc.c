@@ -23,7 +23,8 @@
 
 const gchar mmc_reference_markup_text[] =
     "Reference:\n"
-    BULLET REFLINK("https://www.kernel.org/doc/Documentation/mmc/mmc-dev-attrs.txt")
+    BULLET REFLINK("https://www.kernel.org/doc/Documentation/mmc/mmc-dev-attrs.txt") "\n"
+    BULLET REFLINK("https://lwn.net/Articles/682276/") "\n"
     "\n";
 
 static attr_tab mmc_items[] = {
@@ -39,8 +40,8 @@ static attr_tab mmc_items[] = {
     { "oemid",    N_("OEM/Application ID (from CID Register)") },
     { "prv",      N_("product revision (from CID Register) (SD and MMCv4 only)") },
     { "serial",               N_("product serial number (from CID Register)") },
-    { "erase_size",           N_("erase group size") },
-    { "preferred_erase_size", N_("preferred erase size") },
+    { "erase_size",           N_("erase group size"), OF_NONE, fmt_bytes_to_higher },
+    { "preferred_erase_size", N_("preferred erase size"), OF_NONE, fmt_bytes_to_higher },
     { "raw_rpmb_size_mult",   N_("RPMB partition size") },
     { "rel_sectors",          N_("reliable write sector count") },
     { "ocr",                  N_("Operation Conditions Register") },

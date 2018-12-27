@@ -197,12 +197,15 @@ gchar *fmt_megabitspersecond(sysobj *obj, int fmt_opts) {
         : g_strdup_printf("%.1f %s", mbps, _("Mbps"));
 }
 
-gchar *fmt_KiB(sysobj *obj, int fmt_opts) {
+gchar *fmt_bytes(sysobj *obj, int fmt_opts) {
     CHECK_OBJ();
     PREP_RAW();
-    double v = strtod(raw, NULL);
+    double bytes = strtod(raw, NULL);
     FINISH_RAW();
-    return g_strdup_printf("%0.1f %s", v, _("KiB") );
+    return
+        util_strchomp_float(fmt_opts & FMT_OPT_NO_UNIT
+        ? g_strdup_printf("%.1f", bytes)
+        : g_strdup_printf("%.1f %s", bytes, _("bytes")) );
 }
 
 #define bytes_KiB (1024.0)
@@ -210,6 +213,39 @@ gchar *fmt_KiB(sysobj *obj, int fmt_opts) {
 #define bytes_GiB (bytes_MiB * 1024.0)
 #define bytes_TiB (bytes_GiB * 1024.0)
 #define bytes_PiB (bytes_TiB * 1024.0)
+
+#define no_unit_check_chomp(f, u)                       \
+        util_strchomp_float(fmt_opts & FMT_OPT_NO_UNIT  \
+        ? g_strdup_printf("%.1f", (f))                    \
+        : g_strdup_printf("%.1f %s", (f), (u)) )
+
+gchar *fmt_bytes_to_higher(sysobj *obj, int fmt_opts) {
+    CHECK_OBJ();
+    PREP_RAW();
+    double v = strtod(raw, NULL);
+    FINISH_RAW();
+
+    if (v > 2 * bytes_PiB)
+        return no_unit_check_chomp(v / bytes_PiB, _("PiB"));
+    if (v > 2 * bytes_TiB)
+        return no_unit_check_chomp(v / bytes_TiB, _("TiB"));
+    if (v > 2 * bytes_GiB)
+        return no_unit_check_chomp(v / bytes_GiB, _("GiB"));
+    if (v > 2 * bytes_MiB)
+        return no_unit_check_chomp(v / bytes_MiB, _("MiB"));
+    if (v > 2 * bytes_KiB)
+        return no_unit_check_chomp(v / bytes_KiB, _("KiB"));
+
+    return no_unit_check_chomp(v, _("bytes"));
+}
+
+gchar *fmt_KiB(sysobj *obj, int fmt_opts) {
+    CHECK_OBJ();
+    PREP_RAW();
+    double v = strtod(raw, NULL);
+    FINISH_RAW();
+    return g_strdup_printf("%0.1f %s", v, _("KiB") );
+}
 
 gchar *fmt_KiB_to_MiB(sysobj *obj, int fmt_opts) {
     CHECK_OBJ();
@@ -232,15 +268,15 @@ gchar *fmt_KiB_to_higher(sysobj *obj, int fmt_opts) {
     FINISH_RAW();
 
     if (v > 2 * bytes_PiB)
-        return g_strdup_printf("%0.1f %s", v / bytes_PiB, _("PiB") );
+        return no_unit_check_chomp(v / bytes_PiB, _("PiB"));
     if (v > 2 * bytes_TiB)
-        return g_strdup_printf("%0.1f %s", v / bytes_TiB, _("TiB") );
+        return no_unit_check_chomp(v / bytes_TiB, _("TiB"));
     if (v > 2 * bytes_GiB)
-        return g_strdup_printf("%0.1f %s", v / bytes_GiB, _("GiB") );
+        return no_unit_check_chomp(v / bytes_GiB, _("GiB"));
     if (v > 2 * bytes_MiB)
-        return g_strdup_printf("%0.1f %s", v / bytes_MiB, _("MiB") );
+        return no_unit_check_chomp(v / bytes_MiB, _("MiB"));
 
-    return g_strdup_printf("%0.1f %s", v / bytes_KiB, _("KiB") );
+    return no_unit_check_chomp(v / bytes_KiB, _("KiB"));
 }
 
 gchar *fmt_megatransferspersecond(sysobj *obj, int fmt_opts) {
@@ -616,6 +652,8 @@ STD_FORMAT_FUNC(fmt_millivolt)
 STD_FORMAT_FUNC(fmt_rpm)
 STD_FORMAT_FUNC(fmt_1yes0no)
 STD_FORMAT_FUNC(fmt_megabitspersecond)
+STD_FORMAT_FUNC(fmt_bytes)
+STD_FORMAT_FUNC(fmt_bytes_to_higher)
 STD_FORMAT_FUNC(fmt_KiB)
 STD_FORMAT_FUNC(fmt_KiB_to_MiB)
 STD_FORMAT_FUNC(fmt_KiB_to_higher)

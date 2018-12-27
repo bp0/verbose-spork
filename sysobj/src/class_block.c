@@ -32,6 +32,7 @@ static attr_tab block_items[] = {
     { "size", N_("size in sectors") },
     { "stat", N_("block layer statistics"), OF_NONE, NULL, 0.5 },
     { "removable", N_("is removable"), OF_NONE, fmt_1yes0no },
+    { "force_ro", N_("force read-only"), OF_NONE, fmt_1yes0no },
     { "ro", N_("is read-only"), OF_NONE, fmt_1yes0no },
     { "partition", N_("partition number") },
     ATTR_TAB_LAST
