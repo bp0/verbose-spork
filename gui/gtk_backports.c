@@ -1,4 +1,6 @@
 
+#if !GTK_CHECK_VERSION(3,16,0)
+
 /* gtk_text_view_set_monospace() requres 3.16 */
 
 void gtk_text_view_set_monospace (GtkTextView *text_view, gboolean monospace)
@@ -6,7 +8,6 @@ void gtk_text_view_set_monospace (GtkTextView *text_view, gboolean monospace)
 
 /* gtk_text_buffer_insert_markup() requires 3.16 */
 
-#if !GTK_CHECK_VERSION(3,16,0)
 static GtkTextTag *
 get_tag_for_attributes (PangoAttrIterator *iter)
 {
