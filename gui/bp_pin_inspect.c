@@ -254,8 +254,11 @@ void bp_pin_inspect_do(bpPinInspect *s, const pin *p, int fmt_opts) {
     priv->fmt_opts = fmt_opts;
     if (!p) {
         gtk_label_set_markup(GTK_LABEL(priv->lbl_top), "");
+        gtk_label_set_markup(GTK_LABEL(priv->lbl_vendor), "");
         gtk_label_set_markup(GTK_LABEL(priv->lbl_debug), "");
         gtk_widget_hide(priv->help_container);
+        gtk_text_buffer_set_text(priv->val_formatted, "", -1);
+        gtk_text_buffer_set_text(priv->val_raw, "", -1);
         return;
     }
 
