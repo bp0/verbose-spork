@@ -59,6 +59,7 @@ static attr_tab pci_idcomp_items[] = {
 static attr_tab pci_var_items[] = {
     { "boot_vga", N_("is the primary graphics device"), OF_NONE, fmt_1yes0no, 60.0 },
     { "ari_enabled", N_("uses the alternative routing-ID interpretation"), OF_NONE, fmt_1yes0no, 60.0 },
+    { "broken_parity_status", N_("the device is known to report false errors"), OF_NONE, fmt_1yes0no, 60.0 },
     { "enable", NULL, OF_NONE, fmt_1yes0no },
     ATTR_TAB_LAST
 };
