@@ -135,8 +135,8 @@ static gpointer _sysobj_foreach_thread_main(mt_state *s) {
         }
 
         if (0)
-        printf("[0x%016llx](rate: %0.2lf/s) to_search:%lu searched:%lu now: %s\n",
-            (long long unsigned)g_thread_self(), s->stats.rate, s->stats.queue_length, s->stats.searched, path);
+        printf("[%p](rate: %0.2lf/s) to_search:%lu searched:%lu now: %s\n",
+            g_thread_self(), s->stats.rate, s->stats.queue_length, s->stats.searched, path);
 
         sysobj *obj = sysobj_new_fast(path);
         if (!obj) { g_free(path); continue; }
