@@ -90,7 +90,7 @@ static gboolean _dt_item_callback(const sysobj *obj, gpointer user_data, gconstp
         return SYSOBJ_FOREACH_CONTINUE;
 
     /* should either be NULL or @ */
-    if (*(obj->name+3) == '\0' || *(obj->name+3) == '@') {
+    if (obj->data.is_dir && *(obj->name+3) == '\0' || *(obj->name+3) == '@') {
         gchar *gpu_id = g_strdup_printf(PFX_DT "%s", obj->name_req);
         sysobj_virt_add_simple(":/gpu/found", gpu_id, obj->path, VSO_TYPE_SYMLINK | VSO_TYPE_AUTOLINK | VSO_TYPE_DYN );
         g_free(gpu_id);
