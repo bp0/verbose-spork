@@ -139,7 +139,6 @@ static void procs_scan() {
             gchar *c_path = g_strdup_printf(PROCS_ROOT "/%s%d/%s%d", s_pack, p, s_core, c);
             gchar *p_path = g_strdup_printf(PROCS_ROOT "/%s%d", s_pack, p);
             gchar *cpuinfo_path = g_strdup_printf(":/cpuinfo/logical_cpu%d", log);
-            gchar *model = sysobj_raw_from_fn(cpuinfo_path, "model_name");
 
             /* sysobj_virt_add() returns TRUE only if added, so count the additions */
             if ( sysobj_virt_add_simple(p_path, NULL, "*", VSO_TYPE_DIR ) ) packs++;
@@ -147,13 +146,11 @@ static void procs_scan() {
             if ( sysobj_virt_add_simple(t_path, NULL, "*", VSO_TYPE_DIR ) ) threads++;
             sysobj_virt_add_simple(t_path, cpu_obj->name, cpu_obj->path, VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_AUTOLINK );
             sysobj_virt_add_simple(t_path, "cpuinfo", cpuinfo_path, VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_AUTOLINK );
-            sysobj_virt_add_simple(p_path, "model_name", model, VSO_TYPE_STRING);
 
             g_free(t_path);
             g_free(c_path);
             g_free(p_path);
             g_free(cpuinfo_path);
-            g_free(model);
             sysobj_free(topo_obj);
 
             /* clock */
