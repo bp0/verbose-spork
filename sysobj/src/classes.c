@@ -74,6 +74,7 @@ void class_backlight();
 void class_i2c();
 void class_block();
 void class_scsi();
+void class_clocksource();
 
 void class_uptime();
 void class_dmi_id();
@@ -219,6 +220,7 @@ void class_init() {
     class_i2c();
     class_block();
     class_scsi();
+    class_clocksource();
 
     class_cpu();
     class_cpufreq();
