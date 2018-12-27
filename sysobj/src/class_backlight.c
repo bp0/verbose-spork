@@ -47,32 +47,16 @@ static sysobj_class cls_backlight[] = {
     .f_format = backlight_format, .s_halp = backlight_reference_markup_text },
   { SYSOBJ_CLASS_DEF
     .tag = "backlight:dev", .pattern = "/sys/devices/*/backlight/*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .f_verify = backlight_dev_verify,
-    .f_format = backlight_format, .s_halp = backlight_reference_markup_text },
+    .v_parent_path_suffix = "/backlight", .s_node_format = "{{bl_power}}{{actual_brightness}}",
+    .s_halp = backlight_reference_markup_text },
   { SYSOBJ_CLASS_DEF
     .tag = "backlight:attr", .pattern = "/sys/devices/*/backlight/*/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .attributes = backlight_items, .s_halp = backlight_reference_markup_text },
 };
 
-static gboolean backlight_dev_verify(sysobj *obj) {
-    return verify_parent_name(obj, "backlight");
-}
-
 static gchar *backlight_format(sysobj *obj, int fmt_opts) {
     const gchar *tag = obj->cls->tag;
-    if (SEQ(tag, "backlight:dev") ) {
-        gchar *ret = NULL;
-        gchar *pwr = sysobj_format_from_fn(obj->path, "bl_power", fmt_opts | FMT_OPT_PART);
-        gchar *brt = sysobj_format_from_fn(obj->path, "actual_brightness", fmt_opts | FMT_OPT_PART);
-        if (pwr)
-            ret = appf(ret, "%s", pwr);
-        if (brt)
-            ret = appf(ret, "%s", util_strchomp_float(brt));
-        g_free(pwr);
-        g_free(brt);
-        if (ret) return ret;
-    }
-    else if (SEQ(tag, "backlight:list") ) {
+    if (SEQ(tag, "backlight:list") ) {
         gchar *ret = NULL;
         for(GSList *l = obj->data.childs; l; l = l->next) {
             sysobj *bl = sysobj_new_from_fn(obj->path, l->data);
@@ -93,7 +77,9 @@ static gchar *fmt_brightness(sysobj *obj, int fmt_opts) {
     if (fmt_opts & FMT_OPT_NO_UNIT)
         return trim;
     double lev = strtol(obj->data.str, NULL, 10);
-    lev = (lev / 255) * 100;
+    double max = sysobj_uint32_from_fn(obj->path, "../max_brightness", 10);
+    if (max == 0.0) max = 255;
+    lev = (lev / max) * 100;
     g_free(trim);
     return g_strdup_printf("%.1lf%s", lev, _("%") );
 }
