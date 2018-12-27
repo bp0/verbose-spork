@@ -35,8 +35,8 @@ void gen_arm_ids(); /* creates in :/cpuinfo, before it exists */
 void gen_dt_ids();
 void gen_os_release();
 void gen_dmidecode();
-void gen_mobo(); /* requires :/dmidecode */
 void gen_rpi();
+void gen_mobo(); /* requires :/dmidecode :/raspberry_pi */
 void gen_cpuinfo();
 void gen_meminfo();
 void gen_procs(); /* requires :/cpuinfo */
@@ -52,8 +52,8 @@ void generators_init() {
     gen_dt_ids();
     gen_os_release();
     gen_dmidecode();
-    gen_mobo();
     gen_rpi();
+    gen_mobo();
     gen_cpuinfo();
     gen_meminfo();
     gen_procs();
@@ -62,8 +62,8 @@ void generators_init() {
 
 void class_power();
 void class_os_release();
-void class_mobo();
 void class_rpi();
+void class_mobo();
 void class_cpuinfo();
 void class_meminfo();
 void class_procs();
@@ -208,8 +208,8 @@ void class_init() {
     class_proc_alts();
 
     class_os_release();
-    class_mobo();
     class_rpi();
+    class_mobo();
     class_cpuinfo();
     class_meminfo();
     class_procs();

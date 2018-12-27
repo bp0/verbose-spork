@@ -206,5 +206,9 @@ void gen_mobo() {
     for (int i = 0; i < (int)G_N_ELEMENTS(vol); i++)
         sysobj_virt_add(&vol[i]);
 
+    if (sysobj_exists_from_fn(":/raspberry_pi", NULL) ) {
+        sysobj_virt_add_simple(":/mobo/raspberry_pi", NULL, ":/raspberry_pi", VSO_TYPE_SYMLINK | VSO_TYPE_AUTOLINK | VSO_TYPE_DYN );
+    }
+
     auto_free(mobo_get_name(":/mobo"));
 }

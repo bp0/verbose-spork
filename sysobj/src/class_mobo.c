@@ -33,14 +33,14 @@ static sysobj_class cls_mobo[] = {
 };
 
 static vendor_list mobo_vendor(sysobj *obj) {
-    vendor_list vl = sysobj_vendors_from_fn("/sys/class/dmi/id", NULL);
-    if (!vl) {
-        gchar *vs = sysobj_raw_from_fn("/sys/firmware/devicetree/base/model", NULL);
-        const Vendor *v = vendor_match(vs, NULL);
-        g_free(vs);
-        return vendor_list_append(NULL, v);
-    }
-    return vl;
+    const Vendor *v = NULL;
+    gchar *vs = sysobj_raw_from_fn("/sys/firmware/devicetree/base/model", NULL);
+    v = vendor_match(vs, NULL);
+    g_free(vs);
+    return vendor_list_concat_va(3,
+        sysobj_vendors_from_fn("/sys/class/dmi/id", NULL),
+        vendor_list_append(NULL, v),
+        sysobj_vendors_from_fn(":/raspberry_pi", NULL)  );
 }
 
 static gchar *mobo_format(sysobj *obj, int fmt_opts) {

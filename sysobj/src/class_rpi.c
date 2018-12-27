@@ -21,10 +21,15 @@
 #include "sysobj.h"
 
 static gchar *rpi_format(sysobj *obj, int fmt_opts);
+vendor_list rpi_vendors(sysobj *obj) {
+    return vendor_list_concat(
+        sysobj_vendors_from_fn(obj->path, "board_name"),
+        sysobj_vendors_from_fn(obj->path, "manufacturer") );
+}
 
 attr_tab rpi_items[] = {
     { "raspberry_pi",  N_("Raspberry Pi information"), OF_NONE },
-    { "board_name",    N_("model"), OF_NONE },
+    { "board_name",    N_("model"), OF_HAS_VENDOR },
     { "introduction",  N_("date of introduction"), OF_NONE },
     { "manufacturer",  N_("manufacturer"), OF_HAS_VENDOR },
     { "overvolt",      N_("permanent over-volt bit"), OF_NONE },
@@ -38,7 +43,11 @@ attr_tab rpi_items[] = {
 
 static sysobj_class cls_rpi[] = {
   { SYSOBJ_CLASS_DEF
-    .tag = "rpi", .pattern = ":/raspberry_pi*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .tag = "rpi", .pattern = ":/raspberry_pi", .flags = OF_CONST | OF_HAS_VENDOR,
+    .attributes = rpi_items, .f_vendors = rpi_vendors,
+    .f_format = rpi_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
+  { SYSOBJ_CLASS_DEF
+    .tag = "rpi:attr", .pattern = ":/raspberry_pi/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .attributes = rpi_items,
     .f_format = rpi_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
 };
