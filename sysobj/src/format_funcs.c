@@ -506,14 +506,16 @@ gchar *format_node_fmt_str(sysobj *obj, int fmt_opts, const gchar *comp_str) {
         /* leading literal bits */
         s = strstr(p, "{{");
         if (!s) {
-            ret = appfs(ret, "", "%s", p);
+            if (strlen(p))
+                ret = appfs(ret, "", "%s", p);
             break;
         }
         b = s + 2;
         /* skip literal {s */
         while(*b == '{') b++;
         *(b - 2) = 0;
-        ret = appfs(ret, "", "%s", p);
+        if (strlen(p))
+            ret = appfs(ret, "", "%s", p);
         p = b;
         /* p starts {{ }} section */
         e = strstr(p, "}}");
