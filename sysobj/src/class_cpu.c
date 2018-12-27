@@ -67,7 +67,7 @@ double cpu_update_interval(sysobj *obj) {
 static sysobj_class cls_cpu[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "cpu_list", .pattern = "/sys/devices/system/cpu", .flags = OF_CONST,
-    .s_suggest = ":/procs", .s_halp = cpu_reference_markup_text,
+    .s_suggest = ":/cpu", .s_halp = cpu_reference_markup_text,
     .f_update_interval = cpu_update_interval },
 
   { SYSOBJ_CLASS_DEF

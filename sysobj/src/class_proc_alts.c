@@ -30,7 +30,7 @@ static sysobj_class cls_proc_alts[] = {
     .f_format = proc_alts_format, .s_update_interval = 30.0 },
   { SYSOBJ_CLASS_DEF
     .tag = "proc_use_alt:cpuinfo", .pattern = "/proc/cpuinfo", .flags = OF_CONST,
-    .s_label = N_("Raw cpuinfo"), .s_suggest = ":/procs/cpuinfo",
+    .s_label = N_("Raw cpuinfo"), .s_suggest = ":/cpu/cpuinfo",
     .f_format = proc_alts_format, .s_update_interval = 30.0 },
 };
 

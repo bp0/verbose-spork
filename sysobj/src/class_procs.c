@@ -21,22 +21,22 @@
 #include "sysobj.h"
 
 static gchar *procs_format(sysobj *obj, int fmt_opts);
-static double procs_update_interval(sysobj *obj);
+static vendor_list procs_vendors(sysobj *obj) { return sysobj_vendors_from_fn(obj->path, "cpuinfo"); }
 
 static sysobj_class cls_procs[] = {
   { SYSOBJ_CLASS_DEF
-    .tag = "procs", .pattern = ":/procs", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .tag = "procs", .pattern = ":/cpu", .flags = OF_GLOB_PATTERN | OF_CONST | OF_HAS_VENDOR,
+    .f_format = procs_format, .s_update_interval = UPDATE_INTERVAL_NEVER, .f_vendors = procs_vendors },
+  { SYSOBJ_CLASS_DEF
+    .tag = "procs:pack", .pattern = ":/cpu/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .v_lblnum = "package", .v_parent_path_suffix = ":/cpu",
     .f_format = procs_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
   { SYSOBJ_CLASS_DEF
-    .tag = "procs:pack", .pattern = ":/procs/*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .v_lblnum = "package", .v_parent_path_suffix = ":/procs",
-    .f_format = procs_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
-  { SYSOBJ_CLASS_DEF
-    .tag = "procs:core", .pattern = ":/procs/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .tag = "procs:core", .pattern = ":/cpu/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .v_lblnum = "core", .v_lblnum_child = "package",
     .f_format = procs_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
   { SYSOBJ_CLASS_DEF
-    .tag = "procs:thread", .pattern = ":/procs/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .tag = "procs:thread", .pattern = ":/cpu/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .v_lblnum = "thread", .v_lblnum_child = "core",
     .f_format = procs_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
 };
@@ -105,7 +105,7 @@ static int count_children(const gchar *path, const gchar *child_glob) {
 }
 
 static gchar *procs_format(sysobj *obj, int fmt_opts) {
-    if (SEQ(obj->name, "procs")) {
+    if (SEQ(obj->path, ":/cpu")) {
         gchar *ret = NULL;
         gchar *p_str = sysobj_raw_from_fn(obj->path, "packs");
         gchar *c_str = sysobj_raw_from_fn(obj->path, "cores");
@@ -115,7 +115,7 @@ static gchar *procs_format(sysobj *obj, int fmt_opts) {
         int threads = atoi(t_str);
         int logical = 0;
         if (!threads)
-            logical = count_children(":/procs/cpuinfo", "logical_cpu*");
+            logical = count_children(":/cpu/cpuinfo", "logical_cpu*");
         gchar *tsum = procs_summarize_topology(packs, cores, threads, logical);
 
         if (fmt_opts & FMT_OPT_COMPLETE) {
@@ -130,7 +130,7 @@ static gchar *procs_format(sysobj *obj, int fmt_opts) {
             g_free(msum);
 
             if (!threads) {
-                gchar *cisum = sysobj_format_from_fn(":/procs/cpuinfo", NULL, fmt_opts | FMT_OPT_PART | FMT_OPT_OR_NULL);
+                gchar *cisum = sysobj_format_from_fn(":/cpu/cpuinfo", NULL, fmt_opts | FMT_OPT_PART | FMT_OPT_OR_NULL);
                 if (cisum)
                     ret = appfs(ret, "\n", "%s", cisum);
                 g_free(cisum);

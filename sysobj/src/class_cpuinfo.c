@@ -28,8 +28,8 @@
 const gchar arm_ids_reference_markup_text[] =
     " Items are generated on-demand and cached.\n"
     "\n"
-    " :/procs/cpuinfo/arm.ids/{implementer}/name\n"
-    " :/procs/cpuinfo/arm.ids/{implementer}/{part}/name\n"
+    " :/cpu/cpuinfo/arm.ids/{implementer}/name\n"
+    " :/cpu/cpuinfo/arm.ids/{implementer}/{part}/name\n"
     "Reference:\n"
     BULLET REFLINK("https://github.com/bp0/armids")
     "\n";
@@ -42,7 +42,7 @@ static gboolean cpuinfo_lcpu_prop_verify(sysobj *obj);
 
 static gchar *fmt_arm_implementer(sysobj *obj, int fmt_opts) {
     int imp = strtol(obj->data.str, NULL, 16);
-    gchar *istr = auto_free( sysobj_raw_from_printf(":/procs/cpuinfo/arm.ids/%02x/name", imp) );
+    gchar *istr = auto_free( sysobj_raw_from_printf(":/cpu/cpuinfo/arm.ids/%02x/name", imp) );
     if (istr)
         return g_strdup_printf("[%s] %s", obj->data.str, istr);
     simple_format(obj, fmt_opts);
@@ -55,7 +55,7 @@ static gchar *fmt_arm_part(sysobj *obj, int fmt_opts) {
         sysobj_read(obj_imp, FALSE);
         int imp = strtol(obj_imp->data.str, NULL, 16);
         int part = strtol(obj->data.str, NULL, 16);
-        gchar *pstr = auto_free( sysobj_raw_from_printf(":/procs/cpuinfo/arm.ids/%02x/%03x/name", imp, part) );
+        gchar *pstr = auto_free( sysobj_raw_from_printf(":/cpu/cpuinfo/arm.ids/%02x/%03x/name", imp, part) );
         if (pstr)
             return g_strdup_printf("[%s] %s", obj->data.str, pstr);
     }
@@ -97,7 +97,7 @@ static vendor_list cpuinfo_lcpu_vendors(sysobj *obj) {
 static vendor_list cpuinfo_lcpu_prop_vendors(sysobj *obj) {
     if (SEQ(obj->name, "cpu_implementer") ) {
         int imp = strtol(obj->data.str, NULL, 16);
-        gchar *istr = auto_free( sysobj_raw_from_printf(":/procs/cpuinfo/arm.ids/%02x/name", imp) );
+        gchar *istr = auto_free( sysobj_raw_from_printf(":/cpu/cpuinfo/arm.ids/%02x/name", imp) );
         return vendor_list_append(NULL, vendor_match(istr, NULL) );
     }
     return simple_vendors(obj);
@@ -105,44 +105,44 @@ static vendor_list cpuinfo_lcpu_prop_vendors(sysobj *obj) {
 
 static sysobj_class cls_cpuinfo[] = {
   { SYSOBJ_CLASS_DEF
-    .tag = "cpuinfo", .pattern = ":/procs/cpuinfo", .flags = OF_CONST | OF_HAS_VENDOR,
+    .tag = "cpuinfo", .pattern = ":/cpu/cpuinfo", .flags = OF_CONST | OF_HAS_VENDOR,
     .s_label = N_("CPU information from /proc/cpuinfo"),
     .f_format = cpuinfo_format, .s_update_interval = UPDATE_INTERVAL_NEVER,
     .f_vendors = cpuinfo_vendors },
   { SYSOBJ_CLASS_DEF
-    .tag = "cpuinfo:lcpu", .pattern = ":/procs/cpuinfo/logical_cpu*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_HAS_VENDOR,
+    .tag = "cpuinfo:lcpu", .pattern = ":/cpu/cpuinfo/logical_cpu*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_HAS_VENDOR,
     .v_lblnum = "logical_cpu", .f_vendors = cpuinfo_lcpu_vendors,
     .f_format = cpuinfo_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
   { SYSOBJ_CLASS_DEF
-    .tag = "cpuinfo:lcpu:prop", .pattern = ":/procs/cpuinfo/logical_cpu*/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .tag = "cpuinfo:lcpu:prop", .pattern = ":/cpu/cpuinfo/logical_cpu*/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .v_lblnum_child = "logical_cpu", .attributes = cpu_prop_items, .f_vendors = cpuinfo_lcpu_prop_vendors,
     .s_update_interval = UPDATE_INTERVAL_NEVER },
 
   { SYSOBJ_CLASS_DEF
-    .tag = "cpuinfo:flag", .pattern = ":/procs/cpuinfo/*/flags/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .tag = "cpuinfo:flag", .pattern = ":/cpu/cpuinfo/*/flags/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_format = cpuinfo_feature_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
   { SYSOBJ_CLASS_DEF
-    .tag = "cpuinfo:flag:list", .pattern = ":/procs/cpuinfo/*/flags", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .tag = "cpuinfo:flag:list", .pattern = ":/cpu/cpuinfo/*/flags", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_format = cpuinfo_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
   { SYSOBJ_CLASS_DEF
-    .tag = "cpuinfo:isa", .pattern = ":/procs/cpuinfo/*/isa/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .tag = "cpuinfo:isa", .pattern = ":/cpu/cpuinfo/*/isa/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_format = cpuinfo_feature_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
   { SYSOBJ_CLASS_DEF
-    .tag = "cpuinfo:isa:list", .pattern = ":/procs/cpuinfo/*/isa", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .tag = "cpuinfo:isa:list", .pattern = ":/cpu/cpuinfo/*/isa", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_format = cpuinfo_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
   { SYSOBJ_CLASS_DEF
-    .tag = "cpuinfo:feature", .pattern = ":/procs/cpuinfo/*/features/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .tag = "cpuinfo:feature", .pattern = ":/cpu/cpuinfo/*/features/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_format = cpuinfo_feature_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
   { SYSOBJ_CLASS_DEF
-    .tag = "cpuinfo:feature:list", .pattern = ":/procs/cpuinfo/*/features", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .tag = "cpuinfo:feature:list", .pattern = ":/cpu/cpuinfo/*/features", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_format = cpuinfo_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
 
   { SYSOBJ_CLASS_DEF
-    .tag = "arm.ids", .pattern = ":/procs/cpuinfo/arm.ids", .flags = OF_CONST,
+    .tag = "arm.ids", .pattern = ":/cpu/cpuinfo/arm.ids", .flags = OF_CONST,
     .s_halp = arm_ids_reference_markup_text, .s_label = "arm.ids lookup virtual tree",
     .s_update_interval = 4.0 },
   { SYSOBJ_CLASS_DEF
-    .tag = "arm.ids:id", .pattern = ":/procs/cpuinfo/arm.ids/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .tag = "arm.ids:id", .pattern = ":/cpu/cpuinfo/arm.ids/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .s_halp = arm_ids_reference_markup_text, .s_label = "arm.ids lookup result",
     .f_format = fmt_node_name },
 };

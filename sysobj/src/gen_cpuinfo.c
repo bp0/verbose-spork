@@ -19,7 +19,7 @@
  */
 
 /* Generator turns /proc/cpuinfo into a sysobj tree
- *  :/procs/cpuinfo
+ *  :/cpu/cpuinfo
  */
 
 #include "sysobj.h"
@@ -48,10 +48,10 @@ static gchar *cpuinfo_found(const gchar *path) {
 }
 
 static sysobj_virt vol[] = {
-    { .path = ":/procs/cpuinfo/_found", .str = "",
+    { .path = ":/cpu/cpuinfo/_found", .str = "",
       .type = VSO_TYPE_STRING | VSO_TYPE_CONST,
       .f_get_data = cpuinfo_found, .f_get_type = NULL },
-    { .path = ":/procs/cpuinfo", .str = "*",
+    { .path = ":/cpu/cpuinfo", .str = "*",
       .type = VSO_TYPE_DIR | VSO_TYPE_CONST,
       .f_get_data = NULL, .f_get_type = NULL },
 };
@@ -307,8 +307,8 @@ void cpuinfo_scan_arm_x86_rv(gchar **lines, gsize line_count) {
             if (this_lcpu->cpu_implementer && this_lcpu->cpu_part) {
                 int imp = strtol(this_lcpu->cpu_implementer, NULL, 16);
                 int part = strtol(this_lcpu->cpu_part, NULL, 16);
-                gchar *part_str = sysobj_raw_from_printf(":/procs/cpuinfo/arm.ids/%02x/%03x/name", imp, part);
-                gchar *imp_str = sysobj_raw_from_printf(":/procs/cpuinfo/arm.ids/%02x/name", imp);
+                gchar *part_str = sysobj_raw_from_printf(":/cpu/cpuinfo/arm.ids/%02x/%03x/name", imp, part);
+                gchar *imp_str = sysobj_raw_from_printf(":/cpu/cpuinfo/arm.ids/%02x/name", imp);
                 this_lcpu->vendor = vendor_match(imp_str, NULL);
                 g_free(part_str);
                 g_free(imp_str);
@@ -353,7 +353,7 @@ void cpuinfo_scan() {
         lcpu *this_lcpu = l->data;
         gchar *type = g_strdup(cpu_types[this_lcpu->type]);
         gchar *sysfs = g_strdup_printf("/sys/devices/system/cpu/cpu%d", this_lcpu->id);
-        gchar *base = g_strdup_printf(":/procs/cpuinfo/logical_cpu%d", this_lcpu->id);
+        gchar *base = g_strdup_printf(":/cpu/cpuinfo/logical_cpu%d", this_lcpu->id);
         //printf("%s\n", base);
         sysobj_virt_add_simple(base, NULL, "*", VSO_TYPE_DIR);
         sysobj_virt_add_simple(base, "cpu", sysfs, VSO_TYPE_SYMLINK | VSO_TYPE_AUTOLINK | VSO_TYPE_DYN );
