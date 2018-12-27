@@ -20,12 +20,100 @@
 
 #include "sysobj.h"
 #include "format_funcs.h"
+#include <ctype.h>
 
 const gchar mmc_reference_markup_text[] =
     "Reference:\n"
     BULLET REFLINK("https://www.kernel.org/doc/Documentation/mmc/mmc-dev-attrs.txt") "\n"
     BULLET REFLINK("https://lwn.net/Articles/682276/") "\n"
     "\n";
+
+#define mk_oem_id(c1, c2) (c1 << 8 | c2)
+
+/* source: https://www.cameramemoryspeed.com/sd-memory-card-faq/reading-sd-card-cid-serial-psn-internal-numbers/ */
+static struct { unsigned int manfid, oemid; const char *vendor; } sd_ids[] = {
+    { 0x000001, mk_oem_id('P','A'), "Panasonic" },
+    { 0x000002, mk_oem_id('T','M'), "Toshiba" },
+    { 0x000003, mk_oem_id('S','D'), "SanDisk" },
+    { 0x000003, mk_oem_id('P','T'), "SanDisk" },
+    { 0x00001b, mk_oem_id('S','M'), "Samsung" },
+    { 0x00001d, mk_oem_id('A','D'), "ADATA" },
+    { 0x000027, mk_oem_id('P','H'), "Phison" },
+    { 0x000028, mk_oem_id('B','E'), "Lexar" },
+    { 0x000031, mk_oem_id('S','P'), "Silicon Power" },
+    { 0x000041, mk_oem_id('4','2'), "Kingston" },
+    { 0x000074, mk_oem_id('J','E'), "Transcend" },
+    { 0x000074, mk_oem_id('J','`'), "Transcend" },
+    { 0x000076, 0xffff,             "Patriot" },
+    { 0x000082, mk_oem_id('J','T'), "Sony" },
+    { 0x00009c, mk_oem_id('S','O'), "Angelbird/Hoodman" },
+    { 0x00009c, mk_oem_id('B','E'), "Angelbird/Hoodman" },
+};
+
+gchar *mmc_format_oemid(sysobj *obj, int fmt_opts) {
+    unsigned int v = strtol(obj->data.str, NULL, 16);
+    char c2 = v & 0xff, c1 = (v >> 8) & 0xff;
+    unsigned int id = mk_oem_id(c1, c2);
+    gchar *ret = g_strdup_printf("[0x%04x] \"%c%c\"", v, isprint(c1) ? c1 : '.', isprint(c2) ? c2 : '.' );
+    const gchar *vstr = NULL;
+    for(int i = 0; i < (int)G_N_ELEMENTS(sd_ids); i++) {
+        if (id == sd_ids[i].oemid)
+            vstr = sd_ids[i].vendor;
+    }
+    if (vstr) {
+        gchar *ven_tag = vendor_match_tag(vstr, fmt_opts);
+        ret = appf(ret, "%s", ven_tag ? ven_tag : vstr);
+        g_free(ven_tag);
+    }
+    return ret;
+}
+
+gchar *mmc_format_manfid(sysobj *obj, int fmt_opts) {
+    unsigned int id = strtol(obj->data.str, NULL, 16);
+    const gchar *vstr = NULL;
+    for(int i = 0; i < (int)G_N_ELEMENTS(sd_ids); i++) {
+        if (id == sd_ids[i].manfid)
+            vstr = sd_ids[i].vendor;
+    }
+    if (vstr) {
+        gchar *ven_tag = vendor_match_tag(vstr, fmt_opts);
+        gchar *ret = g_strdup_printf("[0x%06x] %s", id, ven_tag ? ven_tag : vstr);
+        g_free(ven_tag);
+        return ret;
+    }
+    return simple_format(obj, fmt_opts);
+}
+
+vendor_list mmc_vendor(sysobj *obj) {
+    return vendor_list_concat(
+        sysobj_vendors_from_fn(obj->path, "manfid"),
+        sysobj_vendors_from_fn(obj->path, "oemid") );
+}
+
+vendor_list mmc_vendor_field(sysobj *obj) {
+    if (!obj->data.str) return NULL;
+
+    if (SEQ(obj->name, "oemid") ) {
+        unsigned int v = strtol(obj->data.str, NULL, 16);
+        char c2 = v & 0xff, c1 = (v >> 8) & 0xff;
+        unsigned int id = mk_oem_id(c1, c2);
+        const gchar *vstr = NULL;
+        for(int i = 0; i < (int)G_N_ELEMENTS(sd_ids); i++) {
+            if (id == sd_ids[i].oemid)
+                vstr = sd_ids[i].vendor;
+        }
+        return vendor_list_append(NULL, vendor_match(vstr, NULL));
+    }
+    if (SEQ(obj->name, "manfid") ) {
+        unsigned int id = strtol(obj->data.str, NULL, 16);
+        const gchar *vstr = NULL;
+        for(int i = 0; i < (int)G_N_ELEMENTS(sd_ids); i++) {
+            if (id == sd_ids[i].manfid)
+                vstr = sd_ids[i].vendor;
+        }
+        return vendor_list_append(NULL, vendor_match(vstr, NULL));
+    }
+}
 
 static attr_tab mmc_items[] = {
     { "force_ro", N_("enforce read-only access even if write protect switch is off"), OF_NONE, fmt_1yes0no },
@@ -35,9 +123,9 @@ static attr_tab mmc_items[] = {
     { "date",     N_("manufacturing date (from CID Register)") },
     { "fwrev",    N_("firmware/product revision (from CID Register) (SD and MMCv1 only)") },
     { "hwrev",    N_("hardware/product revision (from CID Register) (SD and MMCv1 only)") },
-    { "manfid",   N_("manufacturer ID (from CID Register)") },
+    { "manfid",   N_("manufacturer ID (from CID Register)"), OF_HAS_VENDOR, mmc_format_manfid },
     { "name",     N_("product name (from CID Register)") },
-    { "oemid",    N_("OEM/Application ID (from CID Register)") },
+    { "oemid",    N_("OEM/Application ID (from CID Register)"), OF_HAS_VENDOR, mmc_format_oemid },
     { "prv",      N_("product revision (from CID Register) (SD and MMCv4 only)") },
     { "serial",               N_("product serial number (from CID Register)") },
     { "erase_size",           N_("erase group size"), OF_NONE, fmt_bytes_to_higher },
@@ -53,12 +141,12 @@ static attr_tab mmc_items[] = {
 
 static sysobj_class cls_mmc[] = {
   { SYSOBJ_CLASS_DEF
-    .tag = "mmc", .pattern = "/sys/devices/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .tag = "mmc", .pattern = "/sys/devices/*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_HAS_VENDOR,
     .v_subsystem = "/sys/bus/mmc", .s_node_format = "{{type}}{{name}}",
-    .s_halp = mmc_reference_markup_text },
+    .s_halp = mmc_reference_markup_text, .f_vendors = mmc_vendor },
   { SYSOBJ_CLASS_DEF
     .tag = "mmc:attr", .pattern = "/sys/devices/*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .v_subsystem_parent = "/sys/bus/mmc", .attributes = mmc_items,
+    .v_subsystem_parent = "/sys/bus/mmc", .attributes = mmc_items, .f_vendors = mmc_vendor_field,
     .s_halp = mmc_reference_markup_text },
 };
 
