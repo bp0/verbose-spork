@@ -430,6 +430,12 @@ name Raspberry Pi Foundation
     match_string RaspberryPi
     match_string Raspberry Pi
 
+name Embest Technology
+    name_short Embest
+    url www.embest-tech.com
+    ansi_color 0;96;44
+    match_string Embest
+
 #
 # BIOS manufacturers
 #
