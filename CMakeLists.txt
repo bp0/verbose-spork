@@ -76,6 +76,7 @@ add_library(sysobj STATIC
         sysobj/src/class_block.c
         sysobj/src/class_scsi.c
         sysobj/src/class_clocksource.c
+        sysobj/src/class_mmc.c
 # gen only
         sysobj/src/gen_arm_ids.c
         sysobj/src/gen_dt.c
