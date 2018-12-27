@@ -436,6 +436,17 @@ name Embest Technology
     ansi_color 0;96;44
     match_string Embest
 
+name Transcend Information
+    name_short Transcend
+    url transcend-info.com
+    ansi_color 0;31;47
+    match_string Transcend
+
+name ADATA Technology
+    name_short ADATA
+    ansi_color 0;34;47
+    match_string_case ADATA
+
 #
 # BIOS manufacturers
 #
