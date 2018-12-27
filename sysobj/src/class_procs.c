@@ -58,7 +58,7 @@ static gchar *procs_summarize_topology(int packs, int cores, int threads, int lo
     return ret;
 }
 
-static gchar *summarize_children_by_counting_uniq_format_strings(sysobj *obj, int fmt_opts, const gchar *child_glob) {
+static gchar *summarize_children_by_counting_uniq_format_strings(sysobj *obj, int fmt_opts, const gchar *child_glob, gboolean nox) {
     gchar *ret = NULL;
     GSList *models = NULL, *l = NULL;
     GSList *childs = sysobj_children(obj, child_glob, NULL, FALSE);
@@ -77,7 +77,7 @@ static gchar *summarize_children_by_counting_uniq_format_strings(sysobj *obj, in
             cur_count = 1;
         } else {
             if(g_strcmp0(cur_str, model) ) {
-                if (cur_count > 1)
+                if (cur_count > 1 && !nox)
                     ret = appfs(ret, " + ", "%dx %s", cur_count, cur_str);
                 else
                     ret = appfs(ret, " + ", "%s", cur_str);
@@ -87,7 +87,7 @@ static gchar *summarize_children_by_counting_uniq_format_strings(sysobj *obj, in
                 cur_count++;
         }
     }
-    if (cur_count > 1)
+    if (cur_count > 1 && !nox)
         ret = appfs(ret, " + ", "%dx %s", cur_count, cur_str);
     else
         ret = appfs(ret, " + ", "%s", cur_str);
@@ -104,55 +104,74 @@ static int count_children(const gchar *path, const gchar *child_glob) {
     return n;
 }
 
+static sysobj *first_child(const gchar *path, const gchar *child_glob) {
+    sysobj *ret = NULL;
+    sysobj *obj = sysobj_new_fast(path);
+    GSList *childs = sysobj_children(obj, child_glob, NULL, FALSE);
+    if (childs)
+        ret = sysobj_new_from_fn(obj->path, childs->data);
+    g_slist_free_full(childs, g_free);
+    sysobj_free(obj);
+    return ret;
+}
+
 static gchar *procs_format(sysobj *obj, int fmt_opts) {
     if (SEQ(obj->path, ":/cpu")) {
         gchar *ret = NULL;
-        gchar *p_str = sysobj_raw_from_fn(obj->path, "packs");
-        gchar *c_str = sysobj_raw_from_fn(obj->path, "cores");
-        gchar *t_str = sysobj_raw_from_fn(obj->path, "threads");
-        int packs = atoi(p_str);
-        int cores = atoi(c_str);
-        int threads = atoi(t_str);
+        int packs = sysobj_uint32_from_fn(obj->path, "packs", 10);
+        int cores = sysobj_uint32_from_fn(obj->path, "cores", 10);
+        int threads = sysobj_uint32_from_fn(obj->path, "threads", 10);
         int logical = 0;
         if (!threads)
             logical = count_children(":/cpu/cpuinfo", "logical_cpu*");
         gchar *tsum = procs_summarize_topology(packs, cores, threads, logical);
+        gchar *soc = sysobj_format_from_fn(obj->path, "soc_name", fmt_opts | FMT_OPT_PART | FMT_OPT_OR_NULL);
+        gchar *msum = summarize_children_by_counting_uniq_format_strings(obj, fmt_opts, "package*", FALSE);
+        gchar *cisum = sysobj_format_from_fn(":/cpu/cpuinfo", NULL, fmt_opts | FMT_OPT_PART | FMT_OPT_OR_NULL);
 
         if (fmt_opts & FMT_OPT_COMPLETE) {
-            gchar *soc = sysobj_format_from_fn(obj->path, "soc_name", fmt_opts | FMT_OPT_PART | FMT_OPT_OR_NULL);
             if (soc)
                 ret = appfs(ret, "\n", "%s", soc);
-            g_free(soc);
-
-            gchar *msum = summarize_children_by_counting_uniq_format_strings(obj, fmt_opts, "package*");
             if (msum)
                 ret = appfs(ret, "\n", "%s", msum);
-            g_free(msum);
-
-            if (!threads) {
-                gchar *cisum = sysobj_format_from_fn(":/cpu/cpuinfo", NULL, fmt_opts | FMT_OPT_PART | FMT_OPT_OR_NULL);
-                if (cisum)
+            if (!threads && cisum)
                     ret = appfs(ret, "\n", "%s", cisum);
-                g_free(cisum);
-            }
+            ret = appfs(ret, "\n", "%s", tsum);
+        } else {
+            /* not FMT_OPT_COMPLETE */
+            if (soc)
+                ret = appf(ret, "%s", soc);
+            else if (msum)
+                ret = appf(ret, "%s", msum);
+            else if (!threads && cisum)
+                ret = appf(ret, "%s", cisum);
+
+            if (!ret)
+                ret = appf(ret, "%s", tsum);
         }
 
-        ret = appfs(ret, "\n", "%s", tsum);
-
+        g_free(soc);
         g_free(tsum);
-        g_free(p_str);
-        g_free(c_str);
-        g_free(t_str);
+        g_free(msum);
+        g_free(cisum);
         return ret;
     }
     if (verify_lblnum(obj, "thread") ) {
         return sysobj_format_from_fn(obj->path, "cpuinfo", fmt_opts);
     }
     if (verify_lblnum(obj, "core") ) {
-        return summarize_children_by_counting_uniq_format_strings(obj, fmt_opts, "thread*");
+        return summarize_children_by_counting_uniq_format_strings(obj, fmt_opts, "thread*", TRUE);
     }
     if (verify_lblnum(obj, "package") ) {
-        return summarize_children_by_counting_uniq_format_strings(obj, fmt_opts, "core*");
+        gboolean nox = TRUE;
+        sysobj *log0 = first_child(":/cpu/cpuinfo", "logical_cpu*");
+        if (log0->exists) {
+            gchar *fam = sysobj_raw_from_fn(log0->path, "arch_family");
+            if (SEQ(fam, "arm") ) nox = FALSE;
+            g_free(fam);
+        }
+        sysobj_free(log0);
+        return summarize_children_by_counting_uniq_format_strings(obj, fmt_opts, "core*", nox);
     }
     return simple_format(obj, fmt_opts);
 }
