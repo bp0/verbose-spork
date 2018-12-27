@@ -31,7 +31,7 @@ void gen_sysobj();
 void gen_dt();
 void gen_pci_ids();
 void gen_usb_ids();
-void gen_arm_ids(); /* creates in :/cpuinfo, before it exists */
+void gen_arm_ids(); /* creates in :/procs/cpuinfo, before it exists */
 void gen_dt_ids();
 void gen_os_release();
 void gen_dmidecode();
@@ -39,7 +39,7 @@ void gen_rpi();
 void gen_mobo(); /* requires :/dmidecode :/raspberry_pi */
 void gen_cpuinfo();
 void gen_meminfo();
-void gen_procs(); /* requires :/cpuinfo */
+void gen_procs(); /* requires :/procs/cpuinfo */
 void gen_gpu();   /* requires gen_*_ids, gen_dt */
 
 void generators_init() {

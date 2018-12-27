@@ -25,7 +25,7 @@ static vendor_list ven_ribbon_vendors(sysobj *obj) {
     return vendor_list_concat_va(9,
         sysobj_vendors_from_fn("/sys/devices/virtual/dmi/id", NULL), //TODO: get via mobo
         sysobj_vendors_from_fn(":/mobo", NULL),
-        sysobj_vendors_from_fn(":/cpuinfo", NULL),
+        sysobj_vendors_from_fn(":/procs/cpuinfo", NULL),
         sysobj_vendors_from_fn(":/gpu", NULL),
         sysobj_vendors_from_fn(":/os", NULL),
         sysobj_vendors_from_fn("/sys/bus/scsi/devices", NULL),

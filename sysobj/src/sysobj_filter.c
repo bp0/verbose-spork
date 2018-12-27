@@ -19,10 +19,11 @@
  */
 #include "sysobj_filter.h"
 
-sysobj_filter *sysobj_filter_new(int type, gchar *pattern) {
+sysobj_filter *sysobj_filter_new(int type, const gchar *pattern) {
     sysobj_filter *f = g_new0(sysobj_filter, 1);
+    f->pattern = g_strdup(pattern);
     f->type = type;
-    f->pspec = g_pattern_spec_new(pattern);
+    f->pspec = g_pattern_spec_new(f->pattern);
     return f;
 }
 

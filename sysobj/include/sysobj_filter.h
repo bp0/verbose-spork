@@ -42,7 +42,7 @@ typedef struct sysobj_filter {
     GPatternSpec *pspec;
 } sysobj_filter;
 
-sysobj_filter *sysobj_filter_new(int type, gchar *pattern);
+sysobj_filter *sysobj_filter_new(int type, const gchar *pattern);
 void sysobj_filter_free(sysobj_filter *f);
 gboolean sysobj_filter_item_include(gchar *item, GSList *filters);
 /* returns the new head of now-filtered items */

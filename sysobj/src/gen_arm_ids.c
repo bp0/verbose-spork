@@ -19,12 +19,12 @@
  */
 
 /* Generator for ids from the arm.ids file (https://github.com/bp0/armids)
- *  :/cpuinfo/arm.ids
+ *  :/procs/cpuinfo/arm.ids
  *
  * Items are generated on-demand and cached.
  *
- * :/cpuinfo/arm.ids/<implementer>/name
- * :/cpuinfo/arm.ids/<implementer>/<part>/name
+ * :/procs/cpuinfo/arm.ids/<implementer>/name
+ * :/procs/cpuinfo/arm.ids/<implementer>/<part>/name
  *
  */
 #include "sysobj.h"
@@ -34,13 +34,13 @@ static void gen_arm_ids_cache_item(arm_id *pid) {
     gchar buff[128] = "";
     int dev_symlink_flags = VSO_TYPE_SYMLINK | VSO_TYPE_AUTOLINK | VSO_TYPE_DYN;
     if (pid->implementer) {
-        sprintf(buff, ":/cpuinfo/arm.ids/%02x", pid->implementer);
+        sprintf(buff, ":/procs/cpuinfo/arm.ids/%02x", pid->implementer);
         sysobj_virt_add_simple(buff, NULL, "*", VSO_TYPE_DIR );
         if (pid->implementer_str)
             sysobj_virt_add_simple(buff, "name", pid->implementer_str, VSO_TYPE_STRING );
     }
     if (pid->part) {
-        sprintf(buff, ":/cpuinfo/arm.ids/%02x/%03x", pid->implementer, pid->part);
+        sprintf(buff, ":/procs/cpuinfo/arm.ids/%02x/%03x", pid->implementer, pid->part);
         sysobj_virt_add_simple(buff, NULL, "*", VSO_TYPE_DIR );
         if (pid->part_str)
             sysobj_virt_add_simple(buff, "name", pid->part_str, VSO_TYPE_STRING );
@@ -97,19 +97,19 @@ static gchar *gen_arm_ids_lookup_value(const gchar *path) {
     if ( name_is_0x02(name) || name_is_0x03(name) )
         name_id = strtol(name, NULL, 16);
 
-    int mc = sscanf(path, ":/cpuinfo/arm.ids/%02x/%03x", &pid->implementer, &pid->part);
+    int mc = sscanf(path, ":/procs/cpuinfo/arm.ids/%02x/%03x", &pid->implementer, &pid->part);
     gchar *verify = NULL;
     switch(mc) {
         case 2:
             if (!verify)
             verify = (name_id == -1)
-                ? g_strdup_printf(":/cpuinfo/arm.ids/%02x/%03x/%s", pid->implementer, pid->part, name)
-                : g_strdup_printf(":/cpuinfo/arm.ids/%02x/%03x", pid->implementer, pid->part);
+                ? g_strdup_printf(":/procs/cpuinfo/arm.ids/%02x/%03x/%s", pid->implementer, pid->part, name)
+                : g_strdup_printf(":/procs/cpuinfo/arm.ids/%02x/%03x", pid->implementer, pid->part);
         case 1:
             if (!verify)
             verify = (name_id == -1)
-                ? g_strdup_printf(":/cpuinfo/arm.ids/%02x/%s", pid->implementer, name)
-                : g_strdup_printf(":/cpuinfo/arm.ids/%02x", pid->implementer);
+                ? g_strdup_printf(":/procs/cpuinfo/arm.ids/%02x/%s", pid->implementer, name)
+                : g_strdup_printf(":/procs/cpuinfo/arm.ids/%02x", pid->implementer);
 
             if (strcmp(path, verify) != 0) {
                 arm_id_free(pid);
@@ -158,7 +158,7 @@ static int gen_arm_ids_lookup_type(const gchar *path) {
 
 void gen_arm_ids() {
     sysobj_virt *vo = sysobj_virt_new();
-    vo->path = g_strdup(":/cpuinfo/arm.ids");
+    vo->path = g_strdup(":/procs/cpuinfo/arm.ids");
     vo->str = g_strdup("*");
     vo->type = VSO_TYPE_DIR | VSO_TYPE_DYN;
     vo->f_get_data = gen_arm_ids_lookup_value;

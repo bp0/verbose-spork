@@ -35,7 +35,7 @@ static sysobj_virt vol[] = {
 };
 
 static gboolean cpu_x86_vfms(int logical, gchar **vendor_id, int *family, int *model, int *stepping) {
-    gchar *cpuinfo_path = g_strdup_printf(":/cpuinfo/logical_cpu%d", logical);
+    gchar *cpuinfo_path = g_strdup_printf(":/procs/cpuinfo/logical_cpu%d", logical);
     gchar *type_str =
         sysobj_raw_from_fn(cpuinfo_path, "arch_family");
 
@@ -138,7 +138,7 @@ static void procs_scan() {
             gchar *t_path = g_strdup_printf(PROCS_ROOT "/%s%d/%s%d/%s%d", s_pack, p, s_core, c, s_thread, t);
             gchar *c_path = g_strdup_printf(PROCS_ROOT "/%s%d/%s%d", s_pack, p, s_core, c);
             gchar *p_path = g_strdup_printf(PROCS_ROOT "/%s%d", s_pack, p);
-            gchar *cpuinfo_path = g_strdup_printf(":/cpuinfo/logical_cpu%d", log);
+            gchar *cpuinfo_path = g_strdup_printf(":/procs/cpuinfo/logical_cpu%d", log);
 
             /* sysobj_virt_add() returns TRUE only if added, so count the additions */
             if ( sysobj_virt_add_simple(p_path, NULL, "*", VSO_TYPE_DIR ) ) packs++;

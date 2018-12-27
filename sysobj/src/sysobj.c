@@ -836,7 +836,7 @@ GSList *sysobj_children_ex(sysobj *s, GSList *filters, gboolean sort) {
     return ret;
 }
 
-GSList *sysobj_children(sysobj *s, gchar *include_glob, gchar *exclude_glob, gboolean sort) {
+GSList *sysobj_children(sysobj *s, const gchar *include_glob, const gchar *exclude_glob, gboolean sort) {
     GSList *filters = NULL, *ret = NULL;
     if (include_glob)
         filters = g_slist_append(filters, sysobj_filter_new(SO_FILTER_INCLUDE_IIF, include_glob) );

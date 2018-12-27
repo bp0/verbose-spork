@@ -287,7 +287,7 @@ gchar *sysobj_parent_name_ex(const sysobj *s, gboolean req);
 sysobj *sysobj_parent(sysobj *s, gboolean req);
 sysobj *sysobj_sibling(sysobj *s, gchar *sib_name, gboolean req);
 sysobj *sysobj_child(sysobj *s, gchar *child);
-GSList *sysobj_children(sysobj *s, gchar *include_glob, gchar *exclude_glob, gboolean sort);
+GSList *sysobj_children(sysobj *s, const gchar *include_glob, const gchar *exclude_glob, gboolean sort);
 /* filters is list of sysobj_filter */
 GSList *sysobj_children_ex(sysobj *s, GSList *filters, gboolean sort);
 
