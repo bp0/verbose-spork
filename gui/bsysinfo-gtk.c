@@ -80,8 +80,10 @@ void about_init() {
         g_strdup_printf("GTK %d.%d.%d (built against: %d.%d.%d)",
             gtk_major_version, gtk_minor_version, gtk_micro_version,
             GTK_MAJOR_VERSION, GTK_MINOR_VERSION, GTK_MICRO_VERSION );
+    gchar *pango_version_info =
+        g_strdup_printf("Pango %s (built against: %s)", pango_version_string(), PANGO_VERSION_STRING );
 
-    gchar *text = g_strdup_printf("\n%s%s\n%s\n", about_markup_text, glib_version_info, gtk_version_info);
+    gchar *text = g_strdup_printf("\n%s%s\n%s\n%s\n", about_markup_text, glib_version_info, gtk_version_info, pango_version_info);
 
     GtkWidget *lbl;
     lbl = gtk_label_new(NULL);
