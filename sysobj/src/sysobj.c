@@ -710,7 +710,7 @@ static void sysobj_read_data(sysobj *s) {
         }
     }
 
-    if (s->data.was_read) {
+    if (s->data.was_read && s->data.str) {
         s->data.is_utf8 = g_utf8_validate(s->data.str, s->data.len, NULL);
         if (s->data.is_utf8) {
             s->data.lines = util_count_lines(s->data.str);
@@ -964,6 +964,13 @@ sysobj *sysobj_new_fast(const gchar *path) {
         sysobj_stats.so_new_fast++;
     }
     return s;
+}
+
+sysobj *sysobj_new_fast_from_fn(const gchar *base, const gchar *name) {
+    gchar *path = util_build_fn(base, name);
+    sysobj *ret = sysobj_new_fast(path);
+    g_free(path);
+    return ret;
 }
 
 sysobj *sysobj_new_from_fn(const gchar *base, const gchar *name) {

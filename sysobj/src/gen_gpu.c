@@ -30,6 +30,7 @@
 /* virt get funcs */
 static gchar *gpu_data(const gchar *path);
 static gchar *gpu_driver(const gchar *path);
+static gchar *gpu_core_khz(const gchar *path);
 
 /* listing is sorted, num is priority */
 #define PFX_DRM "1-drm-"
@@ -225,12 +226,16 @@ static void gpu_intel(gpud *g) {
     if (!g->name || !g->drm_card) return;
     gchar *gpu_path = util_build_fn(":/gpu", g->name);
 
+    sysobj *min_freq = sysobj_new_from_printf("/sys/class/drm/%s/%s", g->drm_card, "gt_min_freq_mhz");
     sysobj *max_freq = sysobj_new_from_printf("/sys/class/drm/%s/%s", g->drm_card, "gt_max_freq_mhz");
     sysobj *act_freq = sysobj_new_from_printf("/sys/class/drm/%s/%s", g->drm_card, "gt_act_freq_mhz");
+    if (min_freq->exists)
+        sysobj_virt_add_simple_mkpath(gpu_path, "intel/min_freq", min_freq->path, VSO_TYPE_SYMLINK );
     if (max_freq->exists)
-        sysobj_virt_add_simple(gpu_path, "intel.max_freq", max_freq->path, VSO_TYPE_SYMLINK );
+        sysobj_virt_add_simple_mkpath(gpu_path, "intel/max_freq", max_freq->path, VSO_TYPE_SYMLINK );
     if (act_freq->exists)
-        sysobj_virt_add_simple(gpu_path, "intel.actual_freq", act_freq->path, VSO_TYPE_SYMLINK );
+        sysobj_virt_add_simple_mkpath(gpu_path, "intel/actual_freq", act_freq->path, VSO_TYPE_SYMLINK );
+    sysobj_free(min_freq);
     sysobj_free(max_freq);
     sysobj_free(act_freq);
     g_free(gpu_path);
@@ -246,15 +251,15 @@ static void gpu_pci_var(gpud *g) {
         { "current_link_speed", "pcie.current_link_speed" },
         { "max_link_width", "pcie.max_link_width" },
         { "current_link_width", "pcie.current_link_width" },
-        { "pp_dpm_mclk", "amd.pp_dpm_mclk" },
-        { "pp_dpm_sclk", "amd.pp_dpm_sclk" },
+        { "pp_dpm_mclk", "amd/pp_dpm_mclk" },
+        { "pp_dpm_sclk", "amd/pp_dpm_sclk" },
     };
 
     gchar *gpu_path = util_build_fn(":/gpu", g->name);
     for(int i = 0; i < (int)G_N_ELEMENTS(find_items); i++) {
         sysobj *obj = sysobj_new_from_fn(g->device_path, find_items[i].target);
         if (obj->exists)
-            sysobj_virt_add_simple(gpu_path, find_items[i].name, obj->path, VSO_TYPE_SYMLINK );
+            sysobj_virt_add_simple_mkpath(gpu_path, find_items[i].name, obj->path, VSO_TYPE_SYMLINK );
         sysobj_free(obj);
     }
     g_free(gpu_path);
@@ -263,13 +268,26 @@ static void gpu_pci_var(gpud *g) {
 static void gpu_dt_opp(gpud *g) {
     if (!g->name || !g->dt_name) return;
 
-    gchar *gpu_path = util_build_fn(":/gpu", g->name);
-    gchar *oppkv = dtr_get_opp_kv(g->dt_path, NULL);
+    gchar *gpu_opp_path = g_strdup_printf(":/gpu/%s/opp", g->name);
+    gchar *oppkv = dtr_get_opp_kv(g->dt_path, "");
 
-    sysobj_virt_from_kv(gpu_path, oppkv);
+    if (oppkv) {
+        sysobj_virt_add_simple(gpu_opp_path, NULL, "*", VSO_TYPE_DIR);
+        sysobj_virt_from_kv(gpu_opp_path, oppkv);
+
+        gchar *ver = sysobj_raw_from_fn(gpu_opp_path, "version");
+        if (SEQ(ver, "2") ) {
+            /* link to of_node */
+            gchar *ref = sysobj_raw_from_fn(gpu_opp_path, "ref");
+            gchar *target = util_build_fn("/sys/firmware/devicetree/base", ref);
+            sysobj_virt_add_simple(gpu_opp_path, "of_node", target, VSO_TYPE_SYMLINK | VSO_TYPE_AUTOLINK | VSO_TYPE_DYN);
+            g_free(ref);
+        }
+        g_free(ver);
+    }
 
     g_free(oppkv);
-    g_free(gpu_path);
+    g_free(gpu_opp_path);
 }
 
 static gboolean _dev_by_of_node_callback(const sysobj *obj, gpud *g, gconstpointer stats) {
@@ -443,12 +461,31 @@ static void gpu_scan() {
                 sysobj_free(dev);
             }
 
+            sysobj_virt *vo = NULL;
+
             /* driver finder */
-            sysobj_virt *vo_drv = sysobj_virt_new();
-            vo_drv->path = util_build_fn(gpu_path, "driver_kmod");
-            vo_drv->type = VSO_TYPE_STRING;
-            vo_drv->f_get_data = gpu_driver;
-            sysobj_virt_add(vo_drv);
+            vo = sysobj_virt_new();
+            vo->path = util_build_fn(gpu_path, "driver_kmod");
+            vo->type = VSO_TYPE_STRING;
+            vo->f_get_data = gpu_driver;
+            sysobj_virt_add(vo);
+
+            /* clock freq finders */
+            vo = sysobj_virt_new();
+            vo->path = util_build_fn(gpu_path, "core_khz_max");
+            vo->type = VSO_TYPE_STRING;
+            vo->f_get_data = gpu_core_khz;
+            sysobj_virt_add(vo);
+            vo = sysobj_virt_new();
+            vo->path = util_build_fn(gpu_path, "core_khz_min");
+            vo->type = VSO_TYPE_STRING;
+            vo->f_get_data = gpu_core_khz;
+            sysobj_virt_add(vo);
+            vo = sysobj_virt_new();
+            vo->path = util_build_fn(gpu_path, "core_khz_cur");
+            vo->type = VSO_TYPE_STRING;
+            vo->f_get_data = gpu_core_khz;
+            sysobj_virt_add(vo);
 
             g_free(gpu_path);
         }
@@ -482,6 +519,137 @@ static gchar *gpu_driver(const gchar *path) {
         g_free(ver);
     }
     sysobj_free(mod);
+    return ret;
+}
+
+static gchar *gpu_core_khz(const gchar *path) {
+    if (!path) return NULL;
+    gchar *ret = NULL;
+
+    int t = 0; /* _cur */
+    if (g_str_has_suffix(path, "_min") ) t = 1;
+    if (g_str_has_suffix(path, "_max") ) t = 2;
+
+    /* SOURCE: MIN, MAX, CUR
+     * intel(MHZ): intel/min_freq, intel/max_freq, intel/actual_freq
+     * amdgpu(MHZ): amd/pp_dpm_sclk-> first line, last line, line with *
+     * devfreq(HZ): devfreq/available_frequencies (first, last), devfreq/cur_freq
+     * opp: opp/khz_min, opp/khz_max, NA
+     */
+
+    sysobj *tobj = NULL;
+
+    switch(t) {
+        case 0: /* cur */
+            tobj = sysobj_new_fast_from_fn(path, "../intel/actual_freq");
+            if (tobj->exists) {
+                sysobj_read(tobj, FALSE);
+                double v = strtoll(tobj->data.str, NULL, 10);
+                ret = g_strdup_printf("%lf", v * 1000); /* src in mhz */
+                sysobj_free(tobj);
+                break;
+            } else sysobj_free(tobj);
+            tobj = sysobj_new_fast_from_fn(path, "../amd/pp_dpm_sclk");
+            if (tobj->exists) {
+                sysobj_read(tobj, FALSE);
+                gchar *b = strchr(tobj->data.str, '*');
+                if (b) {
+                    *b = 0; b = strrchr(tobj->data.str, ':');
+                    if (b) {
+                        double v = strtoll(b+2, NULL, 10);
+                        ret = g_strdup_printf("%lf", v * 1000); /* src in mhz */
+                    }
+                }
+                sysobj_free(tobj);
+                if (ret) break;
+            } else sysobj_free(tobj);
+            tobj = sysobj_new_fast_from_fn(path, "../devfreq/cur_freq");
+            if (tobj->exists) {
+                sysobj_read(tobj, FALSE);
+                double v = strtoll(tobj->data.str, NULL, 10);
+                ret = g_strdup_printf("%lf", v / 1000); /* src in hz */
+                sysobj_free(tobj);
+                break;
+            } else sysobj_free(tobj);
+            /* opp doesn't offer cur, but if opp then devfreq should have been
+             * available anyway */
+            break;
+
+        case 1: /* min */
+            tobj = sysobj_new_fast_from_fn(path, "../intel/min_freq");
+            if (tobj->exists) {
+                sysobj_read(tobj, FALSE);
+                double v = strtoll(tobj->data.str, NULL, 10);
+                ret = g_strdup_printf("%lf", v * 1000); /* src in mhz */
+                sysobj_free(tobj);
+                break;
+            } else sysobj_free(tobj);
+            tobj = sysobj_new_fast_from_fn(path, "../amd/pp_dpm_sclk");
+            if (tobj->exists) {
+                sysobj_read(tobj, FALSE);
+                gchar *b = strchr(tobj->data.str, ':');
+                if (b) {
+                    double v = strtoll(b+2, NULL, 10);
+                    ret = g_strdup_printf("%lf", v * 1000); /* src in mhz */
+                }
+                sysobj_free(tobj);
+                if (ret) break;
+            } else sysobj_free(tobj);
+            tobj = sysobj_new_fast_from_fn(path, "../devfreq/available_frequencies");
+            if (tobj->exists) {
+                sysobj_read(tobj, FALSE);
+                gchar *b = strrchr(tobj->data.str, ' ');
+                double v = strtoll(b ? b : tobj->data.str, NULL, 10);
+                ret = g_strdup_printf("%lf", v / 1000); /* src in hz */
+                sysobj_free(tobj);
+                break;
+            } else sysobj_free(tobj);
+            tobj = sysobj_new_fast_from_fn(path, "../opp/khz_min");
+            if (tobj->exists) {
+                sysobj_read(tobj, FALSE);
+                ret = g_strdup(tobj->data.str);
+                sysobj_free(tobj);
+                break;
+            } else sysobj_free(tobj);
+            break;
+
+        case 2: /* max */
+            tobj = sysobj_new_fast_from_fn(path, "../intel/max_freq");
+            if (tobj->exists) {
+                sysobj_read(tobj, FALSE);
+                double v = strtoll(tobj->data.str, NULL, 10);
+                ret = g_strdup_printf("%lf", v * 1000); /* src in mhz */
+                sysobj_free(tobj);
+                break;
+            } else sysobj_free(tobj);
+            tobj = sysobj_new_fast_from_fn(path, "../amd/pp_dpm_sclk");
+            if (tobj->exists) {
+                sysobj_read(tobj, FALSE);
+                gchar *b = strrchr(tobj->data.str, ':');
+                if (b) {
+                    double v = strtoll(b+2, NULL, 10);
+                    ret = g_strdup_printf("%lf", v * 1000); /* src in mhz */
+                }
+                sysobj_free(tobj);
+                if (ret) break;
+            } else sysobj_free(tobj);
+            tobj = sysobj_new_fast_from_fn(path, "../devfreq/available_frequencies");
+            if (tobj->exists) {
+                sysobj_read(tobj, FALSE);
+                double v = strtoll(tobj->data.str, NULL, 10);
+                ret = g_strdup_printf("%lf", v / 1000); /* src in hz */
+                sysobj_free(tobj);
+                break;
+            } else sysobj_free(tobj);
+            tobj = sysobj_new_fast_from_fn(path, "../opp/khz_max");
+            if (tobj->exists) {
+                sysobj_read(tobj, FALSE);
+                ret = g_strdup(tobj->data.str);
+                sysobj_free(tobj);
+                break;
+            } else sysobj_free(tobj);
+            break;
+    }
     return ret;
 }
 

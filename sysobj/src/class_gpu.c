@@ -46,6 +46,9 @@ static gboolean drm_conn_attr_verify(sysobj *obj);
 attr_tab gpu_prop_items[] = {
     { "name", NULL, OF_NONE, NULL, UPDATE_INTERVAL_NEVER },
     { "driver_kmod", N_("driver kernel module") },
+    { "core_khz_cur", N_("current clock frequency"), OF_NONE, fmt_khz_to_mhz, 0.5 },
+    { "core_khz_min", N_("minimum clock frequency"), OF_NONE, fmt_khz_to_mhz, 5.0 },
+    { "core_khz_max", N_("maximum clock frequency"), OF_NONE, fmt_khz_to_mhz, 5.0 },
     { "opp.khz_min", N_("operating-performance-points minimum frequency"), OF_NONE, fmt_khz_to_mhz, UPDATE_INTERVAL_NEVER },
     { "opp.khz_max", N_("operating-performance-points maximum frequency"), OF_NONE, fmt_khz_to_mhz, UPDATE_INTERVAL_NEVER },
     { "opp.clock_frequency", N_("devicetree-specified clock frequency"), OF_NONE, fmt_khz_to_mhz, UPDATE_INTERVAL_NEVER },

@@ -249,6 +249,7 @@ vendor_list simple_vendors(sysobj *s);
 
 sysobj *sysobj_new();
 sysobj *sysobj_new_fast(const gchar *path);  /* does not classify() */
+sysobj *sysobj_new_fast_from_fn(const gchar *base, const gchar *name);  /* does not classify() */
 sysobj *sysobj_new_from_fn(const gchar *base, const gchar *name);
 sysobj *sysobj_new_from_printf(gchar *path_fmt, ...)
     __attribute__ ((format (printf, 1, 2)));
