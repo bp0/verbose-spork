@@ -81,7 +81,9 @@ name VIA Technologies
     match_string_case VIA
 
 name NEC Corporation
+    name_short NEC
     url www.nec.com
+    ansi_color 0;94;107
     match_string_case NEC
 
 name Realtek Semiconductor
@@ -133,6 +135,12 @@ name Hitachi-LG Data Storage
     name_short HLDS
     url http://hlds.co.kr
     match_string_case HL-DT-ST
+
+name Hitachi
+    name_short HITACHI
+    url www.hitachi.com
+    ansi_color 0;30;47
+    match_string Hitachi
 
 name Lexmark
     url www.lexmark.com
@@ -269,8 +277,10 @@ name Hewlett-Packard
     match_string Hewlett-Packard
     match_string_case HP
 
-name TEAC America
+name TEAC Corporation
+    name_short TEAC
     url www.teac.com
+    ansi_color 0;34;107
     match_string_case TEAC
 
 name Microsoft
