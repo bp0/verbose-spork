@@ -27,6 +27,10 @@
 #include "util_pci.h"
 #include "vendor.h"
 
+/* virt get funcs */
+static gchar *gpu_data(const gchar *path);
+static gchar *gpu_driver(const gchar *path);
+
 /* listing is sorted, num is priority */
 #define PFX_DRM "1-drm-"
 #define PFX_PCI "2-pci-dc-"
@@ -438,6 +442,14 @@ static void gpu_scan() {
 
                 sysobj_free(dev);
             }
+
+            /* driver finder */
+            sysobj_virt *vo_drv = sysobj_virt_new();
+            vo_drv->path = util_build_fn(gpu_path, "driver_kmod");
+            vo_drv->type = VSO_TYPE_STRING;
+            vo_drv->f_get_data = gpu_driver;
+            sysobj_virt_add(vo_drv);
+
             g_free(gpu_path);
         }
         sysobj_free(fobj);
@@ -451,6 +463,26 @@ static void buff_basename(const gchar *path, gchar *buff, gsize n) {
     gchar *fname = g_path_get_basename(path);
     strncpy(buff, fname, n);
     g_free(fname);
+}
+
+/* find the driver module */
+static gchar *gpu_driver(const gchar *path) {
+    if (!path) return NULL;
+    gchar *ret = NULL;
+    sysobj *mod = sysobj_new_from_fn(path, "../drm/device/driver/module");
+    if (!mod->exists) {
+        sysobj_free(mod);
+        mod = sysobj_new_from_fn(path, "../pci/driver/module");
+    }
+    if (mod->exists) {
+        gchar *ver = sysobj_raw_from_fn(mod->path, "version");
+        ret = ver
+            ? g_strdup_printf("%s/%s", mod->name, ver)
+            : g_strdup(mod->name);
+        g_free(ver);
+    }
+    sysobj_free(mod);
+    return ret;
 }
 
 static gchar *gpu_data(const gchar *path) {

@@ -44,11 +44,12 @@ static gchar *drm_conn_format(sysobj *obj, int fmt_opts);
 static gboolean drm_conn_attr_verify(sysobj *obj);
 
 attr_tab gpu_prop_items[] = {
-    { "name", NULL, OF_NONE, NULL, -1 },
-    { "opp.khz_min",   "operating-performance-points minimum frequency", OF_NONE, fmt_khz_to_mhz, -1 },
-    { "opp.khz_max",   "operating-performance-points maximum frequency", OF_NONE, fmt_khz_to_mhz, -1 },
-    { "opp.clock_frequency",  "devicetree-specified clock frequency", OF_NONE, fmt_khz_to_mhz, -1 },
-    { "opp.clock_latency_ns", "transition latency", OF_NONE, fmt_nanoseconds, -1 },
+    { "name", NULL, OF_NONE, NULL, UPDATE_INTERVAL_NEVER },
+    { "driver_kmod", N_("driver kernel module") },
+    { "opp.khz_min", N_("operating-performance-points minimum frequency"), OF_NONE, fmt_khz_to_mhz, UPDATE_INTERVAL_NEVER },
+    { "opp.khz_max", N_("operating-performance-points maximum frequency"), OF_NONE, fmt_khz_to_mhz, UPDATE_INTERVAL_NEVER },
+    { "opp.clock_frequency", N_("devicetree-specified clock frequency"), OF_NONE, fmt_khz_to_mhz, UPDATE_INTERVAL_NEVER },
+    { "opp.clock_latency_ns", N_("transition latency"), OF_NONE, fmt_nanoseconds, UPDATE_INTERVAL_NEVER },
     ATTR_TAB_LAST
 };
 
@@ -379,15 +380,15 @@ static gchar* gpu_format_nice_name(sysobj *gpu, int fmt_opts) {
     if (!vendor_str) vendor_str = g_strdup(unk_v);
     if (!device_str) device_str = g_strdup(unk_d);
 
-    /* These two former special cases are currently handled by the vendor_get_shortest_name()
-     * function well enough, but the notes are preserved here. */
+    /* Currently handled by the vendor_get_shortest_name()
+     * function well enough */
         /* nvidia PCI strings are pretty nice already,
          * just shorten the company name */
         // s->nice_name = g_strdup_printf("%s %s", "nVidia", device_str);
-        /* Intel Graphics may have very long names, like "Intel Corporation Seventh Generation Something Core Something Something Integrated Graphics Processor Revision Ninety-four"
-         * but for now at least shorten "Intel Corporation" to just "Intel" */
-        // s->nice_name = g_strdup_printf("%s %s", "Intel", device_str);
+
     if (strstr(vendor_str, "Intel")) {
+        /* Intel Graphics may have very long names,
+         * like "Intel Corporation Seventh Generation Something Core Something Something Integrated Graphics Processor Revision Ninety-four" */
         gchar *full_name = strdup(device_str);
         str_shorten(full_name, "(R)", ""); /* Intel(R) -> Intel */
         str_shorten(full_name, "Integrated Graphics Controller", "Integrated Graphics");
