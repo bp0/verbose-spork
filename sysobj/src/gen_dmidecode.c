@@ -124,7 +124,7 @@ static gchar *dmidecode_get_best(const gchar *path) {
     } else {
         ret = dmidecode_map(name);
         if (!ret)
-            ret = g_strdup_printf("%s/%s", ":/dmidecode/--string", name);
+            ret = g_strdup_printf("%s/%s", ":/extern/dmidecode/--string", name);
     }
     g_free(name);
     return ret;
@@ -154,19 +154,19 @@ static int dmidecode_check_type(const gchar *path) {
 }
 
 static sysobj_virt vol[] = {
-    { .path = ":/dmidecode", .str = "*",
+    { .path = ":/extern/dmidecode", .str = "*",
       .type = VSO_TYPE_DIR | VSO_TYPE_CONST,
       .f_get_data = NULL, .f_get_type = NULL },
-    { .path = ":/dmidecode/--string", .str = "",
+    { .path = ":/extern/dmidecode/--string", .str = "",
       .type = VSO_TYPE_DIR | VSO_TYPE_DYN | VSO_TYPE_CONST,
       .f_get_data = dmidecode_get_str, .f_get_type = dmidecode_check_type },
-    { .path = ":/dmidecode/sysfs_map", .str = "",
+    { .path = ":/extern/dmidecode/sysfs_map", .str = "",
       .type = VSO_TYPE_DIR | VSO_TYPE_DYN | VSO_TYPE_CONST,
       .f_get_data = dmidecode_get_link, .f_get_type = dmidecode_check_type },
-    { .path = ":/dmidecode/best_available", .str = "",
+    { .path = ":/extern/dmidecode/best_available", .str = "",
       .type = VSO_TYPE_DIR | VSO_TYPE_DYN | VSO_TYPE_CONST,
       .f_get_data = dmidecode_get_best, .f_get_type = dmidecode_check_type },
-    { .path = ":/dmidecode/dmi_id", .str = "/sys/devices/virtual/dmi/id",
+    { .path = ":/extern/dmidecode/dmi_id", .str = "/sys/devices/virtual/dmi/id",
       .type = VSO_TYPE_AUTOLINK | VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_CONST,
       .f_get_data = NULL, .f_get_type = NULL },
 };

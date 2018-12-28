@@ -70,7 +70,7 @@ static sysobj_class cls_dmi_id[] = {
     .attributes = dmi_id_items, .f_verify = dmi_id_verify, .f_format = dmi_id_format },
 
   { SYSOBJ_CLASS_DEF
-    .tag = "dmidecode:string", .pattern = ":/dmidecode/--string/*", .flags = OF_GLOB_PATTERN | OF_REQ_ROOT | OF_CONST,
+    .tag = "dmidecode:string", .pattern = ":/extern/dmidecode/--string/*", .flags = OF_GLOB_PATTERN | OF_REQ_ROOT | OF_CONST,
     .s_label = N_("Result of `dmidecode --string {}`") },
 };
 

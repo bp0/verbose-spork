@@ -36,7 +36,7 @@ void gen_dt_ids();
 void gen_os_release();
 void gen_dmidecode();
 void gen_rpi();
-void gen_mobo(); /* requires :/dmidecode :/raspberry_pi */
+void gen_mobo(); /* requires :/extern/dmidecode :/raspberry_pi */
 void gen_cpuinfo(); /* creates in :/cpu, before it exists */
 void gen_meminfo();
 void gen_procs(); /* requires :/cpu/cpuinfo */
@@ -179,6 +179,9 @@ static sysobj_class cls_internal[] = {
     .tag = "vsfs", .pattern = ":", .flags = OF_CONST | OF_HAS_VENDOR,
     .s_label = N_("Virtual sysfs root"), .s_update_interval = 60.0,
     .f_vendors = vsfs_vendors },
+  { SYSOBJ_CLASS_DEF
+    .tag = "extern", .pattern = ":/extern/", .flags = OF_CONST,
+    .s_label = N_("items that may depend on external utilities") },
   { SYSOBJ_CLASS_DEF
     .tag = "sysobj:stat", .pattern = ":sysobj/*", .flags = OF_CONST | OF_GLOB_PATTERN,
     .attributes = sysobj_items, .s_update_interval = 0.5 },

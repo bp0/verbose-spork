@@ -257,21 +257,21 @@ static int get_class_info_type(const gchar *path) {
 static sysobj_virt vol[] = {
     /* the vsysfs  root */
     { .path = ":", .str = "*",
-      .type = VSO_TYPE_DIR | VSO_TYPE_CONST,
-      .f_get_data = NULL, .f_get_type = NULL },
+      .type = VSO_TYPE_DIR | VSO_TYPE_CONST },
+
+    /* requires external utilities that don't use sysobj */
+    { .path = ":/extern", .str = "*",
+      .type = VSO_TYPE_DIR | VSO_TYPE_CONST },
 
     /* handy /sys and /proc links */
     { .path = ":/sysfs", .str = "/sys",
-      .type = VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_AUTOLINK | VSO_TYPE_CONST,
-      .f_get_data = NULL, .f_get_type = NULL },
+      .type = VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_AUTOLINK | VSO_TYPE_CONST },
     { .path = ":/procfs", .str = "/proc",
-      .type = VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_AUTOLINK | VSO_TYPE_CONST,
-      .f_get_data = NULL, .f_get_type = NULL },
+      .type = VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_AUTOLINK | VSO_TYPE_CONST },
 
     /* internal stuff */
     { .path = ":sysobj", .str = "*",
-      .type = VSO_TYPE_DIR | VSO_TYPE_CONST,
-      .f_get_data = NULL, .f_get_type = NULL },
+      .type = VSO_TYPE_DIR | VSO_TYPE_CONST },
     { .path = ":sysobj/classes", .str = "*",
       .type = VSO_TYPE_DIR | VSO_TYPE_DYN | VSO_TYPE_CONST,
       .f_get_data = get_class_info, .f_get_type = get_class_info_type },

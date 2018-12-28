@@ -26,12 +26,12 @@
 #include "vendor.h"
 
 void link_name_dmi(const gchar *k) {
-    gchar *lt = util_build_fn(":/dmidecode/best_available", k);
+    gchar *lt = util_build_fn(":/extern/dmidecode/best_available", k);
     sysobj_virt_add_simple_mkpath(":/mobo/name", k, lt, VSO_TYPE_SYMLINK);
 }
 
 #define dt_get_model() sysobj_format_from_fn("/sys/firmware/devicetree/base/model", NULL, FMT_OPT_OR_NULL );
-#define dmi_get_str(k) sysobj_format_from_fn(":/dmidecode/best_available", k, FMT_OPT_NO_JUNK | FMT_OPT_OR_NULL );
+#define dmi_get_str(k) sysobj_format_from_fn(":/extern/dmidecode/best_available", k, FMT_OPT_NO_JUNK | FMT_OPT_OR_NULL );
 static gchar *mobo_get_name(const gchar *path) {
     if (!path) return NULL; /* no cleanup needed */
 
