@@ -19,14 +19,14 @@
  */
 
 /* Generator for ids from the dt.ids file (https://github.com/bp0/dtid)
- *  :/devicetree/dt.ids
+ *  :/lookup/dt.ids
  *
  *
  * Items are generated on-demand and cached.
  *
- * :/devicetree/dt.ids/<compat_element>/vendor
- * :/devicetree/dt.ids/<compat_element>/name
- * :/devicetree/dt.ids/<compat_element>/class
+ * :/lookup/dt.ids/<compat_element>/vendor
+ * :/lookup/dt.ids/<compat_element>/name
+ * :/lookup/dt.ids/<compat_element>/class
  *
  */
 #include <stdlib.h>
@@ -151,7 +151,7 @@ static void gen_dt_ids_cache_item(dt_id *id) {
 
     if (!id) return;
 
-    snprintf(elpath, 127, ":/devicetree/dt.ids/%s", id->compat_elem);
+    snprintf(elpath, 127, ":/lookup/dt.ids/%s", id->compat_elem);
     sysobj_virt_add_simple(elpath, NULL, "*", VSO_TYPE_DIR);
     if (id->vendor)
         sysobj_virt_add_simple(elpath, "vendor", id->vendor, VSO_TYPE_STRING);
@@ -188,7 +188,7 @@ static gchar *gen_dt_ids_lookup_value(const gchar *path) {
     gchar *ret = NULL;
 
     char compat_elem[128] = "";
-    int mc = sscanf(path, ":/devicetree/dt.ids/%s", compat_elem);
+    int mc = sscanf(path, ":/lookup/dt.ids/%s", compat_elem);
     if (mc == 1) {
         gchar *slash = strchr(compat_elem, '/');
         if (slash) *slash = 0;
@@ -261,7 +261,7 @@ static int gen_dt_ids_lookup_type(const gchar *path) {
 
 void gen_dt_ids() {
     sysobj_virt *vo = sysobj_virt_new();
-    vo->path = g_strdup(":/devicetree/dt.ids");
+    vo->path = g_strdup(":/lookup/dt.ids");
     vo->str = g_strdup("*");
     vo->type = VSO_TYPE_DIR | VSO_TYPE_DYN;
     vo->f_get_data = gen_dt_ids_lookup_value;

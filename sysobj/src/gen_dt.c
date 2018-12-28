@@ -47,6 +47,8 @@ static sysobj_virt vol[] = {
       .type = VSO_TYPE_DIR | VSO_TYPE_CONST },
     { .path = ":/devicetree/_symbol_map", .str = "*",
       .type = VSO_TYPE_DIR | VSO_TYPE_CONST },
+    { .path = ":/devicetree/dt.ids", .str = ":/lookup/dt.ids",
+      .type = VSO_TYPE_SYMLINK | VSO_TYPE_AUTOLINK | VSO_TYPE_DYN | VSO_TYPE_CONST },
 };
 
 void gen_dt() {

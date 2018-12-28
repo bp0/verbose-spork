@@ -224,7 +224,7 @@ void find_soc() {
         if (obj->data.str) {
             gchar *el = obj->data.str;
             while(el < obj->data.str + obj->data.len) {
-                gchar *lookup_path = g_strdup_printf(":/devicetree/dt.ids/%s", el);
+                gchar *lookup_path = g_strdup_printf(":/lookup/dt.ids/%s", el);
                 gchar *cls = sysobj_raw_from_fn(lookup_path, "class");
                 if (SEQ(cls, "soc") ) {
                     gchar *vendor = sysobj_raw_from_fn(lookup_path, "vendor");

@@ -680,7 +680,7 @@ gchar *dtr_compat_decode(const gchar *compat_str_list, gsize len, gboolean show_
     if (compat_str_list) {
         const gchar *el = compat_str_list;
         while(el < compat_str_list + len) {
-            gchar *lookup_path = g_strdup_printf(":/devicetree/dt.ids/%s", el);
+            gchar *lookup_path = g_strdup_printf(":/lookup/dt.ids/%s", el);
             gchar *cls = show_class ? sysobj_raw_from_fn(lookup_path, "class") : NULL;
             gchar *vendor = sysobj_raw_from_fn(lookup_path, "vendor");
             gchar *name = sysobj_raw_from_fn(lookup_path, "name");

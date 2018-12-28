@@ -36,9 +36,9 @@ const gchar dt_reference_markup_text[] =
 const gchar dt_ids_reference_markup_text[] =
     " Items are generated on-demand and cached.\n"
     "\n"
-    " :/devicetree/dt.ids/{compat_element}/vendor\n"
-    " :/devicetree/dt.ids/{compat_element}/name\n"
-    " :/devicetree/dt.ids/{compat_element}/class\n"
+    " :/lookup/dt.ids/{compat_element}/vendor\n"
+    " :/lookup/dt.ids/{compat_element}/name\n"
+    " :/lookup/dt.ids/{compat_element}/class\n"
     "\n"
     "Reference:\n"
     BULLET REFLINKT("dt.ids", "https://github.com/bp0/dtid") "\n"
@@ -59,11 +59,11 @@ static sysobj_class cls_dtr[] = {
     .f_format = dtr_format, .f_vendors = dt_compat_vendors },
 
   { SYSOBJ_CLASS_DEF
-    .tag = "dt.ids", .pattern = ":/devicetree/dt.ids", .flags = OF_CONST,
+    .tag = "dt.ids", .pattern = ":/lookup/dt.ids", .flags = OF_CONST,
     .s_halp = dt_ids_reference_markup_text, .s_label = "dt.ids lookup virtual tree",
     .f_format = dt_ids_format,.s_update_interval = 3.0 },
   { SYSOBJ_CLASS_DEF
-    .tag = "dt.ids:id", .pattern = ":/devicetree/dt.ids/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .tag = "dt.ids:id", .pattern = ":/lookup/dt.ids/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .s_halp = dt_ids_reference_markup_text, .s_label = "dt.ids lookup result",
     .f_format = dt_ids_format },
 };
@@ -106,7 +106,7 @@ static vendor_list dt_compat_vendors(sysobj *obj) {
     if (compat_str_list) {
         const gchar *el = compat_str_list;
         while(el < compat_str_list + len) {
-            gchar *lookup_path = g_strdup_printf(":/devicetree/dt.ids/%s", el);
+            gchar *lookup_path = g_strdup_printf(":/lookup/dt.ids/%s", el);
             gchar *vendor = sysobj_raw_from_fn(lookup_path, "vendor");
             if (vendor) {
                 const Vendor *v = vendor_match(vendor, NULL);

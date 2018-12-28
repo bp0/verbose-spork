@@ -429,8 +429,8 @@ static void gpu_scan() {
                     g_free(lt);
                 }
                 /* name by dt.ids */
-                g->vendor_str = sysobj_raw_from_printf(":/devicetree/dt.ids/%s/vendor", g->dt_compat);
-                g->device_str = sysobj_raw_from_printf(":/devicetree/dt.ids/%s/name", g->dt_compat);
+                g->vendor_str = sysobj_raw_from_printf(":/lookup/dt.ids/%s/vendor", g->dt_compat);
+                g->device_str = sysobj_raw_from_printf(":/lookup/dt.ids/%s/name", g->dt_compat);
                 /* extra stuff */
                 gpu_dt_opp(g);
             }
