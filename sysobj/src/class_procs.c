@@ -31,6 +31,7 @@ static attr_tab procs_items[] = {
     { "freq_domains", N_("number of scaling units discovered") },
     { "soc_name", N_("model name of system-on-chip") },
     { "soc_vendor", N_("vendor name of system-on-chip"), OF_HAS_VENDOR, fmt_vendor_name_to_tag },
+    { "topo_desc", NULL, OF_NONE, procs_format },
     ATTR_TAB_LAST
 };
 
@@ -131,15 +132,17 @@ static sysobj *first_child(const gchar *path, const gchar *child_glob) {
 }
 
 static gchar *procs_format(sysobj *obj, int fmt_opts) {
-    if (SEQ(obj->path, ":/cpu")) {
-        gchar *ret = NULL;
-        int packs = sysobj_uint32_from_fn(obj->path, "packs", 10);
-        int cores = sysobj_uint32_from_fn(obj->path, "cores", 10);
-        int threads = sysobj_uint32_from_fn(obj->path, "threads", 10);
-        int logical = 0;
+    if (SEQ(obj->path, ":/cpu/topo_desc")) {
+        int packs = 0, cores = 0, threads = 0, logical = 0;
+        int mc = sscanf(obj->data.str, "%dxP %dxC %dxT", &packs, &cores, &threads);
         if (!threads)
             logical = count_children(":/cpu/cpuinfo", "logical_cpu*");
-        gchar *tsum = procs_summarize_topology(packs, cores, threads, logical);
+        return procs_summarize_topology(packs, cores, threads, logical);
+    }
+    if (SEQ(obj->path, ":/cpu")) {
+        gchar *ret = NULL;
+        int threads = sysobj_uint32_from_fn(obj->path, "threads", 10);
+        gchar *tsum = sysobj_format_from_fn(obj->path, "topo_desc", fmt_opts | FMT_OPT_PART | FMT_OPT_OR_NULL);
         gchar *soc_vendor = sysobj_format_from_fn(obj->path, "soc_vendor", fmt_opts | FMT_OPT_PART | FMT_OPT_OR_NULL);
         gchar *soc_name = sysobj_format_from_fn(obj->path, "soc_name", fmt_opts | FMT_OPT_PART | FMT_OPT_OR_NULL);
         gchar *msum = summarize_children_by_counting_uniq_format_strings(obj, fmt_opts, "package*", FALSE);

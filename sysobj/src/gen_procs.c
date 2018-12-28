@@ -26,9 +26,25 @@
 
 #define PROCS_ROOT ":/cpu"
 
+gchar *sys_topo_desc(const gchar *path) {
+    if (!path) return NULL;
+    gchar *ret = NULL;
+    gchar *packs = sysobj_raw_from_fn(path, "../packs");
+    gchar *cores = sysobj_raw_from_fn(path, "../cores");
+    gchar *threads = sysobj_raw_from_fn(path, "../threads");
+    if (packs && cores && threads)
+        ret = g_strdup_printf("%sxP %sxC %sxT", packs, cores, threads);
+    g_free(packs);
+    g_free(cores);
+    g_free(threads);
+    return ret;
+}
+
 static sysobj_virt vol[] = {
     { .path = PROCS_ROOT, .str = "*",
       .type = VSO_TYPE_DIR | VSO_TYPE_CONST },
+    { .path = PROCS_ROOT "/topo_desc", .str = "", .f_get_data = sys_topo_desc,
+      .type = VSO_TYPE_STRING | VSO_TYPE_CONST },
     { .path = PROCS_ROOT "/vulnerabilities",
       .str = "/sys/devices/system/cpu/vulnerabilities",
       .type = VSO_TYPE_SYMLINK | VSO_TYPE_AUTOLINK | VSO_TYPE_DYN | VSO_TYPE_CONST },
