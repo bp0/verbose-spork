@@ -19,13 +19,13 @@
  */
 
 /* Generator for ids from the usb.ids file (http://www.linux-usb.org/usb.ids)
- *  :/usb/usb.ids
+ *  :/lookup/usb.ids
  *
  *
  * Items are generated on-demand and cached.
  *
- * :/usb/usb.ids/<vendor>/name
- * :/usb/usb.ids/<vendor>/<device>/name
+ * :/lookup/usb.ids/<vendor>/name
+ * :/lookup/usb.ids/<vendor>/<device>/name
  *
  * TODO: usb device and interface classes
  *
@@ -40,7 +40,7 @@ static void gen_usb_ids_cache_item(util_usb_id *pid) {
     int dev_symlink_flags = VSO_TYPE_SYMLINK | VSO_TYPE_AUTOLINK | VSO_TYPE_DYN;
     gchar *devpath = g_strdup_printf(SYSFS_USB "/devices/%s", pid->address);
     if (pid->vendor) {
-        sprintf(buff, ":/usb/usb.ids/%04x", pid->vendor);
+        sprintf(buff, ":/lookup/usb.ids/%04x", pid->vendor);
         sysobj_virt_add_simple(buff, NULL, "*", VSO_TYPE_DIR );
         if (pid->vendor_str)
             sysobj_virt_add_simple(buff, "name", pid->vendor_str, VSO_TYPE_STRING );
@@ -48,7 +48,7 @@ static void gen_usb_ids_cache_item(util_usb_id *pid) {
             sysobj_virt_add_simple(buff, pid->address, devpath, dev_symlink_flags );
     }
     if (pid->device) {
-        sprintf(buff, ":/usb/usb.ids/%04x/%04x", pid->vendor, pid->device);
+        sprintf(buff, ":/lookup/usb.ids/%04x/%04x", pid->vendor, pid->device);
         sysobj_virt_add_simple(buff, NULL, "*", VSO_TYPE_DIR );
         if (pid->device_str)
             sysobj_virt_add_simple(buff, "name", pid->device_str, VSO_TYPE_STRING );
@@ -132,19 +132,19 @@ static gchar *gen_usb_ids_lookup_value(const gchar *path) {
     if ( name_is_0x04(name) )
         name_id = strtol(name, NULL, 16);
 
-    int mc = sscanf(path, ":/usb/usb.ids/%04x/%04x", &pid->vendor, &pid->device);
+    int mc = sscanf(path, ":/lookup/usb.ids/%04x/%04x", &pid->vendor, &pid->device);
     gchar *verify = NULL;
     switch(mc) {
         case 2:
             if (!verify)
             verify = (name_id == -1)
-                ? g_strdup_printf(":/usb/usb.ids/%04x/%04x/%s", pid->vendor, pid->device, name)
-                : g_strdup_printf(":/usb/usb.ids/%04x/%04x", pid->vendor, pid->device);
+                ? g_strdup_printf(":/lookup/usb.ids/%04x/%04x/%s", pid->vendor, pid->device, name)
+                : g_strdup_printf(":/lookup/usb.ids/%04x/%04x", pid->vendor, pid->device);
         case 1:
             if (!verify)
             verify = (name_id == -1)
-                ? g_strdup_printf(":/usb/usb.ids/%04x/%s", pid->vendor, name)
-                : g_strdup_printf(":/usb/usb.ids/%04x", pid->vendor);
+                ? g_strdup_printf(":/lookup/usb.ids/%04x/%s", pid->vendor, name)
+                : g_strdup_printf(":/lookup/usb.ids/%04x", pid->vendor);
 
             if (strcmp(path, verify) != 0) {
                 util_usb_id_free(pid);
@@ -193,7 +193,7 @@ static int gen_usb_ids_lookup_type(const gchar *path) {
 
 void gen_usb_ids() {
     sysobj_virt *vo = sysobj_virt_new();
-    vo->path = g_strdup(":/usb/usb.ids");
+    vo->path = g_strdup(":/lookup/usb.ids");
     vo->str = g_strdup("*");
     vo->type = VSO_TYPE_DIR | VSO_TYPE_DYN;
     vo->f_get_data = gen_usb_ids_lookup_value;

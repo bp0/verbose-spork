@@ -28,8 +28,8 @@
 const gchar usb_ids_reference_markup_text[] =
     " Items are generated on-demand and cached.\n"
     "\n"
-    " :/usb/usb.ids/{vendor}/name\n"
-    " :/usb/usb.ids/{vendor}/{device}/name\n\n"
+    " :/lookup/usb.ids/{vendor}/name\n"
+    " :/lookup/usb.ids/{vendor}/{device}/name\n\n"
     "Reference:\n"
     BULLET REFLINKT("<i>The Linux USB Project</i>'s usb.ids", "http://www.linux-usb.org/")
     "\n";
@@ -121,11 +121,11 @@ static sysobj_class cls_usb[] = {
     .f_format = usb_format_idcomp, .s_update_interval = usb_update_interval }, */
 
   { SYSOBJ_CLASS_DEF
-    .tag = "usb.ids", .pattern = ":/usb/usb.ids", .flags = OF_CONST,
+    .tag = "usb.ids", .pattern = ":/lookup/usb.ids", .flags = OF_CONST,
     .s_halp = usb_ids_reference_markup_text, .s_label = "usb.ids lookup virtual tree",
     .s_update_interval = 10.0 },
   { SYSOBJ_CLASS_DEF
-    .tag = "usb.ids:id", .pattern = ":/usb/usb.ids/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .tag = "usb.ids:id", .pattern = ":/lookup/usb.ids/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .s_halp = usb_ids_reference_markup_text, .s_label = "usb.ids lookup result",
     .f_format = fmt_node_name },
 };
@@ -178,7 +178,7 @@ static gchar *usb_format(sysobj *obj, int fmt_opts) {
 static vendor_list usb_vendor_lookup(sysobj *obj) {
     if (obj->data.is_utf8) {
         gchar *vendor_str = sysobj_raw_from_printf(
-            ":/usb/usb.ids/%04lx/name", strtoul(obj->data.str, NULL, 16) );
+            ":/lookup/usb.ids/%04lx/name", strtoul(obj->data.str, NULL, 16) );
         const Vendor *v = vendor_match(vendor_str, NULL);
         g_free(vendor_str);
         if (v)
@@ -212,9 +212,9 @@ util_usb_id *get_usb_id(gchar *dev_path) {
     pid->device = sysobj_uint32_from_fn(dev_path, "idProduct", 16);
 
     /* full first should cause all to be looked-up */
-    sprintf(path, ":/usb/usb.ids/%04x/%04x", pid->vendor, pid->device);
+    sprintf(path, ":/lookup/usb.ids/%04x/%04x", pid->vendor, pid->device);
     pid->device_str = sysobj_raw_from_fn(path, "name");
-    sprintf(path, ":/usb/usb.ids/%04x", pid->vendor);
+    sprintf(path, ":/lookup/usb.ids/%04x", pid->vendor);
     pid->vendor_str = sysobj_raw_from_fn(path, "name");
 
     return pid;
