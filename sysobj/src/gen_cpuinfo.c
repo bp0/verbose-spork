@@ -30,6 +30,7 @@
 #include "riscv_data.h"
 
 #define PROC_CPUINFO "/proc/cpuinfo"
+static gchar *x86_funfacts_path = NULL;
 
 /* guess from what appears in the cpuinfo, because we
  * could be testing on a different arch. */
@@ -43,17 +44,20 @@ static const gchar *cpu_types[] = { "unknown", "arm", "x86", "risc-v" };
 
 static int cpuinfo_was_found = 0;
 static gchar *cpuinfo_found(const gchar *path) {
-    PARAM_NOT_UNUSED(path);
+    if (!path) {
+        /* generator cleanup */
+        g_free(x86_funfacts_path);
+        return NULL;
+    }
     return g_strdup(cpuinfo_was_found ? "1" : "0");
 }
 
 static sysobj_virt vol[] = {
-    { .path = ":/cpu/cpuinfo/_found", .str = "",
-      .type = VSO_TYPE_STRING | VSO_TYPE_CONST,
-      .f_get_data = cpuinfo_found, .f_get_type = NULL },
+    { .path = ":/cpu/cpuinfo/_found", .str = "", /* handles generator cleanup */
+      .type = VSO_TYPE_STRING | VSO_TYPE_CONST | VSO_TYPE_CLEANUP,
+      .f_get_data = cpuinfo_found },
     { .path = ":/cpu/cpuinfo", .str = "*",
-      .type = VSO_TYPE_DIR | VSO_TYPE_CONST,
-      .f_get_data = NULL, .f_get_type = NULL },
+      .type = VSO_TYPE_DIR | VSO_TYPE_CONST },
 };
 
 static GList *lcpus = NULL;
@@ -118,6 +122,95 @@ void lcpu_free(lcpu *s) {
     g_free(s->isa);
     /* self */
     g_free(s);
+}
+
+static void x86_funfacts(lcpu *s) {
+#define X86F_BUFF_SIZE 128
+#define X86F_FFWD() while(isspace((unsigned char)*p)) p++;
+#define X86F_CHK(TOK) (strncmp(p, TOK, tl = strlen(TOK)) == 0)
+    gchar *chunk = g_malloc0(X86F_BUFF_SIZE*9);
+    char *buff     = chunk;
+    char *arch     = chunk + X86F_BUFF_SIZE;
+    char *codename = chunk + X86F_BUFF_SIZE*2;
+    char *process  = chunk + X86F_BUFF_SIZE*3;
+    char *socket   = chunk + X86F_BUFF_SIZE*4;
+    char *bus      = chunk + X86F_BUFF_SIZE*5;
+    char *tdp      = chunk + X86F_BUFF_SIZE*6;
+    char *release  = chunk + X86F_BUFF_SIZE*7;
+    char *url      = chunk + X86F_BUFF_SIZE*8;
+
+    FILE *fd;
+    char *p, *b;
+    int tl;
+
+    if (!x86_funfacts_path)
+        x86_funfacts_path = sysobj_find_data_file("x86.funfacts");
+
+    fd = fopen(x86_funfacts_path, "r");
+    if (!fd) goto x86_funfacts_bail;
+
+    while (fgets(buff, X86F_BUFF_SIZE, fd)) {
+        b = strchr(buff, '\n');
+        if (b) *b = 0;
+        p = buff;
+        X86F_FFWD();
+        if (X86F_CHK("arch ")) {
+            memset(arch, 0, X86F_BUFF_SIZE * 8);
+            strncpy(arch, p + tl, X86F_BUFF_SIZE - 1);
+        }
+        if (X86F_CHK("codename "))
+            strncpy(codename, p + tl, X86F_BUFF_SIZE - 1);
+        if (X86F_CHK("process "))
+            strncpy(process, p + tl, X86F_BUFF_SIZE - 1);
+        if (X86F_CHK("socket "))
+            strncpy(socket, p + tl, X86F_BUFF_SIZE - 1);
+        if (X86F_CHK("bus "))
+            strncpy(bus, p + tl, X86F_BUFF_SIZE - 1);
+        if (X86F_CHK("tdp "))
+            strncpy(tdp, p + tl, X86F_BUFF_SIZE - 1);
+        if (X86F_CHK("release "))
+            strncpy(release, p + tl, X86F_BUFF_SIZE - 1);
+        if (X86F_CHK("url "))
+            strncpy(url, p + tl, X86F_BUFF_SIZE - 1);
+
+        if (X86F_CHK("match ")) {
+            /* match <vendor>/<family>/<model>/<stepping>:name glob */
+            gboolean ok = TRUE;
+            char *id = p + tl;
+            char *nglob = strrchr(id, ':');
+            char ven[X86F_BUFF_SIZE] = "";
+            unsigned int family, model, stepping;
+            if (nglob) { *nglob = 0; nglob++; }
+            int mc = sscanf(id, "%[^/]/%x/%x/%x", ven, &family, &model, &stepping);
+            switch(mc) {
+                case 4: if (stepping != atoi(s->stepping)) { ok = FALSE; printf("failedat stepping\n"); }
+                case 3: if (model != atoi(s->model)) { ok = FALSE; printf("failedat model\n"); }
+                case 2: if (family != atoi(s->family)) { ok = FALSE; printf("failedat fam\n"); }
+                case 1: if (!SEQ(ven, s->vendor_id)) { ok = FALSE; printf("failedat ven %s vs %s\n", ven, s->vendor_id); }
+            }
+            if (nglob && strlen(nglob)) {
+                //TODO:
+            }
+            if (ok) {
+                gchar *ffpath = g_strdup_printf(":/cpu/cpuinfo/logical_cpu%d/x86_details", s->id);
+#define virt_if_not_empty(attr) if (strlen(attr)) sysobj_virt_add_simple_mkpath(ffpath, #attr, attr, VSO_TYPE_STRING);
+                virt_if_not_empty(arch);
+                virt_if_not_empty(codename);
+                virt_if_not_empty(process);
+                virt_if_not_empty(socket);
+                virt_if_not_empty(bus);
+                virt_if_not_empty(tdp);
+                virt_if_not_empty(release);
+                virt_if_not_empty(url);
+                g_free(ffpath);
+                goto x86_funfacts_bail;
+            }
+        }
+    }
+
+x86_funfacts_bail:
+    if (fd) fclose(fd);
+    g_free(chunk);
 }
 
 gboolean cpuinfo_arm_decoded_name(lcpu *c) {
@@ -407,6 +500,9 @@ void cpuinfo_scan() {
         EASY_VOM(cache_size);
         EASY_VOM(cpu_mhz);
         EASY_VOM(bogomips);
+
+        if (this_lcpu->type == CPU_TYPE_X86)
+            x86_funfacts(this_lcpu);
 
         if (this_lcpu->vendor)
             sysobj_virt_add_vendor_match(base, "vendor", this_lcpu->vendor);

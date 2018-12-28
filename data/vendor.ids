@@ -529,7 +529,7 @@ name Advanced Micro Devices
 name Intel Corporation
     name_short Intel
     url www.intel.com
-    url_support http://ark.intel.com/search.aspx?q=
+    url_support ark.intel.com
     ansi_color 0;97;44
     match_string GenuineIntel
 

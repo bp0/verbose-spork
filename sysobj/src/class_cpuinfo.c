@@ -119,6 +119,11 @@ static sysobj_class cls_cpuinfo[] = {
     .s_update_interval = UPDATE_INTERVAL_NEVER },
 
   { SYSOBJ_CLASS_DEF
+    .tag = "cpuinfo:x86funfacts", .pattern = ":/cpu/cpuinfo/*/x86_details", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .s_node_format = "{{arch}}/{{|codename}}{{; |process}}{{; |tdp}}{{; |release}}",
+    .s_update_interval = UPDATE_INTERVAL_NEVER },
+
+  { SYSOBJ_CLASS_DEF
     .tag = "cpuinfo:flag", .pattern = ":/cpu/cpuinfo/*/flags/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_format = cpuinfo_feature_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
   { SYSOBJ_CLASS_DEF

@@ -145,6 +145,10 @@ static gchar *procs_format(sysobj *obj, int fmt_opts) {
         gchar *msum = summarize_children_by_counting_uniq_format_strings(obj, fmt_opts, "package*", FALSE);
         gchar *cisum = sysobj_format_from_fn(":/cpu/cpuinfo", NULL, fmt_opts | FMT_OPT_PART | FMT_OPT_OR_NULL);
 
+        sysobj *log0 = first_child(":/cpu/cpuinfo", "logical_cpu*");
+        gchar *funfacts = log0 ? sysobj_format_from_fn(log0->path, "x86_details", fmt_opts | FMT_OPT_PART | FMT_OPT_OR_NULL) : NULL;
+        sysobj_free(log0);
+
         if (fmt_opts & FMT_OPT_COMPLETE) {
             if (soc_vendor) {
                 ret = appf(ret, "%s", soc_vendor);
@@ -153,7 +157,9 @@ static gchar *procs_format(sysobj *obj, int fmt_opts) {
             if (msum)
                 ret = appfs(ret, "\n", "%s", msum);
             if (!threads && cisum)
-                    ret = appfs(ret, "\n", "%s", cisum);
+                ret = appfs(ret, "\n", "%s", cisum);
+            if (funfacts)
+                ret = appfs(ret, "\n", "%s", funfacts);
             ret = appfs(ret, "\n", "%s", tsum);
         } else {
             /* not FMT_OPT_COMPLETE */
@@ -172,6 +178,7 @@ static gchar *procs_format(sysobj *obj, int fmt_opts) {
 
         g_free(soc_name);
         g_free(soc_vendor);
+        g_free(funfacts);
         g_free(tsum);
         g_free(msum);
         g_free(cisum);
@@ -186,7 +193,7 @@ static gchar *procs_format(sysobj *obj, int fmt_opts) {
     if (verify_lblnum(obj, "package") ) {
         gboolean nox = TRUE;
         sysobj *log0 = first_child(":/cpu/cpuinfo", "logical_cpu*");
-        if (log0->exists) {
+        if (log0 && log0->exists) {
             gchar *fam = sysobj_raw_from_fn(log0->path, "arch_family");
             if (SEQ(fam, "arm") ) nox = FALSE;
             g_free(fam);

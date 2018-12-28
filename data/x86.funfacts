@@ -1,0 +1,38 @@
+#
+# x86 trivia
+#
+# Syntax:
+#
+# arch <arch name>   # clears the set
+# codename <code name>
+# process <mfs>[ <type>]
+# socket <socket name>
+# bus <bus desc>
+# tdp <watts>
+# release <release date>
+# url <url>
+# match <vendor>/<family>/<model>/<stepping>:name glob
+#
+# Except for the newline, trailing whitespace is included in the string.
+# Match strings should be unique.
+#
+
+arch P6
+codename Tualatin
+process 130nm
+socket Socket 370
+bus 133MHz FSB
+tdp 32.2W
+release Q4 2001
+url https://ark.intel.com/products/27525/
+match GenuineIntel/6/b/4:*
+
+arch Zen
+codename Summit Ridge
+process 14nm FinFET
+socket Socket AM4
+bus Infinity Fabric @ Memory Clock
+tdp 65W
+release Q2 2017
+url https://en.wikipedia.org/wiki/Ryzen
+match AuthenticAMD/17/1/1:*Ryzen 5 1600 Six-Core Processor*
