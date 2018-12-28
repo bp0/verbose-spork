@@ -19,15 +19,15 @@
  */
 
 /* Generator for ids from the pci.ids file (https://pci-ids.ucw.cz/)
- *  :/pci/pci.ids
+ *  :/lookup/pci.ids
  *
  *
  * Items are generated on-demand and cached.
  *
- * :/pci/pci.ids/<vendor>/name
- * :/pci/pci.ids/<vendor>/<device>/name
- * :/pci/pci.ids/<vendor>/<device>/<subvendor>/name
- * :/pci/pci.ids/<vendor>/<device>/<subvendor>/<subdevice>/name
+ * :/lookup/pci.ids/<vendor>/name
+ * :/lookup/pci.ids/<vendor>/<device>/name
+ * :/lookup/pci.ids/<vendor>/<device>/<subvendor>/name
+ * :/lookup/pci.ids/<vendor>/<device>/<subvendor>/<subdevice>/name
  *
  * TODO: pci device classes
  *
@@ -42,7 +42,7 @@ static void gen_pci_ids_cache_item(util_pci_id *pid) {
     int dev_symlink_flags = VSO_TYPE_SYMLINK | VSO_TYPE_AUTOLINK | VSO_TYPE_DYN;
     gchar *devpath = g_strdup_printf(SYSFS_PCI "/devices/%s", pid->address);
     if (pid->vendor) {
-        sprintf(buff, ":/pci/pci.ids/%04x", pid->vendor);
+        sprintf(buff, ":/lookup/pci.ids/%04x", pid->vendor);
         sysobj_virt_add_simple(buff, NULL, "*", VSO_TYPE_DIR );
         if (pid->vendor_str)
             sysobj_virt_add_simple(buff, "name", pid->vendor_str, VSO_TYPE_STRING );
@@ -50,7 +50,7 @@ static void gen_pci_ids_cache_item(util_pci_id *pid) {
             sysobj_virt_add_simple(buff, pid->address, devpath, dev_symlink_flags );
     }
     if (pid->device) {
-        sprintf(buff, ":/pci/pci.ids/%04x/%04x", pid->vendor, pid->device);
+        sprintf(buff, ":/lookup/pci.ids/%04x/%04x", pid->vendor, pid->device);
         sysobj_virt_add_simple(buff, NULL, "*", VSO_TYPE_DIR );
         if (pid->device_str)
             sysobj_virt_add_simple(buff, "name", pid->device_str, VSO_TYPE_STRING );
@@ -58,7 +58,7 @@ static void gen_pci_ids_cache_item(util_pci_id *pid) {
             sysobj_virt_add_simple(buff, pid->address, devpath, dev_symlink_flags );
     }
     if (pid->sub_vendor) {
-        sprintf(buff, ":/pci/pci.ids/%04x/%04x/%04x", pid->vendor, pid->device, pid->sub_vendor);
+        sprintf(buff, ":/lookup/pci.ids/%04x/%04x/%04x", pid->vendor, pid->device, pid->sub_vendor);
         sysobj_virt_add_simple(buff, NULL, "*", VSO_TYPE_DIR );
         if (pid->sub_vendor_str)
             sysobj_virt_add_simple(buff, "name", pid->sub_vendor_str, VSO_TYPE_STRING );
@@ -67,13 +67,13 @@ static void gen_pci_ids_cache_item(util_pci_id *pid) {
 
         /* also cache as vendor */
         if (pid->sub_vendor_str) {
-            sprintf(buff, ":/pci/pci.ids/%04x", pid->sub_vendor);
+            sprintf(buff, ":/lookup/pci.ids/%04x", pid->sub_vendor);
             sysobj_virt_add_simple(buff, NULL, "*", VSO_TYPE_DIR );
             sysobj_virt_add_simple(buff, "name", pid->sub_vendor_str, VSO_TYPE_STRING );
         }
     }
     if (pid->sub_device) {
-        sprintf(buff, ":/pci/pci.ids/%04x/%04x/%04x/%04x", pid->vendor, pid->device, pid->sub_vendor, pid->sub_device);
+        sprintf(buff, ":/lookup/pci.ids/%04x/%04x/%04x/%04x", pid->vendor, pid->device, pid->sub_vendor, pid->sub_device);
         sysobj_virt_add_simple(buff, NULL, "*", VSO_TYPE_DIR );
         if (pid->sub_device_str)
             sysobj_virt_add_simple(buff, "name", pid->sub_device_str, VSO_TYPE_STRING );
@@ -160,29 +160,29 @@ static gchar *gen_pci_ids_lookup_value(const gchar *path) {
     if ( name_is_0x04(name) )
         name_id = strtol(name, NULL, 16);
 
-    int mc = sscanf(path, ":/pci/pci.ids/%04x/%04x/%04x/%04x", &pid->vendor, &pid->device, &pid->sub_vendor, &pid->sub_device);
+    int mc = sscanf(path, ":/lookup/pci.ids/%04x/%04x/%04x/%04x", &pid->vendor, &pid->device, &pid->sub_vendor, &pid->sub_device);
     gchar *verify = NULL;
     switch(mc) {
         case 4:
             if (!verify)
             verify = (name_id == -1)
-                ? g_strdup_printf(":/pci/pci.ids/%04x/%04x/%04x/%04x/%s", pid->vendor, pid->device, pid->sub_vendor, pid->sub_device, name)
-                : g_strdup_printf(":/pci/pci.ids/%04x/%04x/%04x/%04x", pid->vendor, pid->device, pid->sub_vendor, pid->sub_device);
+                ? g_strdup_printf(":/lookup/pci.ids/%04x/%04x/%04x/%04x/%s", pid->vendor, pid->device, pid->sub_vendor, pid->sub_device, name)
+                : g_strdup_printf(":/lookup/pci.ids/%04x/%04x/%04x/%04x", pid->vendor, pid->device, pid->sub_vendor, pid->sub_device);
         case 3:
             if (!verify)
             verify = (name_id == -1)
-                ? g_strdup_printf(":/pci/pci.ids/%04x/%04x/%04x/%s", pid->vendor, pid->device, pid->sub_vendor, name)
-                : g_strdup_printf(":/pci/pci.ids/%04x/%04x/%04x", pid->vendor, pid->device, pid->sub_vendor);
+                ? g_strdup_printf(":/lookup/pci.ids/%04x/%04x/%04x/%s", pid->vendor, pid->device, pid->sub_vendor, name)
+                : g_strdup_printf(":/lookup/pci.ids/%04x/%04x/%04x", pid->vendor, pid->device, pid->sub_vendor);
         case 2:
             if (!verify)
             verify = (name_id == -1)
-                ? g_strdup_printf(":/pci/pci.ids/%04x/%04x/%s", pid->vendor, pid->device, name)
-                : g_strdup_printf(":/pci/pci.ids/%04x/%04x", pid->vendor, pid->device);
+                ? g_strdup_printf(":/lookup/pci.ids/%04x/%04x/%s", pid->vendor, pid->device, name)
+                : g_strdup_printf(":/lookup/pci.ids/%04x/%04x", pid->vendor, pid->device);
         case 1:
             if (!verify)
             verify = (name_id == -1)
-                ? g_strdup_printf(":/pci/pci.ids/%04x/%s", pid->vendor, name)
-                : g_strdup_printf(":/pci/pci.ids/%04x", pid->vendor);
+                ? g_strdup_printf(":/lookup/pci.ids/%04x/%s", pid->vendor, name)
+                : g_strdup_printf(":/lookup/pci.ids/%04x", pid->vendor);
 
             if (strcmp(path, verify) != 0) {
                 util_pci_id_free(pid);
@@ -233,7 +233,7 @@ static int gen_pci_ids_lookup_type(const gchar *path) {
 
 void gen_pci_ids() {
     sysobj_virt *vo = sysobj_virt_new();
-    vo->path = g_strdup(":/pci/pci.ids");
+    vo->path = g_strdup(":/lookup/pci.ids");
     vo->str = g_strdup("*");
     vo->type = VSO_TYPE_DIR | VSO_TYPE_DYN;
     vo->f_get_data = gen_pci_ids_lookup_value;

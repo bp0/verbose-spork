@@ -28,10 +28,10 @@
 const gchar pci_ids_reference_markup_text[] =
     " Items are generated on-demand and cached.\n"
     "\n"
-    " :/pci/pci.ids/{vendor}/name\n"
-    " :/pci/pci.ids/{vendor}/{device}/name\n"
-    " :/pci/pci.ids/{vendor}/{device}/{subvendor}/name\n"
-    " :/pci/pci.ids/{vendor}/{device}/{subvendor}/{subdevice}/name\n\n"
+    " :/lookup/pci.ids/{vendor}/name\n"
+    " :/lookup/pci.ids/{vendor}/{device}/name\n"
+    " :/lookup/pci.ids/{vendor}/{device}/{subvendor}/name\n"
+    " :/lookup/pci.ids/{vendor}/{device}/{subvendor}/{subdevice}/name\n\n"
     "Reference:\n"
     BULLET REFLINKT("<i>The PCI ID Repository</i>'s pci.ids", "https://pci-ids.ucw.cz")
     "\n";
@@ -98,11 +98,11 @@ static sysobj_class cls_pci[] = {
     .v_subsystem_parent = "/sys/bus/pci", .attributes = pci_var_items },
 
   { SYSOBJ_CLASS_DEF
-    .tag = "pci.ids", .pattern = ":/pci/pci.ids", .flags = OF_CONST,
+    .tag = "pci.ids", .pattern = ":/lookup/pci.ids", .flags = OF_CONST,
     .s_halp = pci_ids_reference_markup_text, .s_label = "pci.ids lookup virtual tree",
     .s_update_interval = pci_ids_update_interval },
   { SYSOBJ_CLASS_DEF
-    .tag = "pci.ids:id", .pattern = ":/pci/pci.ids/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .tag = "pci.ids:id", .pattern = ":/lookup/pci.ids/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .s_halp = pci_ids_reference_markup_text, .s_label = "pci.ids lookup result", .f_format = fmt_node_name },
 };
 
@@ -139,7 +139,7 @@ static gchar *pci_format(sysobj *obj, int fmt_opts) {
 static vendor_list pci_vendor_lookup(sysobj *obj) {
     if (obj->data.is_utf8) {
         gchar *vendor_str = sysobj_raw_from_printf(
-            ":/pci/pci.ids/%04lx/name", strtoul(obj->data.str, NULL, 16) );
+            ":/lookup/pci.ids/%04lx/name", strtoul(obj->data.str, NULL, 16) );
         const Vendor *v  = vendor_match(vendor_str, NULL);
         g_free(vendor_str);
         if (v)
@@ -180,13 +180,13 @@ util_pci_id *get_pci_id(gchar *dev_path) {
     pid->dev_class = sysobj_uint32_from_fn(dev_path, "class", 16);
 
     /* full first should cause all to be looked-up */
-    sprintf(path, ":/pci/pci.ids/%04x/%04x/%04x/%04x", pid->vendor, pid->device, pid->sub_vendor, pid->sub_device);
+    sprintf(path, ":/lookup/pci.ids/%04x/%04x/%04x/%04x", pid->vendor, pid->device, pid->sub_vendor, pid->sub_device);
     pid->sub_device_str = sysobj_raw_from_fn(path, "name");
-    sprintf(path, ":/pci/pci.ids/%04x/%04x/%04x", pid->vendor, pid->device, pid->sub_vendor);
+    sprintf(path, ":/lookup/pci.ids/%04x/%04x/%04x", pid->vendor, pid->device, pid->sub_vendor);
     pid->sub_vendor_str = sysobj_raw_from_fn(path, "name");
-    sprintf(path, ":/pci/pci.ids/%04x/%04x", pid->vendor, pid->device);
+    sprintf(path, ":/lookup/pci.ids/%04x/%04x", pid->vendor, pid->device);
     pid->device_str = sysobj_raw_from_fn(path, "name");
-    sprintf(path, ":/pci/pci.ids/%04x", pid->vendor);
+    sprintf(path, ":/lookup/pci.ids/%04x", pid->vendor);
     pid->vendor_str = sysobj_raw_from_fn(path, "name");
 
     //TODO: dev class

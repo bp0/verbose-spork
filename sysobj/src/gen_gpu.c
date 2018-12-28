@@ -408,8 +408,8 @@ static void gpu_scan() {
                 gchar *d_str = sysobj_raw_from_printf("%s/%s", lt, "device");
                 uint32_t v = strtol(v_str, NULL, 16);
                 uint32_t d = strtol(d_str, NULL, 16);
-                g->vendor_str = sysobj_raw_from_printf(":/pci/pci.ids/%04x/name", v);
-                g->device_str = sysobj_raw_from_printf(":/pci/pci.ids/%04x/%04x/name", v, d);
+                g->vendor_str = sysobj_raw_from_printf(":/lookup/pci.ids/%04x/name", v);
+                g->device_str = sysobj_raw_from_printf(":/lookup/pci.ids/%04x/%04x/name", v, d);
                 g_free(v_str);
                 g_free(d_str);
                 g_free(lt);
