@@ -183,10 +183,10 @@ static void x86_funfacts(lcpu *s) {
             if (nglob) { *nglob = 0; nglob++; }
             int mc = sscanf(id, "%[^/]/%x/%x/%x", ven, &family, &model, &stepping);
             switch(mc) {
-                case 4: if (stepping != atoi(s->stepping)) { ok = FALSE; printf("failedat stepping\n"); }
-                case 3: if (model != atoi(s->model)) { ok = FALSE; printf("failedat model\n"); }
-                case 2: if (family != atoi(s->family)) { ok = FALSE; printf("failedat fam\n"); }
-                case 1: if (!SEQ(ven, s->vendor_id)) { ok = FALSE; printf("failedat ven %s vs %s\n", ven, s->vendor_id); }
+                case 4: if (stepping != atoi(s->stepping)) { ok = FALSE; break; }
+                case 3: if (model != atoi(s->model)) { ok = FALSE; break; }
+                case 2: if (family != atoi(s->family)) { ok = FALSE; break; }
+                case 1: if (!SEQ(ven, s->vendor_id)) { ok = FALSE; break; }
             }
             if (nglob && strlen(nglob)) {
                 //TODO:
