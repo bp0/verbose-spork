@@ -263,6 +263,10 @@ static sysobj_virt vol[] = {
     { .path = ":/extern", .str = "*",
       .type = VSO_TYPE_DIR | VSO_TYPE_CONST },
 
+    /* value lookup paths, caches */
+    { .path = ":/lookup", .str = "*",
+      .type = VSO_TYPE_DIR | VSO_TYPE_CONST },
+
     /* handy /sys and /proc links */
     { .path = ":/sysfs", .str = "/sys",
       .type = VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_AUTOLINK | VSO_TYPE_CONST },

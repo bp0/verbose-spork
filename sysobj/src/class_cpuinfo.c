@@ -28,8 +28,8 @@
 const gchar arm_ids_reference_markup_text[] =
     " Items are generated on-demand and cached.\n"
     "\n"
-    " :/cpu/cpuinfo/arm.ids/{implementer}/name\n"
-    " :/cpu/cpuinfo/arm.ids/{implementer}/{part}/name\n"
+    " :/lookup/arm.ids/{implementer}/name\n"
+    " :/lookup/arm.ids/{implementer}/{part}/name\n"
     "Reference:\n"
     BULLET REFLINK("https://github.com/bp0/armids")
     "\n";
@@ -42,7 +42,7 @@ static gboolean cpuinfo_lcpu_prop_verify(sysobj *obj);
 
 static gchar *fmt_arm_implementer(sysobj *obj, int fmt_opts) {
     int imp = strtol(obj->data.str, NULL, 16);
-    gchar *istr = auto_free( sysobj_raw_from_printf(":/cpu/cpuinfo/arm.ids/%02x/name", imp) );
+    gchar *istr = auto_free( sysobj_raw_from_printf(":/lookup/arm.ids/%02x/name", imp) );
     if (istr)
         return g_strdup_printf("[%s] %s", obj->data.str, istr);
     simple_format(obj, fmt_opts);
@@ -55,7 +55,7 @@ static gchar *fmt_arm_part(sysobj *obj, int fmt_opts) {
         sysobj_read(obj_imp, FALSE);
         int imp = strtol(obj_imp->data.str, NULL, 16);
         int part = strtol(obj->data.str, NULL, 16);
-        gchar *pstr = auto_free( sysobj_raw_from_printf(":/cpu/cpuinfo/arm.ids/%02x/%03x/name", imp, part) );
+        gchar *pstr = auto_free( sysobj_raw_from_printf(":/lookup/arm.ids/%02x/%03x/name", imp, part) );
         if (pstr)
             return g_strdup_printf("[%s] %s", obj->data.str, pstr);
     }
@@ -97,7 +97,7 @@ static vendor_list cpuinfo_lcpu_vendors(sysobj *obj) {
 static vendor_list cpuinfo_lcpu_prop_vendors(sysobj *obj) {
     if (SEQ(obj->name, "cpu_implementer") ) {
         int imp = strtol(obj->data.str, NULL, 16);
-        gchar *istr = auto_free( sysobj_raw_from_printf(":/cpu/cpuinfo/arm.ids/%02x/name", imp) );
+        gchar *istr = auto_free( sysobj_raw_from_printf(":/lookup/arm.ids/%02x/name", imp) );
         return vendor_list_append(NULL, vendor_match(istr, NULL) );
     }
     return simple_vendors(obj);
@@ -143,11 +143,11 @@ static sysobj_class cls_cpuinfo[] = {
     .f_format = cpuinfo_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
 
   { SYSOBJ_CLASS_DEF
-    .tag = "arm.ids", .pattern = ":/cpu/cpuinfo/arm.ids", .flags = OF_CONST,
+    .tag = "arm.ids", .pattern = ":/lookup/arm.ids", .flags = OF_CONST,
     .s_halp = arm_ids_reference_markup_text, .s_label = "arm.ids lookup virtual tree",
     .s_update_interval = 4.0 },
   { SYSOBJ_CLASS_DEF
-    .tag = "arm.ids:id", .pattern = ":/cpu/cpuinfo/arm.ids/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .tag = "arm.ids:id", .pattern = ":/lookup/arm.ids/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .s_halp = arm_ids_reference_markup_text, .s_label = "arm.ids lookup result",
     .f_format = fmt_node_name },
 };

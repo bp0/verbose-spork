@@ -180,8 +180,11 @@ static sysobj_class cls_internal[] = {
     .s_label = N_("Virtual sysfs root"), .s_update_interval = 60.0,
     .f_vendors = vsfs_vendors },
   { SYSOBJ_CLASS_DEF
-    .tag = "extern", .pattern = ":/extern/", .flags = OF_CONST,
+    .tag = "extern", .pattern = ":/extern", .flags = OF_CONST,
     .s_label = N_("items that may depend on external utilities") },
+  { SYSOBJ_CLASS_DEF
+    .tag = "lookup", .pattern = ":/lookup", .flags = OF_CONST,
+    .s_label = N_("lookup cache") },
   { SYSOBJ_CLASS_DEF
     .tag = "sysobj:stat", .pattern = ":sysobj/*", .flags = OF_CONST | OF_GLOB_PATTERN,
     .attributes = sysobj_items, .s_update_interval = 0.5 },

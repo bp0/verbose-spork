@@ -400,8 +400,8 @@ void cpuinfo_scan_arm_x86_rv(gchar **lines, gsize line_count) {
             if (this_lcpu->cpu_implementer && this_lcpu->cpu_part) {
                 int imp = strtol(this_lcpu->cpu_implementer, NULL, 16);
                 int part = strtol(this_lcpu->cpu_part, NULL, 16);
-                gchar *part_str = sysobj_raw_from_printf(":/cpu/cpuinfo/arm.ids/%02x/%03x/name", imp, part);
-                gchar *imp_str = sysobj_raw_from_printf(":/cpu/cpuinfo/arm.ids/%02x/name", imp);
+                gchar *part_str = sysobj_raw_from_printf(":/lookup/arm.ids/%02x/%03x/name", imp, part);
+                gchar *imp_str = sysobj_raw_from_printf(":/lookup/arm.ids/%02x/name", imp);
                 this_lcpu->vendor = vendor_match(imp_str, NULL);
                 g_free(part_str);
                 g_free(imp_str);
