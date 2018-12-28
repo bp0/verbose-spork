@@ -415,7 +415,9 @@ name Microchip Technology (formerly Standard Microsystems)
 
 name Linux Foundation
     name_short Linux
+    ansi_color 0;33;40
     match_string Linux Foundation
+    match_string Linux
 
 name ASMedia Technology
     name_short ASMedia
