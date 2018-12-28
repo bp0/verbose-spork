@@ -29,7 +29,7 @@ const gchar arm_ids_reference_markup_text[] =
     " Items are generated on-demand and cached.\n"
     "\n"
     " :/lookup/arm.ids/{implementer}/name\n"
-    " :/lookup/arm.ids/{implementer}/{part}/name\n"
+    " :/lookup/arm.ids/{implementer}/{part}/name\n\n"
     "Reference:\n"
     BULLET REFLINK("https://github.com/bp0/armids")
     "\n";
