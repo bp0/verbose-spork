@@ -38,7 +38,7 @@ gchar *ven_ribbon_format(sysobj *obj, int fmt_opts) {
     vendor_list vl = ven_ribbon_vendors(obj);
     gchar *ret = vendor_list_ribbon(vl, fmt_opts);
     vendor_list_free(vl);
-    return ret;
+    return ret ? ret : g_strdup("");
 }
 
 static sysobj_class cls_TEMPLATE[] = {
