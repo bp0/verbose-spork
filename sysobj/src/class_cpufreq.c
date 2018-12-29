@@ -31,7 +31,7 @@ attr_tab cpufreq_items[] = {
     { "scaling_max_freq", N_("maximum clock frequency (via scaling driver)"), OF_NONE, fmt_khz_to_mhz, 1.0 },
     { "scaling_cur_freq", N_("current clock frequency (via scaling driver)"), OF_NONE, fmt_khz_to_mhz, 0.25 },
 
-    { "bios_limit", N_("maximum clock frequency (via BIOS)"), OF_NONE, fmt_khz_to_mhz, -1 },
+    { "bios_limit", N_("maximum clock frequency (via BIOS)"), OF_NONE, fmt_khz_to_mhz },
 
     { "cpuinfo_min_freq", N_("minimum clock frequency (via cpuinfo)"), OF_NONE, fmt_khz_to_mhz, 1.0 },
     { "cpuinfo_max_freq", N_("maximum clock frequency (via cpuinfo)"), OF_NONE, fmt_khz_to_mhz, 1.0 },

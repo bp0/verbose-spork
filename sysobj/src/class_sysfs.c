@@ -46,16 +46,16 @@ static sysobj_class cls_power[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "subsystem:class", .pattern = "/sys/class/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_verify = subsystem_verify,
-    .s_label = "sysfs sub-system", .f_format = subsystem_format, .s_update_interval = 0.0 },
+    .s_label = "sysfs sub-system", .f_format = subsystem_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
   { SYSOBJ_CLASS_DEF
     .tag = "subsystem:block", .pattern = "/sys/block/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_verify = subsystem_verify,
-    .s_label = "sysfs sub-system", .f_format = subsystem_format, .s_update_interval = 0.0 },
+    .s_label = "sysfs sub-system", .f_format = subsystem_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
 
   { SYSOBJ_CLASS_DEF
     .tag = "kernel:module", .pattern = "/sys/module/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_verify = subsystem_verify,
-    .s_label = "kernel module", .f_format = subsystem_format, .s_update_interval = 0.0 },
+    .s_label = "kernel module", .f_format = subsystem_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
 
   { SYSOBJ_CLASS_DEF
     .tag = "device_power", .pattern = "/sys/devices/*/power", .flags = OF_GLOB_PATTERN | OF_CONST,

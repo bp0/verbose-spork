@@ -49,8 +49,8 @@ static vendor_list usb_all_vendors(sysobj *obj);
 
 attr_tab usb_idcomp_items[] = {
     //TODO: labels
-    { "idVendor", N_("usb.ids-provided vendor name"), OF_HAS_VENDOR, NULL, -1 },
-    { "idProduct", N_("usb.ids-provided product name"), OF_NONE, NULL, -1 },
+    { "idVendor", N_("usb.ids-provided vendor name"), OF_HAS_VENDOR, NULL },
+    { "idProduct", N_("usb.ids-provided product name"), OF_NONE, NULL },
     ATTR_TAB_LAST
 };
 
@@ -63,17 +63,17 @@ static gchar *fmt_bcddevice(sysobj *obj, int fmt_opts) {
 }
 
 attr_tab usb_dev_items[] = {
-    { "manufacturer", N_("device-provided vendor name"), OF_HAS_VENDOR, NULL, -1 },
-    { "product",   N_("device-provided product name"), OF_NONE, NULL, -1 },
-    { "version",   N_("USB version"), OF_NONE, NULL, -1 },
-    { "speed",     N_("bitrate"), OF_NONE, fmt_megabitspersecond, -1 },
-    { "removable", N_("device is removable or fixed"), OF_NONE, NULL, -1 },
+    { "manufacturer", N_("device-provided vendor name"), OF_HAS_VENDOR },
+    { "product",   N_("device-provided product name") },
+    { "version",   N_("USB version") },
+    { "speed",     N_("bitrate"), OF_NONE, fmt_megabitspersecond },
+    { "removable", N_("device is removable or fixed") },
     { "urbnum",    N_("number of URBs submitted for the whole device"), OF_NONE, NULL, 0.2 },
     { "tx_lanes",  N_("transmit lanes"), OF_NONE, NULL, 0.5 },
     { "rx_lanes",  N_("receive lanes"), OF_NONE, NULL, 0.5 },
-    { "bMaxPower", N_("maximum power consumption"), OF_NONE, fmt_milliampere, -1 },
-    { "bcdDevice", N_("device revision"), OF_NONE, fmt_bcddevice, -1 },
-    { "serial",    N_("serial number"), OF_NONE, NULL, -1 },
+    { "bMaxPower", N_("maximum power consumption"), OF_NONE, fmt_milliampere },
+    { "bcdDevice", N_("device revision"), OF_NONE, fmt_bcddevice },
+    { "serial",    N_("serial number") },
     ATTR_TAB_LAST
 };
 

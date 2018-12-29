@@ -58,14 +58,14 @@ attr_tab gpu_prop_items[] = {
 
 attr_tab drm_items[] = {
     //TODO: labels
-    { "gt_cur_freq_mhz",   NULL, OF_NONE, fmt_mhz, -1 },
-    { "gt_min_freq_mhz",   NULL, OF_NONE, fmt_mhz, -1 },
-    { "gt_max_freq_mhz",   NULL, OF_NONE, fmt_mhz, -1 },
-    { "gt_boost_freq_mhz", NULL, OF_NONE, fmt_mhz, -1 },
-    { "gt_act_freq_mhz",   NULL, OF_NONE, fmt_mhz, -1 },
-    { "gt_RP0_freq_mhz",   NULL, OF_NONE, fmt_mhz, -1 },
-    { "gt_RP1_freq_mhz",   NULL, OF_NONE, fmt_mhz, -1 },
-    { "gt_RPn_freq_mhz",   NULL, OF_NONE, fmt_mhz, -1 },
+    { "gt_cur_freq_mhz",   NULL, OF_NONE, fmt_mhz },
+    { "gt_min_freq_mhz",   NULL, OF_NONE, fmt_mhz },
+    { "gt_max_freq_mhz",   NULL, OF_NONE, fmt_mhz },
+    { "gt_boost_freq_mhz", NULL, OF_NONE, fmt_mhz },
+    { "gt_act_freq_mhz",   NULL, OF_NONE, fmt_mhz },
+    { "gt_RP0_freq_mhz",   NULL, OF_NONE, fmt_mhz },
+    { "gt_RP1_freq_mhz",   NULL, OF_NONE, fmt_mhz },
+    { "gt_RPn_freq_mhz",   NULL, OF_NONE, fmt_mhz },
     ATTR_TAB_LAST
 };
 

@@ -34,8 +34,10 @@
 #include "sysobj_filter.h"
 #include "vendor.h"
 
-#define UPDATE_INTERVAL_DEFAULT  10.0   /* in seconds */
-#define UPDATE_INTERVAL_NEVER     0.0   /* in seconds */
+#define UPDATE_INTERVAL_DEFAULT_VALUE  10.0   /* in seconds */
+#define UPDATE_INTERVAL_UNSPECIFIED 0
+#define UPDATE_INTERVAL_DEFAULT    -2
+#define UPDATE_INTERVAL_NEVER      -1
 
 enum {
     OF_NONE          = 0,
@@ -47,8 +49,6 @@ enum {
      * use sysobj_has_flag() to check */
     OF_REQ_ROOT      = 1<<16, /* expected to require root */
     OF_HAS_VENDOR    = 1<<17, /* additional vendor information may be available through sysobj_vendor() */
-                              /* TODO: rename to OF_HAS_VENDOR */
-
 };
 
 enum {

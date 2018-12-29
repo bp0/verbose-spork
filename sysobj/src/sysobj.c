@@ -778,16 +778,20 @@ double sysobj_update_interval(sysobj *s) {
                 int i = attr_tab_lookup(s->cls->attributes, s->name);
                 if (i != -1) {
                     double ui = s->cls->attributes[i].s_update_interval;
-                    if (ui >= 0)
+                    if (ui != UPDATE_INTERVAL_UNSPECIFIED)
                         return ui;
                 }
             }
-            if (s->cls->f_update_interval)
-                return s->cls->f_update_interval(s);
-            if (s->cls->s_update_interval)
+            if (s->cls->f_update_interval) {
+                double ui = s->cls->f_update_interval(s);
+                if (ui != UPDATE_INTERVAL_UNSPECIFIED)
+                    return ui;
+            }
+            if (s->cls->s_update_interval
+                && s->cls->s_update_interval != UPDATE_INTERVAL_UNSPECIFIED)
                 return s->cls->s_update_interval;
         }
-        return UPDATE_INTERVAL_DEFAULT;
+        return UPDATE_INTERVAL_UNSPECIFIED;
     }
     return UPDATE_INTERVAL_NEVER;
 }
@@ -1244,8 +1248,10 @@ gboolean sysobj_data_expired(sysobj *s) {
         double ui = sysobj_update_interval(s);
         if (ui == UPDATE_INTERVAL_NEVER)
             return !s->data.was_read; /* once read, never expires */
-        if (ui < 0)
-            ui = UPDATE_INTERVAL_DEFAULT;
+        if (ui == UPDATE_INTERVAL_DEFAULT
+            || ui == UPDATE_INTERVAL_UNSPECIFIED
+            || ui <= 0 )
+            ui = UPDATE_INTERVAL_DEFAULT_VALUE;
         if ( (sysobj_elapsed() - s->data.stamp) >= ui ) {
             return TRUE;
         }

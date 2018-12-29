@@ -298,7 +298,12 @@ void bp_pin_inspect_do(bpPinInspect *s, const pin *p, int fmt_opts) {
     gchar *data_info = g_strdup_printf("was_read = %s; is_null = %s; len = %lu byte(s)%s; guess_nbase = %d\ntag = %s",
         p->obj->data.was_read ? "yes" : "no", (p->obj->data.any == NULL) ? "yes" : "no",
         p->obj->data.len, p->obj->data.is_utf8 ? ", utf8" : "", p->obj->data.maybe_num, tag);
-    gchar *update = g_strdup_printf("update_interval = %0.4lfs, last_update = %0.4lfs", p->update_interval, p->obj->data.stamp);
+    double ui = sysobj_update_interval(p->obj);
+    gchar *uidesc = "";
+    if (ui == UPDATE_INTERVAL_DEFAULT) uidesc = " (use-default)";
+    if (ui == UPDATE_INTERVAL_UNSPECIFIED) uidesc = " (unspecified)";
+    if (ui == UPDATE_INTERVAL_NEVER) uidesc = " (never)";
+    gchar *update = g_strdup_printf("update_interval = %0.2lfs%s, last_update = %0.4lfs", ui, uidesc, p->obj->data.stamp);
     gchar *pin_info = g_strdup_printf("hist_stat = %d, hist_len = %" PRIu64 "/%" PRIu64 ", hist_mem_size = %" PRIu64 " (%" PRIu64 " bytes)",
         p->history_status, p->history_len, p->history_max_len, p->history_mem, p->history_mem * sizeof(sysobj_data) );
 
