@@ -548,12 +548,12 @@ void sysobj_free(sysobj *s) {
 }
 
 void sysobj_classify(sysobj *s) {
-    GSList *l = NULL;
     sysobj_class *c = NULL, *c_blast = NULL;
     gsize len = 0;
     if (s) {
         len = strlen(s->path);
-        for (l = class_list; l; l = l->next) {
+        for (GSList *l = class_list; l; l = l->next) {
+            sysobj_stats.so_class_iter++;
             c = l->data;
             gboolean match = FALSE;
 

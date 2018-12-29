@@ -323,7 +323,11 @@ typedef struct {
         so_read_force,
         so_read_expired,
         so_read_not_expired,
-        so_read_wo;
+        so_read_wo,
+        so_virt_iter,
+        so_virt_rm,
+        so_class_iter,
+        ven_iter;
     double
         auto_free_next;
 } so_stats;

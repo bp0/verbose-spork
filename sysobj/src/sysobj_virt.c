@@ -50,6 +50,7 @@ void sysobj_virt_remove(gchar *glob) {
             //printf("rm virtual object %s\n", tv->path);
             sysobj_virt_free(tv);
             vo_list = g_slist_delete_link(vo_list, t);
+            sysobj_stats.so_virt_rm++;
         }
         g_free(l->data); /* won't need again */
         l = l->next;
@@ -62,8 +63,8 @@ void sysobj_virt_remove(gchar *glob) {
 gboolean sysobj_virt_add(sysobj_virt *vo) {
     if (vo) {
         g_mutex_lock(&vo_list_lock);
-        GSList *l = vo_list;
-        while(l) {
+        for (GSList *l = vo_list; l; l = l->next) {
+            sysobj_stats.so_virt_iter++;
             sysobj_virt *lv = l->data;
             if (g_strcmp0(lv->path, vo->path) == 0) {
                 /* already exists, overwrite */
@@ -72,7 +73,6 @@ gboolean sysobj_virt_add(sysobj_virt *vo) {
                 g_mutex_unlock(&vo_list_lock);
                 return FALSE;
             }
-            l = l->next;
         }
         //printf("add virtual object: %s [%s]\n", vo->path, vo->str);
         vo_list = g_slist_append(vo_list, vo);
@@ -105,7 +105,7 @@ gboolean sysobj_virt_add_simple(const gchar *base, const gchar *name, const gcha
 
 void sysobj_virt_from_lines(const gchar *base, const gchar *data_in, gboolean safe_names) {
     gchar **lines = g_strsplit(data_in, "\n", -1);
-    for(int i = 0; lines[i]; i++) {
+    for (int i = 0; lines[i]; i++) {
         gchar *c = g_utf8_strchr(lines[i], strlen(lines[i]), ':');
         if (c) {
             *c = 0;
@@ -170,6 +170,7 @@ sysobj_virt *sysobj_virt_find(const gchar *path) {
     int best_len = 0;
     /* exact static match wins over longest dynamic match */
     for (GSList *l = vo_list; l; l = l->next) {
+        sysobj_stats.so_virt_iter++;
         sysobj_virt *vo = l->data;
         if (vo->type & VSO_TYPE_DYN && g_str_has_prefix(path, vo->path) ) {
             int len = strlen(vo->path);
@@ -243,11 +244,10 @@ int sysobj_virt_get_type(const sysobj_virt *vo, const gchar *req) {
 
 GSList *sysobj_virt_all_paths() {
     GSList *ret = NULL;
-    GSList *l = vo_list;
-    while (l) {
+    for (GSList *l = vo_list; l; l = l->next) {
+        sysobj_stats.so_virt_iter++;
         sysobj_virt *vo = l->data;
         ret = g_slist_append(ret, g_strdup(vo->path));
-        l = l->next;
     }
     return ret;
 }
@@ -258,8 +258,8 @@ static GSList *sysobj_virt_children_auto(const sysobj_virt *vo, const gchar *req
         gchar *fn = NULL;
         gchar *spath = g_strdup_printf("%s/", req);
         gsize spl = strlen(spath);
-        GSList *l = vo_list;
-        while (l) {
+        for (GSList *l = vo_list; l; l = l->next) {
+            sysobj_stats.so_virt_iter++;
             sysobj_virt *tvo = l->data;
             /* find all vo paths that are immediate children */
             if ( g_str_has_prefix(tvo->path, spath) ) {
@@ -268,8 +268,6 @@ static GSList *sysobj_virt_children_auto(const sysobj_virt *vo, const gchar *req
                     ret = g_slist_append(ret, fn);
                 }
             }
-
-            l = l->next;
         }
         g_free(spath);
     }
@@ -288,7 +286,7 @@ GSList *sysobj_virt_children(const sysobj_virt *vo, const gchar *req) {
         } else {
             childs = g_strsplit(data, "\n", 0);
             len = g_strv_length(childs);
-            for(i = 0; i < len; i++) {
+            for (i = 0; i < len; i++) {
                 if (*childs[i] != 0)
                     ret = g_slist_append(ret, g_strdup(childs[i]));
             }

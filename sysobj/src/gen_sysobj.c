@@ -29,16 +29,18 @@ static void buff_basename(const gchar *path, gchar *buff, gsize n) {
 }
 
 static gchar *get_item_items[] = {
-    "elapsed", "root", "class_count", "virt_count",
+    "elapsed", "root",
     "freed_count", "free_queue", "free_expected",
     "free_delay",
     "sysobj_new", "sysobj_new_fast",
     "sysobj_clean", "sysobj_free",
-    "classify_none",
     "sysobj_read_first", "sysobj_read_force",
     "sysobj_read_expired", "sysobj_read_not_expired",
     "sysobj_read_wo",
     "gg_file_total_wait",
+    "virt_count", "virt_iter", "virt_rm",
+    "class_count", "class_iter", "classify_none",
+    "ven_iter",
 };
 
 static gchar *get_item(const gchar *path) {
@@ -48,16 +50,14 @@ static gchar *get_item(const gchar *path) {
 
     if (SEQ(name, "root") )
         return g_strdup_printf("%s", sysobj_root_get());
-    if (SEQ(name, "class_count") )
-        return g_strdup_printf("%lu", (long unsigned)class_count() );
-    if (SEQ(name, "virt_count") )
-        return g_strdup_printf("%lu", (long unsigned)sysobj_virt_count() );
+
     if (SEQ(name, "free_queue") )
         return g_strdup_printf("%llu", sysobj_stats.auto_free_len );
     if (SEQ(name, "freed_count") )
         return g_strdup_printf("%llu", sysobj_stats.auto_freed );
     if (SEQ(name, "free_delay") )
         return g_strdup_printf("%u", (unsigned)AF_DELAY_SECONDS );
+
     if (SEQ(name, "sysobj_new") )
         return g_strdup_printf("%llu", sysobj_stats.so_new );
     if (SEQ(name, "sysobj_new_fast") )
@@ -66,8 +66,7 @@ static gchar *get_item(const gchar *path) {
         return g_strdup_printf("%llu", sysobj_stats.so_clean );
     if (SEQ(name, "sysobj_free") )
         return g_strdup_printf("%llu", sysobj_stats.so_free );
-    if (SEQ(name, "classify_none") )
-        return g_strdup_printf("%llu", sysobj_stats.classify_none );
+
     if (SEQ(name, "sysobj_read_first") )
         return g_strdup_printf("%llu", sysobj_stats.so_read_first );
     if (SEQ(name, "sysobj_read_force") )
@@ -81,6 +80,23 @@ static gchar *get_item(const gchar *path) {
 
     if (SEQ(name, "gg_file_total_wait") )
         return g_strdup_printf("%llu", gg_file_get_total_wait() );
+
+    if (SEQ(name, "virt_count") )
+        return g_strdup_printf("%lu", (long unsigned)sysobj_virt_count() );
+    if (SEQ(name, "virt_iter") )
+        return g_strdup_printf("%llu", sysobj_stats.so_virt_iter );
+    if (SEQ(name, "virt_rm") )
+        return g_strdup_printf("%llu", sysobj_stats.so_virt_rm );
+
+    if (SEQ(name, "class_count") )
+        return g_strdup_printf("%lu", (long unsigned)class_count() );
+    if (SEQ(name, "class_iter") )
+        return g_strdup_printf("%llu", sysobj_stats.so_class_iter );
+    if (SEQ(name, "classify_none") )
+        return g_strdup_printf("%llu", sysobj_stats.classify_none );
+
+    if (SEQ(name, "ven_iter") )
+        return g_strdup_printf("%llu", sysobj_stats.ven_iter );
 
     double elapsed = sysobj_elapsed();
     if (SEQ(name, "elapsed") )
