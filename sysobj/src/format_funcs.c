@@ -640,6 +640,19 @@ gchar *vendor_list_ribbon(const vendor_list vl_in, int fmt_opts) {
     return ret;
 }
 
+gchar *format_data(gconstpointer data, int length, func_format f_fmt, int fmt_opts) {
+    sysobj *fake = sysobj_new();
+    if (length < 0)
+        length = strlen((const char*)data) + 1;
+    fake->data.any = g_memdup(data, length);
+    fake->data.len = length;
+    fake->data.was_read = TRUE;
+    fake->exists = TRUE;
+    gchar *ret = f_fmt(fake, fmt_opts);
+    sysobj_free(fake);
+    return ret;
+}
+
 #define STD_FORMAT_FUNC(f) { (gpointer)f ,  #f },
 fmt_func_tab format_funcs[] = {
 STD_FORMAT_FUNC(fmt_nanoseconds)

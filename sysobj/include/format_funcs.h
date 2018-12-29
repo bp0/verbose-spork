@@ -23,6 +23,10 @@
 
 #include "sysobj.h"
 
+/* call a format func with a string of data instead of a sysobj
+ * length = -1 for strlen(data) */
+gchar *format_data(gconstpointer data, int length, func_format f_fmt, int fmt_opts);
+
 /* the input unit is specified, but the formatted
  * output maybe be some other unit
  * ex: fmt_khz() the input must be khz, but it may format as MHz.
