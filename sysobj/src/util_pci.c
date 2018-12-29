@@ -56,6 +56,8 @@ void util_pci_id_free(util_pci_id *s) {
         g_free(s->sub_vendor_str);
         g_free(s->sub_device_str);
         g_free(s->dev_class_str);
+        g_free(s->dev_subclass_str);
+        g_free(s->dev_progif_str);
         g_free(s);
     }
 }
@@ -126,6 +128,8 @@ int util_pci_ids_lookup_list(GSList *items) {
                 fgets(buffer, 128, pci_dot_ids)   ) {
             if (buffer[0] == '#') continue; /* comment */
             if (buffer[0] == '\n') continue; /* empty line */
+            if (buffer[0] == 'C'
+                && buffer[1] == ' ') break; /* arrived at class section */
             gboolean not_found = FALSE;
 
             char *next_sp = strchr(buffer, ' ');
@@ -182,6 +186,8 @@ int util_pci_ids_lookup_list(GSList *items) {
                 fgets(buffer, 128, pci_dot_ids)   ) {
             if (buffer[0] == '#') continue; /* comment */
             if (buffer[0] == '\n') continue; /* empty line */
+            if (buffer[0] == 'C'
+                && buffer[1] == ' ') break; /* arrived at class section */
             gboolean not_found = FALSE;
 
             char *next_sp = strchr(buffer, ' ');
@@ -205,14 +211,87 @@ int util_pci_ids_lookup_list(GSList *items) {
         /* rewind a bit for the next device (maybe same vendor) */
         fseek(pci_dot_ids, last_vendor_fpos, SEEK_SET);
 
-        /* copy the device_str for sub_device if undefined */
-        if (d->sub_vendor_str && !d->sub_device_str)
-            d->sub_device_str = g_strdup(d->device_str);
+        l = l->next;
+    }
+
+    /* third pass for the classes */
+    tmp = g_slist_sort(tmp, (GCompareFunc)cmp_util_pci_id_class);
+    last_vendor_fpos = 0; /* reuse vendor as class */
+    fseek(pci_dot_ids, 0, SEEK_SET);
+    gboolean found_classes = FALSE;
+    l = tmp;
+    while(l) {
+        util_pci_id *d = l->data;
+        int this_class = (d->dev_class >> 16) & 0xff;
+        int this_subclass = (d->dev_class >> 8) & 0xff;
+        int this_progif = d->dev_class & 0xff;
+        while ( 1+(line_fpos = ftell(pci_dot_ids)) &&
+                fgets(buffer, 128, pci_dot_ids)   ) {
+            if (buffer[0] == '#') continue; /* comment */
+            if (buffer[0] == '\n') continue; /* empty line */
+            if (buffer[0] == 'C'
+                && buffer[1] == ' ') found_classes = TRUE; /* arrived at class section */
+            if (!found_classes) continue;
+            gboolean not_found = FALSE;
+
+            char *next_sp = strchr(buffer, ' ');
+            int tabs = 0;
+            while(buffer[tabs] == '\t')
+                tabs++;
+            if (tabs == 0 && buffer[0] == 'C' && buffer[1] == ' ')
+                id = strtol(buffer + 2, &next_sp, 16);
+            else
+                id = strtol(buffer, &next_sp, 16);
+
+            switch (tabs) {
+                case 0:  /* class  class_name */
+                    if (id == this_class ) {
+                        d->dev_class_str = g_strdup(g_strstrip(next_sp));
+                        last_vendor_fpos = line_fpos;
+                        continue;
+                    } else if (id > this_class) not_found = TRUE;
+                    break;
+                case 1:  /* subclass  sub_class_name */
+                    if (!d->dev_class_str) break;
+                    if (id == this_subclass ) {
+                        d->dev_subclass_str = g_strdup(g_strstrip(next_sp));
+                        continue;
+                    } else if (id > this_subclass) not_found = TRUE;
+                    break;
+                case 2:  /* prog-if  prog-if_name */
+                    if (!d->dev_subclass_str) break;
+                    if (id == this_progif ) {
+                        d->dev_progif_str = g_strdup(g_strstrip(next_sp));
+                        continue;
+                    } else if (id > this_progif) not_found = TRUE;
+                    break;
+            }
+            if (not_found)
+                break;
+        }
+        /* rewind a bit for the next device (maybe same class) */
+        fseek(pci_dot_ids, last_vendor_fpos, SEEK_SET);
 
         l = l->next;
     }
 
-    //TODO: class
+    /* one more pass to fill in missing info */
+    for(l = items; l; l = l->next) {
+        util_pci_id *d = l->data;
+        /* use class as device name, if no device name was found */
+        if (!d->device_str) {
+            if (d->dev_subclass_str)
+                d->device_str = g_strdup(d->dev_subclass_str);
+            else if (d->dev_class_str)
+                d->device_str = g_strdup(d->dev_class_str);
+        }
+        if (!d->sub_device_str) {
+            if (d->dev_subclass_str)
+                d->sub_device_str = g_strdup(d->dev_subclass_str);
+            else if (d->dev_class_str)
+                d->sub_device_str = g_strdup(d->dev_class_str);
+        }
+    }
 
     fclose(pci_dot_ids);
     return found_count;

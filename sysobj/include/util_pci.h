@@ -38,7 +38,10 @@ typedef struct {
     gchar *device_str;
     gchar *sub_vendor_str;
     gchar *sub_device_str;
+
     gchar *dev_class_str;
+    gchar *dev_subclass_str;
+    gchar *dev_progif_str;
 } util_pci_id;
 
 void util_pci_id_free(util_pci_id *s);

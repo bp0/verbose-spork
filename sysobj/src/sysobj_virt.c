@@ -167,18 +167,21 @@ sysobj_virt *sysobj_virt_find(const gchar *path) {
     sysobj_virt *ret = NULL;
     gchar *spath = g_strdup(path);
     util_null_trailing_slash(spath);
-    GSList *l = vo_list;
-    while (l) {
+    int best_len = 0;
+    /* exact static match wins over longest dynamic match */
+    for (GSList *l = vo_list; l; l = l->next) {
         sysobj_virt *vo = l->data;
         if (vo->type & VSO_TYPE_DYN && g_str_has_prefix(path, vo->path) ) {
-            ret = vo;
-            /* break; -- No, don't break, maybe a non-dynamic item matches */
+            int len = strlen(vo->path);
+            if (len > best_len) {
+                ret = vo;
+                best_len = len;
+            }
         }
-        if (SEQ(vo->path, path)) {
+        if (SEQ(vo->path, spath)) {
             ret = vo;
             break;
         }
-        l = l->next;
     }
     g_free(spath);
     //DEBUG("... %s", (ret) ? ret->path : "(NOT FOUND)");

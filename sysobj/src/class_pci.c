@@ -39,6 +39,7 @@ const gchar pci_ids_reference_markup_text[] =
 static gchar *pci_format(sysobj *obj, int fmt_opts);
 static gchar *pci_format_idcomp(sysobj *obj, int fmt_opts);
 static gchar *pci_format_device(sysobj *obj, int fmt_opts);
+static gchar *pci_format_class(sysobj *obj, int fmt_opts);
 
 static vendor_list pci_vendor_lookup(sysobj *obj);
 static vendor_list pci_vendor_dev(sysobj *obj);
@@ -48,11 +49,11 @@ static vendor_list pci_all_vendors(sysobj *obj);
 #define pci_ids_update_interval 4.0
 
 static attr_tab pci_idcomp_items[] = {
-    { "vendor", N_("PCI-SIG-assigned vendor id"), OF_HAS_VENDOR, NULL, -1 },
-    { "device", N_("vendor-specific device id"), OF_NONE, NULL, -1 },
-    { "subsystem_vendor", N_("PCI-assigned vendor id for sub-vendor"), OF_HAS_VENDOR, NULL, -1 },
-    { "subsystem_device", N_("vendor-specific device id"), OF_NONE, NULL, -1 },
-    { "class", NULL, OF_NONE, NULL, -1 },
+    { "vendor", N_("PCI-SIG-assigned vendor id"), OF_HAS_VENDOR },
+    { "device", N_("vendor-specific device id") },
+    { "subsystem_vendor", N_("PCI-assigned vendor id for sub-vendor"), OF_HAS_VENDOR },
+    { "subsystem_device", N_("vendor-specific device id") },
+    { "class", N_("device class"), OF_NONE, pci_format_class },
     ATTR_TAB_LAST
 };
 
@@ -104,6 +105,14 @@ static sysobj_class cls_pci[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "pci.ids:id", .pattern = ":/lookup/pci.ids/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .s_halp = pci_ids_reference_markup_text, .s_label = "pci.ids lookup result", .f_format = fmt_node_name },
+  { SYSOBJ_CLASS_DEF
+    .tag = "pci.ids:class", .pattern = ":/lookup/pci.ids/class", .flags = OF_CONST,
+    .s_halp = pci_ids_reference_markup_text, .s_label = "pci.ids device class lookup results",
+    .s_update_interval = pci_ids_update_interval },
+  { SYSOBJ_CLASS_DEF
+    .tag = "pci.ids:class:result", .pattern = ":/lookup/pci.ids/class/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .s_halp = pci_ids_reference_markup_text, .s_label = "pci.ids device class lookup result",
+    .s_update_interval = pci_ids_update_interval, .s_node_format = "{{class}}{{ :: |subclass}}{{ :: |progif}}" },
 };
 
 static sysobj_virt vol[] = {
@@ -194,6 +203,18 @@ util_pci_id *get_pci_id(gchar *dev_path) {
     return pid;
 }
 
+static gchar *pci_format_class(sysobj *obj, int fmt_opts) {
+    gchar *ret = NULL;
+    uint32_t value = strtol(obj->data.str, NULL, 16);
+    gchar *value_str = sysobj_format_from_printf(fmt_opts, ":/lookup/pci.ids/class/%06x", value & 0xffffff);
+    if (value_str) {
+        ret = g_strdup_printf("[%04x] %s", value, value_str);
+        g_free(value_str);
+    }
+    if (ret) return ret;
+    return simple_format(obj, fmt_opts);
+}
+
 static gchar *pci_format_idcomp(sysobj *obj, int fmt_opts) {
     gchar *pp = sysobj_parent_path(obj);
     util_pci_id *d = get_pci_id(pp);
@@ -209,8 +230,6 @@ static gchar *pci_format_idcomp(sysobj *obj, int fmt_opts) {
         value_str = d->sub_vendor_str ? d->sub_vendor_str : "Unknown";
     else if (SEQ(obj->name, "subsystem_device") )
         value_str = d->sub_device_str ? d->sub_device_str : "Device";
-    else if (SEQ(obj->name, "class") )
-        value_str = d->dev_class_str ? d->dev_class_str : "Unknown";
     if (value_str) {
         uint32_t value = strtol(obj->data.str, NULL, 16);
         ret = g_strdup_printf("[%04x] %s", value, value_str);

@@ -80,6 +80,15 @@ static void gen_pci_ids_cache_item(util_pci_id *pid) {
         if (pid->address)
             sysobj_virt_add_simple(buff, pid->address, devpath, dev_symlink_flags );
     }
+    /* class */
+    sprintf(buff, ":/lookup/pci.ids/class/%06x", pid->dev_class);
+    #define OR_EMPTY(s) (s ? s : "")
+    sysobj_virt_add_simple(buff, NULL, "*", VSO_TYPE_DIR );
+    sysobj_virt_add_simple(buff, "class", OR_EMPTY(pid->dev_class_str), VSO_TYPE_STRING );
+    sysobj_virt_add_simple(buff, "subclass", OR_EMPTY(pid->dev_subclass_str), VSO_TYPE_STRING );
+    sysobj_virt_add_simple(buff, "progif", OR_EMPTY(pid->dev_progif_str), VSO_TYPE_STRING );
+    if (pid->address)
+        sysobj_virt_add_simple(buff, pid->address, devpath, dev_symlink_flags );
     g_free(devpath);
 }
 
@@ -147,10 +156,25 @@ static gboolean name_is_0x04(gchar *name) {
     return FALSE;
 }
 
+static gboolean name_is_0x06(gchar *name) {
+    if (!name) return FALSE;
+    if (  isxdigit(name[0])
+        && isxdigit(name[1])
+        && isxdigit(name[2])
+        && isxdigit(name[3])
+        && isxdigit(name[4])
+        && isxdigit(name[5])
+        && name[6] == 0 )
+        return TRUE;
+    return FALSE;
+}
+
 static gchar *gen_pci_ids_lookup_value(const gchar *path) {
     if (!path) return NULL;
     gchar name[16] = "";
     buff_basename(path, name, 15);
+
+    pci_msg("gen_pci_ids_lookup_value(): %s\n", path);
 
     if (SEQ(name, "pci.ids") )
         return g_strdup("*");
@@ -220,7 +244,7 @@ static int gen_pci_ids_lookup_type(const gchar *path) {
     buff_basename(path, name, 15);
 
     if (SEQ(name, "pci.ids") )
-        return VSO_TYPE_DIR | VSO_TYPE_DYN;
+        return VSO_TYPE_DIR | VSO_TYPE_DYN | VSO_TYPE_CONST;
 
     if (SEQ(name, "name") )
         return VSO_TYPE_STRING;
@@ -231,14 +255,86 @@ static int gen_pci_ids_lookup_type(const gchar *path) {
     return VSO_TYPE_NONE;
 }
 
+static gchar *gen_pci_ids_lookup_class_value(const gchar *path) {
+    if (!path) return NULL;
+    gchar name[16] = "";
+    buff_basename(path, name, 15);
+
+    pci_msg("gen_pci_ids_lookup_class_value(): %s\n", path);
+
+    if (SEQ(path, ":/lookup/pci.ids/class") )
+        return g_strdup("*");
+
+    util_pci_id *pid = g_new0(util_pci_id, 1);
+    int32_t name_id = -1;
+    if ( name_is_0x06(name) )
+        name_id = strtol(name, NULL, 16);
+
+    int mc = sscanf(path, ":/lookup/pci.ids/class/%06x", &pid->dev_class);
+    gchar *verify = NULL;
+    switch(mc) {
+        case 1:
+            if (!verify)
+            verify = (name_id == -1)
+                ? g_strdup_printf(":/lookup/pci.ids/class/%06x/%s", pid->dev_class & 0xffffff, name)
+                : g_strdup_printf(":/lookup/pci.ids/class/%06x", pid->dev_class & 0xffffff);
+
+            if (strcmp(path, verify) != 0) {
+                util_pci_id_free(pid);
+                return NULL;
+            }
+
+            int ok = util_pci_ids_lookup(pid);
+            gen_pci_ids_cache_item(pid);
+            break;
+        case 0:
+            util_pci_id_free(pid);
+            return NULL;
+    }
+
+    gchar *ret = NULL;
+    if (SEQ(name, "class") )
+        ret = g_strdup(pid->dev_class_str);
+    if (SEQ(name, "subclass") )
+        ret = g_strdup(pid->dev_subclass_str);
+    if (SEQ(name, "progid") )
+        ret = g_strdup(pid->dev_progif_str);
+
+    util_pci_id_free(pid);
+    return ret;
+}
+
+static int gen_pci_ids_lookup_class_type(const gchar *path) {
+    gchar name[16] = "";
+    buff_basename(path, name, 15);
+
+    if (SEQ(path, ":/lookup/pci.ids/class") )
+        return VSO_TYPE_DIR | VSO_TYPE_DYN | VSO_TYPE_CONST;
+
+    if (SEQ(name, "class")
+        || SEQ(name, "subclass")
+        || SEQ(name, "progif") )
+        return VSO_TYPE_STRING;
+
+    if (name_is_0x06(name) )
+        return VSO_TYPE_DIR;
+
+    return VSO_TYPE_NONE;
+}
+
+static sysobj_virt vol[] = {
+    { .path = ":/lookup/pci.ids/class", .str = "*",
+      .type = VSO_TYPE_DIR | VSO_TYPE_DYN | VSO_TYPE_CONST,
+      .f_get_data = gen_pci_ids_lookup_class_value, .f_get_type = gen_pci_ids_lookup_class_type },
+    { .path = ":/lookup/pci.ids", .str = "*",
+      .type =  VSO_TYPE_DIR | VSO_TYPE_DYN | VSO_TYPE_CONST,
+      .f_get_data = gen_pci_ids_lookup_value, .f_get_type = gen_pci_ids_lookup_type },
+};
+
 void gen_pci_ids() {
-    sysobj_virt *vo = sysobj_virt_new();
-    vo->path = g_strdup(":/lookup/pci.ids");
-    vo->str = g_strdup("*");
-    vo->type = VSO_TYPE_DIR | VSO_TYPE_DYN;
-    vo->f_get_data = gen_pci_ids_lookup_value;
-    vo->f_get_type = gen_pci_ids_lookup_type;
-    sysobj_virt_add(vo);
+    /* add virtual sysobj */
+    for (int i = 0; i < (int)G_N_ELEMENTS(vol); i++)
+        sysobj_virt_add(&vol[i]);
 
     /* this is not required, but it is more effecient to
      * look the whole list up at once */

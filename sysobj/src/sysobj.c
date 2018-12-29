@@ -271,6 +271,17 @@ gchar *sysobj_format_from_fn(const gchar *base, const gchar *name, int fmt_opts)
     return ret;
 }
 
+gchar *sysobj_format_from_printf(int fmt_opts, gchar *path_fmt, ...) {
+    gchar *path = NULL;
+    va_list args;
+    va_start(args, path_fmt);
+    path = g_strdup_vprintf(path_fmt, args);
+    va_end(args);
+    gchar *ret = sysobj_format_from_fn(path, NULL, fmt_opts);
+    g_free(path);
+    return ret;
+}
+
 gchar *sysobj_raw_from_fn(const gchar *base, const gchar *name) {
     gchar *ret = NULL;
     gchar *req = util_build_fn(base, name);
