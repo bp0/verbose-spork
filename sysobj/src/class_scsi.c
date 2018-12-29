@@ -43,6 +43,10 @@ static sysobj_class cls_scsi[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "scsi:dev:attr", .pattern = "/sys/devices/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .v_subsystem_parent = "/sys/bus/scsi", .attributes = scsi_items },
+
+  { SYSOBJ_CLASS_DEF
+    .tag = "scsi_disk", .pattern = "/sys/devices/*/scsi_disk/*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_HAS_VENDOR,
+    .v_subsystem = "/sys/class/scsi_disk", .s_node_format = "{{device}}" },
 };
 
 vendor_list scsi_all_vendors(sysobj *obj) {
