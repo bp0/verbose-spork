@@ -617,9 +617,10 @@ void sysobj_fscheck(sysobj *s) {
             /* virtual */
             const sysobj_virt *vo = sysobj_virt_find(s->path);
             if (vo) {
+                int t = sysobj_virt_get_type(vo, s->path);
+                if (t == VSO_TYPE_NONE) return;
                 s->exists = TRUE;
                 s->root_can_read = TRUE;
-                int t = sysobj_virt_get_type(vo, s->path);
                 s->others_can_read = (t & VSO_TYPE_REQ_ROOT) ? FALSE : TRUE;
                 if (t & VSO_TYPE_DIR)
                     s->data.is_dir = TRUE;
@@ -679,8 +680,14 @@ static void sysobj_read_data(sysobj *s) {
     if (*(s->path) == ':') {
         /* virtual */
         s->data.was_read = FALSE;
+        s->exists = FALSE;
         const sysobj_virt *vo = sysobj_virt_find(s->path);
         if (vo) {
+            int t = sysobj_virt_get_type(vo, s->path);
+            if (t == VSO_TYPE_NONE)
+                return; /* if it existed, it doesn't now */
+            s->exists = TRUE;
+
             gboolean readable = s->others_can_read;
             if (!readable) {
                 if (s->root_can_read && util_have_root() )

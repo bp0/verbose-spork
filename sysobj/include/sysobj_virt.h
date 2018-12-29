@@ -24,7 +24,7 @@
 #include "sysobj.h"
 
 enum {
-    VSO_TYPE_NONE     = 0,
+    VSO_TYPE_NONE     = 0,    /* if returned from f_get_type(), signal not found */
     VSO_TYPE_DIR      = 1,
     VSO_TYPE_STRING   = 1<<1,
 
@@ -33,6 +33,7 @@ enum {
     VSO_TYPE_DYN      = 1<<17, /* any path beyond that doesn't match a non-dyn path */
     VSO_TYPE_AUTOLINK = 1<<18,
     VSO_TYPE_CLEANUP  = 1<<19, /* will get a call f_get_data(NULL) to signal cleanup */
+    VSO_TYPE_BASE     = 1<<20, /* for DYN vo's, return from f_get_type() with the the base type */
     VSO_TYPE_CONST    = 1<<30, /* don't free */
 };
 

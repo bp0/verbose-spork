@@ -244,7 +244,7 @@ static int gen_pci_ids_lookup_type(const gchar *path) {
     buff_basename(path, name, 15);
 
     if (SEQ(name, "pci.ids") )
-        return VSO_TYPE_DIR | VSO_TYPE_DYN | VSO_TYPE_CONST;
+        return VSO_TYPE_BASE;
 
     if (SEQ(name, "name") )
         return VSO_TYPE_STRING;
@@ -309,7 +309,7 @@ static int gen_pci_ids_lookup_class_type(const gchar *path) {
     buff_basename(path, name, 15);
 
     if (SEQ(path, ":/lookup/pci.ids/class") )
-        return VSO_TYPE_DIR | VSO_TYPE_DYN | VSO_TYPE_CONST;
+        return VSO_TYPE_BASE;
 
     if (SEQ(name, "class")
         || SEQ(name, "subclass")

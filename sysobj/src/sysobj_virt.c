@@ -21,6 +21,8 @@
 #include "sysobj.h"
 #include "sysobj_virt.h"
 
+#define virt_msg(fmt, ...) fprintf (stderr, "[%s] " fmt "\n", __FUNCTION__, ##__VA_ARGS__)
+
 static GSList *vo_list = NULL;
 static GMutex vo_list_lock;
 
@@ -47,7 +49,7 @@ void sysobj_virt_remove(gchar *glob) {
         t = g_slist_find_custom(vo_list, &svo, (GCompareFunc)virt_path_cmp);
         if (t) {
             sysobj_virt *tv = t->data;
-            //printf("rm virtual object %s\n", tv->path);
+            //virt_msg("rm virtual object %s", tv->path);
             sysobj_virt_free(tv);
             vo_list = g_slist_delete_link(vo_list, t);
             sysobj_stats.so_virt_rm++;
@@ -62,6 +64,22 @@ void sysobj_virt_remove(gchar *glob) {
 
 gboolean sysobj_virt_add(sysobj_virt *vo) {
     if (vo) {
+        /* check for errors */
+        if (vo->type == VSO_TYPE_NONE
+            && !vo->f_get_type) {
+            virt_msg("no .type or .f_get_type for %s", vo->path);
+            sysobj_virt_free(vo);
+            return FALSE;
+        }
+        if (!vo->f_get_data
+            && !(vo->type & VSO_TYPE_SYMLINK)
+            && vo->type & VSO_TYPE_DYN ) {
+            virt_msg(".type is VSO_TYPE_DYN, but not VSO_TYPE_SYMLINK, and no .f_get_data for %s", vo->path);
+            sysobj_virt_free(vo);
+            return FALSE;
+        }
+
+        /* search for existing */
         g_mutex_lock(&vo_list_lock);
         for (GSList *l = vo_list; l; l = l->next) {
             sysobj_stats.so_virt_iter++;
@@ -74,7 +92,9 @@ gboolean sysobj_virt_add(sysobj_virt *vo) {
                 return FALSE;
             }
         }
-        //printf("add virtual object: %s [%s]\n", vo->path, vo->str);
+
+        /* add */
+        //virt_msg("add virtual object: %s [%s]", vo->path, vo->str);
         vo_list = g_slist_append(vo_list, vo);
         g_mutex_unlock(&vo_list_lock);
         return TRUE;
@@ -163,7 +183,7 @@ void sysobj_virt_from_kv(const gchar *base, const gchar *kv_data_in) {
 }
 
 sysobj_virt *sysobj_virt_find(const gchar *path) {
-    //DEBUG("find path %s", path);
+    //virt_msg("find path %s", path);
     sysobj_virt *ret = NULL;
     gchar *spath = g_strdup(path);
     util_null_trailing_slash(spath);
@@ -185,7 +205,7 @@ sysobj_virt *sysobj_virt_find(const gchar *path) {
         }
     }
     g_free(spath);
-    //DEBUG("... %s", (ret) ? ret->path : "(NOT FOUND)");
+    //virt_msg("... %s", (ret) ? ret->path : "(NOT FOUND)");
     return ret;
 }
 
@@ -207,7 +227,7 @@ gchar *sysobj_virt_symlink_entry(const sysobj_virt *vo, const gchar *target, con
             const gchar *extry = req + strlen(vo->path);
             ret = g_strdup_printf("%s%s%s", target, (*extry == '/') ? "" : "/", extry);
             util_null_trailing_slash(ret);
-            //DEBUG("---\ntarget=%s\nreq=%s\nextry=%s\nret=%s", target, req, extry, ret);
+            //virt_msg("---\ntarget=%s\nreq=%s\nextry=%s\nret=%s", target, req, extry, ret);
         }
     }
     return ret;
@@ -232,11 +252,13 @@ gchar *sysobj_virt_get_data(const sysobj_virt *vo, const gchar *req) {
 }
 
 int sysobj_virt_get_type(const sysobj_virt *vo, const gchar *req) {
-    int ret = 0;
+    int ret = VSO_TYPE_NONE;
     if (vo) {
-        if (vo->f_get_type)
+        if (vo->f_get_type) {
             ret = vo->f_get_type(req ? req : vo->path);
-        else
+            if (ret == VSO_TYPE_BASE)
+                ret = vo->type;
+        } else
             ret = vo->type;
     }
     return ret;

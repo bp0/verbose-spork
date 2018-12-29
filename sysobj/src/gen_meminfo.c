@@ -62,6 +62,7 @@ static gchar *meminfo_scan(const gchar *path) {
                 g_strchomp(lines[i]);
                 sysobj_virt *vo = sysobj_virt_new();
                 vo->path = g_strdup_printf(":/meminfo/%s", lines[i]);
+                vo->type = VSO_TYPE_STRING;
                 vo->f_get_data = meminfo_read;
                 sysobj_virt_add(vo);
             }
@@ -79,12 +80,11 @@ static gchar *meminfo_read(const gchar *path) {
     /* normal request */
     if (!meminfo_path_fs) return NULL;
     gchar *ret = NULL, *data = NULL;
-    gg_file_get_contents_non_blocking(meminfo_path_fs, &data, NULL, NULL);
     gchar *name = g_path_get_basename(path);
-    if (data && name) {
-        g_strchomp(name);
+    if (name) g_strchomp(name);
+    gg_file_get_contents_non_blocking(meminfo_path_fs, &data, NULL, NULL);
+    if (data && name)
         ret = util_find_line_value(data, name, ':');
-    }
     g_free(data);
     g_free(name);
     return ret;

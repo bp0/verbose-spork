@@ -236,7 +236,7 @@ static int gen_dt_ids_lookup_type(const gchar *path) {
     buff_basename(path, name, 127);
 
     if (SEQ(name, "dt.ids") )
-        return VSO_TYPE_DIR | VSO_TYPE_DYN;
+        return VSO_TYPE_BASE;
 
     if (SEQ(name, "name") )
         return VSO_TYPE_STRING;

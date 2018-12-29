@@ -145,7 +145,7 @@ static int gen_arm_ids_lookup_type(const gchar *path) {
     buff_basename(path, name, 15);
 
     if (SEQ(name, "arm.ids") )
-        return VSO_TYPE_DIR | VSO_TYPE_DYN;
+        return VSO_TYPE_BASE;
 
     if (SEQ(name, "name") )
         return VSO_TYPE_STRING;
