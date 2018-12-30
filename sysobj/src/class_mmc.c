@@ -139,6 +139,65 @@ static attr_tab mmc_items[] = {
     ATTR_TAB_LAST
 };
 
+vendor_list sdio_vendor(sysobj *obj) {
+    return sysobj_vendors_from_fn(obj->path, "vendor");
+}
+
+vendor_list sdio_vendor_field(sysobj *obj) {
+    if (obj->data.str && SEQ(obj->name, "vendor") ) {
+        int vendor = strtol(obj->data.str, NULL, 16);
+        gchar *vstr = auto_free( sysobj_raw_from_printf(":/lookup/sdio.ids/%04x/name", vendor) );
+        return vendor_list_append(NULL, vendor_match(vstr, NULL) );
+    }
+    return simple_vendors(obj);
+}
+
+gchar *sdio_format_vdc(sysobj *obj, int fmt_opts) {
+    gchar *ret = NULL;
+    if (SEQ(obj->name, "vendor") ) {
+        int vendor = strtol(obj->data.str, NULL, 16);
+        gchar *vstr = sysobj_format_from_printf(fmt_opts | FMT_OPT_OR_NULL, ":/lookup/sdio.ids/%04x/name", vendor);
+        gchar *ven_tag = vendor_match_tag(vstr, fmt_opts);
+        if (ven_tag) {
+            g_free(vstr);
+            vstr = ven_tag;
+        }
+        ret = (fmt_opts & FMT_OPT_PART)
+            ? g_strdup(vstr ? vstr : _("Unknown"))
+            : g_strdup_printf("[%04x] %s", vendor, vstr ? vstr : _("Unknown"));
+        g_free(vstr);
+    }
+    if (SEQ(obj->name, "device") ) {
+        int vendor = sysobj_uint32_from_fn(obj->path, "../vendor", 16);
+        int device = strtol(obj->data.str, NULL, 16);
+        gchar *dstr = sysobj_format_from_printf(fmt_opts | FMT_OPT_OR_NULL, ":/lookup/sdio.ids/%04x/%04x/name", vendor, device);
+        if (fmt_opts & FMT_OPT_PART) {
+            if (!dstr)
+                dstr = sysobj_format_from_fn(obj->path, "../class", fmt_opts | FMT_OPT_PART);
+            ret = g_strdup(dstr ? dstr : _("Device"));
+        } else
+            ret = g_strdup_printf("[%04x] %s", device, dstr ? dstr : _("Device"));
+        g_free(dstr);
+    }
+    if (SEQ(obj->name, "class") ) {
+        int class = strtol(obj->data.str, NULL, 16);
+        gchar *cstr = sysobj_format_from_printf(fmt_opts | FMT_OPT_OR_NULL, ":/lookup/sdio.ids/class/%02x/name", class);
+        ret = (fmt_opts & FMT_OPT_PART)
+            ? g_strdup(cstr ? cstr : _("Unknown"))
+            : g_strdup_printf("[%04x] %s", class, cstr ? cstr : _("Unknown"));
+        g_free(cstr);
+    }
+    if (ret) return ret;
+    return simple_format(obj, fmt_opts);
+}
+
+static attr_tab sdio_items[] = {
+    { "vendor", N_("SD Association-assigned vendor ID"), OF_HAS_VENDOR, sdio_format_vdc },
+    { "device", N_("vendor-specific device ID"), OF_NONE, sdio_format_vdc },
+    { "class", N_("device class"), OF_NONE, sdio_format_vdc },
+    ATTR_TAB_LAST
+};
+
 static sysobj_class cls_mmc[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "mmc", .pattern = "/sys/devices/*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_HAS_VENDOR,
@@ -148,6 +207,15 @@ static sysobj_class cls_mmc[] = {
     .tag = "mmc:attr", .pattern = "/sys/devices/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .v_subsystem_parent = "/sys/bus/mmc", .attributes = mmc_items, .f_vendors = mmc_vendor_field,
     .s_halp = mmc_reference_markup_text },
+
+  { SYSOBJ_CLASS_DEF
+    .tag = "sdio", .pattern = "/sys/devices/*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_HAS_VENDOR,
+    .v_subsystem = "/sys/bus/sdio", .s_node_format = "{{vendor}}{{device}}",
+    /*.s_halp = sdio_reference_markup_text,*/ .f_vendors = sdio_vendor },
+  { SYSOBJ_CLASS_DEF
+    .tag = "sdio:attr", .pattern = "/sys/devices/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .v_subsystem_parent = "/sys/bus/sdio", .attributes = sdio_items, .f_vendors = sdio_vendor_field,
+    /*.s_halp = sdio_reference_markup_text*/ },
 };
 
 void class_mmc() {
