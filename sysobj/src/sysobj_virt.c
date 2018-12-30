@@ -149,7 +149,8 @@ gboolean sysobj_virt_add_simple_mkpath(const gchar *base, const gchar *name, con
     tp = util_build_fn(base, name);
     tpp = g_path_get_dirname(tp);
     if (strlen(tpp) > 1) {
-        if (!sysobj_virt_find(tpp) )
+        sysobj_virt *vo = sysobj_virt_find(tpp);
+        if (!vo || !SEQ(vo->path, tpp) )
             sysobj_virt_add_simple_mkpath(tpp, NULL, "*", VSO_TYPE_DIR);
     }
     g_free(tp);
@@ -231,7 +232,7 @@ sysobj_virt *sysobj_virt_find(const gchar *path) {
     util_null_trailing_slash(spath);
     int best_len = 0;
     /* exact static match wins over longest dynamic match */
-    ret = g_tree_lookup(vo_tree, path);
+    ret = g_tree_lookup(vo_tree, spath);
     if (ret)
         goto sysobj_virt_find_done;
 

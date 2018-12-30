@@ -25,311 +25,100 @@
  *
  * :/lookup/sdio.ids/<vendor>/name
  * :/lookup/sdio.ids/<vendor>/<device>/name
- * :/lookup/sdio.ids/class/<class>/name
+ * :/lookup/sdio.ids/C <class>/name
  *
  */
 #include "sysobj.h"
 
+#include "util_ids.c"
+
+static gchar *sdio_ids_file = NULL;
+
 #define sdio_msg(msg, ...)  fprintf (stderr, "[%s] " msg "\n", __FUNCTION__, ##__VA_ARGS__) /**/
 
-#define SDIO_ILLEGAL_PART 0xffff
-#define SDIO_ID_BUFF_SIZE 128
-typedef struct {
-    gchar strs[SDIO_ID_BUFF_SIZE * 3];
-    gchar *vendor_str;
-    gchar *device_str;
-    gchar *dev_class_str;
-    int vendor;
-    int device;
-    int dev_class;
-} sdio_id;
-#define sdio_id_new() g_new0(sdio_id, 1)
-#define sdio_id_free(aid) g_free(aid)
+enum {
+    PT_NONE = 0,
+    PT_DIR  = 1,
+    PT_NAME = 2,
+};
 
-sdio_id *scan_sdio_ids_file(int vendor, int device, int dev_class) {
-    char buff[SDIO_ID_BUFF_SIZE] = "",
-         imp[SDIO_ID_BUFF_SIZE] = "",
-         prt[SDIO_ID_BUFF_SIZE] = "",
-         *cls = NULL, *p;
-    FILE *fd;
-    int tabs, imp_match = 0;
-    unsigned id;
+int _path_type(const gchar *path) {
+    char name[5] = "";
+    int mc = 0;
+    unsigned int i1, i2;
 
-    sdio_id *ret = NULL;
+    mc = sscanf(path, ":/lookup/sdio.ids/C %02x/%4s", &i1, name);
+    if (mc == 2 && SEQ(name, "name") ) return PT_NAME;
+    if (mc == 1) return PT_DIR;
 
-    gchar *sdio_ids_file = sysobj_find_data_file("sdio.ids");
-    if (!sdio_ids_file) {
-        sdio_msg("sdio.ids file not found");
-        return ret;
-    }
+    mc = sscanf(path, ":/lookup/sdio.ids/%04x/%04x/%4s", &i1, &i2, name);
+    if (mc == 3 && SEQ(name, "name") ) return PT_NAME;
+    if (mc == 2) return PT_DIR;
 
-    fd = fopen(sdio_ids_file, "r");
-    g_free(sdio_ids_file);
-    if (!fd) {
-        sdio_msg("sdio.ids file could not be read");
-        return NULL;
-    }
+    mc = sscanf(path, ":/lookup/sdio.ids/%04x/%4s", &i1, name);
+    if (mc == 2 && SEQ(name, "name") ) return PT_NAME;
+    if (mc == 1) return PT_DIR;
 
-    int class_section = 0;
-    while (fgets(buff, SDIO_ID_BUFF_SIZE, fd)) {
-        /* line ends at comment */
-        p = strchr(buff, '#');
-        if (p) *p = 0;
-
-        /* trim trailing white space */
-        p = buff + strlen(buff) - 1;
-        while(p > buff && isspace((unsigned char)*p)) p--;
-        *(p+1) = 0;
-        p = buff;
-
-        if (buff[0] == 0)    continue; /* empty line */
-        if (buff[0] == '\n') continue; /* empty line */
-        if (buff[0] == 'C'
-            && buff[1] == ' ')
-            class_section = 1; /* arrived at dev_class section */
-
-        /* scan for fields */
-        if (class_section) {
-            if (dev_class == -1)
-                goto scan_sdio_id_done;
-            id = strtol(p + 2, &p, 16);
-            while(isspace((unsigned char)*p)) p++;
-            if (id == dev_class) {
-                cls = p;
-                goto scan_sdio_id_done;
-            }
-            if (id > dev_class)
-                goto scan_sdio_id_done;
-            continue;
-        }
-
-        tabs = 0;
-        while(*p == '\t') { tabs++; p++; }
-        id = strtol(p, &p, 16);
-        while(isspace((unsigned char)*p)) p++;
-        if (tabs == 0) {
-            /* vendor */
-            if (id == vendor) {
-                strcpy(imp, p);
-                imp_match = 1;
-            } else if (id > vendor && dev_class == -1)
-                goto scan_sdio_id_done;
-        } else if (tabs == 1 && imp_match) {
-            /* device */
-            if (id == device) {
-                strcpy(prt, p);
-                if (dev_class == -1)
-                    goto scan_sdio_id_done;
-            } else if (id > device && dev_class == -1)
-                goto scan_sdio_id_done;
-        }
-    }
-
-scan_sdio_id_done:
-    fclose(fd);
-
-    if (imp_match || cls) {
-        ret = sdio_id_new();
-        ret->vendor = vendor;
-        ret->device = device;
-        ret->dev_class = dev_class;
-        ret->vendor_str = ret->strs;
-        ret->device_str = ret->strs + strlen(imp) + 1;
-        ret->dev_class_str = ret->device_str + strlen(prt) + 1;
-        strcpy(ret->vendor_str, imp);
-        strcpy(ret->device_str, prt);
-        if (cls)
-            strcpy(ret->dev_class_str, cls);
-    }
-    return ret;
+    return PT_NONE;
 }
 
-static void gen_sdio_ids_cache_item(sdio_id *pid) {
-    gchar buff[128] = "";
-    int dev_symlink_flags = VSO_TYPE_SYMLINK | VSO_TYPE_AUTOLINK | VSO_TYPE_DYN;
-    if (pid->vendor != -1) {
-        sprintf(buff, ":/lookup/sdio.ids/%04x", pid->vendor);
-        sysobj_virt_add_simple(buff, NULL, "*", VSO_TYPE_DIR );
-        if (pid->vendor_str)
-            sysobj_virt_add_simple(buff, "name", pid->vendor_str, VSO_TYPE_STRING );
-    }
-    if (pid->device != -1) {
-        sprintf(buff, ":/lookup/sdio.ids/%04x/%04x", pid->vendor, pid->device);
-        sysobj_virt_add_simple(buff, NULL, "*", VSO_TYPE_DIR );
-        if (pid->device_str)
-            sysobj_virt_add_simple(buff, "name", pid->device_str, VSO_TYPE_STRING );
-    }
-    if (pid->dev_class != -1) {
-        sprintf(buff, ":/lookup/sdio.ids/class/%02x", pid->dev_class & 0xff);
-        sysobj_virt_add_simple(buff, NULL, "*", VSO_TYPE_DIR );
-        if (pid->vendor_str)
-            sysobj_virt_add_simple(buff, "name", pid->dev_class_str, VSO_TYPE_STRING );
-    }
-}
-
-static void buff_basename(const gchar *path, gchar *buff, gsize n) {
-    gchar *fname = g_path_get_basename(path);
-    strncpy(buff, fname, n);
-    g_free(fname);
-}
-
-static gboolean name_is_0x02(gchar *name) {
-    if (!name) return FALSE;
-    if (  isxdigit(name[0])
-        && isxdigit(name[1])
-        && name[2] == 0 )
-        return TRUE;
-    return FALSE;
-}
-
-static gboolean name_is_0x04(gchar *name) {
-    if (!name) return FALSE;
-    if (  isxdigit(name[0])
-        && isxdigit(name[1])
-        && isxdigit(name[2])
-        && isxdigit(name[3])
-        && name[4] == 0 )
-        return TRUE;
-    return FALSE;
-}
-
-gboolean sdio_ids_lookup(sdio_id **pid) {
-    sdio_id *aid = scan_sdio_ids_file((*pid)->vendor, (*pid)->device, (*pid)->dev_class);
-    if (aid) {
-        sdio_id_free(*pid);
-        *pid = aid;
-        return TRUE;
-    }
-    return FALSE;
-}
-
-static gchar *gen_sdio_ids_lookup_value(const gchar *path) {
-    if (!path) return NULL;
-    gchar name[16] = "";
-    buff_basename(path, name, 15);
-
-    if (SEQ(name, "sdio.ids") )
-        return g_strdup("*");
-
-    sdio_id *pid = sdio_id_new();
-    pid->dev_class = -1;
-    int32_t name_id = -1;
-    if (name_is_0x04(name))
-        name_id = strtol(name, NULL, 16);
-
-    int mc = sscanf(path, ":/lookup/sdio.ids/%04x/%04x", &pid->vendor, &pid->device);
-    gchar *verify = NULL;
-    switch(mc) {
-        case 2:
-            if (!verify)
-            verify = (name_id == -1)
-                ? g_strdup_printf(":/lookup/sdio.ids/%04x/%04x/%s", pid->vendor, pid->device, name)
-                : g_strdup_printf(":/lookup/sdio.ids/%04x/%04x", pid->vendor, pid->device);
-        case 1:
-            if (!verify)
-            verify = (name_id == -1)
-                ? g_strdup_printf(":/lookup/sdio.ids/%04x/%s", pid->vendor, name)
-                : g_strdup_printf(":/lookup/sdio.ids/%04x", pid->vendor);
-
-            if (strcmp(path, verify) != 0) {
-                sdio_id_free(pid);
-                return NULL;
-            }
-
-            int ok = sdio_ids_lookup(&pid);
-            gen_sdio_ids_cache_item(pid);
-            break;
-        case 0:
-            sdio_id_free(pid);
-            return NULL;
-    }
-
-    if (name_id != -1) {
-        sdio_id_free(pid);
-        return "*";
-    }
-
-    gchar *ret = NULL;
-    if (SEQ(name, "name") ) {
-        switch(mc) {
-            case 1: ret = g_strdup(pid->vendor_str); break;
-            case 2: ret = g_strdup(pid->device_str); break;
-        }
-    }
-    sdio_id_free(pid);
-    return ret;
-}
-
-static gchar *gen_sdio_ids_lookup_class_value(const gchar *path) {
-    if (!path) return NULL;
-    gchar name[16] = "";
-    buff_basename(path, name, 15);
-
-    if (SEQ(path, ":/lookup/sdio.ids/class") )
-        return g_strdup("*");
-
-    sdio_id *pid = g_new0(sdio_id, 1);
-    pid->vendor = -1;
-    pid->device = -1;
-    int32_t name_id = -1;
-    if ( name_is_0x04(name) )
-        name_id = strtol(name, NULL, 16);
-
-    int mc = sscanf(path, ":/lookup/sdio.ids/class/%02x", &pid->dev_class);
-    gchar *verify = NULL;
-    switch(mc) {
-        case 1:
-            if (!verify)
-            verify = (name_id == -1)
-                ? g_strdup_printf(":/lookup/sdio.ids/class/%02x/%s", pid->dev_class, name)
-                : g_strdup_printf(":/lookup/sdio.ids/class/%02x", pid->dev_class);
-
-            if (strcmp(path, verify) != 0) {
-                sdio_id_free(pid);
-                return NULL;
-            }
-
-            int ok = sdio_ids_lookup(&pid);
-            gen_sdio_ids_cache_item(pid);
-            break;
-        case 0:
-            sdio_id_free(pid);
-            return NULL;
-    }
-
-    gchar *ret = NULL;
-    if (SEQ(name, "name") )
-        ret = g_strdup(pid->dev_class_str);
-
-    sdio_id_free(pid);
-    return ret;
-}
-
-static int gen_sdio_ids_lookup_type(const gchar *path) {
-    gchar name[16] = "";
-    buff_basename(path, name, 15);
-
-    if (SEQ(name, "sdio.ids") )
+int gen_sdio_ids_lookup_type(const gchar *path) {
+    if (SEQ(path, ":/lookup/sdio.ids") )
         return VSO_TYPE_BASE;
-
-    if (SEQ(name, "class") )
-        return VSO_TYPE_BASE;
-
-    if (SEQ(name, "name") )
-        return VSO_TYPE_STRING;
-
-    if (name_is_0x04(name) || name_is_0x02(name))
-        return VSO_TYPE_DIR;
-
+    switch(_path_type(path)) {
+        case PT_DIR: return VSO_TYPE_DIR;
+        case PT_NAME: return VSO_TYPE_STRING;
+    }
     return VSO_TYPE_NONE;
 }
 
+gchar *gen_sdio_ids_lookup_value(const gchar *path) {
+    if (!path) {
+        /* cleanup */
+        g_free(sdio_ids_file);
+        sdio_ids_file = NULL;
+        return NULL;
+    }
+
+    /* find the data file, if not already found */
+    if (!sdio_ids_file)
+        sdio_ids_file = sysobj_find_data_file("sdio.ids");
+    if (!sdio_ids_file) {
+        sdio_msg("sdio.ids file not found");
+        return FALSE;
+    }
+
+    const gchar *qpath = path + strlen(":/lookup/sdio.ids");
+    if (!qpath)
+        return NULL; /* auto-dir for lookup root */
+
+    qpath++; /* skip the '/' */
+    ids_query_result result = {};
+    gchar *n = NULL;
+    int pt = _path_type(path);
+    if (!pt) return NULL; /* type will have been VSO_TYPE_NONE */
+
+    scan_ids_file(sdio_ids_file, qpath, FALSE, &result, -1);
+
+    gchar **qparts = g_strsplit(qpath, "/", -1);
+    gchar *svo_path = g_strdup(":/lookup/sdio.ids");
+    for(int i = 0; qparts[i]; i++) {
+        if (!SEQ(qparts[i], "name") ) {
+            sysobj_virt_add_simple(svo_path, qparts[i], "*", VSO_TYPE_DIR);
+            svo_path = appfs(svo_path, "/", "%s", qparts[i]);
+            n = result.results[i] ? result.results[i] : "";
+            sysobj_virt_add_simple(svo_path, "name", n, VSO_TYPE_STRING);
+        }
+    }
+    g_strfreev(qparts);
+
+    if (pt == PT_NAME) return g_strdup(n);
+    return NULL; /* auto-dir */
+}
+
 static sysobj_virt vol[] = {
-    { .path = ":/lookup/sdio.ids/class", .str = "*",
-      .type = VSO_TYPE_DIR | VSO_TYPE_DYN | VSO_TYPE_CONST,
-      .f_get_data = gen_sdio_ids_lookup_class_value, .f_get_type = gen_sdio_ids_lookup_type },
     { .path = ":/lookup/sdio.ids", .str = "*",
-      .type =  VSO_TYPE_DIR | VSO_TYPE_DYN | VSO_TYPE_CONST,
+      .type =  VSO_TYPE_DIR | VSO_TYPE_DYN | VSO_TYPE_CONST | VSO_TYPE_CLEANUP,
       .f_get_data = gen_sdio_ids_lookup_value, .f_get_type = gen_sdio_ids_lookup_type },
 };
 

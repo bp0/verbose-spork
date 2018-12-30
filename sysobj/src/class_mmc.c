@@ -181,7 +181,7 @@ gchar *sdio_format_vdc(sysobj *obj, int fmt_opts) {
     }
     if (SEQ(obj->name, "class") ) {
         int class = strtol(obj->data.str, NULL, 16);
-        gchar *cstr = sysobj_format_from_printf(fmt_opts | FMT_OPT_OR_NULL, ":/lookup/sdio.ids/class/%02x/name", class);
+        gchar *cstr = sysobj_format_from_printf(fmt_opts | FMT_OPT_OR_NULL, ":/lookup/sdio.ids/C %02x/name", class);
         ret = (fmt_opts & FMT_OPT_PART)
             ? g_strdup(cstr ? cstr : _("Unknown"))
             : g_strdup_printf("[%04x] %s", class, cstr ? cstr : _("Unknown"));
@@ -216,6 +216,15 @@ static sysobj_class cls_mmc[] = {
     .tag = "sdio:attr", .pattern = "/sys/devices/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .v_subsystem_parent = "/sys/bus/sdio", .attributes = sdio_items, .f_vendors = sdio_vendor_field,
     /*.s_halp = sdio_reference_markup_text*/ },
+
+  { SYSOBJ_CLASS_DEF
+    .tag = "sdio.ids", .pattern = ":/lookup/sdio.ids", .flags = OF_CONST,
+    /*.s_halp = sdio_ids_reference_markup_text,*/ .s_label = "sdio.ids lookup virtual tree",
+    .s_update_interval = 4.0 },
+  { SYSOBJ_CLASS_DEF
+    .tag = "sdio.ids:id", .pattern = ":/lookup/sdio.ids/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    /*.s_halp = sdio_ids_reference_markup_text,*/ .s_label = "sdio.ids lookup result",
+    .f_format = fmt_node_name },
 };
 
 void class_mmc() {
