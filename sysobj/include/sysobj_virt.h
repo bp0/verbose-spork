@@ -45,6 +45,7 @@ typedef struct sysobj_virt {
     int (*f_get_type)(const gchar *path);
 } sysobj_virt;
 
+void sysobj_virt_init();
 #define sysobj_virt_new() g_new0(sysobj_virt, 1)
 void sysobj_virt_free(sysobj_virt *s);
 gboolean sysobj_virt_add(sysobj_virt *vo); /* TRUE if added, FALSE if exists (was overwritten) or error */

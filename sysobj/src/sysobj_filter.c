@@ -52,6 +52,7 @@ gboolean sysobj_filter_item_include(gchar *item, GSList *filters) {
         if (!f->pspec)
             f->pspec = g_pattern_spec_new(f->pattern);
         gboolean match = g_pattern_match(f->pspec, len, item, NULL);
+        sysobj_stats.so_filter_pattern_cmp++;
         switch (f->type & SO_FILTER_MASK) {
             case SO_FILTER_EXCLUDE_IIF:
                 marked = match;
@@ -92,9 +93,11 @@ GSList *sysobj_filter_list(GSList *items, GSList *filters) {
         l = items;
         i = 0;
         while (l) {
+            sysobj_stats.so_filter_list_iter++;
             gchar *d = l->data;
             gsize len = strlen(d);
             gboolean match = g_pattern_match(f->pspec, len, d, NULL);
+            sysobj_stats.so_filter_pattern_cmp++;
             switch (f->type) {
                 case SO_FILTER_EXCLUDE_IIF:
                     marked[i] = match;

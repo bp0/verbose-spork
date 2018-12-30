@@ -39,8 +39,10 @@ static gchar *get_item_items[] = {
     "sysobj_read_wo",
     "gg_file_total_wait",
     "virt_count", "virt_iter", "virt_rm",
+    "virt_add", "virt_replace", "virt_getf",
     "class_count", "class_iter", "classify_none",
     "ven_iter",
+    "filter_iter", "filter_pattern_cmp",
 };
 
 static gchar *get_item(const gchar *path) {
@@ -81,6 +83,12 @@ static gchar *get_item(const gchar *path) {
     if (SEQ(name, "gg_file_total_wait") )
         return g_strdup_printf("%llu", gg_file_get_total_wait() );
 
+    if (SEQ(name, "virt_add") )
+        return g_strdup_printf("%llu", sysobj_stats.so_virt_add );
+    if (SEQ(name, "virt_replace") )
+        return g_strdup_printf("%llu", sysobj_stats.so_virt_replace );
+    if (SEQ(name, "virt_getf") )
+        return g_strdup_printf("%llu", sysobj_stats.so_virt_getf );
     if (SEQ(name, "virt_count") )
         return g_strdup_printf("%lu", (long unsigned)sysobj_virt_count() );
     if (SEQ(name, "virt_iter") )
@@ -94,6 +102,11 @@ static gchar *get_item(const gchar *path) {
         return g_strdup_printf("%llu", sysobj_stats.so_class_iter );
     if (SEQ(name, "classify_none") )
         return g_strdup_printf("%llu", sysobj_stats.classify_none );
+
+    if (SEQ(name, "filter_iter") )
+        return g_strdup_printf("%llu", sysobj_stats.so_filter_list_iter );
+    if (SEQ(name, "filter_pattern_cmp") )
+        return g_strdup_printf("%llu", sysobj_stats.so_filter_pattern_cmp );
 
     if (SEQ(name, "ven_iter") )
         return g_strdup_printf("%llu", sysobj_stats.ven_iter );

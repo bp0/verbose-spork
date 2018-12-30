@@ -324,10 +324,15 @@ typedef struct {
         so_read_expired,
         so_read_not_expired,
         so_read_wo,
+        so_virt_add,
+        so_virt_replace,
+        so_virt_getf,
         so_virt_iter,
         so_virt_rm,
         so_class_iter,
-        ven_iter;
+        ven_iter,
+        so_filter_list_iter,
+        so_filter_pattern_cmp;
     double
         auto_free_next;
 } so_stats;

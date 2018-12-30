@@ -959,8 +959,9 @@ gboolean sysobj_config_paths(sysobj *s, const gchar *base, const gchar *name) {
     //DEBUG("\n{ .path_req_fs = %s\n  .path_req = %s\n  .path_fs = %s\n  .path = %s\n  .req_is_link = %s }",
     //    s->path_req_fs, s->path_req, s->path_fs, s->path, s->req_is_link ? "TRUE" : "FALSE" );
 
-    if (!sysobj_filter_item_include(s->path, sysobj_global_filters) ) {
-        goto config_bad_path;
+    if (target_is_real
+        && !sysobj_filter_item_include(s->path, sysobj_global_filters) ) {
+            goto config_bad_path;
     }
 
     g_free(vlink);
@@ -1173,6 +1174,7 @@ void sysobj_init(const gchar *alt_root) {
     g_timer_start(sysobj_global_timer);
 
     sysobj_append_data_path(".");
+    sysobj_virt_init();
     vendor_init();
     class_init();
 
