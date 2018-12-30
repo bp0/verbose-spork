@@ -137,26 +137,40 @@ gchar *class_flags_format(sysobj *obj, int fmt_opts) {
 }
 
 static attr_tab sysobj_items[] = {
-    { "elapsed", N_("seconds since sysobj_init()"), OF_NONE, fmt_seconds_to_span, 0.2 },
-    { "class_count", N_("number of sysobj classes defined"), OF_NONE, NULL, 0.5 },
-    { "virt_count", N_("number of objects in the sysobj virtual fs tree"), OF_NONE, NULL, 0.5 },
     { "root", N_("the alternate filesystem root, if any") },
+    { "elapsed", N_("seconds since sysobj_init()"), OF_NONE, fmt_seconds_to_span, 0.2 },
+    { "class_count", N_("number of sysobj classes defined") },
+    { "classify_none", N_("sysobj_classify() found none") },
+    { "class_iter", N_("steps through the class list") },
+    { "classify_pattern_cmp" },
+    { "virt_count", N_("number of objects in the sysobj virtual tree") },
+    { "vo_tree_count" },
+    { "vo_list_count" },
+    { "virt_iter", N_("steps through the dynamic virtual object list") },
+    { "virt_rm" },
+    { "virt_add" },
+    { "virt_replace" },
+    { "virt_getf" },
     { "free_expected", N_("seconds until next free_auto_free()"), OF_NONE, fmt_seconds, 0.2 },
-    { "freed_count", N_("memory objects freed via auto_free()"), OF_NONE, NULL, 0.5 },
-    { "free_queue", N_("memory objects waiting to be freed via auto_free()"), OF_NONE, NULL, 0.5 },
+    { "freed_count", N_("memory objects freed via auto_free()") },
+    { "free_queue", N_("memory objects waiting to be freed via auto_free()") },
     { "free_delay", N_("minimum time until free() from auto_free()"), OF_NONE, fmt_seconds, UPDATE_INTERVAL_NEVER },
     { "sysobj_new", N_("sysobj created with sysobj_new()") },
     { "sysobj_new_fast", N_("sysobj created without sysobj_classify()") },
     { "sysobj_clean", N_("sysobj cleared") },
     { "sysobj_free", N_("sysobj freed") },
-    { "classify_none", N_("sysobj_classify() found none"), OF_NONE, NULL, 0.5 },
-    { "gg_file_total_wait", N_("time spent waiting for read() in gg_file_get_contents_non_blocking()"), OF_NONE, fmt_microseconds_to_milliseconds, 1.0 },
-    { "sysobj_read_first", NULL, OF_NONE, NULL, 2.0 },
-    { "sysobj_read_force", NULL, OF_NONE, NULL, 2.0 },
-    { "sysobj_read_expired", NULL, OF_NONE, NULL, 2.0 },
-    { "sysobj_read_not_expired", NULL, OF_NONE, NULL, 2.0 },
+    { "gg_file_total_wait", N_("time spent waiting for read() in gg_file_get_contents_non_blocking()"), OF_NONE, fmt_microseconds_to_milliseconds },
+    { "sysobj_read_first" },
+    { "sysobj_read_force" },
+    { "sysobj_read_expired" },
+    { "sysobj_read_not_expired" },
+    { "sysobj_read_wo" },
+    { "ven_iter", N_("steps through the vendors list") },
+    { "filter_iter" },
+    { "filter_pattern_cmp" },
     ATTR_TAB_LAST
 };
+
 
 static gboolean verify_ansi_color(sysobj *obj) {
     sysobj_read(obj, FALSE);
@@ -189,7 +203,7 @@ static sysobj_class cls_internal[] = {
     .s_label = N_("lookup cache") },
   { SYSOBJ_CLASS_DEF
     .tag = "sysobj:stat", .pattern = ":sysobj/*", .flags = OF_CONST | OF_GLOB_PATTERN,
-    .attributes = sysobj_items, .s_update_interval = 0.5 },
+    .attributes = sysobj_items, .s_update_interval = 2.0 },
   { SYSOBJ_CLASS_DEF
     .tag = "sysobj:class", .pattern = ":sysobj/classes/*", .flags = OF_CONST | OF_GLOB_PATTERN,
     .f_verify = class_verify, .f_format = class_format },

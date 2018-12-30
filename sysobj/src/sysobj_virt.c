@@ -33,7 +33,12 @@ void sysobj_virt_init() {
     vo_tree = g_tree_new_full((GCompareDataFunc)g_strcmp0_data, NULL, g_free, (GDestroyNotify)sysobj_virt_free);
 }
 
-int sysobj_virt_count() {
+/* 0 = both, 1 = vo_tree, 2 = vo_list */
+int sysobj_virt_count_ex(int what) {
+    switch(what) {
+        case 2: return g_slist_length(vo_list);
+        case 1: return g_tree_nnodes(vo_tree);
+    }
     return g_tree_nnodes(vo_tree) + g_slist_length(vo_list);
 }
 

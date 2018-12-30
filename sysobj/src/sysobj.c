@@ -561,6 +561,7 @@ void sysobj_classify(sysobj *s) {
                 if (!c->pspec)
                     c->pspec = g_pattern_spec_new(c->pattern);
                 match = g_pattern_match(c->pspec, len, s->path, NULL);
+                sysobj_stats.classify_pattern_cmp++;
             } else
                 match = g_str_has_suffix(s->path, c->pattern);
 

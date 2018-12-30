@@ -56,7 +56,8 @@ sysobj_virt *sysobj_virt_find(const gchar *path);
 gchar *sysobj_virt_get_data(const sysobj_virt *vo, const gchar *req);
 int sysobj_virt_get_type(const sysobj_virt *vo, const gchar *req);
 GSList *sysobj_virt_all_paths();
-int sysobj_virt_count();
+#define sysobj_virt_count() sysobj_virt_count_ex(0)
+int sysobj_virt_count_ex(int what); /* 0 = both, 1 = vo_tree, 2 = vo_list */
 /* using the glib key-value file parser, create a tree of
  * base/group/name=value virtual sysobj's. Items before a first
  * group are put in base/name=value. */

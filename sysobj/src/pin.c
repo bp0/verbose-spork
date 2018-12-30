@@ -33,9 +33,13 @@ pin *pin_new_sysobj(sysobj *obj) {
         pin *p = pin_new();
         p->obj = obj;
         p->update_interval = sysobj_update_interval(p->obj);
-        if (!p->update_interval) {
+        if (p->update_interval == UPDATE_INTERVAL_NEVER) {
             /* static, only read once */
             pin_update(p, TRUE);
+        }
+        if (p->update_interval == UPDATE_INTERVAL_UNSPECIFIED
+            || p->update_interval == UPDATE_INTERVAL_DEFAULT) {
+                p->update_interval = UPDATE_INTERVAL_DEFAULT_VALUE;
         }
         return p;
     }
@@ -100,7 +104,7 @@ const pin *pins_pin_if_updated_since(pin_list *pl, int pi, double seconds_ago) {
 void pin_update(pin *p, gboolean force) {
     func_compare_sysobj_data compare_func = NULL;
     if (p->obj) {
-        if (p->update_interval || force) {
+        if (p->update_interval != UPDATE_INTERVAL_NEVER || force) {
             const sysobj_class *c = p->obj->cls;
             sysobj_read(p->obj, TRUE);
             if (!p->history_status) {
@@ -192,7 +196,7 @@ int pins_add_from_fn(pin_list *pl, const gchar *base, const gchar *name) {
         /* if not, then add */
         p = pin_new_sysobj(obj);
         pl->list = g_slist_append(pl->list, p);
-        if (p->update_interval) {
+        if (p->update_interval != UPDATE_INTERVAL_NEVER) {
             if (p->update_interval > pl->longest_interval)
                 pl->longest_interval = p->update_interval;
             if (p->update_interval < pl->shortest_interval
@@ -212,7 +216,7 @@ void pins_refresh(pin_list *pl) {
     GSList *l = pl->list;
     while (l) {
         pin *p = l->data;
-        if (p->update_interval) {
+        if (p->update_interval != UPDATE_INTERVAL_NEVER) {
             /* DEBUG("obj: %s, ui: %lf, lu: %lf el: %lf %s", p->obj->name, p->update_interval, p->last_update, elapsed,
                 ((p->last_update + p->update_interval) < elapsed) ? "update" : "no-update" ); */
             if ( p->last_update + p->update_interval < elapsed ) {

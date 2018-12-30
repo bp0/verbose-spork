@@ -319,6 +319,7 @@ typedef struct {
         auto_freed,
         auto_free_len,
         classify_none,
+        classify_pattern_cmp,
         so_read_first,
         so_read_force,
         so_read_expired,

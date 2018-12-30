@@ -106,7 +106,7 @@ add_library(sysobj STATIC
 target_link_libraries(sysobj
         ${SYSOB_GLIB_LIBRARIES}
 )
-set_target_properties(sysobj PROPERTIES COMPILE_FLAGS "-Werror=implicit-function-declaration")
+set_target_properties(sysobj PROPERTIES COMPILE_FLAGS "-O3 -Werror=implicit-function-declaration")
 
 #set_target_properties(sysobj PROPERTIES COMPILE_FLAGS "-Wall -Wextra -Werror")
 
