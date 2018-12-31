@@ -18,33 +18,20 @@
  *
  */
 
+#include "util_ids.h"
 #include <glib.h>
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 
-#define IDS_LOOKUP_BUFF_SIZE 128
-#define IDS_LOOKUP_MAX_DEPTH 4
-
 #define ids_msg(msg, ...)  fprintf (stderr, "[%s] " msg "\n", __FUNCTION__, ##__VA_ARGS__) /**/
 
-/* may be static, all results[] are NULL or point into _strs */
-typedef struct {
-    gchar *results[IDS_LOOKUP_MAX_DEPTH+1]; /* last always NULL */
-    gchar _strs[IDS_LOOKUP_BUFF_SIZE*IDS_LOOKUP_MAX_DEPTH];
-} ids_query_result;
-#define ids_query_result_new() g_new0(ids_query_result, 1)
-#define ids_query_result_free(s) g_free(s);
-
-typedef struct {
-    gchar *qpath;
-    ids_query_result result;
-} ids_query;
 ids_query *ids_query_new(gchar *qpath) {
     ids_query *s = g_new0(ids_query, 1);
     s->qpath = qpath;
     return s;
 }
+
 void ids_query_free(ids_query *s) {
     if (s) g_free(s->qpath);
     g_free(s);
@@ -63,7 +50,7 @@ void ids_query_free(ids_query *s) {
  *   because usb.ids has several prefixed sets that are not in sorted order.
  *   What happened to "Please keep sorted"?!
  */
-static long scan_ids_file(const gchar *file, const gchar *qpath, gboolean file_unsorted, ids_query_result *result, long start_offset) {
+long scan_ids_file(const gchar *file, const gchar *qpath, gboolean file_unsorted, ids_query_result *result, long start_offset) {
     gchar **qparts = NULL;
     gchar buff[IDS_LOOKUP_BUFF_SIZE] = "";
     ids_query_result ret = {};
@@ -157,7 +144,7 @@ static gint _ids_query_list_cmp(const ids_query *ql1, const ids_query *ql2) {
     return g_strcmp0(ql1->qpath, ql2->qpath);
 }
 
-static long scan_ids_file_list(const gchar *file, gboolean file_unsorted, GSList *query_list, long start_offset) {
+long scan_ids_file_list(const gchar *file, gboolean file_unsorted, GSList *query_list, long start_offset) {
     GSList *tmp = g_slist_copy(query_list);
     tmp = g_slist_sort(tmp, (GCompareFunc)_ids_query_list_cmp);
 
@@ -172,7 +159,7 @@ static long scan_ids_file_list(const gchar *file, gboolean file_unsorted, GSList
     return offset;
 }
 
-static long query_list_cound_found(GSList *query_list) {
+long query_list_cound_found(GSList *query_list) {
     long count = 0;
     for (GSList *l = query_list; l; l = l->next) {
         ids_query *q = l->data;

@@ -28,140 +28,96 @@
  *
  */
 #include "sysobj.h"
-#include "arm_data.h"
+#include "util_ids.h"
 
-static void gen_arm_ids_cache_item(arm_id *pid) {
-    gchar buff[128] = "";
-    int dev_symlink_flags = VSO_TYPE_SYMLINK | VSO_TYPE_AUTOLINK | VSO_TYPE_DYN;
-    if (pid->implementer) {
-        sprintf(buff, ":/lookup/arm.ids/%02x", pid->implementer);
-        sysobj_virt_add_simple(buff, NULL, "*", VSO_TYPE_DIR );
-        if (pid->implementer_str)
-            sysobj_virt_add_simple(buff, "name", pid->implementer_str, VSO_TYPE_STRING );
-    }
-    if (pid->part) {
-        sprintf(buff, ":/lookup/arm.ids/%02x/%03x", pid->implementer, pid->part);
-        sysobj_virt_add_simple(buff, NULL, "*", VSO_TYPE_DIR );
-        if (pid->part_str)
-            sysobj_virt_add_simple(buff, "name", pid->part_str, VSO_TYPE_STRING );
-    }
+static gchar *arm_ids_file = NULL;
+
+#define arm_msg(msg, ...)  fprintf (stderr, "[%s] " msg "\n", __FUNCTION__, ##__VA_ARGS__) /**/
+
+enum {
+    PT_NONE = 0,
+    PT_DIR  = 1,
+    PT_NAME = 2,
+};
+
+static int _path_type(const gchar *path) {
+    char name[5] = "";
+    int mc = 0;
+    unsigned int i1, i2;
+
+    mc = sscanf(path, ":/lookup/arm.ids/%02x/%03x/%4s", &i1, &i2, name);
+    if (mc == 3 && SEQ(name, "name") ) return PT_NAME;
+    if (mc == 2) return PT_DIR;
+
+    mc = sscanf(path, ":/lookup/arm.ids/%02x/%4s", &i1, name);
+    if (mc == 2 && SEQ(name, "name") ) return PT_NAME;
+    if (mc == 1) return PT_DIR;
+
+    return PT_NONE;
 }
 
-#define arm_msg(...) /* fprintf (stderr, __VA_ARGS__) */
-
-static void buff_basename(const gchar *path, gchar *buff, gsize n) {
-    gchar *fname = g_path_get_basename(path);
-    strncpy(buff, fname, n);
-    g_free(fname);
-}
-
-static gboolean name_is_0x02(gchar *name) {
-    if (!name) return FALSE;
-    if (  isxdigit(name[0])
-        && isxdigit(name[1])
-        && name[2] == 0 )
-        return TRUE;
-    return FALSE;
-}
-
-static gboolean name_is_0x03(gchar *name) {
-    if (!name) return FALSE;
-    if (  isxdigit(name[0])
-        && isxdigit(name[1])
-        && isxdigit(name[2])
-        && name[3] == 0 )
-        return TRUE;
-    return FALSE;
-}
-
-gboolean arm_ids_lookup(arm_id **pid) {
-    arm_id *aid = scan_arm_ids_file((*pid)->implementer, (*pid)->part);
-    if (aid) {
-        arm_id_free(*pid);
-        *pid = aid;
-        return TRUE;
-    }
-    return FALSE;
-}
-
-static gchar *gen_arm_ids_lookup_value(const gchar *path) {
-    if (!path) return NULL;
-    gchar name[16] = "";
-    buff_basename(path, name, 15);
-
-    if (SEQ(name, "arm.ids") )
-        return g_strdup("*");
-
-    arm_id *pid = arm_id_new();
-    int32_t name_id = -1;
-    if ( name_is_0x02(name) || name_is_0x03(name) )
-        name_id = strtol(name, NULL, 16);
-
-    int mc = sscanf(path, ":/lookup/arm.ids/%02x/%03x", &pid->implementer, &pid->part);
-    gchar *verify = NULL;
-    switch(mc) {
-        case 2:
-            if (!verify)
-            verify = (name_id == -1)
-                ? g_strdup_printf(":/lookup/arm.ids/%02x/%03x/%s", pid->implementer, pid->part, name)
-                : g_strdup_printf(":/lookup/arm.ids/%02x/%03x", pid->implementer, pid->part);
-        case 1:
-            if (!verify)
-            verify = (name_id == -1)
-                ? g_strdup_printf(":/lookup/arm.ids/%02x/%s", pid->implementer, name)
-                : g_strdup_printf(":/lookup/arm.ids/%02x", pid->implementer);
-
-            if (strcmp(path, verify) != 0) {
-                arm_id_free(pid);
-                return NULL;
-            }
-
-            int ok = arm_ids_lookup(&pid);
-            gen_arm_ids_cache_item(pid);
-            break;
-        case 0:
-            arm_id_free(pid);
-            return NULL;
-    }
-
-    if (name_id != -1) {
-        arm_id_free(pid);
-        return "*";
-    }
-
-    gchar *ret = NULL;
-    if (SEQ(name, "name") ) {
-        switch(mc) {
-            case 1: ret = g_strdup(pid->implementer_str); break;
-            case 2: ret = g_strdup(pid->part_str); break;
-        }
-    }
-    arm_id_free(pid);
-    return ret;
-}
-
-static int gen_arm_ids_lookup_type(const gchar *path) {
-    gchar name[16] = "";
-    buff_basename(path, name, 15);
-
-    if (SEQ(name, "arm.ids") )
+int gen_arm_ids_lookup_type(const gchar *path) {
+    if (SEQ(path, ":/lookup/arm.ids") )
         return VSO_TYPE_BASE;
-
-    if (SEQ(name, "name") )
-        return VSO_TYPE_STRING;
-
-    if (name_is_0x02(name) || name_is_0x03(name))
-        return VSO_TYPE_DIR;
-
+    switch(_path_type(path)) {
+        case PT_DIR: return VSO_TYPE_DIR;
+        case PT_NAME: return VSO_TYPE_STRING;
+    }
     return VSO_TYPE_NONE;
 }
 
+gchar *gen_arm_ids_lookup_value(const gchar *path) {
+    if (!path) {
+        /* cleanup */
+        g_free(arm_ids_file);
+        arm_ids_file = NULL;
+        return NULL;
+    }
+
+    /* find the data file, if not already found */
+    if (!arm_ids_file)
+        arm_ids_file = sysobj_find_data_file("arm.ids");
+    if (!arm_ids_file) {
+        arm_msg("arm.ids file not found");
+        return FALSE;
+    }
+
+    const gchar *qpath = path + strlen(":/lookup/arm.ids");
+    if (!qpath)
+        return NULL; /* auto-dir for lookup root */
+
+    qpath++; /* skip the '/' */
+    ids_query_result result = {};
+    gchar *n = NULL;
+    int pt = _path_type(path);
+    if (!pt) return NULL; /* type will have been VSO_TYPE_NONE */
+
+    scan_ids_file(arm_ids_file, qpath, FALSE, &result, -1);
+
+    gchar **qparts = g_strsplit(qpath, "/", -1);
+    gchar *svo_path = g_strdup(":/lookup/arm.ids");
+    for(int i = 0; qparts[i]; i++) {
+        if (!SEQ(qparts[i], "name") ) {
+            sysobj_virt_add_simple(svo_path, qparts[i], "*", VSO_TYPE_DIR);
+            svo_path = appfs(svo_path, "/", "%s", qparts[i]);
+            n = result.results[i] ? result.results[i] : "";
+            sysobj_virt_add_simple(svo_path, "name", n, VSO_TYPE_STRING);
+        }
+    }
+    g_strfreev(qparts);
+
+    if (pt == PT_NAME) return g_strdup(n);
+    return NULL; /* auto-dir */
+}
+
+static sysobj_virt vol[] = {
+    { .path = ":/lookup/arm.ids", .str = "*",
+      .type =  VSO_TYPE_DIR | VSO_TYPE_DYN | VSO_TYPE_CONST | VSO_TYPE_CLEANUP,
+      .f_get_data = gen_arm_ids_lookup_value, .f_get_type = gen_arm_ids_lookup_type },
+};
+
 void gen_arm_ids() {
-    sysobj_virt *vo = sysobj_virt_new();
-    vo->path = g_strdup(":/lookup/arm.ids");
-    vo->str = g_strdup("*");
-    vo->type = VSO_TYPE_DIR | VSO_TYPE_DYN;
-    vo->f_get_data = gen_arm_ids_lookup_value;
-    vo->f_get_type = gen_arm_ids_lookup_type;
-    sysobj_virt_add(vo);
+    /* add virtual sysobj */
+    for (int i = 0; i < (int)G_N_ELEMENTS(vol); i++)
+        sysobj_virt_add(&vol[i]);
 }

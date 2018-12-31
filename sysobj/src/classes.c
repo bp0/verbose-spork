@@ -62,6 +62,7 @@ void generators_init() {
     gen_gpu();
 }
 
+void class_lookup();
 void class_power();
 void class_os_release();
 void class_rpi();
@@ -226,6 +227,7 @@ void class_internal() {
 void class_init() {
     generators_init();
     class_internal();
+    class_lookup();
 
     class_power();
     class_proc_alts();

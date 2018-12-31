@@ -29,8 +29,7 @@
  *
  */
 #include "sysobj.h"
-
-#include "util_ids.c"
+#include "util_ids.h"
 
 static gchar *sdio_ids_file = NULL;
 
@@ -42,7 +41,7 @@ enum {
     PT_NAME = 2,
 };
 
-int _path_type(const gchar *path) {
+static int _path_type(const gchar *path) {
     char name[5] = "";
     int mc = 0;
     unsigned int i1, i2;

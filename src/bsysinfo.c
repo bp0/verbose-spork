@@ -60,8 +60,7 @@ int main(int argc, char **argv) {
     g_free(config_dir);
     sysobj_init(altroot);
 
-    if (SYSOB_DEBUG_BUILD)
-        class_dump_list();
+    //if (SYSOB_DEBUG_BUILD) class_dump_list();
 
     sysobj *ex_obj = sysobj_new_from_fn(query, NULL);
     printf("root: %s/\n", sysobj_root_get() );

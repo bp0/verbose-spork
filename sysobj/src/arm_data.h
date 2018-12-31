@@ -25,29 +25,8 @@
 const char *arm_arch(const char *cpuinfo_arch_str);
 const char *arm_arch_more(const char *cpuinfo_arch_str);
 
-gchar *arm_implementer(const gchar *imp);
-gchar *arm_part(const gchar *imp, const gchar *part);
-gchar *arm_decoded_name(
-    const gchar *imp, const gchar *part,
-    const gchar *var, const gchar *rev,
-    const gchar *arch);
-
 /* cpu flags from /proc/cpuinfo */
 const char *arm_flag_list(void);                  /* list of all known flags */
 const char *arm_flag_meaning(const char *flag);  /* lookup flag meaning */
-
-#define ARM_ILLEGAL_PART 0xffff
-#define ARM_ID_BUFF_SIZE 128
-typedef struct {
-    gchar strs[ARM_ID_BUFF_SIZE * 2];
-    gchar *implementer_str;
-    gchar *part_str;
-    int implementer;
-    int part;
-} arm_id;
-#define arm_id_new() g_new0(arm_id, 1)
-#define arm_id_free(aid) g_free(aid)
-
-arm_id *scan_arm_ids_file(unsigned implementer, unsigned part);
 
 #endif

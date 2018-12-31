@@ -33,17 +33,6 @@ const gchar dt_reference_markup_text[] =
     BULLET REFLINK("http://elinux.org/Device_Tree_Mysteries") "\n"
     "\n";
 
-const gchar dt_ids_reference_markup_text[] =
-    " Items are generated on-demand and cached.\n"
-    "\n"
-    " :/lookup/dt.ids/{compat_element}/vendor\n"
-    " :/lookup/dt.ids/{compat_element}/name\n"
-    " :/lookup/dt.ids/{compat_element}/class\n"
-    "\n"
-    "Reference:\n"
-    BULLET REFLINKT("dt.ids", "https://github.com/bp0/dtid") "\n"
-    "\n";
-
 static gchar *dt_ids_format(sysobj *obj, int fmt_opts);
 static vendor_list dt_compat_vendors(sysobj *obj);
 
@@ -57,47 +46,7 @@ static sysobj_class cls_dtr[] = {
     .tag = "devicetree:compat", .pattern = DTROOT "*/compatible", .flags = OF_GLOB_PATTERN | OF_CONST | OF_HAS_VENDOR,
     .s_halp = dt_reference_markup_text, .s_update_interval = 0.0,
     .f_format = dtr_format, .f_vendors = dt_compat_vendors },
-
-  { SYSOBJ_CLASS_DEF
-    .tag = "dt.ids", .pattern = ":/lookup/dt.ids", .flags = OF_CONST,
-    .s_halp = dt_ids_reference_markup_text, .s_label = "dt.ids lookup virtual tree",
-    .f_format = dt_ids_format,.s_update_interval = 3.0 },
-  { SYSOBJ_CLASS_DEF
-    .tag = "dt.ids:id", .pattern = ":/lookup/dt.ids/*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .s_halp = dt_ids_reference_markup_text, .s_label = "dt.ids lookup result",
-    .f_format = dt_ids_format },
 };
-
-static gchar *dt_ids_format(sysobj *obj, int fmt_opts) {
-    if (obj) {
-        gchar *ret = NULL;
-        gchar *pname = sysobj_parent_name(obj);
-        if (SEQ(pname, "dt.ids")) {
-            /* compat elem */
-            gchar *vendor = sysobj_raw_from_fn(obj->path, "vendor");
-            gchar *name = sysobj_raw_from_fn(obj->path, "name");
-            gchar *cls = sysobj_raw_from_fn(obj->path, "class");
-
-            if (vendor || name || cls) {
-                if (SEQ(cls, "vendor"))
-                    ret = g_strdup_printf("%s (%s)", vendor, cls);
-                else if (vendor && name && cls)
-                    ret = g_strdup_printf("%s %s (%s)", vendor, name, cls);
-                else if (name && cls)
-                    ret = g_strdup_printf("%s (%s)", name, cls);
-                else if (vendor)
-                    ret = g_strdup_printf("%s %s", vendor, "Unknown");
-            }
-            g_free(vendor);
-            g_free(name);
-            g_free(cls);
-        }
-        g_free(pname);
-        if (ret)
-            return ret;
-    }
-    return simple_format(obj, fmt_opts);
-}
 
 static vendor_list dt_compat_vendors(sysobj *obj) {
     vendor_list ret = NULL;

@@ -25,15 +25,6 @@
 #include "x86_data.h"
 #include "riscv_data.h"
 
-const gchar arm_ids_reference_markup_text[] =
-    " Items are generated on-demand and cached.\n"
-    "\n"
-    " :/lookup/arm.ids/{implementer}/name\n"
-    " :/lookup/arm.ids/{implementer}/{part}/name\n\n"
-    "Reference:\n"
-    BULLET REFLINK("https://github.com/bp0/armids")
-    "\n";
-
 static gboolean cpuinfo_lcpu_verify(sysobj *obj);
 static gchar *cpuinfo_feature_format(sysobj *obj, int fmt_opts);
 static gchar *cpuinfo_format(sysobj *obj, int fmt_opts);
@@ -141,15 +132,6 @@ static sysobj_class cls_cpuinfo[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "cpuinfo:feature:list", .pattern = ":/cpu/cpuinfo/*/features", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_format = cpuinfo_format, .s_update_interval = UPDATE_INTERVAL_NEVER },
-
-  { SYSOBJ_CLASS_DEF
-    .tag = "arm.ids", .pattern = ":/lookup/arm.ids", .flags = OF_CONST,
-    .s_halp = arm_ids_reference_markup_text, .s_label = "arm.ids lookup virtual tree",
-    .s_update_interval = 4.0 },
-  { SYSOBJ_CLASS_DEF
-    .tag = "arm.ids:id", .pattern = ":/lookup/arm.ids/*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .s_halp = arm_ids_reference_markup_text, .s_label = "arm.ids lookup result",
-    .f_format = fmt_node_name },
 };
 
 static gchar *cpuinfo_feature_format(sysobj *obj, int fmt_opts) {

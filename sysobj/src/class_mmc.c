@@ -216,15 +216,6 @@ static sysobj_class cls_mmc[] = {
     .tag = "sdio:attr", .pattern = "/sys/devices/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .v_subsystem_parent = "/sys/bus/sdio", .attributes = sdio_items, .f_vendors = sdio_vendor_field,
     /*.s_halp = sdio_reference_markup_text*/ },
-
-  { SYSOBJ_CLASS_DEF
-    .tag = "sdio.ids", .pattern = ":/lookup/sdio.ids", .flags = OF_CONST,
-    /*.s_halp = sdio_ids_reference_markup_text,*/ .s_label = "sdio.ids lookup virtual tree",
-    .s_update_interval = 4.0 },
-  { SYSOBJ_CLASS_DEF
-    .tag = "sdio.ids:id", .pattern = ":/lookup/sdio.ids/*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    /*.s_halp = sdio_ids_reference_markup_text,*/ .s_label = "sdio.ids lookup result",
-    .f_format = fmt_node_name },
 };
 
 void class_mmc() {

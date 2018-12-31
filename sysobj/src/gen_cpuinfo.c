@@ -215,12 +215,18 @@ x86_funfacts_bail:
 
 gboolean cpuinfo_arm_decoded_name(lcpu *c) {
     if ( c->cpu_architecture ) {
-        char *dn = arm_decoded_name(c->cpu_implementer, c->cpu_part, c->cpu_variant, c->cpu_revision, c->cpu_architecture);
-        if (dn) {
-            c->linux_name = c->model_name;
-            c->model_name = g_strdup(dn);
-            free(dn);
-        }
+        int i = strtol(c->cpu_implementer, NULL, 16);
+        int p = strtol(c->cpu_part, NULL, 16);
+        int v = strtol(c->cpu_variant, NULL, 16);
+        int r = strtol(c->cpu_revision, NULL, 16);
+        gchar *part = sysobj_raw_from_printf(":/lookup/arm.ids/%02x/%03x/name", i, p);
+        gchar *imp = sysobj_raw_from_printf(":/lookup/arm.ids/%02x/name", i);
+        if (!part || !*part) part = g_strdup_printf("0x%03x", p);
+        if (!imp  || !*imp ) imp  = g_strdup_printf("0x%02x", i);
+        c->linux_name = c->model_name;
+        c->model_name = g_strdup_printf("%s %s r%dp%d", imp, part, v, r);
+        g_free(part);
+        g_free(imp);
         return TRUE;
     }
     return FALSE;

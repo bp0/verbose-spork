@@ -57,6 +57,7 @@ add_library(sysobj STATIC
         sysobj/src/class_usb.c
 
 # class only
+        sysobj/src/class_lookup.c
         sysobj/src/class_dt.c
         sysobj/src/class_sysfs.c
         sysobj/src/class_os_release.c
@@ -101,6 +102,7 @@ add_library(sysobj STATIC
         sysobj/src/util_dt.c
         sysobj/src/util_pci.c
         sysobj/src/util_usb.c
+        sysobj/src/util_ids.c
         sysobj/src/vendor.c
 )
 target_link_libraries(sysobj
