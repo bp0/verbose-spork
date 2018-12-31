@@ -369,11 +369,11 @@ gchar *formatted_time_span(double real_seconds, gboolean short_version, gboolean
         seconds_fmt = ngettext("%d second", "%d seconds", seconds);
     }
 
-    if (days > 1)
+    if (days > 0)
         ret = appfs(ret, sep, days_fmt, days);
-    if (ret || hours > 1)
+    if (ret || hours > 0)
         ret = appfs(ret, sep, hours_fmt, hours);
-    if (ret || minutes > 1 || !include_seconds)
+    if (ret || minutes > 0 || !include_seconds)
         ret = appfs(ret, sep, minutes_fmt, minutes);
     if (include_seconds)
         ret = appfs(ret, sep, seconds_fmt, seconds);
