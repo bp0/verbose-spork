@@ -79,6 +79,7 @@ void class_block();
 void class_scsi();
 void class_clocksource();
 void class_mmc();
+void class_media();
 
 void class_uptime();
 void class_dmi_id();
@@ -247,6 +248,7 @@ void class_init() {
     class_scsi();
     class_clocksource();
     class_mmc();
+    class_media();
 
     class_cpu();
     class_cpufreq();
