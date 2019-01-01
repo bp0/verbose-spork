@@ -23,7 +23,7 @@
 
 #include <glib.h>
 
-#define IDS_LOOKUP_BUFF_SIZE 128
+#define IDS_LOOKUP_BUFF_SIZE 220
 #define IDS_LOOKUP_MAX_DEPTH 4
 
 /* may be static, all results[] are NULL or point into _strs */
@@ -43,11 +43,9 @@ typedef struct {
  * - pci.ids "<vendor>/<device>/<subvendor> <subdevice>" or "C <class>/<subclass>/<prog-if>"
  * - arm.ids "<implementer>/<part>"
  * - sdio.ids "<vendor>/<device>", "C <class>"
- * - usb.ids "<vendor>/<device>", "C <class>" etc, but file_unsorted = TRUE
- *   because usb.ids has several prefixed sets that are not in sorted order.
- *   What happened to "Please keep sorted"?!
+ * - usb.ids "<vendor>/<device>", "C <class>" etc.
  */
-long scan_ids_file(const gchar *file, const gchar *qpath, gboolean file_unsorted, ids_query_result *result, long start_offset);
+long scan_ids_file(const gchar *file, const gchar *qpath, ids_query_result *result, long start_offset);
 
 typedef struct {
     gchar *qpath;
@@ -57,7 +55,7 @@ typedef struct {
 ids_query *ids_query_new(gchar *qpath);
 void ids_query_free(ids_query *s);
 
-long scan_ids_file_list(const gchar *file, gboolean file_unsorted, GSList *query_list, long start_offset);
+long scan_ids_file_list(const gchar *file, GSList *query_list, long start_offset);
 long query_list_cound_found(GSList *query_list);
 
 #endif

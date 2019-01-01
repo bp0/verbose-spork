@@ -37,6 +37,16 @@ void ids_query_free(ids_query *s) {
     g_free(s);
 }
 
+static int ids_cmp(const char *s1, const char *s2) {
+    int cmp = (s2 ? 1 : 0) - (s1 ? 1 : 0);
+    if (cmp == 0)
+        cmp = (islower(*s2) ? 1 : 0) - (islower(*s1) ? 1 : 0);
+    if (cmp == 0)
+        return g_strcmp0(s1, s2);
+    else
+        return cmp;
+}
+
 /* Given a qpath "/X/Y/Z", find names as:
  * X <name> ->result[0]
  * \tY <name> ->result[1]
@@ -46,11 +56,9 @@ void ids_query_free(ids_query *s) {
  * - pci.ids "<vendor>/<device>/<subvendor> <subdevice>" or "C <class>/<subclass>/<prog-if>"
  * - arm.ids "<implementer>/<part>"
  * - sdio.ids "<vendor>/<device>", "C <class>"
- * - usb.ids "<vendor>/<device>", "C <class>" etc, but file_unsorted = TRUE
- *   because usb.ids has several prefixed sets that are not in sorted order.
- *   What happened to "Please keep sorted"?!
+ * - usb.ids "<vendor>/<device>", "C <class>" etc
  */
-long scan_ids_file(const gchar *file, const gchar *qpath, gboolean file_unsorted, ids_query_result *result, long start_offset) {
+long scan_ids_file(const gchar *file, const gchar *qpath, ids_query_result *result, long start_offset) {
     gchar **qparts = NULL;
     gchar buff[IDS_LOOKUP_BUFF_SIZE] = "";
     ids_query_result ret = {};
@@ -60,7 +68,7 @@ long scan_ids_file(const gchar *file, const gchar *qpath, gboolean file_unsorted
     int tabs;
     int qdepth;
     int qpartlen[IDS_LOOKUP_MAX_DEPTH];
-    long last_root_fpos = -1, fpos;
+    long last_root_fpos = -1, fpos, line = -1;
 
     if (!qpath)
         return -1;
@@ -84,6 +92,11 @@ long scan_ids_file(const gchar *file, const gchar *qpath, gboolean file_unsorted
         fseek(fd, start_offset, SEEK_SET);
 
     for (fpos = ftell(fd); fgets(buff, IDS_LOOKUP_BUFF_SIZE, fd); fpos = ftell(fd)) {
+        p = strchr(buff, '\n');
+        if (!p)
+            ids_msg("line longer than IDS_LOOKUP_BUFF_SIZE (%d), file: %s, offset: %ld", IDS_LOOKUP_BUFF_SIZE, file, fpos);
+        line++;
+
         /* line ends at comment */
         p = strchr(buff, '#');
         if (p) *p = 0;
@@ -105,6 +118,8 @@ long scan_ids_file(const gchar *file, const gchar *qpath, gboolean file_unsorted
         if (tabs != 0 && !ret.results[tabs-1])
             continue; /* not looking at this depth, yet */
 
+        //ids_msg("looking at (%d) %s...", tabs, p);
+
         if (g_str_has_prefix(p, qparts[tabs])
             && isspace(*(p + qpartlen[tabs])) ) {
             /* found */
@@ -122,12 +137,15 @@ long scan_ids_file(const gchar *file, const gchar *qpath, gboolean file_unsorted
             continue;
         }
 
-        if (!file_unsorted && g_strcmp0(p, qparts[tabs]) == 1)
+        if (ids_cmp(p, qparts[tabs]) == 1) {
+            //ids_msg("will not be found p = %s (%d) qparts[tabs] = %s", p, qparts[tabs]);
             goto ids_lookup_done; /* will not be found */
+        }
 
     } /* for each line */
 
 ids_lookup_done:
+    //ids_msg("bailed at line %ld...", line);
     fclose(fd);
 
     if (result) {
@@ -144,15 +162,15 @@ static gint _ids_query_list_cmp(const ids_query *ql1, const ids_query *ql2) {
     return g_strcmp0(ql1->qpath, ql2->qpath);
 }
 
-long scan_ids_file_list(const gchar *file, gboolean file_unsorted, GSList *query_list, long start_offset) {
+long scan_ids_file_list(const gchar *file, GSList *query_list, long start_offset) {
     GSList *tmp = g_slist_copy(query_list);
     tmp = g_slist_sort(tmp, (GCompareFunc)_ids_query_list_cmp);
 
     long offset = start_offset;
     for (GSList *l = query_list; l; l = l->next) {
         ids_query *q = l->data;
-        offset = scan_ids_file(file, q->qpath, file_unsorted, &(q->result), offset);
-        if (offset == -1 && !file_unsorted)
+        offset = scan_ids_file(file, q->qpath, &(q->result), offset);
+        if (offset == -1)
             break;
     }
     g_slist_free(tmp);

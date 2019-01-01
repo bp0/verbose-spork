@@ -25,21 +25,11 @@
 
 #define SYSFS_USB "/sys/bus/usb"
 
-const gchar usb_ids_reference_markup_text[] =
-    " Items are generated on-demand and cached.\n"
-    "\n"
-    " :/lookup/usb.ids/{vendor}/name\n"
-    " :/lookup/usb.ids/{vendor}/{device}/name\n\n"
-    "Reference:\n"
-    BULLET REFLINKT("<i>The Linux USB Project</i>'s usb.ids", "http://www.linux-usb.org/")
-    "\n";
-
 static gchar *usb_format(sysobj *obj, int fmt_opts);
 static gchar *usb_format_idcomp(sysobj *obj, int fmt_opts);
+static gchar *usb_format_class(sysobj *obj, int fmt_opts);
 static gboolean usb_verify_device(sysobj *obj) { return (obj) ? verify_usb_device(obj->name) : FALSE; }
-static gchar *usb_format_device(sysobj *obj, int fmt_opts);
 static gboolean usb_verify_bus(sysobj *obj) { return (obj) ? verify_usb_bus(obj->name) : FALSE; }
-static gchar *usb_format_bus(sysobj *obj, int fmt_opts);
 
 static vendor_list usb_vendor_lookup(sysobj *obj);
 static vendor_list usb_vendor_dev(sysobj *obj) { return sysobj_vendors_from_fn(obj->path, "idVendor"); }
@@ -74,6 +64,10 @@ attr_tab usb_dev_items[] = {
     { "bMaxPower", N_("maximum power consumption"), OF_NONE, fmt_milliampere },
     { "bcdDevice", N_("device revision"), OF_NONE, fmt_bcddevice },
     { "serial",    N_("serial number") },
+
+    { "bDeviceClass", NULL, OF_NONE, usb_format_class },
+    { "bDeviceSubClass", NULL, OF_NONE, usb_format_class },
+    { "bDeviceProtocol", NULL, OF_NONE, usb_format_class },
     ATTR_TAB_LAST
 };
 
@@ -91,8 +85,9 @@ static sysobj_class cls_usb[] = {
     .f_format = usb_format, .s_update_interval = usb_update_interval, .f_vendors = usb_all_vendors },
   { SYSOBJ_CLASS_DEF
     .tag = "usb:bus", .pattern = "/sys/devices*/usb*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_HAS_VENDOR,
+    .v_subsystem = "/sys/bus/usb", .s_node_format = "{{idVendor}}{{idProduct}}",
     .f_verify = usb_verify_bus, .f_vendors = usb_vendor_dev,
-    .f_format = usb_format_bus, .s_update_interval = usb_update_interval },
+    .s_update_interval = usb_update_interval },
   { SYSOBJ_CLASS_DEF
     .tag = "usb:bus:id", .pattern = "/sys/devices*/usb*/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .attributes = usb_idcomp_items, .f_format = usb_format_idcomp, .f_vendors = usb_vendor_lookup },
@@ -101,9 +96,9 @@ static sysobj_class cls_usb[] = {
     .attributes = usb_dev_items },
   { SYSOBJ_CLASS_DEF
     .tag = "usb:device", .pattern = "/sys/devices*/*-*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_HAS_VENDOR,
-    .v_subsystem = "/sys/bus/usb",
+    .v_subsystem = "/sys/bus/usb", .s_node_format = "{{idVendor}}{{idProduct}}",
     .f_verify = usb_verify_device, .f_vendors = usb_vendor_dev,
-    .f_format = usb_format_device, .s_update_interval = usb_update_interval },
+    .s_update_interval = usb_update_interval },
   { SYSOBJ_CLASS_DEF
     .tag = "usb:id", .pattern = "/sys/devices*/*-*/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .attributes = usb_idcomp_items, .v_subsystem_parent = "/sys/bus/usb",
@@ -119,15 +114,6 @@ static sysobj_class cls_usb[] = {
     .tag = "usb:iface_id", .pattern = "/sys/devices*<<<<>>>>/*-*:*.*<<<<>>>>/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_verify = usb_verify_idcomp,
     .f_format = usb_format_idcomp, .s_update_interval = usb_update_interval }, */
-
-  { SYSOBJ_CLASS_DEF
-    .tag = "usb.ids", .pattern = ":/lookup/usb.ids", .flags = OF_CONST,
-    .s_halp = usb_ids_reference_markup_text, .s_label = "usb.ids lookup virtual tree",
-    .s_update_interval = 10.0 },
-  { SYSOBJ_CLASS_DEF
-    .tag = "usb.ids:id", .pattern = ":/lookup/usb.ids/*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .s_halp = usb_ids_reference_markup_text, .s_label = "usb.ids lookup result",
-    .f_format = fmt_node_name },
 };
 
 static sysobj_virt vol[] = {
@@ -204,68 +190,73 @@ vendor_list usb_all_vendors(sysobj *obj) {
     return ret;
 }
 
-util_usb_id *get_usb_id(gchar *dev_path) {
-    util_usb_id *pid = g_new0(util_usb_id, 1);
-    gchar path[64] = "";
-
-    pid->vendor = sysobj_uint32_from_fn(dev_path, "idVendor", 16);
-    pid->device = sysobj_uint32_from_fn(dev_path, "idProduct", 16);
-
-    /* full first should cause all to be looked-up */
-    sprintf(path, ":/lookup/usb.ids/%04x/%04x", pid->vendor, pid->device);
-    pid->device_str = sysobj_raw_from_fn(path, "name");
-    sprintf(path, ":/lookup/usb.ids/%04x", pid->vendor);
-    pid->vendor_str = sysobj_raw_from_fn(path, "name");
-
-    return pid;
+static gchar *usb_format_class(sysobj *obj, int fmt_opts) {
+    gchar *ret = NULL;
+    if (SEQ(obj->name, "bDeviceClass") ) {
+        int class = strtol(obj->data.str, NULL, 16);
+        gchar *cstr = sysobj_format_from_printf(fmt_opts | FMT_OPT_OR_NULL, ":/lookup/usb.ids/C %02x/name", class);
+        ret = (fmt_opts & FMT_OPT_PART)
+            ? g_strdup(cstr ? cstr : _("Unknown"))
+            : g_strdup_printf("[%02x] %s", class, cstr ? cstr : _("Unknown"));
+        g_free(cstr);
+    }
+    if (SEQ(obj->name, "bDeviceSubClass") ) {
+        int class = sysobj_uint32_from_fn(obj->path, "../bDeviceClass", 16);
+        int subclass = strtol(obj->data.str, NULL, 16);
+        gchar *cstr = sysobj_format_from_printf(fmt_opts | FMT_OPT_OR_NULL, ":/lookup/usb.ids/C %02x/%02x/name", class, subclass);
+        ret = (fmt_opts & FMT_OPT_PART)
+            ? g_strdup(cstr ? cstr : _("Unknown"))
+            : g_strdup_printf("[%02x] %s", subclass, cstr ? cstr : _("Unknown"));
+        g_free(cstr);
+    }
+    if (SEQ(obj->name, "bDeviceProtocol") ) {
+        int class = sysobj_uint32_from_fn(obj->path, "../bDeviceClass", 16);
+        int subclass = sysobj_uint32_from_fn(obj->path, "../bDeviceSubClass", 16);
+        int proto = strtol(obj->data.str, NULL, 16);
+        gchar *cstr = sysobj_format_from_printf(fmt_opts | FMT_OPT_OR_NULL, ":/lookup/usb.ids/C %02x/%02x/%02x/name", class, subclass, proto);
+        ret = (fmt_opts & FMT_OPT_PART)
+            ? g_strdup(cstr ? cstr : _("Unknown"))
+            : g_strdup_printf("[%02x] %s", proto, cstr ? cstr : _("Unknown"));
+        g_free(cstr);
+    }
+    if (ret) return ret;
+    return simple_format(obj, fmt_opts);
 }
 
 static gchar *usb_format_idcomp(sysobj *obj, int fmt_opts) {
-    gchar *pp = sysobj_parent_path(obj);
-    util_usb_id *d = get_usb_id(pp);
-    g_free(pp);
-
     gchar *ret = NULL;
-    gchar *value_str = NULL;
-    if (SEQ(obj->name, "idVendor") )
-        value_str = d->vendor_str ? d->vendor_str : "Unknown";
-    else if (SEQ(obj->name, "idProduct") )
-        value_str = d->device_str ? d->device_str : "Device";
-    if (value_str) {
-        uint32_t value = strtol(obj->data.str, NULL, 16);
-        ret = g_strdup_printf("[%04x] %s", value, value_str);
-    }
-    util_usb_id_free(d);
-    if (ret) return ret;
-    return simple_format(obj, fmt_opts);
-}
-
-static gchar *usb_format_device(sysobj *obj, int fmt_opts) {
-    util_usb_id *d = get_usb_id(obj->path);
-    gchar *ret = NULL;
-    if (d) {
-        vendor_list vl = sysobj_vendors(obj);
-        const Vendor *v = vl ? vl->data : NULL;
-        if (v) {
-            gchar *ven_tag = v->name_short ? g_strdup(v->name_short) : g_strdup(v->name);
-            tag_vendor(&ven_tag, 0, ven_tag, v->ansi_color, fmt_opts);
-            ret = g_strdup_printf("%s %s",
-                ven_tag, d->device_str ? d->device_str : "Device");
-            g_free(ven_tag);
-        } else {
-            ret = g_strdup_printf("%s %s",
-                d->vendor_str ? d->vendor_str : "Unknown",
-                d->device_str ? d->device_str : "Device");
+    if (SEQ(obj->name, "idVendor") ) {
+        int vendor = strtol(obj->data.str, NULL, 16);
+        gchar *vstr = sysobj_format_from_printf(fmt_opts | FMT_OPT_OR_NULL, ":/lookup/usb.ids/%04x/name", vendor);
+        gchar *ven_tag = vendor_match_tag(vstr, fmt_opts);
+        if (ven_tag) {
+            g_free(vstr);
+            vstr = ven_tag;
         }
-        vendor_list_free(vl);
+        ret = (fmt_opts & FMT_OPT_PART)
+            ? g_strdup(vstr ? vstr : _("Unknown"))
+            : g_strdup_printf("[%04x] %s", vendor, vstr ? vstr : _("Unknown"));
+        g_free(vstr);
     }
-    util_usb_id_free(d);
+    if (SEQ(obj->name, "idProduct") ) {
+        int vendor = sysobj_uint32_from_fn(obj->path, "../idVendor", 16);
+        int device = strtol(obj->data.str, NULL, 16);
+        gchar *dstr = sysobj_format_from_printf(fmt_opts | FMT_OPT_OR_NULL, ":/lookup/usb.ids/%04x/%04x/name", vendor, device);
+        if (fmt_opts & FMT_OPT_PART) {
+            if (!dstr) {
+                int cls = sysobj_uint32_from_fn(obj->path, "../bDeviceClass", 16);
+                if (cls == 0xe0) {
+                    dstr = sysobj_format_from_fn(obj->path, "../bDeviceProtocol", fmt_opts | FMT_OPT_PART);
+                } else if (cls != 0 && cls < 0xef)
+                    dstr = sysobj_format_from_fn(obj->path, "../bDeviceClass", fmt_opts | FMT_OPT_PART);
+            }
+            ret = g_strdup(dstr ? dstr : _("Device"));
+        } else
+            ret = g_strdup_printf("[%04x] %s", device, dstr ? dstr : _("Device"));
+        g_free(dstr);
+    }
     if (ret) return ret;
     return simple_format(obj, fmt_opts);
-}
-
-static gchar *usb_format_bus(sysobj *obj, int fmt_opts) {
-    return usb_format_device(obj, fmt_opts);
 }
 
 void class_usb() {

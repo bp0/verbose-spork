@@ -18,189 +18,119 @@
  *
  */
 
-/* Generator for ids from the usb.ids file (http://www.linux-usb.org/usb.ids)
+/* Generator for ids from the usb.ids file (https://github.com/systemd/systemd/blob/master/hwdb/usb.ids)
  *  :/lookup/usb.ids
- *
  *
  * Items are generated on-demand and cached.
  *
  * :/lookup/usb.ids/<vendor>/name
  * :/lookup/usb.ids/<vendor>/<device>/name
- *
- * TODO: usb device and interface classes
+ * :/lookup/usb.ids/C <class>/name
  *
  */
 #include "sysobj.h"
-#include "util_usb.h"
+#include "util_ids.h"
 
-#define SYSFS_USB "/sys/bus/usb"
+static gchar *usb_ids_file = NULL;
 
-static void gen_usb_ids_cache_item(util_usb_id *pid) {
-    gchar buff[128] = "";
-    int dev_symlink_flags = VSO_TYPE_SYMLINK | VSO_TYPE_AUTOLINK | VSO_TYPE_DYN;
-    gchar *devpath = g_strdup_printf(SYSFS_USB "/devices/%s", pid->address);
-    if (pid->vendor) {
-        sprintf(buff, ":/lookup/usb.ids/%04x", pid->vendor);
-        sysobj_virt_add_simple(buff, NULL, "*", VSO_TYPE_DIR );
-        if (pid->vendor_str)
-            sysobj_virt_add_simple(buff, "name", pid->vendor_str, VSO_TYPE_STRING );
-        if (pid->address)
-            sysobj_virt_add_simple(buff, pid->address, devpath, dev_symlink_flags );
-    }
-    if (pid->device) {
-        sprintf(buff, ":/lookup/usb.ids/%04x/%04x", pid->vendor, pid->device);
-        sysobj_virt_add_simple(buff, NULL, "*", VSO_TYPE_DIR );
-        if (pid->device_str)
-            sysobj_virt_add_simple(buff, "name", pid->device_str, VSO_TYPE_STRING );
-        if (pid->address)
-            sysobj_virt_add_simple(buff, pid->address, devpath, dev_symlink_flags );
-    }
-    g_free(devpath);
+#define usb_msg(msg, ...)  fprintf (stderr, "[%s] " msg "\n", __FUNCTION__, ##__VA_ARGS__) /**/
+
+enum {
+    PT_NONE = 0,
+    PT_DIR  = 1,
+    PT_NAME = 2,
+};
+
+static int _path_type(const gchar *path) {
+    char name[5] = "";
+    int mc = 0;
+    unsigned int i1, i2, i3;
+
+    mc = sscanf(path, ":/lookup/usb.ids/C %02x/%02x/%02x/%4s", &i1, &i2, &i3, name);
+    if (mc == 4 && SEQ(name, "name") ) return PT_NAME;
+    if (mc == 3) return PT_DIR;
+
+    mc = sscanf(path, ":/lookup/usb.ids/C %02x/%02x/%4s", &i1, &i2, name);
+    if (mc == 3 && SEQ(name, "name") ) return PT_NAME;
+    if (mc == 2) return PT_DIR;
+
+    mc = sscanf(path, ":/lookup/usb.ids/C %02x/%4s", &i1, name);
+    if (mc == 2 && SEQ(name, "name") ) return PT_NAME;
+    if (mc == 1) return PT_DIR;
+
+    mc = sscanf(path, ":/lookup/usb.ids/%04x/%04x/%4s", &i1, &i2, name);
+    if (mc == 3 && SEQ(name, "name") ) return PT_NAME;
+    if (mc == 2) return PT_DIR;
+
+    mc = sscanf(path, ":/lookup/usb.ids/%04x/%4s", &i1, name);
+    if (mc == 2 && SEQ(name, "name") ) return PT_NAME;
+    if (mc == 1) return PT_DIR;
+
+    return PT_NONE;
 }
 
-#define usb_msg(...) /* fprintf (stderr, __VA_ARGS__) */
-
-static void usb_scan() {
-    GSList *usb_id_list = NULL, *l = NULL;
-
-    sysobj *obj = sysobj_new_from_fn(SYSFS_USB, "devices");
-
-    if (!obj->exists) {
-        usb_msg("usb device list not found at %s/devices\n", SYSFS_USB);
-        sysobj_free(obj);
-        return;
-    }
-
-    GSList *devs = sysobj_children(obj, NULL, NULL, TRUE);
-    for(l = devs; l; l = l->next) {
-        gchar *dev = (gchar*)l->data;
-        if (verify_usb_device(dev) || verify_usb_bus(dev) ) {
-            util_usb_id *pid = g_new0(util_usb_id, 1);
-            gchar *dev_path = g_strdup_printf("%s/%s", obj->path, dev);
-            pid->address = g_strdup(dev);
-            pid->vendor = sysobj_uint32_from_fn(dev_path, "idVendor", 16);
-            pid->device = sysobj_uint32_from_fn(dev_path, "idProduct", 16);
-            usb_id_list = g_slist_append(usb_id_list, pid);
-            g_free(dev_path);
-        }
-    }
-    g_slist_free_full(devs, (GDestroyNotify)g_free);
-
-    if (usb_id_list) {
-        int count = g_slist_length(usb_id_list);
-        int found = util_usb_ids_lookup_list(usb_id_list);
-        for(l = usb_id_list; l; l = l->next) {
-            gen_usb_ids_cache_item((util_usb_id*)l->data);
-        }
-
-        if (found == -1)
-            usb_msg("usb.ids file could not be read\n");
-        else
-            usb_msg("usb.ids matched for %d of %d devices\n", found, count);
-    }
-    sysobj_free(obj);
-    g_slist_free_full(usb_id_list, (GDestroyNotify)util_usb_id_free);
-}
-
-static void buff_basename(const gchar *path, gchar *buff, gsize n) {
-    gchar *fname = g_path_get_basename(path);
-    strncpy(buff, fname, n);
-    g_free(fname);
-}
-
-static gboolean name_is_0x04(gchar *name) {
-    if (!name) return FALSE;
-    if (  isxdigit(name[0])
-        && isxdigit(name[1])
-        && isxdigit(name[2])
-        && isxdigit(name[3])
-        && name[4] == 0 )
-        return TRUE;
-    return FALSE;
-}
-
-static gchar *gen_usb_ids_lookup_value(const gchar *path) {
-    if (!path) return NULL;
-    gchar name[16] = "";
-    buff_basename(path, name, 15);
-
-    if (SEQ(name, "usb.ids") )
-        return g_strdup("*");
-
-    util_usb_id *pid = g_new0(util_usb_id, 1);
-    int32_t name_id = -1;
-    if ( name_is_0x04(name) )
-        name_id = strtol(name, NULL, 16);
-
-    int mc = sscanf(path, ":/lookup/usb.ids/%04x/%04x", &pid->vendor, &pid->device);
-    gchar *verify = NULL;
-    switch(mc) {
-        case 2:
-            if (!verify)
-            verify = (name_id == -1)
-                ? g_strdup_printf(":/lookup/usb.ids/%04x/%04x/%s", pid->vendor, pid->device, name)
-                : g_strdup_printf(":/lookup/usb.ids/%04x/%04x", pid->vendor, pid->device);
-        case 1:
-            if (!verify)
-            verify = (name_id == -1)
-                ? g_strdup_printf(":/lookup/usb.ids/%04x/%s", pid->vendor, name)
-                : g_strdup_printf(":/lookup/usb.ids/%04x", pid->vendor);
-
-            if (strcmp(path, verify) != 0) {
-                util_usb_id_free(pid);
-                return NULL;
-            }
-
-            int ok = util_usb_ids_lookup(pid);
-            gen_usb_ids_cache_item(pid);
-            break;
-        case 0:
-            util_usb_id_free(pid);
-            return NULL;
-    }
-
-    if (name_id != -1) {
-        util_usb_id_free(pid);
-        return "*";
-    }
-
-    gchar *ret = NULL;
-    if (SEQ(name, "name") ) {
-        switch(mc) {
-            case 1: ret = g_strdup(pid->vendor_str); break;
-            case 2: ret = g_strdup(pid->device_str); break;
-        }
-    }
-    util_usb_id_free(pid);
-    return ret;
-}
-
-static int gen_usb_ids_lookup_type(const gchar *path) {
-    gchar name[16] = "";
-    buff_basename(path, name, 15);
-
-    if (SEQ(name, "usb.ids") )
+int gen_usb_ids_lookup_type(const gchar *path) {
+    if (SEQ(path, ":/lookup/usb.ids") )
         return VSO_TYPE_BASE;
-
-    if (SEQ(name, "name") )
-        return VSO_TYPE_STRING;
-
-    if (name_is_0x04(name) )
-        return VSO_TYPE_DIR;
-
+    switch(_path_type(path)) {
+        case PT_DIR: return VSO_TYPE_DIR;
+        case PT_NAME: return VSO_TYPE_STRING;
+    }
     return VSO_TYPE_NONE;
 }
 
-void gen_usb_ids() {
-    sysobj_virt *vo = sysobj_virt_new();
-    vo->path = g_strdup(":/lookup/usb.ids");
-    vo->str = g_strdup("*");
-    vo->type = VSO_TYPE_DIR | VSO_TYPE_DYN;
-    vo->f_get_data = gen_usb_ids_lookup_value;
-    vo->f_get_type = gen_usb_ids_lookup_type;
-    sysobj_virt_add(vo);
+gchar *gen_usb_ids_lookup_value(const gchar *path) {
+    if (!path) {
+        /* cleanup */
+        g_free(usb_ids_file);
+        usb_ids_file = NULL;
+        return NULL;
+    }
 
-    /* this is not required, but it is more effecient to
-     * look the whole list up at once */
-    usb_scan();
+    /* find the data file, if not already found */
+    if (!usb_ids_file)
+        usb_ids_file = sysobj_find_data_file("usb.ids");
+    if (!usb_ids_file) {
+        usb_msg("usb.ids file not found");
+        return FALSE;
+    }
+
+    const gchar *qpath = path + strlen(":/lookup/usb.ids");
+    if (!qpath)
+        return NULL; /* auto-dir for lookup root */
+
+    qpath++; /* skip the '/' */
+    ids_query_result result = {};
+    gchar *n = NULL;
+    int pt = _path_type(path);
+    if (!pt) return NULL; /* type will have been VSO_TYPE_NONE */
+
+    scan_ids_file(usb_ids_file, qpath, &result, -1);
+
+    gchar **qparts = g_strsplit(qpath, "/", -1);
+    gchar *svo_path = g_strdup(":/lookup/usb.ids");
+    for(int i = 0; qparts[i]; i++) {
+        if (!SEQ(qparts[i], "name") ) {
+            sysobj_virt_add_simple(svo_path, qparts[i], "*", VSO_TYPE_DIR);
+            svo_path = appfs(svo_path, "/", "%s", qparts[i]);
+            n = result.results[i] ? result.results[i] : "";
+            sysobj_virt_add_simple(svo_path, "name", n, VSO_TYPE_STRING);
+        }
+    }
+    g_strfreev(qparts);
+
+    if (pt == PT_NAME) return g_strdup(n);
+    return NULL; /* auto-dir */
+}
+
+static sysobj_virt vol[] = {
+    { .path = ":/lookup/usb.ids", .str = "*",
+      .type =  VSO_TYPE_DIR | VSO_TYPE_DYN | VSO_TYPE_CONST | VSO_TYPE_CLEANUP,
+      .f_get_data = gen_usb_ids_lookup_value, .f_get_type = gen_usb_ids_lookup_type },
+};
+
+void gen_usb_ids() {
+    /* add virtual sysobj */
+    for (int i = 0; i < (int)G_N_ELEMENTS(vol); i++)
+        sysobj_virt_add(&vol[i]);
 }

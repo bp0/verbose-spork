@@ -97,7 +97,7 @@ gchar *gen_sdio_ids_lookup_value(const gchar *path) {
     int pt = _path_type(path);
     if (!pt) return NULL; /* type will have been VSO_TYPE_NONE */
 
-    scan_ids_file(sdio_ids_file, qpath, FALSE, &result, -1);
+    scan_ids_file(sdio_ids_file, qpath, &result, -1);
 
     gchar **qparts = g_strsplit(qpath, "/", -1);
     gchar *svo_path = g_strdup(":/lookup/sdio.ids");
