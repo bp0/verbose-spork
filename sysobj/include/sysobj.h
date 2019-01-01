@@ -185,6 +185,8 @@ struct sysobj {
 
     gboolean exists;
     gboolean req_is_link;
+    gchar *req_link_target; /* readlink() */
+
     gboolean root_can_read;
     gboolean root_can_write;
     gboolean others_can_read;

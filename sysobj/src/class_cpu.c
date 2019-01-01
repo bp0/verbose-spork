@@ -73,6 +73,7 @@ static sysobj_class cls_cpu[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "cpu", .pattern = "/sys/devices/system/cpu/cpu*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .s_label = N_("logical CPU"), .s_halp = cpu_reference_markup_text,
+    .v_subsystem = "/sys/bus/cpu",
     .f_verify = cpu_verify, .f_format = cpu_format, .f_update_interval = cpu_update_interval },
 
   { SYSOBJ_CLASS_DEF

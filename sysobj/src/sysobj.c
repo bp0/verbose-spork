@@ -533,6 +533,7 @@ static void sysobj_free_and_clean(sysobj *s) {
         g_free(s->name_req);
         g_free(s->path_fs);
         g_free(s->name);
+        g_free(s->req_link_target);
         sysobj_data_free(&s->data, FALSE);
         memset(s, 0, sizeof(sysobj) );
         sysobj_stats.so_clean++;
@@ -954,8 +955,16 @@ gboolean sysobj_config_paths(sysobj *s, const gchar *base, const gchar *name) {
 
     if (vlink)
         s->req_is_link = TRUE;
-    else
+    else {
         s->req_is_link = g_file_test(s->path_req_fs, G_FILE_TEST_IS_SYMLINK);
+        if (s->req_is_link) {
+            gchar *lt = g_file_read_link(s->path_req_fs, NULL);
+            if (lt) {
+                s->req_link_target = g_filename_to_utf8(lt, -1, NULL, NULL, NULL);
+                g_free(lt);
+            }
+        }
+    }
 
     //DEBUG("\n{ .path_req_fs = %s\n  .path_req = %s\n  .path_fs = %s\n  .path = %s\n  .req_is_link = %s }",
     //    s->path_req_fs, s->path_req, s->path_fs, s->path, s->req_is_link ? "TRUE" : "FALSE" );
@@ -1145,8 +1154,17 @@ gboolean verify_subsystem(sysobj *obj, const gchar *target) {
     gboolean ret = FALSE;
     gchar *ssl = util_build_fn(obj->path, "subsystem");
     sysobj *sso = sysobj_new_fast(ssl);
-    if (SEQ(sso->path, target))
+    if (sso->exists && SEQ(sso->path, target))
         ret = TRUE;
+    else {
+        /* sometimes the snapshot doesn't include all of /sys, but
+         * it still may be possible to match by looking at the link target */
+        if (sso->req_link_target
+            && g_str_has_prefix(target, "/sys")
+            && g_str_has_suffix(sso->req_link_target, target + 4) ) {
+            return TRUE;
+        }
+    }
     sysobj_free(sso);
     return ret;
 }
@@ -1155,8 +1173,17 @@ gboolean verify_subsystem_parent(sysobj *obj, const gchar *target) {
     gboolean ret = FALSE;
     gchar *ssl = util_build_fn(obj->path, "../subsystem");
     sysobj *sso = sysobj_new_fast(ssl);
-    if (SEQ(sso->path, target))
+    if (sso->exists && SEQ(sso->path, target))
         ret = TRUE;
+    else {
+        /* sometimes the snapshot doesn't include all of /sys, but
+         * it still may be possible to match by looking at the link target */
+        if (sso->req_link_target
+            && g_str_has_prefix(target, "/sys")
+            && g_str_has_suffix(sso->req_link_target, target + 4) ) {
+            return TRUE;
+        }
+    }
     sysobj_free(sso);
     return ret;
 }
