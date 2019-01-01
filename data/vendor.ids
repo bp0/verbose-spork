@@ -285,6 +285,7 @@ name TEAC Corporation
 
 name Microsoft
     url www.microsoft.com
+    ansi_color 0;97;40
     match_string Microsoft
 
 name Memorex Products
