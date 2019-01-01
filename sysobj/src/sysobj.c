@@ -567,6 +567,10 @@ void sysobj_classify(sysobj *s) {
                 match = g_str_has_suffix(s->path, c->pattern);
 
             /* simple verifiers */
+            if (match && c->v_is_node)
+                match = s->data.is_dir;
+            if (match && c->v_is_attr)
+                match = !(s->data.is_dir);
             if (match && c->v_lblnum)
                 match = verify_lblnum(s, c->v_lblnum);
             if (match && c->v_lblnum_child)
