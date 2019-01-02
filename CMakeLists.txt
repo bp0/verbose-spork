@@ -80,6 +80,7 @@ add_library(sysobj STATIC
         sysobj/src/class_clocksource.c
         sysobj/src/class_mmc.c
         sysobj/src/class_media.c
+        sysobj/src/class_intel_pstate.c
 # gen only
         sysobj/src/gen_arm_ids.c
         sysobj/src/gen_sdio_ids.c
