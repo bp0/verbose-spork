@@ -49,6 +49,7 @@ gchar *fmt_millidegree_c(sysobj *obj, int fmt_opts);
 gchar *fmt_milliampere(sysobj *obj, int fmt_opts);
 gchar *fmt_microwatt(sysobj *obj, int fmt_opts);
 gchar *fmt_milliwatt(sysobj *obj, int fmt_opts);
+gchar *fmt_milliwatt_to_higher(sysobj *obj, int fmt_opts);
 gchar *fmt_microjoule(sysobj *obj, int fmt_opts);
 gchar *fmt_percent(sysobj *obj, int fmt_opts);
 gchar *fmt_millepercent(sysobj *obj, int fmt_opts);

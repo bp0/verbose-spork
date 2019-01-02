@@ -21,6 +21,11 @@
 #include <stdlib.h>
 #include "format_funcs.h"
 
+#define no_unit_check_chomp(f, u)                       \
+        util_strchomp_float(fmt_opts & FMT_OPT_NO_UNIT  \
+        ? g_strdup_printf("%.3f", (f))                  \
+        : g_strdup_printf("%.3f %s", (f), (u)) )
+
 #define CHECK_OBJ()  \
     if ( !(obj && obj->data.was_read && obj->data.str) ) \
         return simple_format(obj, fmt_opts);
@@ -104,6 +109,21 @@ gchar *fmt_milliwatt(sysobj *obj, int fmt_opts) {
     double mW = strtod(raw, NULL);
     FINISH_RAW();
     return g_strdup_printf("%.3lf %s", mW, _("mW") );
+}
+
+gchar *fmt_milliwatt_to_higher(sysobj *obj, int fmt_opts) {
+    CHECK_OBJ();
+    PREP_RAW();
+    double mW = strtod(raw, NULL);
+    FINISH_RAW();
+
+    if (mW > (2000 * 1000 * 1000) )
+        return no_unit_check_chomp(mW / (1000 * 1000 * 1000), _("MW"));
+    if (mW > (2000 * 1000) )
+        return no_unit_check_chomp(mW / (1000 * 1000), _("kW"));
+    if (mW > 2000)
+        return no_unit_check_chomp(mW / 1000, _("W"));
+    return no_unit_check_chomp(mW, _("mW"));
 }
 
 gchar *fmt_microseconds_to_milliseconds(sysobj *obj, int fmt_opts) {
@@ -221,11 +241,6 @@ gchar *fmt_bytes(sysobj *obj, int fmt_opts) {
 #define bytes_GiB (bytes_MiB * 1024.0)
 #define bytes_TiB (bytes_GiB * 1024.0)
 #define bytes_PiB (bytes_TiB * 1024.0)
-
-#define no_unit_check_chomp(f, u)                       \
-        util_strchomp_float(fmt_opts & FMT_OPT_NO_UNIT  \
-        ? g_strdup_printf("%.1f", (f))                    \
-        : g_strdup_printf("%.1f %s", (f), (u)) )
 
 gchar *fmt_bytes_to_higher(sysobj *obj, int fmt_opts) {
     CHECK_OBJ();
@@ -676,6 +691,7 @@ STD_FORMAT_FUNC(fmt_millidegree_c)
 STD_FORMAT_FUNC(fmt_milliampere)
 STD_FORMAT_FUNC(fmt_microwatt)
 STD_FORMAT_FUNC(fmt_milliwatt)
+STD_FORMAT_FUNC(fmt_milliwatt_to_higher)
 STD_FORMAT_FUNC(fmt_microjoule)
 STD_FORMAT_FUNC(fmt_percent)
 STD_FORMAT_FUNC(fmt_millepercent)

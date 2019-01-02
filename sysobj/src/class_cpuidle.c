@@ -40,6 +40,19 @@ static gchar *state_name_format(sysobj *obj, int fmt_opts) {
     return simple_format(obj, fmt_opts);
 }
 
+static gchar *state_time_format(sysobj *obj, int fmt_opts) {
+    double us = strtod(obj->data.str, NULL);
+    if (us < (1000 * 1000) )
+        return fmt_microseconds_to_milliseconds(obj, fmt_opts);
+    else {
+        double seconds = us / (1000 * 1000);
+        if (fmt_opts & FMT_OPT_PART
+            || fmt_opts & FMT_OPT_SHORT)
+            return formatted_time_span(seconds, TRUE, TRUE); /* short */
+        return formatted_time_span(seconds, FALSE, TRUE);    /* long */
+    }
+}
+
 /* obj is cpuN/cpuidle */
 static int state_count(sysobj *obj) {
     int ret = 0;
@@ -52,7 +65,7 @@ static int state_count(sysobj *obj) {
 static gchar *cpuidle_cpu_format(sysobj *obj, int fmt_opts) {
     //TODO: handle fmt_opts
     gchar *ret = NULL;
-    gchar *drv = sysobj_format_from_fn(obj->path, "driver", fmt_opts);
+    gchar *drv = sysobj_format_from_fn(obj->path, "driver", fmt_opts | FMT_OPT_OR_NULL);
     gchar *states = NULL;
     int c = state_count(obj);
     const char *fmt = ngettext("%d state", "%d states", c);
@@ -72,8 +85,8 @@ static attr_tab state_items[] = {
     { "latency", N_("latency to exit out of this idle state"), OF_NONE, fmt_microseconds_to_milliseconds },
     { "residency", N_("time after which a state becomes more effecient than any shallower state"), OF_NONE, fmt_microseconds_to_milliseconds },
     { "name", N_("name of the idle state"), OF_NONE, state_name_format },
-    { "power", N_("power consumed while in this idle state"), OF_NONE, fmt_milliwatt },
-    { "time", N_("total time spent in this idle state"), OF_NONE, fmt_microseconds_to_milliseconds },
+    { "power", N_("power consumed while in this idle state"), OF_NONE, fmt_milliwatt_to_higher },
+    { "time", N_("total time spent in this idle state"), OF_NONE, state_time_format },
     { "usage", N_("number of times this state was entered") },
     ATTR_TAB_LAST
 };
