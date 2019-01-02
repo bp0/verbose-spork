@@ -37,9 +37,11 @@ void ids_query_free(ids_query *s) {
     g_free(s);
 }
 
+/* c001 < C 01 */
+//TODO: compare more than the first char
 static int ids_cmp(const char *s1, const char *s2) {
     int cmp = (s2 ? 1 : 0) - (s1 ? 1 : 0);
-    if (cmp == 0)
+    if (cmp == 0 && isalpha(*s1) && isalpha(*s2))
         cmp = (islower(*s2) ? 1 : 0) - (islower(*s1) ? 1 : 0);
     if (cmp == 0)
         return g_strcmp0(s1, s2);
