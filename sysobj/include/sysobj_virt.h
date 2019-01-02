@@ -28,12 +28,18 @@ enum {
     VSO_TYPE_DIR      = 1,
     VSO_TYPE_STRING   = 1<<1,
 
-    VSO_TYPE_REQ_ROOT = 1<<15,
+    VSO_TYPE_REQ_ROOT = 1<<10,
+    VSO_TYPE_WRITE    = 1<<11, /* user-writable */
+    VSO_TYPE_WRITE_REQ_ROOT
+                      = 1<<12, /* root-writable */
+
     VSO_TYPE_SYMLINK  = 1<<16,
     VSO_TYPE_DYN      = 1<<17, /* any path beyond that doesn't match a non-dyn path */
     VSO_TYPE_AUTOLINK = 1<<18,
+
     VSO_TYPE_CLEANUP  = 1<<19, /* will get a call f_get_data(NULL) to signal cleanup */
     VSO_TYPE_BASE     = 1<<20, /* for DYN vo's, return from f_get_type() with the the base type */
+
     VSO_TYPE_CONST    = 1<<30, /* don't free */
 };
 
@@ -43,6 +49,7 @@ typedef struct sysobj_virt {
     gchar *str; /* default f_get_data() uses str; */
     gchar *(*f_get_data)(const gchar *path); /* f_get_data(NULL) is called for cleanup */
     int (*f_get_type)(const gchar *path);
+    gboolean (*f_set_data)(const gchar *path, const gchar *data, long length);
 } sysobj_virt;
 
 void sysobj_virt_init();
@@ -54,6 +61,7 @@ gboolean sysobj_virt_add_simple_mkpath(const gchar *base, const gchar *name, con
 void sysobj_virt_remove(gchar *glob);
 sysobj_virt *sysobj_virt_find(const gchar *path);
 gchar *sysobj_virt_get_data(const sysobj_virt *vo, const gchar *req);
+gboolean sysobj_virt_set_data(sysobj_virt *vo, const gchar *req, const gpointer data, long length);
 int sysobj_virt_get_type(const sysobj_virt *vo, const gchar *req);
 GSList *sysobj_virt_all_paths();
 #define sysobj_virt_count() sysobj_virt_count_ex(0)

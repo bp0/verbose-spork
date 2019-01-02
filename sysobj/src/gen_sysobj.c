@@ -39,7 +39,9 @@ static gchar *get_item_items[] = {
     "sysobj_read_wo",
     "gg_file_total_wait",
     "virt_count", "virt_iter", "virt_rm",
-    "virt_add", "virt_replace", "virt_getf",
+    "virt_add", "virt_replace",
+    "virt_fget", "virt_fset",
+    "virt_fget_bytes", "virt_fset_bytes",
     "vo_list_count", "vo_tree_count",
     "class_count", "class_iter", "classify_none",
     "classify_pattern_cmp",
@@ -89,8 +91,14 @@ static gchar *get_item(const gchar *path) {
         return g_strdup_printf("%llu", sysobj_stats.so_virt_add );
     if (SEQ(name, "virt_replace") )
         return g_strdup_printf("%llu", sysobj_stats.so_virt_replace );
-    if (SEQ(name, "virt_getf") )
+    if (SEQ(name, "virt_fget") )
         return g_strdup_printf("%llu", sysobj_stats.so_virt_getf );
+    if (SEQ(name, "virt_fset") )
+        return g_strdup_printf("%llu", sysobj_stats.so_virt_setf );
+    if (SEQ(name, "virt_fget_bytes") )
+        return g_strdup_printf("%llu", sysobj_stats.so_virt_getf_bytes );
+    if (SEQ(name, "virt_fset_bytes") )
+        return g_strdup_printf("%llu", sysobj_stats.so_virt_setf_bytes );
     if (SEQ(name, "virt_count") )
         return g_strdup_printf("%lu", (long unsigned)sysobj_virt_count() );
     if (SEQ(name, "vo_tree_count") )

@@ -628,6 +628,8 @@ void sysobj_fscheck(sysobj *s) {
                 s->exists = TRUE;
                 s->root_can_read = TRUE;
                 s->others_can_read = (t & VSO_TYPE_REQ_ROOT) ? FALSE : TRUE;
+                s->root_can_write = (t & VSO_TYPE_WRITE_REQ_ROOT || t & VSO_TYPE_WRITE) ? TRUE : FALSE;
+                s->others_can_write = (t & VSO_TYPE_WRITE) ? TRUE : FALSE;
                 if (t & VSO_TYPE_DIR)
                     s->data.is_dir = TRUE;
             }

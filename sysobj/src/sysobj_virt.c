@@ -91,6 +91,12 @@ void sysobj_virt_remove(gchar *glob) {
 gboolean sysobj_virt_add(sysobj_virt *vo) {
     if (vo) {
         /* check for errors */
+        if (vo->type == VSO_TYPE_CLEANUP
+            && !vo->f_get_data) {
+            virt_msg("requested cleanup but no .f_get_data for %s", vo->path);
+            sysobj_virt_free(vo);
+            return FALSE;
+        }
         if (vo->type == VSO_TYPE_NONE
             && !vo->f_get_type) {
             virt_msg("no .type or .f_get_type for %s", vo->path);
@@ -101,6 +107,13 @@ gboolean sysobj_virt_add(sysobj_virt *vo) {
             && !(vo->type & VSO_TYPE_SYMLINK)
             && vo->type & VSO_TYPE_DYN ) {
             virt_msg(".type is VSO_TYPE_DYN, but not VSO_TYPE_SYMLINK, and no .f_get_data for %s", vo->path);
+            sysobj_virt_free(vo);
+            return FALSE;
+        }
+        if (vo->type & VSO_TYPE_CONST
+            && (vo->type & VSO_TYPE_WRITE || vo->type & VSO_TYPE_WRITE_REQ_ROOT)
+            && !vo->f_set_data) {
+            virt_msg(".type is VSO_TYPE_CONST, and no .f_set_data for %s", vo->path);
             sysobj_virt_free(vo);
             return FALSE;
         }
@@ -282,6 +295,36 @@ gchar *sysobj_virt_symlink_entry(const sysobj_virt *vo, const gchar *target, con
     return ret;
 }
 
+gboolean sysobj_virt_set_data(sysobj_virt *vo, const gchar *req, const gpointer data, long length) {
+    gboolean ret = FALSE;
+    if (vo) {
+        int t = sysobj_virt_get_type(vo, req);
+        if (!(t & VSO_TYPE_WRITE || t & VSO_TYPE_WRITE_REQ_ROOT) )
+            return FALSE;
+        if (t & VSO_TYPE_WRITE_REQ_ROOT
+            && !util_have_root() )
+            return FALSE;
+
+        if (vo->f_set_data) {
+            sysobj_stats.so_virt_setf++;
+            ret = vo->f_set_data(req ? req : vo->path, data, length);
+        } else {
+            if (vo->type & VSO_TYPE_CONST)
+                return FALSE;
+            else if (g_utf8_validate(data, length, NULL) ) {
+                if (length <= 0)
+                    length = strlen((char*)data);
+                g_free(vo->str);
+                vo->str = g_memdup(data, length);
+                ret = TRUE;
+            }
+        }
+    }
+    if (ret)
+        sysobj_stats.so_virt_setf_bytes += length;
+    return ret;
+}
+
 gchar *sysobj_virt_get_data(const sysobj_virt *vo, const gchar *req) {
     gchar *ret = NULL;
     if (vo) {
@@ -298,6 +341,8 @@ gchar *sysobj_virt_get_data(const sysobj_virt *vo, const gchar *req) {
             ret = res;
         }
     }
+    if (ret)
+        sysobj_stats.so_virt_getf_bytes += strlen(ret);
     return ret;
 }
 
