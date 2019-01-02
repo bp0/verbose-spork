@@ -88,6 +88,7 @@ void class_cpu();
 void class_cpufreq();
 void class_cpucache();
 void class_cputopo();
+void class_cpuidle();
 void class_pci();
 void class_usb();
 void class_os_release();
@@ -254,6 +255,7 @@ void class_init() {
     class_cpufreq();
     class_cpucache();
     class_cputopo();
+    class_cpuidle();
     class_pci();
     class_usb();
     class_uptime();

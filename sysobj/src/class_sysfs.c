@@ -59,6 +59,7 @@ static sysobj_class cls_power[] = {
 
   { SYSOBJ_CLASS_DEF
     .tag = "device_power", .pattern = "/sys/devices/*/power", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .v_is_node = TRUE,
     .s_halp = power_reference_markup_text, .s_label = N_("device power management information"),
     .f_format = power_format, .s_update_interval = 1.0 },
   { SYSOBJ_CLASS_DEF

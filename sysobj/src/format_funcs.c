@@ -98,6 +98,14 @@ gchar *fmt_microwatt(sysobj *obj, int fmt_opts) {
     return g_strdup_printf("%.3lf %s", mW, _("mW") );
 }
 
+gchar *fmt_milliwatt(sysobj *obj, int fmt_opts) {
+    CHECK_OBJ();
+    PREP_RAW();
+    double mW = strtod(raw, NULL);
+    FINISH_RAW();
+    return g_strdup_printf("%.3lf %s", mW, _("mW") );
+}
+
 gchar *fmt_microseconds_to_milliseconds(sysobj *obj, int fmt_opts) {
     CHECK_OBJ();
     PREP_RAW();
@@ -667,6 +675,7 @@ STD_FORMAT_FUNC(fmt_mhz)
 STD_FORMAT_FUNC(fmt_millidegree_c)
 STD_FORMAT_FUNC(fmt_milliampere)
 STD_FORMAT_FUNC(fmt_microwatt)
+STD_FORMAT_FUNC(fmt_milliwatt)
 STD_FORMAT_FUNC(fmt_microjoule)
 STD_FORMAT_FUNC(fmt_percent)
 STD_FORMAT_FUNC(fmt_millepercent)
