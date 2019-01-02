@@ -172,6 +172,7 @@ static attr_tab sysobj_items[] = {
     { "sysobj_read_expired" },
     { "sysobj_read_not_expired" },
     { "sysobj_read_wo" },
+    { "sysobj_read_bytes", NULL, OF_NONE, fmt_bytes_to_higher },
     { "ven_iter", N_("steps through the vendors list") },
     { "filter_iter" },
     { "filter_pattern_cmp" },

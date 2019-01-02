@@ -715,28 +715,15 @@ static void sysobj_read_data(sysobj *s) {
         }
     } else {
         /* normal */
-        if (0) {
-            sysobj_data_free(&s->data, FALSE);
-            s->data.was_read =
-                g_file_get_contents(s->path_fs, &s->data.str, &s->data.len, &error);
-                if (!s->data.str) {
-                    if (error && error->code == G_FILE_ERROR_ACCES)
-                        s->access_fail = TRUE;
-                }
-                if (error)
-                    g_error_free(error);
-        } else {
-            sysobj_data_free(&s->data, FALSE);
-            int err = 0;
-            s->data.was_read = gg_file_get_contents_non_blocking(s->path_fs, &s->data.str, &s->data.len, &err);
-            if (!s->data.str) {
-                if (err == EACCES)
-                    s->access_fail = TRUE;
-            }
-        }
+        sysobj_data_free(&s->data, FALSE);
+        int err = 0;
+        s->data.was_read = gg_file_get_contents_non_blocking(s->path_fs, &s->data.str, &s->data.len, &err);
+        if (!s->data.str && err == EACCES)
+            s->access_fail = TRUE;
     }
 
     if (s->data.was_read && s->data.str) {
+        sysobj_stats.so_read_bytes += s->data.len;
         s->data.is_utf8 = g_utf8_validate(s->data.str, s->data.len, NULL);
         if (s->data.is_utf8) {
             s->data.lines = util_count_lines(s->data.str);

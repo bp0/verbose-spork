@@ -36,7 +36,7 @@ static gchar *get_item_items[] = {
     "sysobj_clean", "sysobj_free",
     "sysobj_read_first", "sysobj_read_force",
     "sysobj_read_expired", "sysobj_read_not_expired",
-    "sysobj_read_wo",
+    "sysobj_read_wo", "sysobj_read_bytes",
     "gg_file_total_wait",
     "virt_count", "virt_iter", "virt_rm",
     "virt_add", "virt_replace",
@@ -83,6 +83,8 @@ static gchar *get_item(const gchar *path) {
         return g_strdup_printf("%llu", sysobj_stats.so_read_not_expired );
     if (SEQ(name, "sysobj_read_wo") )
         return g_strdup_printf("%llu", sysobj_stats.so_read_wo );
+    if (SEQ(name, "sysobj_read_bytes") )
+        return g_strdup_printf("%llu", sysobj_stats.so_read_bytes );
 
     if (SEQ(name, "gg_file_total_wait") )
         return g_strdup_printf("%llu", gg_file_get_total_wait() );

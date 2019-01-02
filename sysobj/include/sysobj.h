@@ -329,6 +329,7 @@ typedef struct {
         so_read_expired,
         so_read_not_expired,
         so_read_wo,
+        so_read_bytes,
         so_virt_add,
         so_virt_replace,
         so_virt_getf,
