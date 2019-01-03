@@ -45,6 +45,8 @@ gchar *fmt_hz(sysobj *obj, int fmt_opts);
 gchar *fmt_hz_to_mhz(sysobj *obj, int fmt_opts);
 gchar *fmt_khz_to_mhz(sysobj *obj, int fmt_opts);
 gchar *fmt_mhz(sysobj *obj, int fmt_opts);
+gchar *fmt_frequencies_list_hz(sysobj *obj, int fmt_opts);
+gchar *fmt_frequencies_list_khz(sysobj *obj, int fmt_opts);
 gchar *fmt_millidegree_c(sysobj *obj, int fmt_opts);
 gchar *fmt_milliampere(sysobj *obj, int fmt_opts);
 gchar *fmt_microwatt(sysobj *obj, int fmt_opts);
@@ -66,6 +68,7 @@ gchar *fmt_megatransferspersecond(sysobj *obj, int fmt_opts);
 gchar *fmt_gigatransferspersecond(sysobj *obj, int fmt_opts);
 gchar *fmt_lanes_x(sysobj *obj, int fmt_opts);
 gchar *fmt_vendor_name_to_tag(sysobj *obj, int fmt_opts);
+gchar *fmt_word_list_spaces(sysobj *obj, int fmt_opts);
 /* returns formatted <self>/name */
 gchar *fmt_node_name(sysobj *obj, int fmt_opts);
 

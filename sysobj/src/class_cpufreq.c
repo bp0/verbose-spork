@@ -26,7 +26,7 @@ const gchar cpufreq_reference_markup_text[] =
     BULLET REFLINK("https://www.kernel.org/doc/Documentation/cpu-freq/")
     "\n";
 
-attr_tab cpufreq_items[] = {
+static attr_tab cpufreq_items[] = {
     { "scaling_min_freq", N_("minimum clock frequency (via scaling driver)"), OF_NONE, fmt_khz_to_mhz, 1.0 },
     { "scaling_max_freq", N_("maximum clock frequency (via scaling driver)"), OF_NONE, fmt_khz_to_mhz, 1.0 },
     { "scaling_cur_freq", N_("current clock frequency (via scaling driver)"), OF_NONE, fmt_khz_to_mhz, 0.25 },
@@ -42,6 +42,9 @@ attr_tab cpufreq_items[] = {
     { "freqdomain_cpus", N_("logical CPUs that share the same base clock") },
     { "affected_cpus",   N_("logical CPUs affected by change to scaling_setspeed") },
     { "related_cpus",    N_("related logical CPUs") },
+
+    { "scaling_available_frequencies", NULL, OF_NONE, fmt_frequencies_list_khz },
+    { "scaling_available_governors", NULL, OF_NONE, fmt_word_list_spaces },
     ATTR_TAB_LAST
 };
 

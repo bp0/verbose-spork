@@ -348,6 +348,84 @@ gchar *fmt_vendor_name_to_tag(sysobj *obj, int fmt_opts) {
     return simple_format(obj, fmt_opts);
 }
 
+gchar *fmt_frequencies_list_khz(sysobj *obj, int fmt_opts) {
+    gchar *ret = NULL;
+    gboolean oneline = fmt_opts & FMT_OPT_LIST_ITEM;
+    gchar *sep = oneline ? ", " : "\n";
+    gchar **list = g_strsplit(obj->data.str, " ", -1);
+    int len = 0, i;
+    for(i = 0; list[i]; i++) {
+        g_strstrip(list[i]);
+        if (*list[i] != 0) len = i + 1;
+    }
+    for(i = 0; i < len; i++) {
+        g_strstrip(list[i]);
+        if (*list[i] == 0) continue;
+        int fo = (oneline && i != len-1)
+            ? fmt_opts | FMT_OPT_PART | FMT_OPT_NO_UNIT
+            : fmt_opts | FMT_OPT_PART;
+        gchar *tmp = format_data(list[i], strlen(list[i]), fmt_khz_to_mhz, fo);
+        util_strchomp_float(tmp);
+        ret = appfs(ret, sep, "%s", tmp);
+        g_free(tmp);
+    }
+    g_strfreev(list);
+    if (ret)
+        return ret;
+    return simple_format(obj, fmt_opts);
+}
+
+gchar *fmt_frequencies_list_hz(sysobj *obj, int fmt_opts) {
+    gchar *ret = NULL;
+    gboolean oneline = fmt_opts & FMT_OPT_LIST_ITEM;
+    gchar *sep = oneline ? ", " : "\n";
+    gchar **list = g_strsplit(obj->data.str, " ", -1);
+    int len = 0, i;
+    for(i = 0; list[i]; i++) {
+        g_strstrip(list[i]);
+        if (*list[i] != 0) len = i + 1;
+    }
+    for(i = 0; i < len; i++) {
+        g_strstrip(list[i]);
+        if (*list[i] == 0) continue;
+        int fo = (oneline && i != len-1)
+            ? fmt_opts | FMT_OPT_PART | FMT_OPT_NO_UNIT
+            : fmt_opts | FMT_OPT_PART;
+        gchar *tmp = format_data(list[i], strlen(list[i]), fmt_hz_to_mhz, fo);
+        util_strchomp_float(tmp);
+        ret = appfs(ret, sep, "%s", tmp);
+        g_free(tmp);
+    }
+    g_strfreev(list);
+    if (ret)
+        return ret;
+    return simple_format(obj, fmt_opts);
+}
+
+gchar *fmt_word_list_spaces(sysobj *obj, int fmt_opts) {
+    gchar *ret = NULL;
+    gboolean oneline = fmt_opts & FMT_OPT_LIST_ITEM;
+    gchar *sep = oneline ? " " : "\n";
+    gchar **list = g_strsplit(obj->data.str, " ", -1);
+    int len = 0, i;
+    for(i = 0; list[i]; i++) {
+        g_strstrip(list[i]);
+        if (*list[i] != 0) len = i + 1;
+    }
+    for(i = 0; i < len; i++) {
+        g_strstrip(list[i]);
+        if (*list[i] == 0) continue;
+        int fo = (oneline && i != len-1)
+            ? fmt_opts | FMT_OPT_PART | FMT_OPT_NO_UNIT
+            : fmt_opts | FMT_OPT_PART;
+        ret = appfs(ret, sep, "%s", list[i]);
+    }
+    g_strfreev(list);
+    if (ret)
+        return ret;
+    return simple_format(obj, fmt_opts);
+}
+
 gchar *fmt_seconds(sysobj *obj, int fmt_opts) {
     CHECK_OBJ();
     PREP_RAW();
@@ -687,6 +765,8 @@ STD_FORMAT_FUNC(fmt_hz)
 STD_FORMAT_FUNC(fmt_hz_to_mhz)
 STD_FORMAT_FUNC(fmt_khz_to_mhz)
 STD_FORMAT_FUNC(fmt_mhz)
+STD_FORMAT_FUNC(fmt_frequencies_list_hz)
+STD_FORMAT_FUNC(fmt_frequencies_list_khz)
 STD_FORMAT_FUNC(fmt_millidegree_c)
 STD_FORMAT_FUNC(fmt_milliampere)
 STD_FORMAT_FUNC(fmt_microwatt)
@@ -709,6 +789,7 @@ STD_FORMAT_FUNC(fmt_gigatransferspersecond)
 STD_FORMAT_FUNC(fmt_lanes_x)
 STD_FORMAT_FUNC(fmt_node_name)
 STD_FORMAT_FUNC(fmt_vendor_name_to_tag)
+STD_FORMAT_FUNC(fmt_word_list_spaces)
 };
 
 const gchar *format_funcs_lookup(const gpointer fp) {

@@ -32,7 +32,7 @@ static gboolean devfreq_item_verify(sysobj *obj);
 static gchar *devfreq_format(sysobj *obj, int fmt_opts);
 static double devfreq_update_interval(sysobj *obj);
 
-attr_tab devfreq_items[] = {
+static attr_tab devfreq_items[] = {
     { "governor",  N_("devfreq governor"), OF_NONE, NULL, 4.0 },
     { "min_freq",  N_("minimum frequency requested"), OF_NONE, fmt_hz_to_mhz, 0.1 },
     { "max_freq",  N_("maximum frequency requested"), OF_NONE, fmt_hz_to_mhz, 0.1 },
@@ -40,8 +40,8 @@ attr_tab devfreq_items[] = {
     { "target_freq",  N_("next governor-predicted target frequency"), OF_NONE, fmt_hz_to_mhz, 0.1 },
     { "polling_interval",  N_("requested polling interval"), OF_NONE, fmt_milliseconds, 1.7 },
     { "trans_stat",  N_("statistics of devfreq behavior") },
-    { "available_frequencies",  N_("available frequencies") },
-    { "available_governors",  N_("available devfreq governors") },
+    { "available_frequencies",  N_("available frequencies"), OF_NONE, fmt_frequencies_list_hz },
+    { "available_governors",  N_("available devfreq governors"), OF_NONE, fmt_word_list_spaces },
     { NULL, NULL, 0 }
 };
 
