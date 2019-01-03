@@ -20,6 +20,7 @@
 
 #include <stdio.h> /* for sscanf() */
 #include "sysobj.h"
+#include "format_funcs.h"
 
 const gchar cpucache_reference_markup_text[] =
     "Reference:\n"
@@ -133,26 +134,59 @@ gchar *cpucache_format_collection(sysobj *obj, int fmt_opts) {
     return simple_format(obj, fmt_opts);
 }
 
+static gchar *fmt_cpucache_write_policy(sysobj *obj, int fmt_opts) {
+    static lookup_tab cpucache_write_policy[] = {
+        { "WriteThrough", N_("data is written to both the cache line and to the block in the lower-level memory") },
+        { "WriteBack", N_("data is written only to the cache line and the modified cache line is written to main memory only when it is replaced") },
+        LOOKUP_TAB_LAST
+    };
+    gchar *ret = sysobj_format_lookup_tab(obj, cpucache_write_policy, fmt_opts);
+    if (ret) return ret;
+    return simple_format(obj, fmt_opts);
+}
+
+static gchar *fmt_cpucache_allocation_policy(sysobj *obj, int fmt_opts) {
+    static lookup_tab cpucache_allocation_policy[] = {
+        { "WriteAllocate", N_("allocate on miss due to write") },
+        { "ReadAllocate", N_("allocate on miss due to read") },
+        { "ReadWriteAllocate", N_("allocate on miss due to read or write") },
+        LOOKUP_TAB_LAST
+    };
+    gchar *ret = sysobj_format_lookup_tab(obj, cpucache_allocation_policy, fmt_opts);
+    if (ret) return ret;
+    return simple_format(obj, fmt_opts);
+}
+
+static attr_tab cache_part_items[] = {
+    { "size", N_("cache size"), OF_NONE, cpucache_format_size },
+    { "type", N_("cache type"), OF_NONE, cpucache_format_type },
+    { "ways_of_associativity", N_("degree of freedom in placing a particular block") },
+    { "allocation_policy", NULL, OF_NONE, fmt_cpucache_allocation_policy },
+    { "attributes" },
+    { "coherency_line_size", N_("the minimum amount of data in bytes that gets transferred from memory to cache"), OF_NONE, fmt_bytes_to_higher },
+    { "level", N_("the cache hierarchy in the multi-level cache") },
+    { "number_of_sets", N_("total number of sets (of lines that share an index) in the cache") },
+    { "physical_line_partition", N_("number of physical cache line per cache tag") },
+    { "shared_cpu_list", N_("logical cpus sharing the cache") },
+    { "shared_cpu_map" },
+    { "write_policy", NULL, OF_NONE, fmt_cpucache_write_policy },
+    { "id" },
+    ATTR_TAB_LAST
+};
+
 static sysobj_class cls_cpucache[] = {
   { SYSOBJ_CLASS_DEF
-    .tag = "cache:part", .pattern = "/sys/*/cache/index*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .s_label = N_("Cache"), .s_halp = cpucache_reference_markup_text,
-    .v_lblnum = "index", .f_format = cpucache_format_index },
-
-  { SYSOBJ_CLASS_DEF
-    .tag = "cache:size", .pattern = "/sys/*/cache/index*/size", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .s_label = N_("Cache Size"), .s_halp = cpucache_reference_markup_text,
-    .v_lblnum_child = "index", .f_format = cpucache_format_size },
-
-  { SYSOBJ_CLASS_DEF
-    .tag = "cache:part", .pattern = "/sys/*/cache/index*/type", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .s_label = N_("Cache Type"), .s_halp = cpucache_reference_markup_text,
-    .v_lblnum_child = "index", .f_format = cpucache_format_type },
-
-  { SYSOBJ_CLASS_DEF
     .tag = "cache", .pattern = "/sys/*/cpu*/cache", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .s_label = N_("CPU Cache(s)"), .s_halp = cpucache_reference_markup_text,
+    .s_label = N_("CPU cache(s)"), .s_halp = cpucache_reference_markup_text,
     .v_lblnum_child = "cpu", .f_format = cpucache_format_collection },
+  { SYSOBJ_CLASS_DEF
+    .tag = "cache:part", .pattern = "/sys/*/cache/index*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .s_label = N_("CPU cache"), .s_halp = cpucache_reference_markup_text,
+    .v_lblnum = "index", .f_format = cpucache_format_index },
+  { SYSOBJ_CLASS_DEF
+    .tag = "cache:part:attr", .pattern = "/sys/*/cache/index*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .v_lblnum_child = "index", .attributes = cache_part_items,
+    .s_halp = cpucache_reference_markup_text },
 };
 
 void class_cpucache() {

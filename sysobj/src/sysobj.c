@@ -426,11 +426,23 @@ gchar *simple_format(sysobj* obj, int fmt_opts) {
     return nice;
 }
 
+#define class_msg(fmt, ...) fprintf (stderr, "[%s] " fmt "\n", __FUNCTION__, ##__VA_ARGS__)
+
 const sysobj_class *class_add(sysobj_class *c) {
     if (c) {
         if (g_slist_find(class_list, c) ) {
-            DEBUG("Duplicate class address: 0x%llx (%s)", (long long unsigned)c, c->tag ? c->tag : "untagged");
+            class_msg("duplicate class address: 0x%llx (%s)", (long long unsigned)c, c->tag ? c->tag : "untagged");
             return NULL;
+        }
+        for(GSList *l = class_list; l; l = l->next) {
+            sysobj_class *ec = l->data;
+            if (SEQ(ec->tag, c->tag) ) {
+                class_msg("warning: duplicate tag %s for existing %p(\"%s\",%s:%d) and new %p(\"%s\",%s:%d)",
+                    ec->tag,
+                    ec, ec->pattern, ec->def_file ? ec->def_file : "?", ec->def_line,
+                    c, c->pattern, c->def_file ? c->def_file : "?", c->def_line );
+                break;
+            }
         }
         if (class_has_flag(c, OF_BLAST) )
             class_list = g_slist_append(class_list, c);

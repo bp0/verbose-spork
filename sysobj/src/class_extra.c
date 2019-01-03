@@ -22,7 +22,7 @@
 #include "format_funcs.h"
 
 static vendor_list ven_ribbon_vendors(sysobj *obj) {
-    return vendor_list_concat_va(9,
+    return vendor_list_concat_va(10,
         sysobj_vendors_from_fn("/sys/devices/virtual/dmi/id", NULL), //TODO: get via mobo
         sysobj_vendors_from_fn(":/mobo", NULL),
         sysobj_vendors_from_fn(":/cpu", NULL),
@@ -31,7 +31,8 @@ static vendor_list ven_ribbon_vendors(sysobj *obj) {
         sysobj_vendors_from_fn("/sys/bus/scsi/devices", NULL),
         sysobj_vendors_from_fn("/sys/bus/mmc/devices", NULL),
         sysobj_vendors_from_fn(":/pci", NULL),
-        sysobj_vendors_from_fn(":/usb", NULL) );
+        sysobj_vendors_from_fn(":/usb", NULL),
+        sysobj_vendors_from_fn("/sys/bus/sdio/devices", NULL) );
 }
 
 gchar *ven_ribbon_format(sysobj *obj, int fmt_opts) {

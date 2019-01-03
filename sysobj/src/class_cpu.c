@@ -27,10 +27,6 @@ const gchar cpu_reference_markup_text[] =
     BULLET REFLINK("https://www.kernel.org/doc/Documentation/ABI/stable/sysfs-devices-system-cpu") "\n"
     "\n";
 
-gboolean cpu_verify(sysobj *obj) {
-    return verify_lblnum(obj, "cpu");
-}
-
 /* export */
 gboolean cpu_verify_child(sysobj *obj) {
     return verify_lblnum_child(obj, "cpu");
@@ -59,31 +55,47 @@ gchar *cpu_format(sysobj *obj, int fmt_opts) {
     return simple_format(obj, fmt_opts);
 }
 
-double cpu_update_interval(sysobj *obj) {
-    PARAM_NOT_UNUSED(obj);
-    return 1.0;
-}
+static attr_tab cpu_list_items[] = {
+    { "kernel_max", N_("the maximum cpu index allowed by the kernel configuration") },
+    { "offline", N_("cpus offline because hotplugged off or exceed kernel_max") },
+    { "online", N_("cpus online and being scheduled") },
+    { "possible", N_("cpus allocated resources and can be brought online if present") },
+    { "present", N_("cpus identified as being present in the system") },
+    { "isolated" },
+    ATTR_TAB_LAST
+};
+
+static attr_tab cpu_items[] = {
+    { "online", N_("is online"), OF_NONE, fmt_1yes0no },
+    ATTR_TAB_LAST
+};
 
 static sysobj_class cls_cpu[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "cpu_list", .pattern = "/sys/devices/system/cpu", .flags = OF_CONST,
-    .s_suggest = ":/cpu", .s_halp = cpu_reference_markup_text,
-    .f_update_interval = cpu_update_interval },
+    .v_is_node = TRUE, .s_suggest = ":/cpu", .s_halp = cpu_reference_markup_text,
+    .s_update_interval = 1.0 },
+  { SYSOBJ_CLASS_DEF
+    .tag = "cpu_list:attr", .pattern = "/sys/devices/system/cpu/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .attributes = cpu_list_items, .v_parent_path_suffix = "/sys/devices/system/cpu",
+    .s_halp = cpu_reference_markup_text, .s_update_interval = 1.0 },
 
   { SYSOBJ_CLASS_DEF
     .tag = "cpu", .pattern = "/sys/devices/system/cpu/cpu*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .v_is_node = TRUE, .v_subsystem = "/sys/bus/cpu", .v_lblnum = "cpu",
     .s_label = N_("logical CPU"), .s_halp = cpu_reference_markup_text,
-    .v_subsystem = "/sys/bus/cpu",
-    .f_verify = cpu_verify, .f_format = cpu_format, .f_update_interval = cpu_update_interval },
+    .f_format = cpu_format, .s_update_interval = 1.0 },
 
   { SYSOBJ_CLASS_DEF
-    .tag = "cpu:isonline", .pattern = "/sys/devices/system/cpu/cpu*/online", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .s_label = N_("is online"), .s_halp = cpu_reference_markup_text,
-    .f_verify = cpu_verify_child, .f_format = fmt_1yes0no, .f_update_interval = cpu_update_interval },
+    .tag = "cpu:attr", .pattern = "/sys/devices/system/cpu/cpu*/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .v_subsystem_parent = "/sys/bus/cpu", .v_lblnum_child = "cpu",
+    .attributes = cpu_items,
+    .s_halp = cpu_reference_markup_text,
+    .s_update_interval = 1.0 },
 
   { SYSOBJ_CLASS_DEF
     .tag = "cpu:microcode_version", .pattern = "/sys/devices/system/cpu/cpu*/microcode/version", OF_GLOB_PATTERN | OF_CONST | OF_REQ_ROOT,
-    .s_label = N_("microcode version"), .s_halp = cpu_reference_markup_text },
+    .v_is_attr = TRUE, .s_label = N_("microcode version"), .s_halp = cpu_reference_markup_text },
 };
 
 void class_cpu() {

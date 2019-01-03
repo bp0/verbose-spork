@@ -40,7 +40,7 @@ static sysobj_class cls_intel_pstate[] = {
     .tag = "intel_pstate", .pattern = "/sys/devices/system/cpu/intel_pstate", .flags = OF_CONST,
     .s_halp = intel_pstate_reference_markup_text },
   { SYSOBJ_CLASS_DEF
-    .tag = "intel_pstate", .pattern = "/sys/devices/system/cpu/intel_pstate/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .tag = "intel_pstate:attr", .pattern = "/sys/devices/system/cpu/intel_pstate/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .attributes = pstate_items, .s_halp = intel_pstate_reference_markup_text },
 };
 
