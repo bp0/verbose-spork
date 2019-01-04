@@ -675,9 +675,17 @@ gchar *format_node_fmt_str(sysobj *obj, int fmt_opts, const gchar *comp_str) {
             strcpy(sep, " ");
         snprintf(cpath, 127, "%s", p);
         if (strlen(cpath)) {
-            gchar *fc = sysobj_format_from_fn(obj->path, cpath, fmt_opts | FMT_OPT_PART | FMT_OPT_OR_NULL);
-            if (fc) {
-                ret = appfs(ret, sep, "%s", fc);
+            if (SEQ(cpath, "@vendors") ) {
+                vendor_list vl = sysobj_vendors(obj);
+                gchar *vtags = vendor_list_ribbon(vl, fmt_opts);
+                if (vtags)
+                    ret = appfs(ret, sep, "%s", vtags);
+                g_free(vtags);
+                vendor_list_free(vl);
+            } else {
+                gchar *fc = sysobj_format_from_fn(obj->path, cpath, fmt_opts | FMT_OPT_PART | FMT_OPT_OR_NULL);
+                if (fc)
+                    ret = appfs(ret, sep, "%s", fc);
                 g_free(fc);
             }
         }

@@ -201,7 +201,7 @@ static attr_tab sdio_items[] = {
 static sysobj_class cls_mmc[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "mmc", .pattern = "/sys/devices/*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_HAS_VENDOR,
-    .v_subsystem = "/sys/bus/mmc", .s_node_format = "{{type}}{{name}}",
+    .v_subsystem = "/sys/bus/mmc", .s_node_format = "{{type}}{{: |@vendors}}{{name}}",
     .s_halp = mmc_reference_markup_text, .f_vendors = mmc_vendor },
   { SYSOBJ_CLASS_DEF
     .tag = "mmc:attr", .pattern = "/sys/devices/*", .flags = OF_GLOB_PATTERN | OF_CONST,
