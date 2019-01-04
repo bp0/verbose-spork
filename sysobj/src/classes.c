@@ -42,6 +42,7 @@ void gen_cpuinfo(); /* creates in :/cpu, before it exists */
 void gen_meminfo();
 void gen_procs(); /* requires :/cpu/cpuinfo */
 void gen_gpu();   /* requires gen_*_ids, gen_dt */
+void gen_storage();
 
 void generators_init() {
     gen_sysobj(); /* internals, like vsysfs root (":") */
@@ -60,6 +61,7 @@ void generators_init() {
     gen_meminfo();
     gen_procs();
     gen_gpu();
+    gen_storage();
 }
 
 void class_sysobj();
@@ -82,6 +84,7 @@ void class_clocksource();
 void class_mmc();
 void class_media();
 void class_intel_pstate();
+void class_storage();
 
 void class_uptime();
 void class_dmi_id();
@@ -124,6 +127,7 @@ void class_init() {
     class_mmc();
     class_media();
     class_intel_pstate();
+    class_storage();
 
     class_cpu();
     class_cpufreq();

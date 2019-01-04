@@ -39,7 +39,7 @@ static sysobj_class cls_scsi[] = {
     .f_format = scsi_dev_list_format, .f_vendors = scsi_all_vendors },
   { SYSOBJ_CLASS_DEF
     .tag = "scsi:dev", .pattern = "/sys/devices/*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_HAS_VENDOR,
-    .v_subsystem = "/sys/bus/scsi", .s_node_format = "{{vendor}}{{model}}", .f_vendors = scsi_dev_vendors },
+    .v_subsystem = "/sys/bus/scsi", .s_node_format = "{{@vendors!vendor}}{{model}}", .f_vendors = scsi_dev_vendors },
   { SYSOBJ_CLASS_DEF
     .tag = "scsi:dev:attr", .pattern = "/sys/devices/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .v_subsystem_parent = "/sys/bus/scsi", .attributes = scsi_items },
@@ -52,7 +52,7 @@ static sysobj_class cls_scsi[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "scsi_host", .pattern = "/sys/devices/*/scsi_host/*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_HAS_VENDOR,
     .s_vendors_from_child = "vendor",
-    .v_subsystem = "/sys/class/scsi_host", .s_node_format = "{{vendor}}{{model}}" },
+    .v_subsystem = "/sys/class/scsi_host", .s_node_format = "{{@vendors!vendor}}{{model}}" },
   { SYSOBJ_CLASS_DEF
     .tag = "scsi_host:attr", .pattern = "/sys/devices/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .v_subsystem_parent = "/sys/class/scsi_host", .attributes = scsi_items },
@@ -109,7 +109,7 @@ static gchar *scsi_vendor_format(sysobj *obj, int fmt_opts) {
         if (SEQ(val, "ATA"))
             return format_as_junk_value(val, fmt_opts);
     }
-    return simple_format(obj, fmt_opts);
+    return fmt_vendor_name_to_tag(obj, fmt_opts);
 }
 
 void class_scsi() {

@@ -83,6 +83,8 @@ add_library(sysobj STATIC
         sysobj/src/class_mmc.c
         sysobj/src/class_media.c
         sysobj/src/class_intel_pstate.c
+        sysobj/src/class_storage.c
+
 # gen only
         sysobj/src/gen_arm_ids.c
         sysobj/src/gen_sdio_ids.c
@@ -99,6 +101,7 @@ add_library(sysobj STATIC
         sysobj/src/gen_meminfo.c
         sysobj/src/gen_procs.c
         sysobj/src/gen_gpu.c
+        sysobj/src/gen_storage.c
 
         sysobj/src/arm_data.c
         sysobj/src/x86_data.c

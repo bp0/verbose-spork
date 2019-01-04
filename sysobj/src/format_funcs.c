@@ -674,15 +674,26 @@ gchar *format_node_fmt_str(sysobj *obj, int fmt_opts, const gchar *comp_str) {
         } else
             strcpy(sep, " ");
         snprintf(cpath, 127, "%s", p);
+#define SPFX(s, pfx) g_str_has_prefix(s, pfx)
         if (strlen(cpath)) {
-            if (SEQ(cpath, "@vendors") ) {
+            int special = 0;
+            if (SEQ(cpath, "@vendors")
+                || SPFX(cpath, "@vendors!") ) {
+                special = 1;
+                char *x = strchr(cpath, '!'); /* or */
                 vendor_list vl = sysobj_vendors(obj);
                 gchar *vtags = vendor_list_ribbon(vl, fmt_opts);
-                if (vtags)
-                    ret = appfs(ret, sep, "%s", vtags);
-                g_free(vtags);
                 vendor_list_free(vl);
-            } else {
+                if (vtags) {
+                    ret = appfs(ret, sep, "%s", vtags);
+                    g_free(vtags);
+                } else if (x) {
+                    /* set up to handle normal one */
+                    memmove(cpath, x+1, strlen(x+1)+1);
+                    special = 0;
+                }
+            }
+            if (!special) {
                 gchar *fc = sysobj_format_from_fn(obj->path, cpath, fmt_opts | FMT_OPT_PART | FMT_OPT_OR_NULL);
                 if (fc)
                     ret = appfs(ret, sep, "%s", fc);

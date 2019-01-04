@@ -225,6 +225,8 @@ const Vendor *vendor_match(const gchar *id_str, ...) {
     if (!c || tl == 0)
         return NULL;
 
+    g_strstrip(tmp);
+
     for (vlp = vendors; vlp; vlp = vlp->next) {
         sysobj_stats.ven_iter++;
         Vendor *v = (Vendor *)vlp->data;
@@ -349,7 +351,7 @@ vendor_list vendors_match(const gchar *id_str, ...) {
     if (!c || tl == 0)
         return NULL;
 
-    ven_msg_debug("full id_str: %s", tmp);
+    g_strstrip(tmp);
 
     for (vlp = vendors; vlp; vlp = vlp->next) {
         sysobj_stats.ven_iter++;
