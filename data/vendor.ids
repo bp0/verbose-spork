@@ -189,6 +189,8 @@ name Dell Computer
     url www.dell.com
     ansi_color 0;97;44
     match_string Dell
+# Dell PowerEdge/PowerVault controller SCSI vendor
+    match_string PE/PV
 
 name Logitech International
     name_short logitech
