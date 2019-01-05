@@ -46,7 +46,21 @@ static sysobj_class cls_scsi[] = {
 
   { SYSOBJ_CLASS_DEF
     .tag = "scsi_disk", .pattern = "/sys/devices/*/scsi_disk/*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_HAS_VENDOR,
+    .s_vendors_from_child = "device",
     .v_subsystem = "/sys/class/scsi_disk", .s_node_format = "{{device}}" },
+
+  { SYSOBJ_CLASS_DEF
+    .tag = "scsi_host", .pattern = "/sys/devices/*/scsi_host/*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_HAS_VENDOR,
+    .s_vendors_from_child = "vendor",
+    .v_subsystem = "/sys/class/scsi_host", .s_node_format = "{{vendor}}{{model}}" },
+  { SYSOBJ_CLASS_DEF
+    .tag = "scsi_host:attr", .pattern = "/sys/devices/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .v_subsystem_parent = "/sys/class/scsi_host", .attributes = scsi_items },
+
+  { SYSOBJ_CLASS_DEF
+    .tag = "scsi_generic", .pattern = "/sys/devices/*/scsi_generic/*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_HAS_VENDOR,
+    .s_vendors_from_child = "device",
+    .v_subsystem = "/sys/class/scsi_generic", .s_node_format = "{{device}}" },
 };
 
 vendor_list scsi_all_vendors(sysobj *obj) {

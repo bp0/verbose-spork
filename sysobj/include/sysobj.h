@@ -122,6 +122,8 @@ typedef struct sysobj_class {
     const gchar *s_label; /* label for "simple" classes, not translated */
     const gchar *s_halp;  /* markup text. halp for "simple" classes */
     const gchar *s_suggest; /* suggest an alternate path */
+    const gchar *s_vendors_from_child; /* vendor list from child's vendor list */
+
     double s_update_interval;
 
     /* will provide any of f_verify, f_format, f_label, f_flags

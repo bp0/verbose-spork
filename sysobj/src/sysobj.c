@@ -1341,10 +1341,13 @@ vendor_list simple_vendors(sysobj *s) {
 
 vendor_list sysobj_vendors(sysobj *s) {
     vendor_list vl = NULL;
-    if (s->cls && s->cls->f_vendors) {
-        if (sysobj_has_flag(s, OF_HAS_VENDOR) ) {
+    if (s->cls && sysobj_has_flag(s, OF_HAS_VENDOR) ) {
+        if (s->cls->s_vendors_from_child) {
+            vl = vendor_list_concat(vl, sysobj_vendors_from_fn(s->path, s->cls->s_vendors_from_child) );
+        }
+        if (s->cls->f_vendors) {
             sysobj_read(s, FALSE);
-            vl = s->cls->f_vendors(s);
+            vl = vendor_list_concat(vl, s->cls->f_vendors(s));
         }
     }
     if (!vl)
