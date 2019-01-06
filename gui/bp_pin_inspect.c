@@ -129,7 +129,11 @@ static GtkWidget *notebook_add_page(const gchar *name, const gchar *label, GtkWi
 
     if(GTK_IS_TEXT_VIEW(page_widget)) {
         GtkWidget *btn_wrap = gtk_check_button_new_with_label(_("wrap text"));
-        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn_wrap), TRUE);
+        GtkWrapMode wm = gtk_text_view_get_wrap_mode(GTK_TEXT_VIEW(page_widget));
+        if (wm == GTK_WRAP_NONE)
+            gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn_wrap), FALSE);
+        else
+            gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn_wrap), TRUE);
         g_signal_connect(btn_wrap, "toggled", G_CALLBACK(_wrap_toggled), page_widget);
         gtk_widget_show(btn_wrap);
         gtk_action_bar_pack_start(GTK_ACTION_BAR(actions), btn_wrap);
@@ -195,7 +199,7 @@ static void _create(bpPinInspect *s) {
     GtkTextBuffer *val_raw = gtk_text_buffer_new(NULL);
     GtkWidget *text_raw = gtk_text_view_new_with_buffer(val_raw);
     gtk_text_view_set_editable(GTK_TEXT_VIEW(text_raw), FALSE);
-    gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(text_raw), GTK_WRAP_WORD_CHAR);
+    gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(text_raw), GTK_WRAP_NONE);
     gtk_text_view_set_monospace(GTK_TEXT_VIEW(text_raw), TRUE);
     gtk_widget_show(text_raw);
 
@@ -243,6 +247,32 @@ static void _create(bpPinInspect *s) {
     priv->lbl_help = lbl_help;
     priv->value_notebook = value_notebook;
     priv->vendor_container = vendor_container;
+}
+
+static gchar *print_hex(const uint8_t* bytes, gsize len) {
+    gchar *ret = NULL;
+
+    if (bytes && len) {
+        ret = g_strdup_printf("%lu bytes:", len);
+        gchar digits[26] = "";
+        gchar chars[12] = "";
+        for(gsize i = 0; i < len; i++) {
+            int dl = i%8;
+            char c = bytes[i];
+            if (!isprint(c)) c = '.';
+            snprintf(digits + dl*3, 4, "%02X ", (unsigned int)bytes[i]);
+            snprintf(chars + dl*1, 4, "%c ", (unsigned int)c);
+            if (dl == 7) {
+                ret = appfs(ret, "\n", "%04x: %s %s", (unsigned int)((i/8) * 8), digits, chars);
+                strcpy(digits, "");
+                strcpy(chars, "");
+            }
+        }
+    }
+
+    if (ret)
+        return ret;
+    return g_strdup_printf("%lu bytes", len);
 }
 
 void bp_pin_inspect_do(bpPinInspect *s, const pin *p, int fmt_opts) {
@@ -378,16 +408,7 @@ void bp_pin_inspect_do(bpPinInspect *s, const pin *p, int fmt_opts) {
     if (p->obj->data.is_utf8)
         gtk_text_buffer_set_text(priv->val_raw, p->obj->data.str, -1);
     else {
-        gchar *hex = NULL;
-        gsize i = 0, l = p->obj->data.len;
-        uint8_t *byte = (uint8_t*)p->obj->data.any;
-
-        if (l)
-            hex = g_strdup_printf("%lu bytes:\n%02X", p->obj->data.len, byte[0]);
-        else
-            hex = g_strdup_printf("%lu bytes:\n", p->obj->data.len);
-        for(i = 1; i < l; i++)
-            hex = appf(hex, "%02X", byte[i]);
+        gchar *hex = print_hex(p->obj->data.uint8, p->obj->data.len);
         gtk_text_buffer_set_text(priv->val_raw, hex ? hex : "", -1);
         g_free(hex);
     }
@@ -422,3 +443,4 @@ const pin *bp_pin_inspect_get_pin(bpPinInspect *s) {
     bpPinInspectPrivate *priv = BP_PIN_INSPECT_PRIVATE(s);
     return priv->p;
 }
+
