@@ -24,7 +24,8 @@
 #include "sysobj.h"
 
 /* call a format func with a string of data instead of a sysobj
- * length = -1 for strlen(data) */
+ * length is data length, so must include the null for c-strings
+ * or set length = -1 for strlen(data) */
 gchar *format_data(gconstpointer data, int length, func_format f_fmt, int fmt_opts);
 
 /* the input unit is specified, but the formatted

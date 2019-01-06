@@ -364,7 +364,7 @@ gchar *fmt_frequencies_list_khz(sysobj *obj, int fmt_opts) {
         int fo = (oneline && i != len-1)
             ? fmt_opts | FMT_OPT_PART | FMT_OPT_NO_UNIT
             : fmt_opts | FMT_OPT_PART;
-        gchar *tmp = format_data(list[i], strlen(list[i]), fmt_khz_to_mhz, fo);
+        gchar *tmp = format_data(list[i], -1, fmt_khz_to_mhz, fo);
         util_strchomp_float(tmp);
         ret = appfs(ret, sep, "%s", tmp);
         g_free(tmp);
@@ -391,7 +391,7 @@ gchar *fmt_frequencies_list_hz(sysobj *obj, int fmt_opts) {
         int fo = (oneline && i != len-1)
             ? fmt_opts | FMT_OPT_PART | FMT_OPT_NO_UNIT
             : fmt_opts | FMT_OPT_PART;
-        gchar *tmp = format_data(list[i], strlen(list[i]), fmt_hz_to_mhz, fo);
+        gchar *tmp = format_data(list[i], -1, fmt_hz_to_mhz, fo);
         util_strchomp_float(tmp);
         ret = appfs(ret, sep, "%s", tmp);
         g_free(tmp);
