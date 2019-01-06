@@ -80,12 +80,14 @@ struct edid {
     uint32_t n_serial;
     int week;
     int year;
+
+    int check;
 };
 
 static void fill_edid(struct edid *id_out, sysobj *obj) {
     struct edid id = {};
     if (!id_out) return;
-    if (obj->data.len >= 256) {
+    if (obj->data.len >= 128) {
         uint8_t *u8 = obj->data.uint8;
         uint16_t *u16 = obj->data.uint16;
         uint32_t *u32 = obj->data.uint32;
@@ -128,6 +130,8 @@ static void fill_edid(struct edid *id_out, sysobj *obj) {
         if (!dh && dl == 0xfc) { strncpy(id.name, u8+108+5, 13); }
         if (!dh && dl == 0xff) { strncpy(id.serial, u8+108+5, 13); }
 
+        id.check = u8[127];
+
         g_strstrip(id.name);
         g_strstrip(id.serial);
     }
@@ -147,12 +151,18 @@ gchar *edid_format(sysobj *obj, int fmt_opts) {
     gchar *ret = NULL;
     if (id.ver_major) {
         if (fmt_opts & FMT_OPT_PART || !(fmt_opts & FMT_OPT_COMPLETE) ) {
-            ret = appf(ret, "%s", id.ven);
+            gchar *ven_tag = vendor_match_tag(id.ven, fmt_opts);
+            if (ven_tag)
+                ret = appf(ret, "%s", ven_tag);
+            else
+                ret = appf(ret, "%s", id.ven);
             ret = appf(ret, "%s", id.name);
+            g_free(ven_tag);
         } else if (fmt_opts & FMT_OPT_COMPLETE) {
             ret = appfs(ret, "\n", "edid_version: %d.%d", id.ver_major, id.ver_minor);
             ret = appfs(ret, "\n", "mfg: %s, model: %u, n_serial: %u, dom: week %d of %d", id.ven, id.product, id.n_serial, id.week, id.year);
             ret = appfs(ret, "\n", "name: %s, serial: %s", id.name, id.serial);
+            ret = appfs(ret, "\n", "checkbyte: %d", id.check);
         }
     }
     if (ret)
@@ -240,6 +250,22 @@ static attr_tab pci_amdgpu_items[] = {
     ATTR_TAB_LAST
 };
 
+vendor_list drm_card_vendors(sysobj *obj) {
+    vendor_list vl = sysobj_vendors_from_fn(obj->path, "device");
+    if (!vl)
+        vl = sysobj_vendors_from_fn(obj->path, "device/of_node/compatible");
+
+    /* monitors */
+    sysobj_read(obj, FALSE);
+    for(GSList *l = obj->data.childs; l; l = l->next) {
+        gchar *c = l->data;
+        if (g_str_has_prefix(c, "card") )
+            vl = vendor_list_concat(vl, sysobj_vendors_from_fn(obj->path, c) );
+    }
+
+    return vl;
+}
+
 static sysobj_class cls_gpu[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "gpu:list", .pattern = ":/gpu", .flags = OF_GLOB_PATTERN | OF_CONST | OF_HAS_VENDOR,
@@ -254,9 +280,9 @@ static sysobj_class cls_gpu[] = {
     .v_lblnum_child = "gpu", .attributes = gpu_prop_items },
 
   { SYSOBJ_CLASS_DEF
-    .tag = "drm:card", .pattern = "/sys/devices/*/drm/card*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .tag = "drm:card", .pattern = "/sys/devices/*/drm/card*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_HAS_VENDOR,
     .s_label = N_("DRM-managed graphics device"),
-    .f_verify = drm_card_verify, .f_format = drm_card_format },
+    .f_verify = drm_card_verify, .f_format = drm_card_format, .f_vendors = drm_card_vendors },
   { SYSOBJ_CLASS_DEF
     .tag = "drm:card:attr", .pattern = "/sys/devices/*/drm/card*/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .f_verify = drm_card_attr_verify, .f_format = drm_card_attr_format,
@@ -274,11 +300,15 @@ static sysobj_class cls_gpu[] = {
 };
 
 vendor_list gpu_vendors(sysobj *obj) {
-    return vendor_list_concat_va( 4,
-        sysobj_vendors_from_fn(obj->path, "pci"),
-        sysobj_vendors_from_fn(obj->path, "drm/device/of_node/compatible"),
-        sysobj_vendors_from_fn(obj->path, "device/of_node/compatible"),
-        sysobj_vendors_from_fn(obj->path, "of_node/compatible") );
+    vendor_list vl = sysobj_vendors_from_fn(obj->path, "drm");
+    /* if not drm, try other found gpu devices */
+    if (!vl) /* found pci device with video controller class */
+        vl = sysobj_vendors_from_fn(obj->path, "pci");
+    if (!vl) /* found in platform devices */
+        vl = sysobj_vendors_from_fn(obj->path, "device/of_node/compatible");
+    if (!vl) /* found in the device tree */
+        vl = sysobj_vendors_from_fn(obj->path, "of_node/compatible");
+    return vl;
 }
 
 static vendor_list gpu_all_vendors(sysobj *obj) {
@@ -376,19 +406,6 @@ static gboolean drm_conn_verify(sysobj *obj) {
         sysobj_free(pobj);
     }
     return ret;
-}
-
-static gchar *drm_conn_format(sysobj *obj, int fmt_opts) {
-    gchar *ret = NULL;
-    gchar *status = sysobj_format_from_fn(obj->path, "status", fmt_opts);
-    gchar *enabled = sysobj_format_from_fn(obj->path, "enabled", fmt_opts);
-    if (status && enabled)
-        ret = g_strdup_printf("%s; %s", enabled, status);
-    g_free(status);
-    g_free(enabled);
-    if (ret)
-        return ret;
-    return simple_format(obj, fmt_opts);
 }
 
 static gboolean drm_conn_attr_verify(sysobj *obj) {
