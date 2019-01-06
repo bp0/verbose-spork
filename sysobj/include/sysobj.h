@@ -165,8 +165,12 @@ typedef struct sysobj_data {
     union {
         void *any;
         gchar *str;
+        int8_t *int8;
+        int16_t *int16;
         int32_t *int32;
         int64_t *int64;
+        uint8_t *uint8;
+        uint16_t *uint16;
         uint32_t *uint32;
         uint64_t *uint64;
     };

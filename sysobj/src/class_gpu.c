@@ -39,11 +39,10 @@ static gboolean drm_card_attr_verify(sysobj *obj);
 static gchar *drm_card_attr_format(sysobj *obj, int fmt_opts);
 
 static gboolean drm_conn_verify(sysobj *obj);
-static gchar *drm_conn_format(sysobj *obj, int fmt_opts);
 
 static gboolean drm_conn_attr_verify(sysobj *obj);
 
-attr_tab gpu_prop_items[] = {
+static attr_tab gpu_prop_items[] = {
     { "name", NULL, OF_NONE, NULL, UPDATE_INTERVAL_NEVER },
     { "driver_kmod", N_("driver kernel module") },
     { "core_khz_cur", N_("current clock frequency"), OF_NONE, fmt_khz_to_mhz, 0.5 },
@@ -56,7 +55,7 @@ attr_tab gpu_prop_items[] = {
     ATTR_TAB_LAST
 };
 
-attr_tab drm_items[] = {
+static attr_tab drm_items[] = {
     //TODO: labels
     { "gt_cur_freq_mhz",   NULL, OF_NONE, fmt_mhz },
     { "gt_min_freq_mhz",   NULL, OF_NONE, fmt_mhz },
@@ -69,11 +68,103 @@ attr_tab drm_items[] = {
     ATTR_TAB_LAST
 };
 
-attr_tab drm_conn_items[] = {
+/* just enough edid decoding to get the vendor and name */
+struct edid {
+    int ver_major;
+    int ver_minor;
+
+    gchar ven[4];
+    gchar name[14];
+    gchar serial[14];
+    uint16_t product;
+    uint32_t n_serial;
+    int week;
+    int year;
+};
+
+static void fill_edid(struct edid *id_out, sysobj *obj) {
+    struct edid id = {};
+    if (!id_out) return;
+    if (obj->data.len >= 256) {
+        uint8_t *u8 = obj->data.uint8;
+        uint16_t *u16 = obj->data.uint16;
+        uint32_t *u32 = obj->data.uint32;
+
+        uint16_t vid = be16toh(u16[4]); /* bytes 8-9 */
+        id.ven[2] = 64 + (vid & 0x1f);
+        id.ven[1] = 64 + ((vid >> 5) & 0x1f);
+        id.ven[0] = 64 + ((vid >> 10) & 0x1f);
+
+        id.product = le16toh(u16[5]); /* bytes 10-11 */
+        id.n_serial = le32toh(u32[3]);/* bytes 12-15 */
+        id.week = u8[16];             /* byte 16 */
+        id.year = u8[17] + 1990;      /* byte 17 */
+        id.ver_major = u8[18];        /* byte 18 */
+        id.ver_minor = u8[19];        /* byte 19 */
+
+        uint16_t dh, dl;
+
+        /* try descriptor at byte 54 */
+        dh = be16toh(u16[54/2]);
+        dl = be16toh(u16[54/2+1]);
+        if (!dh && dl == 0xfc) { strncpy(id.name, u8+54+5, 13); }
+        if (!dh && dl == 0xff) { strncpy(id.serial, u8+54+5, 13); }
+
+        /* try descriptor at byte 72 */
+        dh = be16toh(u16[72/2]);
+        dl = be16toh(u16[72/2+1]);
+        if (!dh && dl == 0xfc) { strncpy(id.name, u8+72+5, 13); }
+        if (!dh && dl == 0xff) { strncpy(id.serial, u8+72+5, 13); }
+
+        /* try descriptor at byte 90 */
+        dh = be16toh(u16[90/2]);
+        dl = be16toh(u16[90/2+1]);
+        if (!dh && dl == 0xfc) { strncpy(id.name, u8+90+5, 13); }
+        if (!dh && dl == 0xff) { strncpy(id.serial, u8+90+5, 13); }
+
+        /* try descriptor at byte 108 */
+        dh = be16toh(u16[108/2]);
+        dl = be16toh(u16[108/2+1]);
+        if (!dh && dl == 0xfc) { strncpy(id.name, u8+108+5, 13); }
+        if (!dh && dl == 0xff) { strncpy(id.serial, u8+108+5, 13); }
+
+        g_strstrip(id.name);
+        g_strstrip(id.serial);
+    }
+    memcpy(id_out, &id, sizeof(struct edid));
+}
+
+vendor_list edid_vendor(sysobj *obj) {
+    struct edid id = {};
+    fill_edid(&id, obj);
+    const Vendor *v = vendor_match(id.ven, NULL);
+    return vendor_list_append(NULL, v);
+}
+
+gchar *edid_format(sysobj *obj, int fmt_opts) {
+    struct edid id = {};
+    fill_edid(&id, obj);
+    gchar *ret = NULL;
+    if (id.ver_major) {
+        if (fmt_opts & FMT_OPT_PART || !(fmt_opts & FMT_OPT_COMPLETE) ) {
+            ret = appf(ret, "%s", id.ven);
+            ret = appf(ret, "%s", id.name);
+        } else if (fmt_opts & FMT_OPT_COMPLETE) {
+            ret = appfs(ret, "\n", "edid_version: %d.%d", id.ver_major, id.ver_minor);
+            ret = appfs(ret, "\n", "mfg: %s, model: %u, n_serial: %u, dom: week %d of %d", id.ven, id.product, id.n_serial, id.week, id.year);
+            ret = appfs(ret, "\n", "name: %s, serial: %s", id.name, id.serial);
+        }
+    }
+    if (ret)
+        return ret;
+    return simple_format(obj, fmt_opts);
+}
+
+static attr_tab drm_conn_items[] = {
     { "status" },
     { "enabled" },
     { "modes" },
-    { "edid" },
+    { "edid", N_("Extended Display Identification Data"), OF_HAS_VENDOR, edid_format },
     { "dpms" },
     ATTR_TAB_LAST
 };
@@ -171,12 +262,12 @@ static sysobj_class cls_gpu[] = {
     .f_verify = drm_card_attr_verify, .f_format = drm_card_attr_format,
     .attributes = drm_items },
   { SYSOBJ_CLASS_DEF
-    .tag = "drm:link", .pattern = "/sys/devices/*/drm/card*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .s_label = N_("DRM connection"),
-    .f_verify = drm_conn_verify, .f_format = drm_conn_format },
+    .tag = "drm:link", .pattern = "/sys/devices/*/drm/card*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_HAS_VENDOR,
+    .s_label = N_("DRM connection"), .s_node_format = "{{enabled}}{{; |status}}{{: |edid}}",
+    .s_vendors_from_child = "edid", .f_verify = drm_conn_verify },
   { SYSOBJ_CLASS_DEF
     .tag = "drm:link:attr", .pattern = "/sys/devices/*/drm/card*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .f_verify = drm_conn_attr_verify, .attributes = drm_conn_items },
+    .f_verify = drm_conn_attr_verify, .attributes = drm_conn_items, .f_vendors = edid_vendor },
   { SYSOBJ_CLASS_DEF
     .tag = "pci:amdgpu", .pattern = "/sys/devices*/????:??:??.?/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .attributes = pci_amdgpu_items },
