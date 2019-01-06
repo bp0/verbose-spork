@@ -252,11 +252,15 @@ static void _create(bpPinInspect *s) {
 static gchar *print_hex(const uint8_t* bytes, gsize len) {
     gchar *ret = NULL;
 
+    const char *fmt = ngettext("%lu byte", "%lu bytes", (unsigned long)len);
+    gchar *szstr = g_strdup_printf(fmt, (unsigned long)len);
+
     if (bytes && len) {
-        ret = g_strdup_printf("%lu bytes:", len);
+        ret = g_strdup_printf("%s:", szstr);
         gchar digits[26] = "";
         gchar chars[12] = "";
-        for(gsize i = 0; i < len; i++) {
+        gsize i = 0;
+        for(; i < len; i++) {
             int dl = i%8;
             char c = bytes[i];
             if (!isprint(c)) c = '.';
@@ -268,11 +272,19 @@ static gchar *print_hex(const uint8_t* bytes, gsize len) {
                 strcpy(chars, "");
             }
         }
+        for(; i%8; i++) {
+            int dl = i%8;
+            snprintf(digits + dl*3, 4, "   ");
+            snprintf(chars + dl*1, 4, "  ");
+            if (dl == 7)
+                ret = appfs(ret, "\n", "%04x: %s %s", (unsigned int)(((i-1)/8) * 8), digits, chars);
+        }
     }
 
-    if (ret)
-        return ret;
-    return g_strdup_printf("%lu bytes", len);
+    if (!ret)
+        return szstr;
+    g_free(szstr);
+    return ret;
 }
 
 void bp_pin_inspect_do(bpPinInspect *s, const pin *p, int fmt_opts) {
