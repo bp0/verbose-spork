@@ -277,6 +277,8 @@ name Hewlett-Packard
     url www.hp.com
     ansi_color 0;97;46
     match_string Hewlett-Packard
+# EDID vendor code: HWP
+    match_string_case HWP
     match_string_case HP
 
 name TEAC Corporation
@@ -461,6 +463,12 @@ name ADATA Technology
     name_short ADATA
     ansi_color 0;34;47
     match_string_case ADATA
+
+name Victor Company of Japan
+    name_short JVC
+    url www.victor.co.jp
+    ansi_color 0;91;107
+    match_string_case JVC
 
 #
 # BIOS manufacturers
