@@ -81,6 +81,9 @@ struct edid {
     int week;
     int year;
 
+    int horiz_cm;
+    int vert_cm;
+
     int check;
 };
 
@@ -103,6 +106,9 @@ static void fill_edid(struct edid *id_out, sysobj *obj) {
         id.year = u8[17] + 1990;      /* byte 17 */
         id.ver_major = u8[18];        /* byte 18 */
         id.ver_minor = u8[19];        /* byte 19 */
+
+        id.horiz_cm = u8[21];
+        id.vert_cm = u8[22];
 
         uint16_t dh, dl;
 
@@ -156,12 +162,16 @@ gchar *edid_format(sysobj *obj, int fmt_opts) {
                 ret = appf(ret, "%s", ven_tag);
             else
                 ret = appf(ret, "%s", id.ven);
-            ret = appf(ret, "%s", id.name);
             g_free(ven_tag);
+
+            ret = appf(ret, "%s", id.name);
+
         } else if (fmt_opts & FMT_OPT_COMPLETE) {
             ret = appfs(ret, "\n", "edid_version: %d.%d", id.ver_major, id.ver_minor);
             ret = appfs(ret, "\n", "mfg: %s, model: %u, n_serial: %u, dom: week %d of %d", id.ven, id.product, id.n_serial, id.week, id.year);
             ret = appfs(ret, "\n", "name: %s, serial: %s", id.name, id.serial);
+            if (id.horiz_cm && id.vert_cm)
+                ret = appfs(ret, "\n", "size: %d cm × %d cm", id.horiz_cm, id.vert_cm);
             ret = appfs(ret, "\n", "checkbyte: %d", id.check);
         }
     }
