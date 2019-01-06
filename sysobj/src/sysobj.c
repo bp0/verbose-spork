@@ -431,7 +431,7 @@ gchar *simple_format(sysobj* obj, int fmt_opts) {
 const sysobj_class *class_add(sysobj_class *c) {
     if (c) {
         if (g_slist_find(class_list, c) ) {
-            class_msg("duplicate class address: 0x%llx (%s)", (long long unsigned)c, c->tag ? c->tag : "untagged");
+            class_msg("duplicate class address: %p (%s)", c, c->tag ? c->tag : "untagged");
             return NULL;
         }
         for(GSList *l = class_list; l; l = l->next) {
