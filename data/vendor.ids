@@ -21,6 +21,7 @@ name Lenovo Group
     name_short Lenovo
     url www.lenovo.com
     url_support support.lenovo.com
+    ansi_color 0;97;41
     match_string lenovo
 
 name ASUSTeK Computer
@@ -57,6 +58,7 @@ name nVidia Corporation
 name G.Skill International Enterprise
     name_short G.Skill
     url www.gskill.com
+    ansi_color 0;31;107
     match_string G.Skill
     match_string G-Skill
 
@@ -173,9 +175,10 @@ name Broadcom Corporation
     ansi_color 0;30;41
     match_string Broadcom
 
-name Apple Inc
+name Apple Computer
     name_short Apple
     url www.apple.com
+    ansi_color 0;97;100
     match_string Apple
 
 name International Business Machines Corporation
@@ -293,8 +296,9 @@ name Microsoft
     match_string Microsoft
 
 name Memorex Products
+    name_short Memorex
     url www.memorex.com
-    match_string  Memorex
+    match_string Memorex
 
 name eMPIA Technology
     url www.empiatech.com.tw
@@ -302,6 +306,7 @@ name eMPIA Technology
 
 name Canon
     url www.canon.com
+    ansi_color 0;31;107
     match_string Canon
 
 name A4tech
@@ -325,7 +330,9 @@ name BenQ
     match_string BENQ
 
 name Acer
+    name_short acer
     url www.acer.com
+    ansi_color 0;32;107
     match_string Acer
 
 name Quantum
@@ -375,8 +382,10 @@ name Toshiba Samsung Storage Technology
     url www.tsst.co.kr
     match_string_case TSST
 
-name SEAGATE
+name Seagate Technology
+    name_short SEAGATE
     url www.seagate.com
+    ansi_color 0;92;100
     match_string Seagate
 #    match_string_case ST
 
@@ -433,6 +442,7 @@ name ASMedia Technology
 name Sapphire Technology
     name_short SAPPHIRE
     url www.sapphiretech.com
+    ansi_color 0;30;107
     match_string sapphire tech
 
 name Synopsys
@@ -591,18 +601,22 @@ name Transmeta Corporation
     match_string GenuineTMx86
 
 name National Semiconductor
+    name_short NSC
     match_string Geode by NSC
 
 name NexGen
     match_string NexGenDriven
 
 name Rise Technology
+    name_short Rise
     match_string RiseRiseRise
 
 name Silicon Integrated Systems
+    name_short SIS
     match_string SiS SiS SiS
 
 name United Microelectronics Corporation
+    name_short UMC
     match_string UMC UMC UMC
 
 name DMP Electronics
