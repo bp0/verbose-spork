@@ -470,6 +470,27 @@ name Victor Company of Japan
     ansi_color 0;91;107
     match_string_case JVC
 
+name ASRock
+    url www.asrock.com
+    ansi_color 0;32;107
+    match_string ASRock
+
+name Biostar Microtech International
+    name_short BIOSTAR
+    url www.biostar.tw
+    ansi_color 0;31;40
+    match_string Biostar
+
+name EVGA
+    url www.evga.com
+    ansi_color 0;34;107
+    match_string EVGA
+
+name Elitegroup Computer Systems
+    name_short ECS
+    ansi_color 0;36;41
+    match_string_case ECS
+
 #
 # BIOS manufacturers
 #
