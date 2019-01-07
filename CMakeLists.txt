@@ -58,6 +58,7 @@ add_library(sysobj STATIC
         sysobj/src/class_usb.c
 
 # class only
+        sysobj/src/class_sysobj.c
         sysobj/src/class_lookup.c
         sysobj/src/class_dt.c
         sysobj/src/class_sysfs.c

@@ -851,7 +851,6 @@ static gchar *dumb_string_copy(gchar *src, gpointer *e) {
 
 GSList *sysobj_children_ex(sysobj *s, GSList *filters, gboolean sort) {
     GSList *ret = NULL;
-
     if (s) {
         sysobj_read(s, FALSE);
         ret = g_slist_copy_deep(s->data.childs, (GCopyFunc)dumb_string_copy, NULL);

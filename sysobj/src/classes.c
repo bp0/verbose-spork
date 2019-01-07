@@ -62,6 +62,7 @@ void generators_init() {
     gen_gpu();
 }
 
+void class_sysobj();
 void class_lookup();
 void class_power();
 void class_os_release();
@@ -98,142 +99,9 @@ void class_any_utf8();
 void class_any_bus();
 void class_extra();
 
-gboolean class_verify(sysobj *obj) {
-    gboolean ret = FALSE;
-    gchar *pp = sysobj_parent_path(obj);
-    if (SEQ(pp, ":sysobj/classes") )
-        ret = TRUE;
-    g_free(pp);
-    return ret;
-}
-
-gchar *class_format(sysobj *obj, int fmt_opts) {
-    gchar *file = auto_free(sysobj_raw_from_fn(obj->path, ".def_file") );
-    gchar *line = auto_free(sysobj_raw_from_fn(obj->path, ".def_line") );
-    if (file && line) {
-        gchar *ret = g_strdup_printf("%s:%s", file, line);
-        return ret;
-    }
-    return simple_format(obj, fmt_opts);
-}
-
-gchar *class_flags_format(sysobj *obj, int fmt_opts) {
-    gchar *flags_list = NULL;
-    uint32_t flags = strtol(obj->data.str, NULL, 16);
-    if (flags & OF_CONST)
-        flags_list = appfs(flags_list, " | ", "%s", "OF_CONST");
-    if (flags & OF_BLAST)
-        flags_list = appfs(flags_list, " | ", "%s", "OF_BLAST");
-    if (flags & OF_GLOB_PATTERN)
-        flags_list = appfs(flags_list, " | ", "%s", "OF_GLOB_PATTERN");
-
-    if (flags & OF_REQ_ROOT)
-        flags_list = appfs(flags_list, " | ", "%s", "OF_REQ_ROOT");
-    if (flags & OF_HAS_VENDOR)
-        flags_list = appfs(flags_list, " | ", "%s", "OF_HAS_VENDOR");
-
-    if (flags_list) {
-        gchar *ret = g_strdup_printf("[%s] %s", obj->data.str, flags_list);
-        g_free(flags_list);
-        return ret;
-    }
-    return simple_format(obj, fmt_opts);
-}
-
-static attr_tab sysobj_items[] = {
-    { "root", N_("the alternate filesystem root, if any") },
-    { "elapsed", N_("seconds since sysobj_init()"), OF_NONE, fmt_seconds_to_span, 0.2 },
-    { "class_count", N_("number of sysobj classes defined") },
-    { "classify_none", N_("sysobj_classify() found none") },
-    { "class_iter", N_("steps through the class list") },
-    { "classify_pattern_cmp" },
-    { "virt_count", N_("number of objects in the sysobj virtual tree") },
-    { "vo_tree_count" },
-    { "vo_list_count" },
-    { "virt_iter", N_("steps through the dynamic virtual object list") },
-    { "virt_rm" },
-    { "virt_add" },
-    { "virt_replace" },
-    { "virt_fget" },
-    { "virt_fget_bytes", NULL, OF_NONE, fmt_bytes_to_higher },
-    { "virt_fset" },
-    { "virt_fset_bytes", NULL, OF_NONE, fmt_bytes_to_higher },
-    { "free_expected", N_("seconds until next free_auto_free()"), OF_NONE, fmt_seconds, 0.2 },
-    { "freed_count", N_("memory objects freed via auto_free()") },
-    { "free_queue", N_("memory objects waiting to be freed via auto_free()") },
-    { "free_delay", N_("minimum time until free() from auto_free()"), OF_NONE, fmt_seconds, UPDATE_INTERVAL_NEVER },
-    { "sysobj_new", N_("sysobj created with sysobj_new()") },
-    { "sysobj_new_fast", N_("sysobj created without sysobj_classify()") },
-    { "sysobj_clean", N_("sysobj cleared") },
-    { "sysobj_free", N_("sysobj freed") },
-    { "gg_file_total_wait", N_("time spent waiting for read() in gg_file_get_contents_non_blocking()"), OF_NONE, fmt_microseconds_to_milliseconds },
-    { "sysobj_read_first" },
-    { "sysobj_read_force" },
-    { "sysobj_read_expired" },
-    { "sysobj_read_not_expired" },
-    { "sysobj_read_wo" },
-    { "sysobj_read_bytes", NULL, OF_NONE, fmt_bytes_to_higher },
-    { "ven_iter", N_("steps through the vendors list") },
-    { "filter_iter" },
-    { "filter_pattern_cmp" },
-    ATTR_TAB_LAST
-};
-
-
-static gboolean verify_ansi_color(sysobj *obj) {
-    sysobj_read(obj, FALSE);
-    gchar *sf = safe_ansi_color(obj->data.str, FALSE);
-    if (sf) {
-        g_free(sf);
-        return TRUE;
-    }
-    return FALSE;
-}
-
-static gchar *format_ansi_color(sysobj *obj, int fmt_opts) {
-    return format_with_ansi_color(obj->data.str, obj->data.str, fmt_opts);
-}
-
-static vendor_list vsfs_vendors(sysobj *obj) {
-    return sysobj_vendors_from_fn(":/extra/vendor_ribbon", NULL);
-}
-
-static sysobj_class cls_internal[] = {
-  { SYSOBJ_CLASS_DEF
-    .tag = "vsfs", .pattern = ":", .flags = OF_CONST | OF_HAS_VENDOR,
-    .s_label = N_("Virtual sysfs root"), .s_update_interval = 60.0,
-    .f_vendors = vsfs_vendors },
-  { SYSOBJ_CLASS_DEF
-    .tag = "extern", .pattern = ":/extern", .flags = OF_CONST,
-    .s_label = N_("items that may depend on external utilities") },
-  { SYSOBJ_CLASS_DEF
-    .tag = "lookup", .pattern = ":/lookup", .flags = OF_CONST,
-    .s_label = N_("lookup cache") },
-  { SYSOBJ_CLASS_DEF
-    .tag = "sysobj:stat", .pattern = ":sysobj/*", .flags = OF_CONST | OF_GLOB_PATTERN,
-    .attributes = sysobj_items, .s_update_interval = 2.0 },
-  { SYSOBJ_CLASS_DEF
-    .tag = "sysobj:class", .pattern = ":sysobj/classes/*", .flags = OF_CONST | OF_GLOB_PATTERN,
-    .f_verify = class_verify, .f_format = class_format },
-  { SYSOBJ_CLASS_DEF
-    .tag = "sysobj:class:flags", .pattern = ":sysobj/classes/*/.flags", .flags = OF_CONST | OF_GLOB_PATTERN,
-    .f_format = class_flags_format },
-  { SYSOBJ_CLASS_DEF
-    .tag = "sysobj:class:hits", .pattern = ":sysobj/classes/*/hits", .flags = OF_CONST | OF_GLOB_PATTERN,
-    .s_update_interval = 0.5 },
-  { SYSOBJ_CLASS_DEF
-    .tag = "ansi_color", .pattern = "*/ansi_color", .flags = OF_CONST | OF_GLOB_PATTERN,
-    .f_verify = verify_ansi_color, .f_format = format_ansi_color },
-};
-
-void class_internal() {
-    for (int i = 0; i < (int)G_N_ELEMENTS(cls_internal); i++)
-        class_add(&cls_internal[i]);
-}
-
 void class_init() {
     generators_init();
-    class_internal();
+    class_sysobj();
     class_lookup();
 
     class_power();

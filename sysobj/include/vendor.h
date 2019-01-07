@@ -32,6 +32,7 @@ typedef struct {
   char *url;
   char *url_support;
   char *ansi_color;
+  unsigned long file_line;
 } Vendor;
 
 void vendor_init(void);

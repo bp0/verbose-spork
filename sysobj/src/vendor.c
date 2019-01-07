@@ -30,9 +30,11 @@
 #include "sysobj.h"
 #include "vendor.h"
 
-#define ven_msg(...) /* fprintf (stderr, __VA_ARGS__) */
+#define ven_msg(msg, ...)  fprintf (stderr, "[%s] " msg "\n", __FUNCTION__, ##__VA_ARGS__) /**/
+#define ven_msg_debug(msg, ...)  /* fprintf (stderr, "[%s] " msg "\n", __FUNCTION__, ##__VA_ARGS__) */
 
 static GSList *vendors = NULL;
+const GSList *get_vendors_list() { return vendors; }
 
 /* sort the vendor list by length of match_string,
  * LONGEST first */
@@ -49,7 +51,7 @@ gint vendor_sort (gconstpointer a, gconstpointer b) {
 static int read_from_vendor_ids(const char *path) {
 #define VEN_BUFF_SIZE 128
 #define VEN_FFWD() while(isspace((unsigned char)*p)) p++;
-#define VEN_CHK(TOK) (strncmp(p, TOK, tl = strlen(TOK)) == 0)
+#define VEN_CHK(TOK) (strncmp(p, TOK, tl = strlen(TOK)) == 0 && (ok = 1))
     char buff[VEN_BUFF_SIZE] = "";
     char name[VEN_BUFF_SIZE] = "";
     char name_short[VEN_BUFF_SIZE] = "";
@@ -60,15 +62,27 @@ static int read_from_vendor_ids(const char *path) {
     FILE *fd;
     char *p, *b;
     int tl;
+    int line = -1;
+    int ok = 0;
 
-    ven_msg("using vendor.ids format loader for %s", path);
+    ven_msg_debug("using vendor.ids format loader for %s", path);
 
     fd = fopen(path, "r");
     if (!fd) return 0;
 
     while (fgets(buff, VEN_BUFF_SIZE, fd)) {
+        ok = 0;
+        line++;
+
         b = strchr(buff, '\n');
-        if (b) *b = 0;
+        if (b)
+            *b = 0;
+        else
+            ven_msg("%s:%d: line longer than VEN_BUFF_SIZE (%lu)", path, line, (unsigned long)VEN_BUFF_SIZE);
+
+        b = strchr(buff, '#');
+        if (b) *b = 0; /* line ends at comment */
+
         p = buff;
         VEN_FFWD();
         if (VEN_CHK("name ")) {
@@ -91,6 +105,7 @@ static int read_from_vendor_ids(const char *path) {
 
         if (VEN_CHK("match_string ")) {
             Vendor *v = g_new0(Vendor, 1);
+            v->file_line = line;
             v->match_string = g_strdup(p+tl);
             v->match_case = 0;
             v->name = g_strdup(name);
@@ -104,6 +119,7 @@ static int read_from_vendor_ids(const char *path) {
 
         if (VEN_CHK("match_string_case ")) {
             Vendor *v = g_new0(Vendor, 1);
+            v->file_line = line;
             v->match_string = g_strdup(p+tl);
             v->match_case = 1;
             v->name = g_strdup(name);
@@ -114,11 +130,15 @@ static int read_from_vendor_ids(const char *path) {
             vendors = g_slist_prepend(vendors, v);
             count++;
         }
+
+        g_strstrip(buff);
+        if (!ok && *buff != 0)
+            ven_msg("unrecognised item at %s:%d, %s", path, line, p);
     }
 
     fclose(fd);
 
-    ven_msg("... found %d match strings", count);
+    ven_msg_debug("... found %d match strings", count);
 
     return count;
 }
@@ -127,7 +147,7 @@ void vendor_init(void) {
     /* already initialized */
     if (vendors) return;
 
-    ven_msg("initializing vendor list");
+    ven_msg_debug("initializing vendor list");
 
     gchar *path = sysobj_find_data_file("vendor.ids");
     int fail = 1;
@@ -138,7 +158,7 @@ void vendor_init(void) {
     g_free(path);
 
     if (fail)
-        ven_msg("vendor data not found");
+        ven_msg_debug("vendor data not found");
 
     /* sort the vendor list by length of match string so that short strings are
      * less likely to incorrectly match.
@@ -147,7 +167,7 @@ void vendor_init(void) {
 }
 
 void vendor_cleanup() {
-    ven_msg("cleanup vendor list");
+    ven_msg_debug("cleanup vendor list");
     g_slist_free_full(vendors, (GDestroyNotify)vendor_free);
 }
 
@@ -192,7 +212,7 @@ const Vendor *vendor_match(const gchar *id_str, ...) {
     if (!c || tl == 0)
         return NULL;
 
-    ven_msg("full id_str: %s", tmp);
+    ven_msg_debug("full id_str: %s", tmp);
 
     for (vlp = vendors; vlp; vlp = vlp->next) {
         sysobj_stats.ven_iter++;
@@ -210,9 +230,9 @@ const Vendor *vendor_match(const gchar *id_str, ...) {
     }
 
     if (ret)
-        ven_msg("ret: match_string: %s -- case: %s -- name: %s", ret->match_string, (ret->match_case ? "yes" : "no"), ret->name);
+        ven_msg_debug("ret: match_string: %s -- case: %s -- name: %s", ret->match_string, (ret->match_case ? "yes" : "no"), ret->name);
     else
-        ven_msg("ret: not found");
+        ven_msg_debug("ret: not found");
 
     g_free(tmp);
     return ret;
