@@ -22,10 +22,6 @@
 #include "format_funcs.h"
 
 static gchar *meminfo_format(sysobj *obj, int fmt_opts);
-gboolean meminfo_verify(sysobj *obj) {
-    /* attr_tab not complete, so .f_verify is needed to let everyone in */
-    return TRUE;
-}
 
 attr_tab mem_items[] = {
     { "MemTotal", N_("total memory available"), OF_NONE, fmt_KiB_to_higher },
@@ -41,7 +37,8 @@ static sysobj_class cls_meminfo[] = {
     .f_format = meminfo_format, .s_label = N_("Memory information from /proc/meminfo") },
   { SYSOBJ_CLASS_DEF
     .tag = "meminfo:stat", .pattern = ":/meminfo/*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .attributes = mem_items, .f_verify = meminfo_verify,
+    /* attr_tab not complete, so .f_verify is needed to let everyone in */
+    .attributes = mem_items, .f_verify = verify_true,
     .f_format = meminfo_format, .s_update_interval = 1.0 },
 };
 
