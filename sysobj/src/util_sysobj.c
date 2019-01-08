@@ -257,17 +257,20 @@ int util_maybe_num(gchar *str) {
     return r;
 }
 
-gchar *util_safe_name(const gchar *name) {
+gchar *util_safe_name(const gchar *name, gboolean lower_case) {
     if (!name) return NULL;
     const gchar *p = name;
     gchar *buff = g_new0(gchar, strlen(name) + 1);
     gchar *t = buff;
     while(*p) {
-        *t = g_ascii_isalnum(*p) ? *p : '_';
+        gboolean ok = g_ascii_isalnum(*p);
+        if (*p == '.' || *p == '-') ok = TRUE;
+        if (*p == '/') ok = FALSE;
+        *t = ok ? *p : '_';
         t++;
         p = g_utf8_next_char(p);
     }
-    gchar *ret = g_ascii_strdown(buff, -1);
+    gchar *ret = lower_case ? g_ascii_strdown(buff, -1) : g_strdup(buff);
     g_free(buff);
     return ret;
 }

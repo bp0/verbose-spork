@@ -186,11 +186,12 @@ void sysobj_virt_from_lines(const gchar *base, const gchar *data_in, gboolean sa
         if (c) {
             *c = 0;
             g_strchomp(lines[i]);
-            gchar *key = (safe_names) ? util_safe_name(lines[i]) : g_strdup(lines[i]);
+            gchar *key = (safe_names) ? util_safe_name(lines[i], TRUE) : g_strdup(lines[i]);
             gchar *value = g_strdup(g_strstrip(c + 1));
             sysobj_virt *vo = sysobj_virt_new();
             vo->path = util_build_fn(base, key);
             vo->str = value;
+            vo->type = VSO_TYPE_STRING;
             sysobj_virt_add(vo);
             g_free(key);
         }

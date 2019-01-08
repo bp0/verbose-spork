@@ -164,12 +164,9 @@ void make_vendors_lookup() {
     const GSList *vl = get_vendors_list();
     for (const GSList *l = vl; l; l = l->next) {
         const Vendor *v = l->data;
-        gchar *c = NULL;
-        gchar sms[256] = "";
         gchar lnb[128] = "";
-        snprintf(sms, 255, "%s", v->match_string);
-        while(c = strchr(sms, '/')) { *c = '_'; }
-        gchar *mspath = util_build_fn(vlpath, sms);
+        gchar *safe_ms = util_safe_name(v->match_string, FALSE);
+        gchar *mspath = util_build_fn(vlpath, safe_ms);
         sysobj_virt_add_simple(mspath, NULL, "*", VSO_TYPE_DIR);
         sysobj_virt_add_simple(mspath, "name", v->name, VSO_TYPE_STRING);
         sysobj_virt_add_simple(mspath, "name_short", v->name_short, VSO_TYPE_STRING);
@@ -181,6 +178,7 @@ void make_vendors_lookup() {
         sprintf(lnb, "%lu", v->file_line);
         sysobj_virt_add_simple(mspath, "file_line", lnb, VSO_TYPE_STRING);
         g_free(mspath);
+        g_free(safe_ms);
     }
 }
 
