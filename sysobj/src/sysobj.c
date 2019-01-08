@@ -71,9 +71,27 @@ static sysobj_filter path_filters[] = {
     { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc/cpuinfo", NULL },
     { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc/crypto", NULL },
     { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc/modules", NULL },
+    { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc/dma", NULL },
+    { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc/ioports", NULL },
+    { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc/iomem", NULL },
 
     { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc/driver", NULL },
     { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc/driver/*", NULL },
+
+    { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc/net", NULL },
+    { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc/net/*", NULL },
+    { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc/pmu", NULL },
+    { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc/pmu/*", NULL },
+    { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc/acpi", NULL },
+    { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc/acpi/*", NULL },
+    { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc/scsi", NULL },
+    { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc/scsi/*", NULL },
+    { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc/ide", NULL },
+    { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc/ide/*", NULL },
+    { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc/omnibook", NULL },
+    { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc/omnibook/*", NULL },
+    { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc/xen", NULL },
+    { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc/xen/*", NULL },
 
     /* files related to os version detection (:/os) */
     { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/etc/*-release", NULL },
@@ -1200,6 +1218,19 @@ void sysobj_init(const gchar *alt_root) {
     while(path_filters[i].type != SO_FILTER_NONE) {
         sysobj_global_filters = g_slist_append(sysobj_global_filters, &path_filters[i]);
         i++;
+    }
+
+    if (!alt_root) {
+        gchar *self_net = util_canonicalize_path("/proc/net");
+        if (self_net) {
+            gchar *self_net_kids = g_strdup_printf("%s/*", self_net);
+            sysobj_global_filters = g_slist_append(sysobj_global_filters,
+                sysobj_filter_new(SO_FILTER_INCLUDE, self_net) );
+            sysobj_global_filters = g_slist_append(sysobj_global_filters,
+                sysobj_filter_new(SO_FILTER_INCLUDE, self_net_kids) );
+            g_free(self_net_kids);
+        }
+        g_free(self_net);
     }
 
     sysobj_global_timer = g_timer_new();

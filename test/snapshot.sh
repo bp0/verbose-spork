@@ -21,9 +21,22 @@ zip -y -r "SS_$ZNAME.zip" \
 	/proc/crypto \
 	/proc/modules \
 	/proc/driver \
+	/proc/pmu \
+	/proc/acpi \
+	/proc/scsi \
+	/proc/xen \
+	/proc/ide \
+	/proc/omnibook \
+	/proc/ioports \
+	/proc/iomem \
+	/proc/dma \
 	/usr/lib/os-release \
 	/etc/issue \
 	/etc/*-release \
 	/etc/*-version \
 	/etc/*_version \
     --exclude "/sys/kernel/security/apparmor/*"
+# /proc/net is a symlink into /proc/self, itself a symlink
+# into /proc/{PID of zip}, which is useless for snapshot, so
+# just store the files instead of the link
+zip -r "SS_$ZNAME.zip" /proc/net/*
