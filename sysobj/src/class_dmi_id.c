@@ -28,25 +28,25 @@ gchar *dmi_id_format_vendor(sysobj *obj, int fmt_opts);
 guint dmi_id_flags(sysobj *obj, const sysobj_class *cls);
 
 static attr_tab dmi_id_items[] = {
-    { "bios_vendor",       N_("BIOS Vendor"), OF_HAS_VENDOR, dmi_id_format_vendor },
-    { "bios_version",      N_("BIOS Version"), OF_NONE },
-    { "bios_date",         N_("BIOS Date"), OF_NONE },
-    { "sys_vendor",        N_("Product Vendor"), OF_HAS_VENDOR, dmi_id_format_vendor },
-    { "product_name",      N_("Product Name"), OF_NONE },
-    { "product_version",   N_("Product Version"), OF_NONE },
-    { "product_serial",    N_("Product Serial"), OF_REQ_ROOT },
-    { "product_uuid",      N_("Product UUID"), OF_NONE },
-    { "product_sku",       N_("Product SKU"), OF_NONE },
-    { "product_family",    N_("Product Family"), OF_NONE },
-    { "board_vendor",      N_("Board Vendor"), OF_HAS_VENDOR, dmi_id_format_vendor },
-    { "board_name",        N_("Board Name"), OF_NONE },
-    { "board_version",     N_("Board Version"), OF_NONE },
-    { "board_serial",      N_("Board Serial"), OF_REQ_ROOT },
-    { "board_asset_tag",   N_("Board Asset Tag"), OF_NONE },
-    { "chassis_vendor",    N_("Chassis Vendor"), OF_HAS_VENDOR, dmi_id_format_vendor },
-    { "chassis_version",   N_("Chassis Version"), OF_NONE },
-    { "chassis_serial",    N_("Chassis Serial"), OF_REQ_ROOT },
-    { "chassis_asset_tag", N_("Chassis Asset Tag"), OF_NONE },
+    { "bios_vendor",       N_("BIOS vendor"), OF_HAS_VENDOR, dmi_id_format_vendor },
+    { "bios_version",      N_("BIOS version"), OF_NONE },
+    { "bios_date",         N_("BIOS date"), OF_NONE },
+    { "sys_vendor",        N_("product vendor"), OF_HAS_VENDOR, dmi_id_format_vendor },
+    { "product_name",      N_("product name"), OF_NONE },
+    { "product_version",   N_("product version"), OF_NONE },
+    { "product_serial",    N_("product serial number"), OF_REQ_ROOT },
+    { "product_uuid",      N_("product UUID"), OF_NONE },
+    { "product_sku",       N_("product SKU"), OF_NONE },
+    { "product_family",    N_("product family"), OF_NONE },
+    { "board_vendor",      N_("board vendor"), OF_HAS_VENDOR, dmi_id_format_vendor },
+    { "board_name",        N_("board name"), OF_NONE },
+    { "board_version",     N_("board version"), OF_NONE },
+    { "board_serial",      N_("board serial number"), OF_REQ_ROOT },
+    { "board_asset_tag",   N_("board asset tag"), OF_NONE },
+    { "chassis_vendor",    N_("chassis vendor"), OF_HAS_VENDOR, dmi_id_format_vendor },
+    { "chassis_version",   N_("chassis version"), OF_NONE },
+    { "chassis_serial",    N_("chassis serial number"), OF_REQ_ROOT },
+    { "chassis_asset_tag", N_("chassis asset tag"), OF_NONE },
     ATTR_TAB_LAST
 };
 
@@ -66,7 +66,7 @@ static sysobj_class cls_dmi_id[] = {
 
   { SYSOBJ_CLASS_DEF
     .tag = "dmi:id:attr", .pattern = "/sys/devices/virtual/dmi/id/*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .s_update_interval = UPDATE_INTERVAL_NEVER,
+    .s_update_interval = UPDATE_INTERVAL_NEVER, .v_is_attr = TRUE,
     .attributes = dmi_id_items, .f_verify = dmi_id_verify, .f_format = dmi_id_format },
 
   { SYSOBJ_CLASS_DEF
@@ -181,16 +181,21 @@ dmi_ignore_no:
 }
 
 gboolean dmi_id_verify(sysobj *obj) {
-/*
-    int i = attr_tab_lookup(dmi_id_items, obj->name);
-    if (i != -1)
-        return TRUE;
-*/
     if (SEQ(obj->name, "id")) {
         if (verify_parent_name(obj, "dmi"))
             return TRUE;
-    } else if (verify_parent(obj, "/dmi/id"))
-        return TRUE;
+    } else if (verify_parent(obj, "/dmi/id")) {
+        /* known items */
+        if (verify_in_attr_tab(obj, dmi_id_items) )
+            return TRUE;
+        /* new unknown ones */
+        if (g_str_has_prefix(obj->name, "sys_")
+            || g_str_has_prefix(obj->name, "product_")
+            || g_str_has_prefix(obj->name, "bios_")
+            || g_str_has_prefix(obj->name, "chassis_")
+            || g_str_has_prefix(obj->name, "board_") )
+            return TRUE;
+    }
     return FALSE;
 }
 

@@ -149,6 +149,7 @@ static const gchar class_item_list[] =
   ".s_suggest\n"
   ".s_update_interval\n"
   ".s_node_format\n"
+  ".s_vendors_from_child\n"
   ".f_verify\n"
   ".f_label\n"
   ".f_format\n"
@@ -228,15 +229,17 @@ static gchar *get_class_info(const gchar *path) {
         if (SEQ(name, ".flags") )
             return g_strdup_printf("0x%lx", (long unsigned)match->flags);
         if (SEQ(name, ".s_label") )
-            return g_strdup_printf("%s", match->s_label);
+            return g_strdup(match->s_label);
         if (SEQ(name, ".s_halp") )
-            return g_strdup_printf("%s", match->s_halp);
+            return g_strdup(match->s_halp);
         if (SEQ(name, ".s_suggest") )
-            return g_strdup_printf("%s", match->s_suggest);
+            return g_strdup(match->s_suggest);
         if (SEQ(name, ".s_node_format") )
-            return g_strdup_printf("%s", match->s_node_format);
+            return g_strdup(match->s_node_format);
         if (SEQ(name, ".s_update_interval") )
             return g_strdup_printf("%0.4lf", match->s_update_interval);
+        if (SEQ(name, ".s_vendors_from_child") )
+            return g_strdup(match->s_vendors_from_child);
         if (SEQ(name, ".f_verify") )
             return g_strdup_printf("%p", match->f_verify);
         if (SEQ(name, ".f_label") )
@@ -260,15 +263,15 @@ static gchar *get_class_info(const gchar *path) {
         if (SEQ(name, ".f_vendors") )
             return g_strdup_printf("%p", match->f_vendors);
         if (SEQ(name, ".v_subsystem") )
-            return g_strdup_printf("%s", match->v_subsystem);
+            return g_strdup(match->v_subsystem);
         if (SEQ(name, ".v_subsystem_parent") )
-            return g_strdup_printf("%s", match->v_subsystem_parent);
+            return g_strdup(match->v_subsystem_parent);
         if (SEQ(name, ".v_lblnum") )
-            return g_strdup_printf("%s", match->v_lblnum);
+            return g_strdup(match->v_lblnum);
         if (SEQ(name, ".v_lblnum_child") )
-            return g_strdup_printf("%s", match->v_lblnum_child);
+            return g_strdup(match->v_lblnum_child);
         if (SEQ(name, ".v_parent_path_suffix") )
-            return g_strdup_printf("%s", match->v_parent_path_suffix);
+            return g_strdup(match->v_parent_path_suffix);
         if (SEQ(name, ".v_is_node") )
             return g_strdup(match->v_is_node ? "shall be" : "may be");
         if (SEQ(name, ".v_is_attr") )

@@ -65,6 +65,21 @@ gchar *class_flags_format(sysobj *obj, int fmt_opts) {
     return simple_format(obj, fmt_opts);
 }
 
+static gchar *class_s_update_interval_format(sysobj *obj, int fmt_opts) {
+    double ui = strtod(obj->data.str, NULL);
+    const gchar *special = NULL;
+    if (ui == UPDATE_INTERVAL_NEVER)
+        special = "UPDATE_INTERVAL_NEVER";
+    if (ui == UPDATE_INTERVAL_UNSPECIFIED)
+        special = "UPDATE_INTERVAL_UNSPECIFIED";
+    if (ui == UPDATE_INTERVAL_DEFAULT)
+        special = "UPDATE_INTERVAL_DEFAULT";
+    if (special)
+        return util_strchomp_float(g_strdup_printf("[%lf] %s", ui, special));
+    else
+        return fmt_seconds(obj, fmt_opts);
+}
+
 static attr_tab sysobj_items[] = {
     { "root", N_("the alternate filesystem root, if any") },
     { "elapsed", N_("seconds since sysobj_init()"), OF_NONE, fmt_seconds_to_span, 0.2 },
@@ -140,12 +155,14 @@ static sysobj_class cls_sysobj[] = {
     .tag = "sysobj:class:flags", .pattern = ":sysobj/classes/*/.flags", .flags = OF_CONST | OF_GLOB_PATTERN,
     .f_format = class_flags_format },
   { SYSOBJ_CLASS_DEF
+    .tag = "sysobj:class:sui", .pattern = ":sysobj/classes/*/.s_update_interval", .flags = OF_CONST | OF_GLOB_PATTERN,
+    .f_format = class_s_update_interval_format },
+  { SYSOBJ_CLASS_DEF
     .tag = "sysobj:class:hits", .pattern = ":sysobj/classes/*/hits", .flags = OF_CONST | OF_GLOB_PATTERN,
     .s_update_interval = 0.5 },
   { SYSOBJ_CLASS_DEF
     .tag = "ansi_color", .pattern = "*/ansi_color", .flags = OF_CONST | OF_GLOB_PATTERN,
     .f_verify = verify_ansi_color, .f_format = format_ansi_color },
-
   { SYSOBJ_CLASS_DEF
     .tag = "vendor:search", .pattern = ":/lookup/vendor.ids/*", .flags = OF_CONST | OF_GLOB_PATTERN | OF_HAS_VENDOR,
     .v_parent_path_suffix = ":/lookup/vendor.ids", .s_node_format = "{{@vendors}}{{: |name}}{{: |url}}",
