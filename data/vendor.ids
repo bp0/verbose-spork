@@ -132,7 +132,17 @@ name LG Electronics
     name_short LG
     url www.lge.com
     ansi_color 0;97;41
+    match_string Lucky-Goldstar
     match_string_case LG
+
+name LG Display
+    name_short LG Display
+    url www.lgdisplay.com
+    ansi_color 0;97;41
+    match_string LG Display
+    match_string LG.Philips
+# EDID vendor code: LGD
+    match_string_case LGD
 
 name Hitachi-LG Data Storage
     name_short HLDS
