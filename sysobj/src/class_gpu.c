@@ -68,14 +68,24 @@ static attr_tab drm_items[] = {
     ATTR_TAB_LAST
 };
 
-/* just enough edid decoding to get the vendor and name */
+/* just enough edid decoding */
 struct edid {
     int ver_major;
     int ver_minor;
 
     gchar ven[4];
-    gchar name[14];
-    gchar serial[14];
+
+    int d_type[4];
+    gchar d_text[4][14];
+
+    /* point into d_text */
+    gchar *name;
+    gchar *serial;
+    gchar *ut1;
+    gchar *ut2;
+
+    int a_or_d; /* 0 = analog, 1 = digital */
+
     uint16_t product;
     uint32_t n_serial;
     int week;
@@ -87,61 +97,129 @@ struct edid {
     int check;
 };
 
+static const gchar *edid_descriptor_type(int type) {
+    switch(type) {
+        case 0xff:
+            return _("display serial number");
+        case 0xfe:
+            return _("unspecified text");
+        case 0xfd:
+            return _("display range limits");
+        case 0xfc:
+            return _("display name");
+        case 0xfb:
+            return _("additional white point");
+        case 0xfa:
+            return _("additional standard timing identifiers");
+        case 0xf9:
+            return _("Display Color Management");
+        case 0xf8:
+            return _("CVT 3-byte timing codes");
+        case 0xf7:
+            return _("additional standard timing");
+        case 0x10:
+            return _("dummy");
+    }
+    if (type < 0x0f) return _("manufacturer reserved descriptor");
+    return _("detailed timing descriptor");
+}
+
 static void fill_edid(struct edid *id_out, sysobj *obj) {
-    struct edid id = {};
     if (!id_out) return;
+
+    memset(id_out, 0, sizeof(struct edid));
+
     if (obj->data.len >= 128) {
         uint8_t *u8 = obj->data.uint8;
         uint16_t *u16 = obj->data.uint16;
         uint32_t *u32 = obj->data.uint32;
 
         uint16_t vid = be16toh(u16[4]); /* bytes 8-9 */
-        id.ven[2] = 64 + (vid & 0x1f);
-        id.ven[1] = 64 + ((vid >> 5) & 0x1f);
-        id.ven[0] = 64 + ((vid >> 10) & 0x1f);
+        id_out->ven[2] = 64 + (vid & 0x1f);
+        id_out->ven[1] = 64 + ((vid >> 5) & 0x1f);
+        id_out->ven[0] = 64 + ((vid >> 10) & 0x1f);
 
-        id.product = le16toh(u16[5]); /* bytes 10-11 */
-        id.n_serial = le32toh(u32[3]);/* bytes 12-15 */
-        id.week = u8[16];             /* byte 16 */
-        id.year = u8[17] + 1990;      /* byte 17 */
-        id.ver_major = u8[18];        /* byte 18 */
-        id.ver_minor = u8[19];        /* byte 19 */
+        id_out->product = le16toh(u16[5]); /* bytes 10-11 */
+        id_out->n_serial = le32toh(u32[3]);/* bytes 12-15 */
+        id_out->week = u8[16];             /* byte 16 */
+        id_out->year = u8[17] + 1990;      /* byte 17 */
+        id_out->ver_major = u8[18];        /* byte 18 */
+        id_out->ver_minor = u8[19];        /* byte 19 */
 
-        id.horiz_cm = u8[21];
-        id.vert_cm = u8[22];
+        id_out->a_or_d = (u8[20] & 0x80) ? 1 : 0;
+
+        id_out->horiz_cm = u8[21];
+        id_out->vert_cm = u8[22];
+
+        id_out->check = u8[127];
 
         uint16_t dh, dl;
 
-        /* try descriptor at byte 54 */
+        /* descriptor at byte 54 */
         dh = be16toh(u16[54/2]);
         dl = be16toh(u16[54/2+1]);
-        if (!dh && dl == 0xfc) { strncpy(id.name, u8+54+5, 13); }
-        if (!dh && dl == 0xff) { strncpy(id.serial, u8+54+5, 13); }
+        id_out->d_type[0] = (dh << 16) + dl;
+        switch(id_out->d_type[0]) {
+            case 0xfc: case 0xff: case 0xfe:
+                strncpy(id_out->d_text[0], u8+54+5, 13);
+        }
 
-        /* try descriptor at byte 72 */
+        /* descriptor at byte 72 */
         dh = be16toh(u16[72/2]);
         dl = be16toh(u16[72/2+1]);
-        if (!dh && dl == 0xfc) { strncpy(id.name, u8+72+5, 13); }
-        if (!dh && dl == 0xff) { strncpy(id.serial, u8+72+5, 13); }
+        id_out->d_type[1] = (dh << 16) + dl;
+        switch(id_out->d_type[1]) {
+            case 0xfc: case 0xff: case 0xfe:
+                strncpy(id_out->d_text[1], u8+72+5, 13);
+        }
 
-        /* try descriptor at byte 90 */
+        /* descriptor at byte 90 */
         dh = be16toh(u16[90/2]);
         dl = be16toh(u16[90/2+1]);
-        if (!dh && dl == 0xfc) { strncpy(id.name, u8+90+5, 13); }
-        if (!dh && dl == 0xff) { strncpy(id.serial, u8+90+5, 13); }
+        id_out->d_type[2] = (dh << 16) + dl;
+        switch(id_out->d_type[2]) {
+            case 0xfc: case 0xff: case 0xfe:
+                strncpy(id_out->d_text[2], u8+90+5, 13);
+        }
 
-        /* try descriptor at byte 108 */
+        /* descriptor at byte 108 */
         dh = be16toh(u16[108/2]);
         dl = be16toh(u16[108/2+1]);
-        if (!dh && dl == 0xfc) { strncpy(id.name, u8+108+5, 13); }
-        if (!dh && dl == 0xff) { strncpy(id.serial, u8+108+5, 13); }
+        id_out->d_type[3] = (dh << 16) + dl;
+        switch(id_out->d_type[3]) {
+            case 0xfc: case 0xff: case 0xfe:
+                strncpy(id_out->d_text[3], u8+108+5, 13);
+        }
 
-        id.check = u8[127];
+        for(int i = 0; i < 4; i++) {
+            g_strstrip(id_out->d_text[i]);
+            switch(id_out->d_type[i]) {
+                case 0xfc:
+                    id_out->name = id_out->d_text[i];
+                    break;
+                case 0xff:
+                    id_out->serial = id_out->d_text[i];
+                    break;
+                case 0xfe:
+                    if (id_out->ut1)
+                        id_out->ut2 = id_out->d_text[i];
+                    else
+                        id_out->ut1 = id_out->d_text[i];
+                    break;
+            }
+        }
 
-        g_strstrip(id.name);
-        g_strstrip(id.serial);
+        if (!id_out->name) {
+            /* LG may use "uspecified text" for name and model */
+            //SEQ(id_out->ven, "LGD")
+            if (SEQ(id_out->ut1, "LG Display") && id_out->ut2)
+                id_out->name = id_out->ut2;
+            else {
+                if (id_out->ut1) id_out->name = id_out->ut1;
+                if (id_out->ut2 && !id_out->serial) id_out->serial = id_out->ut2;
+            }
+        }
     }
-    memcpy(id_out, &id, sizeof(struct edid));
 }
 
 vendor_list edid_vendor(sysobj *obj) {
@@ -164,15 +242,25 @@ gchar *edid_format(sysobj *obj, int fmt_opts) {
                 ret = appf(ret, "%s", id.ven);
             g_free(ven_tag);
 
-            ret = appf(ret, "%s", id.name);
+            if (id.name)
+                ret = appf(ret, "%s", id.name);
+            else if (ret) {
+                ret = appf(ret, "%s %s", id.a_or_d ? "Digital" : "Analog", "Display");
+            }
 
         } else if (fmt_opts & FMT_OPT_COMPLETE) {
             ret = appfs(ret, "\n", "edid_version: %d.%d", id.ver_major, id.ver_minor);
             ret = appfs(ret, "\n", "mfg: %s, model: %u, n_serial: %u, dom: week %d of %d", id.ven, id.product, id.n_serial, id.week, id.year);
-            ret = appfs(ret, "\n", "name: %s, serial: %s", id.name, id.serial);
+
+            ret = appfs(ret, "\n", "type: %s", id.a_or_d ? "digital" : "analog");
+
             if (id.horiz_cm && id.vert_cm)
                 ret = appfs(ret, "\n", "size: %d cm × %d cm", id.horiz_cm, id.vert_cm);
             ret = appfs(ret, "\n", "checkbyte: %d", id.check);
+
+            for(int i = 0; i < 4; i++)
+                ret = appfs(ret, "\n", "descriptor[%d] (%s): %s", i, edid_descriptor_type(id.d_type[i]), *id.d_text[i] ? id.d_text[i] : "{...}");
+
         }
     }
     if (ret)
@@ -185,7 +273,7 @@ static attr_tab drm_conn_items[] = {
     { "enabled" },
     { "modes" },
     { "edid", N_("Extended Display Identification Data"), OF_HAS_VENDOR, edid_format },
-    { "dpms" },
+    { "dpms", N_("VESA Display Power Management Signaling") },
     ATTR_TAB_LAST
 };
 
