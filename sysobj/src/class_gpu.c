@@ -85,6 +85,7 @@ struct edid {
     gchar *ut2;
 
     int a_or_d; /* 0 = analog, 1 = digital */
+    int bpc;
 
     uint16_t product;
     uint32_t n_serial;
@@ -147,6 +148,17 @@ static void fill_edid(struct edid *id_out, sysobj *obj) {
         id_out->ver_minor = u8[19];        /* byte 19 */
 
         id_out->a_or_d = (u8[20] & 0x80) ? 1 : 0;
+        if (id_out->a_or_d == 1) {
+            /* digital */
+            switch((u8[20] >> 4) & 0x7) {
+                case 0x1: id_out->bpc = 6; break;
+                case 0x2: id_out->bpc = 8; break;
+                case 0x3: id_out->bpc = 10; break;
+                case 0x4: id_out->bpc = 12; break;
+                case 0x5: id_out->bpc = 14; break;
+                case 0x6: id_out->bpc = 16; break;
+            }
+        }
 
         id_out->horiz_cm = u8[21];
         id_out->vert_cm = u8[22];
@@ -253,6 +265,8 @@ gchar *edid_format(sysobj *obj, int fmt_opts) {
             ret = appfs(ret, "\n", "mfg: %s, model: %u, n_serial: %u, dom: week %d of %d", id.ven, id.product, id.n_serial, id.week, id.year);
 
             ret = appfs(ret, "\n", "type: %s", id.a_or_d ? "digital" : "analog");
+            if (id.bpc)
+                ret = appfs(ret, "\n", "bits per color channel: %d", id.bpc);
 
             if (id.horiz_cm && id.vert_cm)
                 ret = appfs(ret, "\n", "size: %d cm × %d cm", id.horiz_cm, id.vert_cm);
