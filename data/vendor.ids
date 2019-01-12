@@ -131,6 +131,7 @@ name Western Digital
 name LG Electronics
     name_short LG
     url www.lge.com
+    ansi_color 0;97;41
     match_string_case LG
 
 name Hitachi-LG Data Storage
