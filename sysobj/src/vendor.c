@@ -107,7 +107,7 @@ static int read_from_vendor_ids(const char *path) {
             Vendor *v = g_new0(Vendor, 1);
             v->file_line = line;
             v->match_string = g_strdup(p+tl);
-            v->match_case = 0;
+            v->match_rule = 0;
             v->name = g_strdup(name);
             v->name_short = dup_if_not_empty(name_short);
             v->url = dup_if_not_empty(url);
@@ -121,7 +121,21 @@ static int read_from_vendor_ids(const char *path) {
             Vendor *v = g_new0(Vendor, 1);
             v->file_line = line;
             v->match_string = g_strdup(p+tl);
-            v->match_case = 1;
+            v->match_rule = 1;
+            v->name = g_strdup(name);
+            v->name_short = dup_if_not_empty(name_short);
+            v->url = dup_if_not_empty(url);
+            v->url_support = dup_if_not_empty(url_support);
+            v->ansi_color = dup_if_not_empty(ansi_color);
+            vendors = g_slist_prepend(vendors, v);
+            count++;
+        }
+
+        if (VEN_CHK("match_string_exact ")) {
+            Vendor *v = g_new0(Vendor, 1);
+            v->file_line = line;
+            v->match_string = g_strdup(p+tl);
+            v->match_rule = 2;
             v->name = g_strdup(name);
             v->name_short = dup_if_not_empty(name_short);
             v->url = dup_if_not_empty(url);
@@ -193,18 +207,14 @@ const Vendor *vendor_match(const gchar *id_str, ...) {
     if (id_str) {
         c++;
         tl += strlen(id_str);
-        tmp = g_malloc0(tl + c + 1);
-        strcat(tmp, id_str);
-        strcat(tmp, " ");
+        tmp = appf(tmp, "%s", id_str);
 
         va_start(ap, id_str);
         p = va_arg(ap, gchar*);
         while(p) {
             c++;
             tl += strlen(p);
-            tmp = g_realloc(tmp, tl + c + 1); /* strings, spaces, null */
-            strcat(tmp, p);
-            strcat(tmp, " ");
+            tmp = appf(tmp, "%s", p);
             p = va_arg(ap, gchar*);
         }
         va_end(ap);
@@ -219,15 +229,31 @@ const Vendor *vendor_match(const gchar *id_str, ...) {
         Vendor *v = (Vendor *)vlp->data;
 
         if (!v) continue;
+        if (!v->match_string) continue;
 
-        if (v->match_case && v->match_string && strstr(tmp, v->match_string) ) {
-            ret = v;
-            break;
-        } else if (v->match_string && strcasestr(tmp, v->match_string)) {
-            ret = v;
-            break;
+        switch(v->match_rule) {
+            case 0:
+                if (strstr(tmp, v->match_string) ) {
+                    ret = v;
+                    goto vendor_match_finish;
+                }
+                break;
+            case 1: /* match case */
+                if (strcasestr(tmp, v->match_string) ) {
+                    ret = v;
+                    goto vendor_match_finish;
+                }
+                break;
+            case 2: /* match exact */
+                if (SEQ(tmp, v->match_string) ) {
+                    ret = v;
+                    goto vendor_match_finish;
+                }
+                break;
         }
     }
+
+vendor_match_finish:
 
     if (ret)
         ven_msg_debug("ret: match_string: %s -- case: %s -- name: %s", ret->match_string, (ret->match_case ? "yes" : "no"), ret->name);

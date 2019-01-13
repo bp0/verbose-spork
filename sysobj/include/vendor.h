@@ -26,7 +26,7 @@
 
 typedef struct {
   char *match_string;
-  int match_case; /* 0 = ignore case, 1 = match case */
+  int match_rule; /* 0 = ignore case, 1 = match case, 2 = exact */
   char *name;
   char *name_short;
   char *url;

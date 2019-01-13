@@ -7,10 +7,10 @@
 #    url <url>
 #    url_support <url>
 #    ansi_color n[;n][...]
-#    [match_string|match_string_case] <match>
+#    [match_string|match_string_case|match_string_exact] <match>
 #    ...
-#    [match_string|match_string_case] <match>
-#    [match_string|match_string_case] <match>
+#    [match_string|match_string_case|match_string_exact] <match>
+#    [match_string|match_string_case|match_string_exact] <match>
 #
 #
 # Except for the newline, trailing whitespace is included in the string.
@@ -23,6 +23,8 @@ name Lenovo Group
     url_support support.lenovo.com
     ansi_color 0;97;41
     match_string lenovo
+# EDID vendor code: LEN
+    match_string_exact LEN
 
 name ASUSTeK Computer
     name_short ASUS
@@ -86,6 +88,7 @@ name NEC Corporation
     name_short NEC
     url www.nec.com
     ansi_color 0;94;107
+# EDID vendor code: NEC
     match_string_case NEC
 
 name Realtek Semiconductor
@@ -100,6 +103,19 @@ name Toshiba Corporation
     url www.toshiba.com
     ansi_color 0;91;47
     match_string Toshiba
+# EDID vendor code: TSB
+    match_string_exact TSB
+
+name Vizio
+# EDID vendor code: VIZ
+    match_string_exact VIZ
+
+name ViewSonic Corporation
+    name_short ViewSonic
+    url www.viewsonic.com
+    ansi_color 0;35;103
+# EDID vendor code: VSC
+    match_string_exact VSC
 
 name LITE-ON
     url www.liteonit.com
@@ -113,10 +129,14 @@ name Samsung
     url www.samsung.com
     ansi_color 0;47;30
     match_string Samsung
+# EDID vendor code: SAM
+    match_string_exact SAM
 
 name Pioneer
     url www.pioneer-eur.com
     match_string Pioneer
+# EDID vendor code: PIO
+    match_string_exact PIO
 
 name Plextor
     url www.plextor.be
@@ -142,7 +162,7 @@ name LG Display
     match_string LG Display
     match_string LG.Philips
 # EDID vendor code: LGD
-    match_string_case LGD
+    match_string_exact LGD
 
 name Hitachi-LG Data Storage
     name_short HLDS
@@ -154,6 +174,8 @@ name Hitachi
     url www.hitachi.com
     ansi_color 0;30;47
     match_string Hitachi
+# EDID vendor code: HTC
+    match_string_exact HTC
 
 name Lexmark
     url www.lexmark.com
@@ -171,9 +193,13 @@ name Atheros Communications
     url www.atheros.com
     match_string Atheros
 
-name Panasonic
+name Panasonic Industry Company
+    name_short Panasonic
     url www.panasonic.com
+    ansi_color 0;30;107
     match_string MATSHITA
+# EDID vendor code: MEI
+    match_string_exact MEI
 
 name Silicon Image
     url www.siliconimage.com
@@ -191,6 +217,8 @@ name Apple Computer
     url www.apple.com
     ansi_color 0;97;100
     match_string Apple
+# EDID vendor code: APP
+    match_string_exact APP
 
 name International Business Machines Corporation
     name_short IBM
@@ -205,6 +233,8 @@ name Dell Computer
     match_string Dell
 # Dell PowerEdge/PowerVault controller SCSI vendor
     match_string PE/PV
+# EDID vendor code: DEL
+    match_string_exact DEL
 
 name Logitech International
     name_short logitech
@@ -222,6 +252,8 @@ name Sony
     ansi_color 0;30;107
     match_string Sony
 #   match_string_case CDU
+# EDID vendor code: SNY
+    match_string_exact SNY
 
 name SanDisk
     url www.sandisk.com
@@ -274,6 +306,15 @@ name Koninklijke Philips
     name_short PHILIPS
     url www.philips.com
     match_string Philips
+# EDID vendor code: PHL
+    match_string_exact PHL
+
+name Sharp Corporation
+    name_short SHARP
+    ansi_color 0;31;107
+    match_string Sharp
+# EDID vendor code: SHP
+    match_string_exact SHP
 
 name Ralink Technology
     name_short Ralink
@@ -292,7 +333,7 @@ name Hewlett-Packard
     ansi_color 0;97;46
     match_string Hewlett-Packard
 # EDID vendor code: HWP
-    match_string_case HWP
+    match_string_exact HWP
     match_string_case HP
 
 name TEAC Corporation
@@ -345,6 +386,8 @@ name Acer
     url www.acer.com
     ansi_color 0;32;107
     match_string Acer
+# EDID vendor code: ACR
+    match_string_exact ACR
 
 name Quantum
     url www.quantum.com

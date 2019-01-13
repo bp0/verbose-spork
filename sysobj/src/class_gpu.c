@@ -101,28 +101,28 @@ struct edid {
 static const gchar *edid_descriptor_type(int type) {
     switch(type) {
         case 0xff:
-            return _("display serial number");
+            return N_("display serial number");
         case 0xfe:
-            return _("unspecified text");
+            return N_("unspecified text");
         case 0xfd:
-            return _("display range limits");
+            return N_("display range limits");
         case 0xfc:
-            return _("display name");
+            return N_("display name");
         case 0xfb:
-            return _("additional white point");
+            return N_("additional white point");
         case 0xfa:
-            return _("additional standard timing identifiers");
+            return N_("additional standard timing identifiers");
         case 0xf9:
-            return _("Display Color Management");
+            return N_("Display Color Management");
         case 0xf8:
-            return _("CVT 3-byte timing codes");
+            return N_("CVT 3-byte timing codes");
         case 0xf7:
-            return _("additional standard timing");
+            return N_("additional standard timing");
         case 0x10:
-            return _("dummy");
+            return N_("dummy");
     }
-    if (type < 0x0f) return _("manufacturer reserved descriptor");
-    return _("detailed timing descriptor");
+    if (type < 0x0f) return N_("manufacturer reserved descriptor");
+    return N_("detailed timing descriptor");
 }
 
 static void fill_edid(struct edid *id_out, sysobj *obj) {
@@ -273,7 +273,7 @@ gchar *edid_format(sysobj *obj, int fmt_opts) {
             ret = appfs(ret, "\n", "checkbyte: %d", id.check);
 
             for(int i = 0; i < 4; i++)
-                ret = appfs(ret, "\n", "descriptor[%d] (%s): %s", i, edid_descriptor_type(id.d_type[i]), *id.d_text[i] ? id.d_text[i] : "{...}");
+                ret = appfs(ret, "\n", "descriptor[%d] (%s): %s", i, _(edid_descriptor_type(id.d_type[i])), *id.d_text[i] ? id.d_text[i] : "{...}");
 
         }
     }

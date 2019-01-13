@@ -176,6 +176,9 @@ static sysobj_class cls_sysobj[] = {
 const GSList *get_vendors_list();
 
 void make_vendors_lookup() {
+    static const gchar *match_rules[] = {
+        "ignore_case", "match_case", "exact"
+    };
     gchar *vlpath = ":/lookup/vendor.ids/";
     sysobj_virt_add_simple(vlpath, NULL, "*", VSO_TYPE_DIR);
     const GSList *vl = get_vendors_list();
@@ -191,7 +194,7 @@ void make_vendors_lookup() {
         sysobj_virt_add_simple(mspath, "url_support", v->url_support, VSO_TYPE_STRING);
         sysobj_virt_add_simple(mspath, "ansi_color", v->ansi_color, VSO_TYPE_STRING);
         sysobj_virt_add_simple(mspath, "match_string", v->match_string, VSO_TYPE_STRING);
-        sysobj_virt_add_simple(mspath, "match_case", v->match_case ? "1" : "0", VSO_TYPE_STRING);
+        sysobj_virt_add_simple(mspath, "match_rule", match_rules[v->match_rule], VSO_TYPE_STRING);
         sprintf(lnb, "%lu", v->file_line);
         sysobj_virt_add_simple(mspath, "file_line", lnb, VSO_TYPE_STRING);
         g_free(mspath);
