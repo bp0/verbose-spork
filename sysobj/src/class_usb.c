@@ -95,7 +95,8 @@ static sysobj_class cls_usb[] = {
     .s_update_interval = usb_update_interval },
   { SYSOBJ_CLASS_DEF
     .tag = "usb:bus:attr", .pattern = "/sys/devices*/usb*/*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .attributes = usb_dev_items, .f_vendors = usb_vendor_lookup },
+    .attributes = usb_dev_items, .v_subsystem_parent = "/sys/bus/usb",
+    .f_vendors = usb_vendor_lookup },
 
   { SYSOBJ_CLASS_DEF
     .tag = "usb:device", .pattern = "/sys/devices*/*-*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_HAS_VENDOR,
