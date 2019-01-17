@@ -50,7 +50,7 @@ static struct { unsigned int manfid, oemid; const char *vendor; } sd_ids[] = {
     { 0x00009c, mk_oem_id('B','E'), "Angelbird/Hoodman" },
 };
 
-gchar *mmc_format_oemid(sysobj *obj, int fmt_opts) {
+gchar *mmc_format_oemid_old(sysobj *obj, int fmt_opts) {
     unsigned int v = strtol(obj->data.str, NULL, 16);
     char c2 = v & 0xff, c1 = (v >> 8) & 0xff;
     unsigned int id = mk_oem_id(c1, c2);
@@ -68,7 +68,7 @@ gchar *mmc_format_oemid(sysobj *obj, int fmt_opts) {
     return ret;
 }
 
-gchar *mmc_format_manfid(sysobj *obj, int fmt_opts) {
+gchar *mmc_format_manfid_old(sysobj *obj, int fmt_opts) {
     unsigned int id = strtol(obj->data.str, NULL, 16);
     const gchar *vstr = NULL;
     for(int i = 0; i < (int)G_N_ELEMENTS(sd_ids); i++) {
@@ -84,6 +84,41 @@ gchar *mmc_format_manfid(sysobj *obj, int fmt_opts) {
     return simple_format(obj, fmt_opts);
 }
 
+gchar *mmc_format_id(sysobj *obj, int fmt_opts) {
+    gchar *ret = NULL;
+    if (!obj->data.str) return NULL;
+
+    if (SEQ(obj->name, "oemid") ) {
+        int id = strtol(obj->data.str, NULL, 16);
+        char c2 = id & 0xff, c1 = (id >> 8) & 0xff;
+        gchar *vstr = sysobj_format_from_printf(fmt_opts | FMT_OPT_OR_NULL, ":/lookup/sdio.ids/OEMID %04x/name", id);
+        gchar *ven_tag = vstr ? vendor_match_tag(vstr, fmt_opts) : NULL;
+        if (ven_tag) {
+            g_free(vstr);
+            vstr = ven_tag;
+        }
+        ret = (fmt_opts & FMT_OPT_PART)
+            ? g_strdup(vstr ? vstr : _("Unknown"))
+            : g_strdup_printf("[%04x] \"%c%c\" %s", id, isprint(c1) ? c1 : '.', isprint(c2) ? c2 : '.', vstr ? vstr : _("Unknown"));
+        g_free(vstr);
+    }
+    if (SEQ(obj->name, "manfid") ) {
+        int id = strtol(obj->data.str, NULL, 16);
+        gchar *vstr = sysobj_format_from_printf(fmt_opts | FMT_OPT_OR_NULL, ":/lookup/sdio.ids/MANFID %06x/name", id);
+        gchar *ven_tag = vstr ? vendor_match_tag(vstr, fmt_opts) : NULL;
+        if (ven_tag) {
+            g_free(vstr);
+            vstr = ven_tag;
+        }
+        ret = (fmt_opts & FMT_OPT_PART)
+            ? g_strdup(vstr ? vstr : _("Unknown"))
+            : g_strdup_printf("[%06x] %s", id, vstr ? vstr : _("Unknown"));
+        g_free(vstr);
+    }
+    if (ret) return ret;
+    return simple_format(obj, fmt_opts);
+}
+
 vendor_list mmc_vendor(sysobj *obj) {
     return vendor_list_concat(
         sysobj_vendors_from_fn(obj->path, "manfid"),
@@ -91,6 +126,25 @@ vendor_list mmc_vendor(sysobj *obj) {
 }
 
 vendor_list mmc_vendor_field(sysobj *obj) {
+    vendor_list vl = NULL;
+    if (!obj->data.str) return NULL;
+
+    if (SEQ(obj->name, "oemid") ) {
+        int id = strtol(obj->data.str, NULL, 16);
+        gchar *cstr = sysobj_raw_from_printf(":/lookup/sdio.ids/OEMID %04x/name", id);
+        vl = vendor_list_append(NULL, vendor_match(cstr, NULL));
+        g_free(cstr);
+    }
+    if (SEQ(obj->name, "manfid") ) {
+        int id = strtol(obj->data.str, NULL, 16);
+        gchar *cstr = sysobj_raw_from_printf(":/lookup/sdio.ids/MANFID %06x/name", id);
+        vl = vendor_list_append(NULL, vendor_match(cstr, NULL));
+        g_free(cstr);
+    }
+    return vl;
+}
+
+vendor_list mmc_vendor_field_old(sysobj *obj) {
     if (!obj->data.str) return NULL;
 
     if (SEQ(obj->name, "oemid") ) {
@@ -123,9 +177,9 @@ static attr_tab mmc_items[] = {
     { "date",     N_("manufacturing date (from CID Register)") },
     { "fwrev",    N_("firmware/product revision (from CID Register) (SD and MMCv1 only)") },
     { "hwrev",    N_("hardware/product revision (from CID Register) (SD and MMCv1 only)") },
-    { "manfid",   N_("manufacturer ID (from CID Register)"), OF_HAS_VENDOR, mmc_format_manfid },
+    { "manfid",   N_("manufacturer ID (from CID Register)"), OF_HAS_VENDOR, mmc_format_id },
     { "name",     N_("product name (from CID Register)") },
-    { "oemid",    N_("OEM/Application ID (from CID Register)"), OF_HAS_VENDOR, mmc_format_oemid },
+    { "oemid",    N_("OEM/Application ID (from CID Register)"), OF_HAS_VENDOR, mmc_format_id },
     { "prv",      N_("product revision (from CID Register) (SD and MMCv4 only)") },
     { "serial",               N_("product serial number (from CID Register)") },
     { "erase_size",           N_("erase group size"), OF_NONE, fmt_bytes_to_higher },

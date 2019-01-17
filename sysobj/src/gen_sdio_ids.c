@@ -46,6 +46,14 @@ static int _path_type(const gchar *path) {
     int mc = 0;
     unsigned int i1, i2;
 
+    mc = sscanf(path, ":/lookup/sdio.ids/MANFID %06x/%4s", &i1, name);
+    if (mc == 2 && SEQ(name, "name") ) return PT_NAME;
+    if (mc == 1) return PT_DIR;
+
+    mc = sscanf(path, ":/lookup/sdio.ids/OEMID %04x/%4s", &i1, name);
+    if (mc == 2 && SEQ(name, "name") ) return PT_NAME;
+    if (mc == 1) return PT_DIR;
+
     mc = sscanf(path, ":/lookup/sdio.ids/C %02x/%4s", &i1, name);
     if (mc == 2 && SEQ(name, "name") ) return PT_NAME;
     if (mc == 1) return PT_DIR;
