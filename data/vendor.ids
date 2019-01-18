@@ -613,6 +613,10 @@ name Arch Linux
     ansi_color 0;36;107
     match_string arch linux
 
+name CDEmu
+    url cdemu.sourceforge.io
+    match_string CDEmu
+
 #
 # x86 vendor strings
 #
