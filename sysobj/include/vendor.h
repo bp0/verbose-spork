@@ -24,6 +24,15 @@
 #ifndef __VENDOR_H__
 #define __VENDOR_H__
 
+#include "gg_slist.h"
+
+typedef GSList* vendor_list;
+#define vendor_list_append(vl, v) g_slist_append(vl, (Vendor*)v)
+#define vendor_list_concat(vl, ext) g_slist_concat(vl, ext)
+vendor_list vendor_list_concat_va(int count, vendor_list vl, ...); /* count = -1 for NULL terminated list */
+#define vendor_list_free(vl) g_slist_free(vl)
+#define vendor_list_remove_duplicates(vl) gg_slist_remove_duplicates(vl)
+
 typedef struct {
   char *match_string;
   int match_rule; /* 0 = ignore case, 1 = match case, 2 = exact */
@@ -32,15 +41,18 @@ typedef struct {
   char *url;
   char *url_support;
   char *ansi_color;
+
   unsigned long file_line;
+  unsigned long ms_length;
 } Vendor;
 
 void vendor_init(void);
 void vendor_cleanup(void);
 const Vendor *vendor_match(const gchar *id_str, ...); /* end list of strings with NULL */
+vendor_list vendors_match(const gchar *id_str, ...);  /* end list of strings with NULL */
 const gchar *vendor_get_name(const gchar *id_str);
 const gchar *vendor_get_shortest_name(const gchar *id_str);
 const gchar *vendor_get_url(const gchar *id_str);
 void vendor_free(Vendor *v);
 
-#endif	/* __VENDOR_H__ */
+#endif /* __VENDOR_H__ */

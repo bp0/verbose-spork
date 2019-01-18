@@ -107,6 +107,7 @@ static int read_from_vendor_ids(const char *path) {
             Vendor *v = g_new0(Vendor, 1);
             v->file_line = line;
             v->match_string = g_strdup(p+tl);
+            v->ms_length = strlen(v->match_string);
             v->match_rule = 0;
             v->name = g_strdup(name);
             v->name_short = dup_if_not_empty(name_short);
@@ -121,6 +122,7 @@ static int read_from_vendor_ids(const char *path) {
             Vendor *v = g_new0(Vendor, 1);
             v->file_line = line;
             v->match_string = g_strdup(p+tl);
+            v->ms_length = strlen(v->match_string);
             v->match_rule = 1;
             v->name = g_strdup(name);
             v->name_short = dup_if_not_empty(name_short);
@@ -135,6 +137,7 @@ static int read_from_vendor_ids(const char *path) {
             Vendor *v = g_new0(Vendor, 1);
             v->file_line = line;
             v->match_string = g_strdup(p+tl);
+            v->ms_length = strlen(v->match_string);
             v->match_rule = 2;
             v->name = g_strdup(name);
             v->name_short = dup_if_not_empty(name_short);
@@ -222,8 +225,6 @@ const Vendor *vendor_match(const gchar *id_str, ...) {
     if (!c || tl == 0)
         return NULL;
 
-    ven_msg_debug("full id_str: %s", tmp);
-
     for (vlp = vendors; vlp; vlp = vlp->next) {
         sysobj_stats.ven_iter++;
         Vendor *v = (Vendor *)vlp->data;
@@ -233,13 +234,13 @@ const Vendor *vendor_match(const gchar *id_str, ...) {
 
         switch(v->match_rule) {
             case 0:
-                if (strstr(tmp, v->match_string) ) {
+                if (strcasestr(tmp, v->match_string) ) {
                     ret = v;
                     goto vendor_match_finish;
                 }
                 break;
             case 1: /* match case */
-                if (strcasestr(tmp, v->match_string) ) {
+                if (strstr(tmp, v->match_string) ) {
                     ret = v;
                     goto vendor_match_finish;
                 }
@@ -254,11 +255,6 @@ const Vendor *vendor_match(const gchar *id_str, ...) {
     }
 
 vendor_match_finish:
-
-    if (ret)
-        ven_msg_debug("ret: match_string: %s -- case: %s -- name: %s", ret->match_string, (ret->match_case ? "yes" : "no"), ret->name);
-    else
-        ven_msg_debug("ret: not found");
 
     g_free(tmp);
     return ret;
@@ -304,4 +300,93 @@ const gchar *vendor_get_url(const gchar * id_str) {
         return v->url;
 
     return NULL;
+}
+
+vendor_list vendor_list_concat_va(int count, vendor_list vl, ...) {
+    vendor_list ret = vl, p = NULL;
+    va_list ap;
+    va_start(ap, vl);
+    if (count > 0) {
+        count--; /* includes vl */
+        while (count) {
+            p = va_arg(ap, vendor_list);
+            ret = g_slist_concat(ret, p);
+            count--;
+        }
+    } else {
+        p = va_arg(ap, vendor_list);
+        while (p) {
+            ret = g_slist_concat(ret, p);
+            p = va_arg(ap, vendor_list);
+        }
+    }
+    va_end(ap);
+    return ret;
+}
+
+vendor_list vendors_match(const gchar *id_str, ...) {
+    va_list ap, ap2;
+    GSList *vlp;
+    gchar *tmp = NULL, *p = NULL;
+    int tl = 0, c = 0;
+    vendor_list ret = NULL;
+
+    if (id_str) {
+        c++;
+        tl += strlen(id_str);
+        tmp = appf(tmp, "%s", id_str);
+
+        va_start(ap, id_str);
+        p = va_arg(ap, gchar*);
+        while(p) {
+            c++;
+            tl += strlen(p);
+            tmp = appf(tmp, "%s", p);
+            p = va_arg(ap, gchar*);
+        }
+        va_end(ap);
+    }
+    if (!c || tl == 0)
+        return NULL;
+
+    ven_msg_debug("full id_str: %s", tmp);
+
+    for (vlp = vendors; vlp; vlp = vlp->next) {
+        sysobj_stats.ven_iter++;
+        Vendor *v = (Vendor *)vlp->data;
+        char *m = NULL;
+
+        if (!v) continue;
+        if (!v->match_string) continue;
+
+        switch(v->match_rule) {
+            case 0:
+                if (m = strcasestr(tmp, v->match_string) ) {
+                    /* clear so it doesn't match again */
+                    for(char *s = m; s < m + v->ms_length; s++) *s = ' ';
+                    /* add to return list */
+                    ret = vendor_list_append(ret, v);
+                }
+                break;
+            case 1: /* match case */
+                if (m = strstr(tmp, v->match_string) ) {
+                    /* clear so it doesn't match again */
+                    for(char *s = m; s < m + v->ms_length; s++) *s = ' ';
+                    /* add to return list */
+                    ret = vendor_list_append(ret, v);
+                }
+                break;
+            case 2: /* match exact */
+                if (SEQ(tmp, v->match_string) ) {
+                    ret = vendor_list_append(ret, v);
+                    goto vendors_match_finish; /* no way for any other match to happen */
+                }
+                break;
+        }
+    }
+
+vendors_match_finish:
+
+    g_free(tmp);
+    return ret;
 }

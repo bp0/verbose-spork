@@ -85,12 +85,6 @@ typedef gchar* (*func_format)(sysobj *obj, int fmt_opts);
 typedef int (*func_compare_sysobj_data)(const sysobj_data *a, const sysobj_data *b);
 typedef gboolean (*func_verify)(sysobj *obj);
 typedef guint (*func_class_flags)(sysobj *obj, const sysobj_class *cls); /* remember to handle obj == NULL */
-typedef GSList* vendor_list;
-#define vendor_list_append(vl, v) g_slist_append(vl, (Vendor*)v)
-#define vendor_list_concat(vl, ext) g_slist_concat(vl, ext)
-vendor_list vendor_list_concat_va(int count, vendor_list vl, ...); /* count = -1 for NULL terminated list */
-#define vendor_list_free(vl) g_slist_free(vl)
-#define vendor_list_remove_duplicates(vl) gg_slist_remove_duplicates(vl)
 typedef vendor_list (*func_get_vendors)(sysobj *obj);
 
 typedef const struct {

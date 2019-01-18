@@ -1335,28 +1335,6 @@ int class_count() {
     return g_slist_length(class_list);
 }
 
-vendor_list vendor_list_concat_va(int count, vendor_list vl, ...) {
-    vendor_list ret = vl, p = NULL;
-    va_list ap;
-    va_start(ap, vl);
-    if (count > 0) {
-        count--; /* includes vl */
-        while (count) {
-            p = va_arg(ap, vendor_list);
-            ret = g_slist_concat(ret, p);
-            count--;
-        }
-    } else {
-        p = va_arg(ap, vendor_list);
-        while (p) {
-            ret = g_slist_concat(ret, p);
-            p = va_arg(ap, vendor_list);
-        }
-    }
-    va_end(ap);
-    return ret;
-}
-
 vendor_list simple_vendors(sysobj *s) {
     if (sysobj_has_flag(s, OF_HAS_VENDOR) ) {
         sysobj_read(s, FALSE);

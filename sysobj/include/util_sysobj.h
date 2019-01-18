@@ -63,9 +63,4 @@ gchar *appf(gchar *src, const gchar *fmt, ...)
 gchar *appfs(gchar *src, const gchar *sep, const gchar *fmt, ...)
     __attribute__ ((format (printf, 3, 4)));
 
-/* glib extension */
-GSList *gg_slist_remove_null(GSList *sl);
-GSList *gg_slist_remove_duplicates(GSList *sl); /* by pointer */
-GSList *gg_slist_remove_duplicates_custom(GSList *sl, GCompareFunc func);
-
 #endif
