@@ -335,6 +335,8 @@ name Hewlett-Packard
 # EDID vendor code: HWP
     match_string_exact HWP
     match_string_case HP
+# SCSI vendor
+    match_string_exact hp
 
 name TEAC Corporation
     name_short TEAC
