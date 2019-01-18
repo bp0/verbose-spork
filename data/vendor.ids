@@ -169,6 +169,12 @@ name Hitachi-LG Data Storage
     url http://hlds.co.kr
     match_string_case HL-DT-ST
 
+name Hitachi Global Storage Technologies
+    name_short HGST
+    url hgst.com
+    ansi_color 0;97;40
+    match_string_case HGST
+
 name Hitachi
     name_short HITACHI
     url www.hitachi.com
