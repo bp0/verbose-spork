@@ -25,6 +25,12 @@
 
 #define SYSFS_USB "/sys/bus/usb"
 
+const gchar usb_reference_markup_text[] =
+    "References:\n"
+    BULLET REFLINK("https://www.kernel.org/doc/Documentation/ABI/stable/sysfs-bus-usb") "\n"
+    BULLET REFLINK("https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-bus-usb") "\n"
+    "\n";
+
 static gchar *usb_format(sysobj *obj, int fmt_opts);
 static gchar *usb_format_idcomp(sysobj *obj, int fmt_opts);
 static gchar *usb_format_class(sysobj *obj, int fmt_opts);
@@ -86,34 +92,35 @@ static sysobj_class cls_usb[] = {
     .f_format = usb_format, .s_update_interval = usb_update_interval, .f_vendors = usb_all_vendors },
   { SYSOBJ_CLASS_DEF
     .tag = "usb:device_list", .pattern = "/sys/bus/usb/devices", .flags = OF_GLOB_PATTERN | OF_CONST | OF_HAS_VENDOR,
-    .f_format = usb_format, .s_update_interval = usb_update_interval, .f_vendors = usb_all_vendors },
+    .f_format = usb_format, .s_update_interval = usb_update_interval, .f_vendors = usb_all_vendors,
+    .s_halp = usb_reference_markup_text },
 
   { SYSOBJ_CLASS_DEF
     .tag = "usb:bus", .pattern = "/sys/devices*/usb*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_HAS_VENDOR,
     .v_subsystem = "/sys/bus/usb", .s_node_format = "{{idVendor}}{{idProduct}}",
     .f_verify = usb_verify_bus, .f_vendors = usb_vendor_dev,
-    .s_update_interval = usb_update_interval },
+    .s_update_interval = usb_update_interval, .s_halp = usb_reference_markup_text },
   { SYSOBJ_CLASS_DEF
     .tag = "usb:bus:attr", .pattern = "/sys/devices*/usb*/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .attributes = usb_dev_items, .v_subsystem_parent = "/sys/bus/usb",
-    .f_vendors = usb_vendor_lookup },
+    .f_vendors = usb_vendor_lookup, .s_halp = usb_reference_markup_text },
 
   { SYSOBJ_CLASS_DEF
     .tag = "usb:device", .pattern = "/sys/devices*/*-*", .flags = OF_GLOB_PATTERN | OF_CONST | OF_HAS_VENDOR,
     .v_subsystem = "/sys/bus/usb", .s_node_format = "{{idVendor}}{{idProduct}}",
     .f_verify = usb_verify_device, .f_vendors = usb_vendor_dev,
-    .s_update_interval = usb_update_interval },
+    .s_update_interval = usb_update_interval, .s_halp = usb_reference_markup_text },
   { SYSOBJ_CLASS_DEF
     .tag = "usb:device:attr", .pattern = "/sys/devices*/*-*/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .attributes = usb_dev_items, .v_subsystem_parent = "/sys/bus/usb",
-    .f_vendors = usb_vendor_lookup },
+    .f_vendors = usb_vendor_lookup, .s_halp = usb_reference_markup_text },
 
   { SYSOBJ_CLASS_DEF
     .tag = "usb:iface", .pattern = "/sys/devices*/*-*:*.*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .v_subsystem = "/sys/bus/usb", .f_verify = usb_verify_iface },
+    .v_subsystem = "/sys/bus/usb", .f_verify = usb_verify_iface, .s_halp = usb_reference_markup_text },
   { SYSOBJ_CLASS_DEF
     .tag = "usb:iface:attr", .pattern = "/sys/devices*/*-*:*.*/*", .flags = OF_GLOB_PATTERN | OF_CONST,
-    .v_subsystem_parent = "/sys/bus/usb", .attributes = usb_iface_items },
+    .v_subsystem_parent = "/sys/bus/usb", .attributes = usb_iface_items, .s_halp = usb_reference_markup_text },
 };
 
 static sysobj_virt vol[] = {
