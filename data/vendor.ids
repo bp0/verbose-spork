@@ -389,6 +389,12 @@ name BenQ
     url www.benq.com
     match_string BENQ
 
+name Holtek Semiconductor
+    name_short Holtek
+    url www.holtek.com
+    ansi_color 0;34;107
+    match_string Holtek
+
 name Acer
     name_short acer
     url www.acer.com
