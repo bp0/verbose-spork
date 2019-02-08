@@ -452,6 +452,10 @@ const sysobj_class *class_add(sysobj_class *c) {
             class_msg("duplicate class address: %p (%s)", c, c->tag ? c->tag : "untagged");
             return NULL;
         }
+        if (c->v_is_attr && c->v_is_node) {
+            class_msg("invalid class requires item to be both an attribute and a node (%p; %s; %s:%d)", c, c->tag ? c->tag : "untagged", c->def_file ? c->def_file : "?", c->def_line);
+            return NULL;
+        }
         for(GSList *l = class_list; l; l = l->next) {
             sysobj_class *ec = l->data;
             if (SEQ(ec->tag, c->tag) ) {
