@@ -27,9 +27,18 @@ static gchar *scsi_dev_list_format(sysobj *obj, int fmt_opts);
 vendor_list scsi_all_vendors(sysobj *obj);
 static vendor_list scsi_dev_vendors(sysobj *obj);
 
+static gchar *fmt_count(sysobj *obj, int fmt_opts) {
+    long long unsigned c = strtoll(obj->data.str, NULL, 0);
+    return g_strdup_printf("%llu", c);
+}
+
 static attr_tab scsi_items[] = {
     { "model", NULL, OF_HAS_VENDOR },
     { "vendor", NULL, OF_HAS_VENDOR, scsi_vendor_format },
+    { "iocounterbits" },
+    { "iodone_cnt", NULL, OF_NONE, fmt_count, 1.0 },
+    { "ioerr_cnt", NULL, OF_NONE, fmt_count, 1.0 },
+    { "iorequest_cnt", NULL, OF_NONE, fmt_count, 1.0 },
     ATTR_TAB_LAST
 };
 
