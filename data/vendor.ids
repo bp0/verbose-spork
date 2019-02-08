@@ -417,6 +417,12 @@ name Chicony
     url www.chicony.com.tw
     match_string Chicony
 
+name Phison Electronics Corporation
+    name_short Phison
+    url www.phison.com
+    ansi_color 0;33;44
+    match_string Phison
+
 name Genius
     url www.genius.ru
     match_string Genius

@@ -83,6 +83,7 @@ add_library(sysobj STATIC
         sysobj/src/class_mmc.c
         sysobj/src/class_media.c
         sysobj/src/class_intel_pstate.c
+        sysobj/src/class_nvme.c
         sysobj/src/class_storage.c
 
 # gen only

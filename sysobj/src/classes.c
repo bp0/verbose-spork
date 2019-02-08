@@ -84,6 +84,7 @@ void class_clocksource();
 void class_mmc();
 void class_media();
 void class_intel_pstate();
+void class_nvme();
 void class_storage();
 
 void class_uptime();
@@ -127,6 +128,7 @@ void class_init() {
     class_mmc();
     class_media();
     class_intel_pstate();
+    class_nvme();
     class_storage();
 
     class_cpu();
