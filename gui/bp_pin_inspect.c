@@ -1,5 +1,6 @@
 
 #include "bp_pin_inspect.h"
+#include "sysobj_foreach.h"
 #include "sysobj_extras.h"
 #include "format_funcs.h"
 #include <inttypes.h>
@@ -23,11 +24,14 @@ struct _bpPinInspectPrivate {
     const pin *p;
     int fmt_opts;
 
+    GSList *wlh;
+
     GtkTextBuffer *val_formatted;
     GtkTextBuffer *val_raw;
 
     GtkWidget *lbl_top;
     GtkWidget *lbl_vendor;
+    GtkWidget *lbl_wlh; /* what links here */
     GtkWidget *lbl_debug;
 
     GtkWidget *value_notebook;
@@ -115,7 +119,69 @@ static void _cleanup(bpPinInspect *s) {
     bpPinInspectPrivate *priv = BP_PIN_INSPECT_PRIVATE(s);
 }
 
-static GtkWidget *notebook_add_page(const gchar *name, const gchar *label, GtkWidget *notebook, GtkWidget *page_widget, gint border) {
+typedef struct {
+    bpPinInspectPrivate *priv;
+    gchar *target;
+    GThread *thread;
+    gboolean valid;
+    GSList *links;
+} wlh_state;
+
+void wlh_mt(wlh_state *s, gboolean done) {
+    if (!s || !s->valid) return;
+    gchar *lmt = NULL;
+    for(GSList *l = s->links; l; l = l->next) {
+        lmt = appfs(lmt, "\n", "<a href=\"sysobj:%s\">%s</a>", (gchar*)l->data, (gchar*)l->data);
+    }
+    if (!done) {
+        lmt = appfs(lmt, "\n", "...");
+    }
+    gtk_label_set_markup(GTK_LABEL(s->priv->lbl_wlh), lmt ? lmt : "");
+    g_free(lmt);
+}
+
+gboolean wlh_examine(sysobj *obj, wlh_state *s, const sysobj_foreach_stats *stats) {
+    bpPinInspectPrivate *priv = s ? s->priv : NULL;
+    if (priv && s->valid && priv->p && priv->p->obj) {
+        if (!SEQ(s->target, priv->p->obj->path)) {
+            s->valid = FALSE;
+            return SYSOBJ_FOREACH_STOP;
+        }
+        if (obj->req_is_link && SEQ(obj->path, s->target)) {
+            s->links = g_slist_append(s->links, g_strdup(obj->path_req));
+            wlh_mt(s, FALSE);
+        }
+        return SYSOBJ_FOREACH_CONTINUE;
+    }
+    s->valid = FALSE;
+    return SYSOBJ_FOREACH_STOP;
+}
+
+static gpointer wlh_thread_main(wlh_state *s) {
+    wlh_mt(s, FALSE);
+    sysobj_foreach(NULL, (f_sysobj_foreach)wlh_examine, s, SO_FOREACH_MT);
+    wlh_mt(s, TRUE);
+    g_thread_unref(s->thread); // self, what implications?
+    g_free(s->target);
+    g_slist_free_full(s->links, (GDestroyNotify)g_free);
+    g_free(s);
+}
+
+void wlh_start(bpPinInspectPrivate *priv) {
+    if (priv && priv->p && priv->p->obj) {
+        wlh_state *s = g_new0(wlh_state, 1);
+        s->target = g_strdup(priv->p->obj->path);
+        s->priv = priv;
+        s->valid = TRUE;
+        s->thread = g_thread_new(NULL, (GThreadFunc)wlh_thread_main, s);
+    }
+}
+
+void _scan_wlh(GtkButton *button, bpPinInspectPrivate *priv) {
+    wlh_start(priv);
+}
+
+static GtkWidget *notebook_add_page(const gchar *name, const gchar *label, GtkWidget *notebook, GtkWidget *page_widget, gint border, bpPinInspectPrivate *priv) {
     GtkWidget *lbl = gtk_label_new (label);
     GtkWidget *scroll = gtk_scrolled_window_new(NULL, NULL);
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
@@ -137,6 +203,14 @@ static GtkWidget *notebook_add_page(const gchar *name, const gchar *label, GtkWi
         g_signal_connect(btn_wrap, "toggled", G_CALLBACK(_wrap_toggled), page_widget);
         gtk_widget_show(btn_wrap);
         gtk_action_bar_pack_start(GTK_ACTION_BAR(actions), btn_wrap);
+    }
+
+    if(SEQ(name, "wlh") ) {
+        GtkWidget *btn_scan = gtk_button_new_from_icon_name("view-refresh", GTK_ICON_SIZE_LARGE_TOOLBAR);
+        gtk_widget_set_tooltip_text(btn_scan, _("Scan"));
+        g_signal_connect(btn_scan, "clicked", G_CALLBACK(_scan_wlh), priv);
+        gtk_widget_show(btn_scan);
+        gtk_action_bar_pack_start(GTK_ACTION_BAR(actions), btn_scan);
     }
 
     GtkWidget *btn_copy = gtk_button_new_from_icon_name("edit-copy", GTK_ICON_SIZE_LARGE_TOOLBAR);
@@ -190,6 +264,15 @@ static void _create(bpPinInspect *s) {
     g_signal_connect (lbl_debug, "activate-link", G_CALLBACK(_activate_link), NULL);
     gtk_widget_show(lbl_debug);
 
+    GtkWidget *lbl_wlh = gtk_label_new("");
+    gtk_label_set_line_wrap(GTK_LABEL(lbl_wlh), FALSE);
+    gtk_label_set_justify(GTK_LABEL(lbl_wlh), GTK_JUSTIFY_LEFT);
+    gtk_widget_set_halign(lbl_wlh, GTK_ALIGN_START);
+    gtk_widget_set_valign(lbl_wlh, GTK_ALIGN_START);
+    gtk_widget_set_margin_start(lbl_wlh, 10);
+    g_signal_connect (lbl_wlh, "activate-link", G_CALLBACK(_activate_link), NULL);
+    gtk_widget_show(lbl_wlh);
+
     GtkTextBuffer *val_formatted = gtk_text_buffer_new(NULL);
     GtkWidget *text_formatted = gtk_text_view_new_with_buffer(val_formatted);
     gtk_text_view_set_editable(GTK_TEXT_VIEW(text_formatted), FALSE);
@@ -205,11 +288,12 @@ static void _create(bpPinInspect *s) {
 
     GtkWidget *value_notebook = gtk_notebook_new();
     gtk_notebook_set_tab_pos(GTK_NOTEBOOK (value_notebook), GTK_POS_TOP);
-    notebook_add_page("formatted", _("Formatted"), value_notebook, text_formatted, 5);
-    notebook_add_page("raw", _("Raw"), value_notebook, text_raw, 5);
+    notebook_add_page("formatted", _("Formatted"), value_notebook, text_formatted, 5, priv);
+    notebook_add_page("raw", _("Raw"), value_notebook, text_raw, 5, priv);
     GtkWidget *vendor_container =
-        notebook_add_page("vendor", _("Vendors"), value_notebook, lbl_vendor, 5);
-    notebook_add_page("debug", _("Debug"), value_notebook, lbl_debug, 5);
+        notebook_add_page("vendor", _("Vendors"), value_notebook, lbl_vendor, 5, priv);
+    notebook_add_page("wlh", _("Links"), value_notebook, lbl_wlh, 5, priv);
+    notebook_add_page("debug", _("Debug"), value_notebook, lbl_debug, 5, priv);
     gtk_widget_show(value_notebook);
 
     GtkWidget *box_sections = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
@@ -242,6 +326,7 @@ static void _create(bpPinInspect *s) {
     priv->raw_view = text_raw;
     priv->lbl_top = lbl_top;
     priv->lbl_vendor = lbl_vendor;
+    priv->lbl_wlh = lbl_wlh;
     priv->lbl_debug = lbl_debug;
     priv->help_container = help_scroll;
     priv->lbl_help = lbl_help;
@@ -439,6 +524,8 @@ void bp_pin_inspect_do(bpPinInspect *s, const pin *p, int fmt_opts) {
         } else {
             gtk_widget_hide(priv->help_container);
         }
+
+        gtk_label_set_markup(GTK_LABEL(priv->lbl_wlh), _("Press \"Scan\" below to search for incoming links."));
     }
 
     g_free(fperm);
