@@ -20,9 +20,6 @@
 
 #include "sysobj.h"
 
-static gchar *nvme_format(sysobj *obj, int fmt_opts);
-
-
 static attr_tab nvme_items[] = {
     { "cntlid" },
     { "firmware_rev" },
@@ -44,10 +41,6 @@ static sysobj_class cls_nvme[] = {
     .tag = "nvme:attr", .pattern = "/sys/*", .flags = OF_CONST | OF_GLOB_PATTERN,
     .v_subsystem_parent = "/sys/class/nvme" },
 };
-
-static gchar *nvme_format(sysobj *obj, int fmt_opts) {
-    return simple_format(obj, fmt_opts);
-}
 
 void class_nvme() {
     /* add classes */
