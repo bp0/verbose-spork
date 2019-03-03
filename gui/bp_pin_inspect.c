@@ -464,6 +464,17 @@ void bp_pin_inspect_do(bpPinInspect *s, const pin *p, int fmt_opts) {
                     g_free(full_link);
                     full_link = NULL;
                 }
+                if (v->wikipedia) {
+                    /* sending the title to wikipedia.com/wiki will autmatically handle the language and section parts,
+                     * but perhaps that shouldn't be relied on so much? */
+                    full_link = g_strdup_printf("http://wikipedia.com/wiki/%s", v->wikipedia);
+                    for(gchar *p = full_link; *p; p++) {
+                        if (*p == ' ') *p = '_';
+                    }
+                    ven_mt = appfs(ven_mt, "\n", "<b>%s:</b> <a href=\"%s\">%s</a>", _("Wikipedia"), full_link ? full_link : v->wikipedia, v->wikipedia);
+                    g_free(full_link);
+                    full_link = NULL;
+                }
                 g_free(ven_tag);
                 ven_mt = appfs(ven_mt, "\n", " ");
                 vcnt++;

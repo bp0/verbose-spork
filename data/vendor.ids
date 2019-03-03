@@ -6,6 +6,7 @@
 #    name_short <shorter name>
 #    url <url>
 #    url_support <url>
+#    wikipedia [language:]<article title>[#section]
 #    ansi_color n[;n][...]
 #    [match_string|match_string_case|match_string_exact] <match>
 #    ...
@@ -420,13 +421,15 @@ name Chicony
 name Phison Electronics Corporation
     name_short Phison
     url www.phison.com
+    wikipedia Phison
     ansi_color 0;33;44
     match_string Phison
 
 name Corsair Components
     name_short Corsair
     url www.corsair.com
-    ansi_color 0;30;103
+    wikipedia Corsair Components
+    ansi_color 0;30;43
     match_string Corsair
 
 name Genius

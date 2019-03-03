@@ -192,6 +192,7 @@ void make_vendors_lookup() {
         sysobj_virt_add_simple(mspath, "name_short", v->name_short, VSO_TYPE_STRING);
         sysobj_virt_add_simple(mspath, "url", v->url, VSO_TYPE_STRING);
         sysobj_virt_add_simple(mspath, "url_support", v->url_support, VSO_TYPE_STRING);
+        sysobj_virt_add_simple(mspath, "wikipedia", v->wikipedia, VSO_TYPE_STRING);
         sysobj_virt_add_simple(mspath, "ansi_color", v->ansi_color, VSO_TYPE_STRING);
         sysobj_virt_add_simple(mspath, "match_string", v->match_string, VSO_TYPE_STRING);
         sysobj_virt_add_simple(mspath, "match_rule", match_rules[v->match_rule], VSO_TYPE_STRING);

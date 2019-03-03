@@ -40,6 +40,7 @@ typedef struct {
   char *name_short;
   char *url;
   char *url_support;
+  char *wikipedia; /* wikipedia page title (assumes en:, otherwise include langauge), usually more informative than the vendor's page */
   char *ansi_color;
 
   unsigned long file_line;
