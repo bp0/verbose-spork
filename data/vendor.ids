@@ -423,6 +423,12 @@ name Phison Electronics Corporation
     ansi_color 0;33;44
     match_string Phison
 
+name Corsair Components
+    name_short Corsair
+    url www.corsair.com
+    ansi_color 0;30;103
+    match_string Corsair
+
 name Genius
     url www.genius.ru
     match_string Genius
