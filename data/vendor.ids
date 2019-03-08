@@ -22,6 +22,7 @@ name Lenovo Group
     name_short Lenovo
     url www.lenovo.com
     url_support support.lenovo.com
+    wikipedia Lenovo
     ansi_color 0;97;41
     match_string lenovo
 # EDID vendor code: LEN
@@ -30,6 +31,7 @@ name Lenovo Group
 name ASUSTeK Computer
     name_short ASUS
     url www.asus.com
+    wikipedia Asus
     ansi_color 0;30;47
     match_string ASUSTek
     match_string ASUS
@@ -38,6 +40,7 @@ name ASUSTeK Computer
 name Advanced Micro Devices
     name_short AMD
     url www.amd.com
+    wikipedia Advanced Micro Devices
     ansi_color 0;97;41
     match_string Advanced Micro Devices
     match_string_case AMD
@@ -46,6 +49,7 @@ name Advanced Micro Devices
 name Advanced Micro Devices (formerly ATI)
     name_short AMD/ATI
     url www.amd.com
+    wikipedia ATI Technologies
     ansi_color 0;97;41
     match_string ATI Technologies
     match_string Advanced Micro Devices, Inc. [AMD/ATI]
@@ -55,23 +59,34 @@ name Advanced Micro Devices (formerly ATI)
 name nVidia Corporation
     name_short nVidia
     url www.nvidia.com
+    wikipedia Nvidia
     ansi_color 0;97;42
     match_string nVidia
 
 name G.Skill International Enterprise
     name_short G.Skill
     url www.gskill.com
+    wikipedia G.Skill
     ansi_color 0;31;107
     match_string G.Skill
     match_string G-Skill
 
+name XFX Pine Group
+    name_short XFX
+    url www.xfxforce.com
+    wikipedia XFX
+    ansi_color 0;30;42
+    match_string_case XFX
+
 name 3Com
     url www.3com.com
+    wikipedia 3Com
     match_string 3Com
 
 name Intel Corporation
     name_short Intel
     url www.intel.com
+    wikipedia Intel Corporation
     ansi_color 0;97;44
     match_string Intel
 
