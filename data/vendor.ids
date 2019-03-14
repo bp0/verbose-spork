@@ -7,6 +7,7 @@
 #    url <url>
 #    url_support <url>
 #    wikipedia [language:]<article title>[#section]
+#    note <short note>
 #    ansi_color n[;n][...]
 #    [match_string|match_string_case|match_string_exact] <match>
 #    ...
@@ -25,7 +26,7 @@ name Lenovo Group
     wikipedia Lenovo
     ansi_color 0;97;41
     match_string lenovo
-# EDID vendor code: LEN
+    note EDID vendor: LEN
     match_string_exact LEN
 
 name ASUSTeK Computer
@@ -81,6 +82,7 @@ name XFX Pine Group
 name 3Com
     url www.3com.com
     wikipedia 3Com
+    ansi_color 0;97;40
     match_string 3Com
 
 name Intel Corporation
@@ -104,7 +106,7 @@ name NEC Corporation
     name_short NEC
     url www.nec.com
     ansi_color 0;94;107
-# EDID vendor code: NEC
+    note EDID vendor: NEC
     match_string_case NEC
 
 name Realtek Semiconductor
@@ -119,18 +121,18 @@ name Toshiba Corporation
     url www.toshiba.com
     ansi_color 0;91;47
     match_string Toshiba
-# EDID vendor code: TSB
+    note EDID vendor: TSB
     match_string_exact TSB
 
 name Vizio
-# EDID vendor code: VIZ
+    note EDID vendor: VIZ
     match_string_exact VIZ
 
 name ViewSonic Corporation
     name_short ViewSonic
     url www.viewsonic.com
     ansi_color 0;35;103
-# EDID vendor code: VSC
+    note EDID vendor: VSC
     match_string_exact VSC
 
 name LITE-ON
@@ -145,13 +147,13 @@ name Samsung
     url www.samsung.com
     ansi_color 0;47;30
     match_string Samsung
-# EDID vendor code: SAM
+    note EDID vendor: SAM
     match_string_exact SAM
 
 name Pioneer
     url www.pioneer-eur.com
     match_string Pioneer
-# EDID vendor code: PIO
+    note EDID vendor: PIO
     match_string_exact PIO
 
 name Plextor
@@ -177,7 +179,7 @@ name LG Display
     ansi_color 0;97;41
     match_string LG Display
     match_string LG.Philips
-# EDID vendor code: LGD
+    note EDID vendor: LGD
     match_string_exact LGD
 
 name Hitachi-LG Data Storage
@@ -196,7 +198,7 @@ name Hitachi
     url www.hitachi.com
     ansi_color 0;30;47
     match_string Hitachi
-# EDID vendor code: HTC
+    note EDID vendor: HTC
     match_string_exact HTC
 
 name Lexmark
@@ -220,7 +222,7 @@ name Panasonic Industry Company
     url www.panasonic.com
     ansi_color 0;30;107
     match_string MATSHITA
-# EDID vendor code: MEI
+    note EDID vendor: MEI
     match_string_exact MEI
 
 name Silicon Image
@@ -239,7 +241,7 @@ name Apple Computer
     url www.apple.com
     ansi_color 0;97;100
     match_string Apple
-# EDID vendor code: APP
+    note EDID vendor: APP
     match_string_exact APP
 
 name International Business Machines Corporation
@@ -255,7 +257,7 @@ name Dell Computer
     match_string Dell
 # Dell PowerEdge/PowerVault controller SCSI vendor
     match_string PE/PV
-# EDID vendor code: DEL
+    note EDID vendor: DEL
     match_string_exact DEL
 
 name Logitech International
@@ -274,7 +276,7 @@ name Sony
     ansi_color 0;30;107
     match_string Sony
 #   match_string_case CDU
-# EDID vendor code: SNY
+    note EDID vendor: SNY
     match_string_exact SNY
 
 name SanDisk
@@ -328,14 +330,14 @@ name Koninklijke Philips
     name_short PHILIPS
     url www.philips.com
     match_string Philips
-# EDID vendor code: PHL
+    note EDID vendor: PHL
     match_string_exact PHL
 
 name Sharp Corporation
     name_short SHARP
     ansi_color 0;31;107
     match_string Sharp
-# EDID vendor code: SHP
+    note EDID vendor: SHP
     match_string_exact SHP
 
 name Ralink Technology
@@ -354,10 +356,10 @@ name Hewlett-Packard
     url www.hp.com
     ansi_color 0;97;46
     match_string Hewlett-Packard
-# EDID vendor code: HWP
-    match_string_exact HWP
     match_string_case HP
-# SCSI vendor
+    note EDID vendor: HWP
+    match_string_exact HWP
+    note SCSI vendor: hp
     match_string_exact hp
 
 name TEAC Corporation
@@ -387,9 +389,13 @@ name Canon
 
 name A4tech
     url www.a4tech.com
+    wikipedia A4Tech
+    ansi_color 0;33;40
     match_string A4Tech
 
-name Alcor
+name Alcor Life Extension Foundation
+# Makes devices?
+    name_short Alcor
     url www.alcor.org
     match_string ALCOR
 
@@ -403,6 +409,7 @@ name Ours Technology
 
 name BenQ
     url www.benq.com
+    ansi_color 0;35;107
     match_string BENQ
 
 name Holtek Semiconductor
@@ -416,7 +423,7 @@ name Acer
     url www.acer.com
     ansi_color 0;32;107
     match_string Acer
-# EDID vendor code: ACR
+    note EDID vendor: ACR
     match_string_exact ACR
 
 name Quantum

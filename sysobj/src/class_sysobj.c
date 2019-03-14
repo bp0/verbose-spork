@@ -184,15 +184,24 @@ void make_vendors_lookup() {
     const GSList *vl = get_vendors_list();
     for (const GSList *l = vl; l; l = l->next) {
         const Vendor *v = l->data;
+        gchar *shortest = NULL;
         gchar lnb[128] = "";
         gchar *safe_ms = util_safe_name(v->match_string, FALSE);
-        gchar *mspath = util_build_fn(vlpath, safe_ms);
+
+        int nl = v->name ? strlen(v->name) : 0;
+        int snl = v->name_short ? strlen(v->name_short) : 0;
+        if (!nl) nl = 9999;
+        if (!snl) snl = 9999;
+        shortest = nl < snl ? v->name : v->name_short;
+
+        gchar *mspath = g_strdup_printf("%s%s, %s", vlpath, shortest, safe_ms);
         sysobj_virt_add_simple(mspath, NULL, "*", VSO_TYPE_DIR);
         sysobj_virt_add_simple(mspath, "name", v->name, VSO_TYPE_STRING);
         sysobj_virt_add_simple(mspath, "name_short", v->name_short, VSO_TYPE_STRING);
         sysobj_virt_add_simple(mspath, "url", v->url, VSO_TYPE_STRING);
         sysobj_virt_add_simple(mspath, "url_support", v->url_support, VSO_TYPE_STRING);
         sysobj_virt_add_simple(mspath, "wikipedia", v->wikipedia, VSO_TYPE_STRING);
+        sysobj_virt_add_simple(mspath, "note", v->note, VSO_TYPE_STRING);
         sysobj_virt_add_simple(mspath, "ansi_color", v->ansi_color, VSO_TYPE_STRING);
         sysobj_virt_add_simple(mspath, "match_string", v->match_string, VSO_TYPE_STRING);
         sysobj_virt_add_simple(mspath, "match_rule", match_rules[v->match_rule], VSO_TYPE_STRING);

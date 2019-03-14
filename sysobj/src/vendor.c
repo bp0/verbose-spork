@@ -58,6 +58,7 @@ static int read_from_vendor_ids(const char *path) {
     char url[VEN_BUFF_SIZE] = "";
     char url_support[VEN_BUFF_SIZE] = "";
     char wikipedia[VEN_BUFF_SIZE] = "";
+    char note[VEN_BUFF_SIZE] = "";
     char ansi_color[VEN_BUFF_SIZE] = "";
     int count = 0;
     FILE *fd;
@@ -92,6 +93,7 @@ static int read_from_vendor_ids(const char *path) {
             strcpy(url, "");
             strcpy(url_support, "");
             strcpy(wikipedia, "");
+            strcpy(note, "");
             strcpy(ansi_color, "");
         }
         if (VEN_CHK("name_short "))
@@ -102,6 +104,8 @@ static int read_from_vendor_ids(const char *path) {
             strncpy(url_support, p + tl, VEN_BUFF_SIZE - 1);
         if (VEN_CHK("wikipedia "))
             strncpy(wikipedia, p + tl, VEN_BUFF_SIZE - 1);
+        if (VEN_CHK("note "))
+            strncpy(note, p + tl, VEN_BUFF_SIZE - 1);
         if (VEN_CHK("ansi_color "))
             strncpy(ansi_color, p + tl, VEN_BUFF_SIZE - 1);
 
@@ -118,6 +122,7 @@ static int read_from_vendor_ids(const char *path) {
             v->url = dup_if_not_empty(url);
             v->url_support = dup_if_not_empty(url_support);
             v->wikipedia = dup_if_not_empty(wikipedia);
+            v->note = dup_if_not_empty(note);
             v->ansi_color = dup_if_not_empty(ansi_color);
             vendors = g_slist_prepend(vendors, v);
             count++;
@@ -134,6 +139,7 @@ static int read_from_vendor_ids(const char *path) {
             v->url = dup_if_not_empty(url);
             v->url_support = dup_if_not_empty(url_support);
             v->wikipedia = dup_if_not_empty(wikipedia);
+            v->note = dup_if_not_empty(note);
             v->ansi_color = dup_if_not_empty(ansi_color);
             vendors = g_slist_prepend(vendors, v);
             count++;
@@ -150,6 +156,7 @@ static int read_from_vendor_ids(const char *path) {
             v->url = dup_if_not_empty(url);
             v->url_support = dup_if_not_empty(url_support);
             v->wikipedia = dup_if_not_empty(wikipedia);
+            v->note = dup_if_not_empty(note);
             v->ansi_color = dup_if_not_empty(ansi_color);
             vendors = g_slist_prepend(vendors, v);
             count++;
