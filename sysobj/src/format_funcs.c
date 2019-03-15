@@ -21,6 +21,38 @@
 #include <stdlib.h>
 #include "format_funcs.h"
 
+gchar *fmt_opts_str(int fmt_opts) {
+#define fmt_opts_str_chk(fo) if (fmt_opts & fo) { flags_list = appfs(flags_list, " | ", "%s", #fo); fchk |= fo; }
+    int fchk = FMT_OPT_NONE;
+    gchar *flags_list = NULL;
+    gchar *ret = NULL;
+    fmt_opts_str_chk(FMT_OPT_PART);
+    fmt_opts_str_chk(FMT_OPT_SHORT);
+    fmt_opts_str_chk(FMT_OPT_COMPLETE);
+    fmt_opts_str_chk(FMT_OPT_LIST_ITEM);
+    fmt_opts_str_chk(FMT_OPT_NO_UNIT);
+    fmt_opts_str_chk(FMT_OPT_NO_JUNK);
+    fmt_opts_str_chk(FMT_OPT_NO_TRANSLATE);
+    fmt_opts_str_chk(FMT_OPT_NULL_IF_EMPTY);
+    fmt_opts_str_chk(FMT_OPT_NULL_IF_MISSING);
+    fmt_opts_str_chk(FMT_OPT_NULL_IF_SIMPLE_DIR);
+    fmt_opts_str_chk(FMT_OPT_ATERM);
+    fmt_opts_str_chk(FMT_OPT_PANGO);
+    fmt_opts_str_chk(FMT_OPT_HTML);
+    if (fchk != fmt_opts)
+        flags_list = appfs(flags_list, " | ", "?");
+    if (flags_list) {
+        ret = g_strdup_printf("[%x] %s", fmt_opts, flags_list);
+        g_free(flags_list);
+    } else {
+        if (fmt_opts == FMT_OPT_NONE)
+            ret = g_strdup_printf("[%x] FMT_OPT_NONE", fmt_opts);
+        else
+            ret = g_strdup_printf("[%x] ?", fmt_opts);
+    }
+    return ret;
+}
+
 #define no_unit_check_chomp(f, u)                       \
         util_strchomp_float(fmt_opts & FMT_OPT_NO_UNIT  \
         ? g_strdup_printf("%.3f", (f))                  \

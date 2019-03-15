@@ -51,6 +51,8 @@ enum {
     OF_HAS_VENDOR    = 1<<17, /* additional vendor information may be available through sysobj_vendor() */
 };
 
+gchar *flags_str(int flags);
+
 enum {
     FMT_OPT_NONE      = 0,          /* plain */
     FMT_OPT_PART      = 1,          /* part of larger string */
@@ -69,6 +71,8 @@ enum {
     FMT_OPT_PANGO  = 1<<17,  /* pango markup for gtk */
     FMT_OPT_HTML   = 1<<18,  /* html */
 };
+
+gchar *fmt_opts_str(int fmt_opts);
 
 #define FMT_OPT_OR_NULL      FMT_OPT_NULL_IF_EMPTY | FMT_OPT_NULL_IF_MISSING
 #define FMT_OPT_RAW_OR_NULL  FMT_OPT_NO_TRANSLATE | FMT_OPT_PART | FMT_OPT_NO_UNIT | FMT_OPT_OR_NULL
@@ -262,6 +266,7 @@ void sysobj_fscheck(sysobj *s);
 void sysobj_classify(sysobj *s);
 gboolean sysobj_exists(sysobj *s);
 gboolean sysobj_exists_from_fn(const gchar *base, const gchar *name);
+guint sysobj_flags(sysobj *s);
 gboolean sysobj_has_flag(sysobj *s, guint flag);
 #define sysobj_read(o, f) sysobj_read_(o, f, __FUNCTION__);
 gboolean sysobj_read_(sysobj *s, gboolean force, const char *call_func); /* TRUE = data state updated, FALSE = data state not updated. Use data.was_read to see check for read error. */

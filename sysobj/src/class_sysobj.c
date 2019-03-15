@@ -43,19 +43,8 @@ gchar *class_format(sysobj *obj, int fmt_opts) {
 }
 
 gchar *class_flags_format(sysobj *obj, int fmt_opts) {
-    gchar *flags_list = NULL;
     uint32_t flags = strtol(obj->data.str, NULL, 16);
-    if (flags & OF_CONST)
-        flags_list = appfs(flags_list, " | ", "%s", "OF_CONST");
-    if (flags & OF_BLAST)
-        flags_list = appfs(flags_list, " | ", "%s", "OF_BLAST");
-    if (flags & OF_GLOB_PATTERN)
-        flags_list = appfs(flags_list, " | ", "%s", "OF_GLOB_PATTERN");
-
-    if (flags & OF_REQ_ROOT)
-        flags_list = appfs(flags_list, " | ", "%s", "OF_REQ_ROOT");
-    if (flags & OF_HAS_VENDOR)
-        flags_list = appfs(flags_list, " | ", "%s", "OF_HAS_VENDOR");
+    gchar *flags_list = flags_str(flags);
 
     if (flags_list) {
         gchar *ret = g_strdup_printf("[%s] %s", obj->data.str, flags_list);

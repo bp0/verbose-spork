@@ -37,7 +37,8 @@ static attr_tab procs_items[] = {
 
 static sysobj_class cls_procs[] = {
   { SYSOBJ_CLASS_DEF
-    .tag = "procs", .pattern = ":/cpu", .flags = OF_GLOB_PATTERN | OF_CONST | OF_HAS_VENDOR,
+    .tag = "procs", .pattern = ":/cpu", .flags = OF_CONST | OF_HAS_VENDOR,
+    .s_label = N_("processor information"),
     .f_format = procs_format, .s_update_interval = UPDATE_INTERVAL_NEVER, .f_vendors = procs_vendors },
   { SYSOBJ_CLASS_DEF
     .tag = "procs:pack", .pattern = ":/cpu/*", .flags = OF_GLOB_PATTERN | OF_CONST,

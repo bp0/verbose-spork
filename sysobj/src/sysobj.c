@@ -485,11 +485,12 @@ const sysobj_class *class_add_simple(const gchar *pattern, const gchar *label, c
     return class_add(nc);
 }
 
-gboolean sysobj_has_flag(sysobj *s, guint flag) {
+guint sysobj_flags(sysobj *s) {
+    guint f = OF_NONE;
     if (s) {
         const sysobj_class *c = s->cls;
         if (c) {
-            guint f = c->flags;
+            f = c->flags;
             if (c->f_flags)
                 f = c->f_flags(s, c);
             else if (c->attributes) {
@@ -497,10 +498,15 @@ gboolean sysobj_has_flag(sysobj *s, guint flag) {
                 if (i != -1)
                     f |= c->attributes[i].extra_flags;
             }
-            if (f & flag)
-                return TRUE;
         }
     }
+    return f;
+}
+
+gboolean sysobj_has_flag(sysobj *s, guint flag) {
+    guint f = sysobj_flags(s);
+    if (f & flag)
+        return TRUE;
     return FALSE;
 }
 
@@ -1379,4 +1385,26 @@ int attr_tab_lookup(const attr_tab *attributes, const gchar *name) {
         if (SEQ(name, attributes[i].attr_name))
             return i;
     return -1;
+}
+
+gchar *flags_str(int flags) {
+#define flags_str_chk(fo) if (flags & fo) { flags_list = appfs(flags_list, " | ", "%s", #fo); fchk |= fo; }
+    int fchk = OF_NONE;
+    gchar *flags_list = NULL;
+    gchar *ret = NULL;
+    flags_str_chk(OF_CONST);
+    flags_str_chk(OF_BLAST);
+    flags_str_chk(OF_GLOB_PATTERN);
+    flags_str_chk(OF_REQ_ROOT);
+    flags_str_chk(OF_HAS_VENDOR);
+    if (fchk != flags)
+        flags_list = appfs(flags_list, " | ", "?");
+    if (flags_list) {
+        ret = g_strdup_printf("[%x] %s", flags, flags_list);
+        g_free(flags_list);
+    } else {
+        if (flags == OF_NONE)
+            ret = g_strdup_printf("[%x] OF_NONE", flags);
+    }
+    return ret;
 }

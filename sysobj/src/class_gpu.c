@@ -380,7 +380,7 @@ vendor_list drm_card_vendors(sysobj *obj) {
 
 static sysobj_class cls_gpu[] = {
   { SYSOBJ_CLASS_DEF
-    .tag = "gpu:list", .pattern = ":/gpu", .flags = OF_GLOB_PATTERN | OF_CONST | OF_HAS_VENDOR,
+    .tag = "gpu:list", .pattern = ":/gpu", .flags = OF_CONST | OF_HAS_VENDOR,
     .s_label = N_("list of discovered graphics processor devices"),
     .f_verify = gpu_list_verify, .f_format = gpu_list_format, .f_vendors = gpu_all_vendors },
   { SYSOBJ_CLASS_DEF

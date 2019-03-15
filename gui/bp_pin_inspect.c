@@ -422,9 +422,9 @@ void bp_pin_inspect_do(bpPinInspect *s, const pin *p, int fmt_opts) {
         suggest = g_strdup_printf(_("Consider using <a href=\"sysobj:%s\">%s</a>"), suggest_path, suggest_path);
 
     /* debug stuff */
-    gchar *data_info = g_strdup_printf("was_read = %s; is_null = %s; len = %lu byte(s)%s; guess_nbase = %d\ntag = %s",
+    gchar *data_info = g_strdup_printf("was_read = %s; is_null = %s; len = %lu byte(s)%s; guess_nbase = %d",
         p->obj->data.was_read ? "yes" : "no", (p->obj->data.any == NULL) ? "yes" : "no",
-        p->obj->data.len, p->obj->data.is_utf8 ? ", utf8" : "", p->obj->data.maybe_num, tag);
+        p->obj->data.len, p->obj->data.is_utf8 ? ", utf8" : "", p->obj->data.maybe_num);
     double ui = sysobj_update_interval(p->obj);
     gchar *uidesc = "";
     if (ui == UPDATE_INTERVAL_DEFAULT) uidesc = " (use-default)";
@@ -433,6 +433,8 @@ void bp_pin_inspect_do(bpPinInspect *s, const pin *p, int fmt_opts) {
     gchar *update = g_strdup_printf("update_interval = %0.2lfs%s, last_update = %0.4lfs", ui, uidesc, p->obj->data.stamp);
     gchar *pin_info = g_strdup_printf("hist_stat = %d, hist_len = %" PRIu64 "/%" PRIu64 ", hist_mem_size = %" PRIu64 " (%" PRIu64 " bytes)",
         p->history_status, p->history_len, p->history_max_len, p->history_mem, p->history_mem * sizeof(sysobj_data) );
+    gchar *fmt = fmt_opts_str(fmt_opts);
+    gchar *oflags = flags_str(sysobj_flags(p->obj));
 
     if (is_new) {
         gchar *ven_mt = NULL;
@@ -522,10 +524,12 @@ void bp_pin_inspect_do(bpPinInspect *s, const pin *p, int fmt_opts) {
     }
 
     mt = g_strdup_printf("debug info:\n"
+        /* fmt_opts */  "fmt: %s\n"
+        /* flags */     "flags%s: %s\n"
         /* data info */ "%s\n"
-        /* pin info */ "%s\n"
-        /* update */ "%s\n",
-        data_info, pin_info, update);
+        /* pin info */  "%s\n"
+        /* update */    "%s\n",
+        fmt, tag, oflags, data_info, pin_info, update);
     gtk_label_set_markup(GTK_LABEL(priv->lbl_debug), mt);
 
     if (is_new) {
@@ -547,6 +551,7 @@ void bp_pin_inspect_do(bpPinInspect *s, const pin *p, int fmt_opts) {
     g_free(update);
     g_free(data_info);
     g_free(pin_info);
+    g_free(fmt);
 }
 
 const pin *bp_pin_inspect_get_pin(bpPinInspect *s) {
