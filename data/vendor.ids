@@ -137,6 +137,7 @@ name ViewSonic Corporation
 
 name LITE-ON
     url www.liteonit.com
+    ansi_color 0;97;104
     match_string_case LITE-ON
 
 name Maxtor
@@ -329,6 +330,8 @@ name AVerMedia Technologies
 name Koninklijke Philips
     name_short PHILIPS
     url www.philips.com
+    match_string Philips
+    ansi_color 0;30;107
     match_string Philips
     note EDID vendor: PHL
     match_string_exact PHL
@@ -663,6 +666,42 @@ name Arch Linux
     url www.archlinux.org
     ansi_color 0;36;107
     match_string arch linux
+
+name Red Hat
+    url www.redhat.com
+    ansi_color 0;31;40
+    match_string Red Hat
+
+name Sun Microsystems
+    name_short Sun
+    wikipedia Sun Microsystems
+    match_string Sun Microsystems
+
+name Oracle Corporation
+    name_short Oracle
+    url www.oracle.com
+    ansi_color 0;97;41
+    match_string Oracle
+
+name Oracle Corporation (formerly InnoTek Systemberatung)
+    name_short Oracle (InnoTek)
+    url www.virtualbox.org/wiki/innotek
+    ansi_color 0;97;41
+    match_string InnoTek
+    url www.virtualbox.org
+    match_string VirtualBox
+    match_string_case VBOX
+
+name Slackware
+    url www.slackware.com
+    ansi_color 0;30;107
+    match_string Slackware
+
+name KDE
+    url www.kde.org
+    wikipedia KDE
+    ansi_color 0;97;104
+    match_string_case KDE
 
 name CDEmu
     url cdemu.sourceforge.io
