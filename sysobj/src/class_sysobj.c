@@ -181,7 +181,7 @@ void make_vendors_lookup() {
         int snl = v->name_short ? strlen(v->name_short) : 0;
         if (!nl) nl = 9999;
         if (!snl) snl = 9999;
-        shortest = nl < snl ? v->name : v->name_short;
+        shortest = util_safe_name(nl < snl ? v->name : v->name_short, FALSE);
 
         gchar *mspath = g_strdup_printf("%s%s, %s", vlpath, shortest, safe_ms);
         sysobj_virt_add_simple(mspath, NULL, "*", VSO_TYPE_DIR);
