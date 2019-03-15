@@ -25,11 +25,6 @@
 #include "sysobj_extras.h"
 #include "vendor.h"
 
-void link_name_dmi(const gchar *k) {
-    gchar *lt = util_build_fn(":/extern/dmidecode/best_available", k);
-    sysobj_virt_add_simple_mkpath(":/mobo/name", k, lt, VSO_TYPE_SYMLINK);
-}
-
 #define dt_get_model() sysobj_format_from_fn("/sys/firmware/devicetree/base/model", NULL, FMT_OPT_OR_NULL );
 #define dmi_get_str(k) sysobj_format_from_fn(":/extern/dmidecode/best_available", k, FMT_OPT_NO_JUNK | FMT_OPT_OR_NULL );
 static gchar *mobo_get_name(const gchar *path) {
@@ -49,11 +44,26 @@ static gchar *mobo_get_name(const gchar *path) {
     if (ret) {
         util_strstrip_double_quotes_dumb(ret);
         sysobj_virt_add_simple(":/mobo/name/model", NULL, "/sys/firmware/devicetree/base/model", VSO_TYPE_SYMLINK);
+        sysobj_virt_add_simple(":/mobo/dt_model", NULL, "/sys/firmware/devicetree/base/model", VSO_TYPE_SYMLINK);
+
+        const Vendor *v = vendor_match(ret, NULL);
+        if (v) {
+            sysobj_virt_add_vendor_match(":/mobo/name/board_vendor", NULL, v);
+            /* attempt to shorten */
+            tmp = vendor_get_shortest_name(ret);
+            sysobj_virt_add_simple(":/mobo/name/board_vendor_str", NULL, tmp, VSO_TYPE_STRING);
+            if (tmp && tmp != board_vendor) {
+                g_free(board_vendor);
+                board_vendor = g_strdup(tmp);
+            }
+        }
 
         /* TODO: vendor: try dt.ids compat for class board */
 
         goto got_mobo_ok;
     }
+
+    sysobj_virt_add_simple(":/mobo/dmi_id", NULL, "/sys/devices/virtual/dmi/id", VSO_TYPE_SYMLINK | VSO_TYPE_DYN | VSO_TYPE_AUTOLINK );
 
     /* use DMI */
     board_name = dmi_get_str("baseboard-product-name");
