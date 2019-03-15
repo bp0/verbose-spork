@@ -53,19 +53,20 @@ static int read_from_vendor_ids(const char *path) {
 #define VEN_FFWD() while(isspace((unsigned char)*p)) p++;
 #define VEN_CHK(TOK) (strncmp(p, TOK, tl = strlen(TOK)) == 0 && (ok = 1))
     char buff[VEN_BUFF_SIZE] = "";
-    char name[VEN_BUFF_SIZE] = "";
-    char name_short[VEN_BUFF_SIZE] = "";
-    char url[VEN_BUFF_SIZE] = "";
-    char url_support[VEN_BUFF_SIZE] = "";
-    char wikipedia[VEN_BUFF_SIZE] = "";
-    char note[VEN_BUFF_SIZE] = "";
-    char ansi_color[VEN_BUFF_SIZE] = "";
+
+    char vars[7][VEN_BUFF_SIZE];
+    char *name = vars[0];
+    char *name_short = vars[1];
+    char *url = vars[2];
+    char *url_support = vars[3];
+    char *wikipedia = vars[4];
+    char *note = vars[5];
+    char *ansi_color = vars[6];
+
     int count = 0;
     FILE *fd;
     char *p, *b;
-    int tl;
-    int line = -1;
-    int ok = 0;
+    int tl, line = -1, ok = 0;
 
     ven_msg_debug("using vendor.ids format loader for %s", path);
 
