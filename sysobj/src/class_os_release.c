@@ -144,6 +144,16 @@ static gchar *os_release_format(sysobj *obj, int fmt_opts) {
             }
         } else
             ret = g_strdup("Linux");
+
+        if (!ansi_color) {
+            const Vendor *v = vendor_match(ret, NULL);
+            if (v && v->ansi_color && *v->ansi_color) {
+                gchar *old = ret;
+                ret = format_with_ansi_color(old, v->ansi_color, fmt_opts);
+                g_free(old);
+            }
+        }
+
         g_free(ansi_color);
         return ret;
     }
