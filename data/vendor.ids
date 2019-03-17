@@ -727,7 +727,7 @@ name Intel Corporation
     note x86 processor vendor ID
     match_string GenuineIntel
 
-name Chengdu Haiguang IC Design
+name Chengdu Haiguang Integrated Circuit Design
     name_short Hygon
     ansi_color 0;97;104
     match_string Hygon
