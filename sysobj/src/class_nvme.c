@@ -39,7 +39,7 @@ static sysobj_class cls_nvme[] = {
     },
   { SYSOBJ_CLASS_DEF
     .tag = "nvme:attr", .pattern = "/sys/*", .flags = OF_CONST | OF_GLOB_PATTERN,
-    .v_subsystem_parent = "/sys/class/nvme" },
+    .v_subsystem_parent = "/sys/class/nvme", .attributes = nvme_items },
 };
 
 void class_nvme() {
