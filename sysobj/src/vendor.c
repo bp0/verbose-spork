@@ -341,6 +341,33 @@ vendor_list vendor_list_concat_va(int count, vendor_list vl, ...) {
     return ret;
 }
 
+vendor_list vendor_list_remove_duplicates_deep(vendor_list vl) {
+    /* vendor_list is GSList* */
+    GSList *tvl = vl;
+    GSList *evl = NULL;
+    while(tvl) {
+        const Vendor *tv = tvl->data;
+        evl = tvl->next;
+        while(evl) {
+            const Vendor *ev = evl->data;
+            if ( SEQ(ev->name, tv->name)
+                 && SEQ(ev->name_short, tv->name_short)
+                 && SEQ(ev->ansi_color, tv->ansi_color)
+                 && SEQ(ev->url, tv->url)
+                 && SEQ(ev->url_support, tv->url_support)
+                 && SEQ(ev->wikipedia, tv->wikipedia)
+                 ) {
+                GSList *next = evl->next;
+                vl = g_slist_delete_link(vl, evl);
+                evl = next;
+            } else
+                evl = evl->next;
+        }
+        tvl = tvl->next;
+    }
+    return vl;
+}
+
 vendor_list vendors_match(const gchar *id_str, ...) {
     va_list ap, ap2;
     GSList *vlp;

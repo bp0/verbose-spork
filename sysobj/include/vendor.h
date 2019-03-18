@@ -32,6 +32,7 @@ typedef GSList* vendor_list;
 vendor_list vendor_list_concat_va(int count, vendor_list vl, ...); /* count = -1 for NULL terminated list */
 #define vendor_list_free(vl) g_slist_free(vl)
 #define vendor_list_remove_duplicates(vl) gg_slist_remove_duplicates(vl)
+vendor_list vendor_list_remove_duplicates_deep(vendor_list vl);
 
 typedef struct {
   char *match_string;

@@ -440,7 +440,7 @@ void bp_pin_inspect_do(bpPinInspect *s, const pin *p, int fmt_opts) {
         gchar *ven_mt = NULL;
         int vcnt = 0;
         GSList *l = NULL, *vl = sysobj_vendors(p->obj);
-        vl = vendor_list_remove_duplicates(vl);
+        vl = vendor_list_remove_duplicates_deep(vl);
         if (vl) {
             for(l = vl; l; l = l->next) {
                 const Vendor *v = l->data;
