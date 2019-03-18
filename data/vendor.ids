@@ -714,6 +714,7 @@ name CDEmu
 name Advanced Micro Devices
     name_short AMD
     url www.amd.com
+    wikipedia Advanced Micro Devices
     ansi_color 0;97;41
     note x86 processor vendor ID
     match_string AMDisbetter!
