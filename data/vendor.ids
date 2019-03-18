@@ -686,9 +686,9 @@ name Oracle Corporation
 name Oracle Corporation (formerly InnoTek Systemberatung)
     name_short Oracle (InnoTek)
     url www.virtualbox.org/wiki/innotek
+    url_support www.virtualbox.org
     ansi_color 0;97;41
     match_string InnoTek
-    url www.virtualbox.org
     match_string VirtualBox
     match_string_case VBOX
 
