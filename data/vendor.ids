@@ -125,6 +125,8 @@ name Toshiba Corporation
     match_string_exact TSB
 
 name Vizio
+    name_short VIZIO
+    ansi_color 0;30;107
     note EDID vendor: VIZ
     match_string_exact VIZ
 
@@ -268,7 +270,9 @@ name Logitech International
     match_string Logitech
 
 name Fujitsu
+    name_short FUJITSU
     url www.fujitsu.com
+    ansi_color 0;31;107
     match_string FUJITSU
 
 name Sony
