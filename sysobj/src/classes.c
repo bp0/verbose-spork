@@ -86,6 +86,7 @@ void class_media();
 void class_intel_pstate();
 void class_nvme();
 void class_storage();
+void class_aer();
 
 void class_uptime();
 void class_dmi_id();
@@ -130,6 +131,7 @@ void class_init() {
     class_intel_pstate();
     class_nvme();
     class_storage();
+    class_aer();
 
     class_cpu();
     class_cpufreq();

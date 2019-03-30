@@ -85,6 +85,7 @@ add_library(sysobj STATIC
         sysobj/src/class_intel_pstate.c
         sysobj/src/class_nvme.c
         sysobj/src/class_storage.c
+        sysobj/src/class_aer.c
 
 # gen only
         sysobj/src/gen_arm_ids.c
