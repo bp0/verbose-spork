@@ -492,6 +492,8 @@ name Crucial (Micron)
 name Toshiba Samsung Storage Technology
     name_short TSST
     url www.tsst.co.kr
+    wikipedia Toshiba Samsung Storage Technology
+    ansi_color 0;34;107
     match_string_case TSST
 
 name Seagate Technology
