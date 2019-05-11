@@ -132,9 +132,16 @@ gboolean dmi_value_is_placeholder(sysobj *obj) {
         "NA",
         "SKU",
 
-        /* noticed on an HP x360 */
+        /* noticed on an HP x360 with Insyde BIOS */
         "Type2 - Board Asset Tag",
         "Type1ProductConfigId",
+
+        /* Toshiba Laptop with Insyde BIOS */
+        "Base Board Version",
+        "No Asset Tag",
+        "None",
+        "Type1Family",
+        "123456789",
 
         NULL
     };
