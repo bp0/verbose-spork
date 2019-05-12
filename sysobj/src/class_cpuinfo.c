@@ -188,7 +188,8 @@ static gchar *cpuinfo_describe_models(sysobj *obj, int fmt_opts) {
 static gchar *cpuinfo_format(sysobj *obj, int fmt_opts) {
     if (verify_lblnum(obj, "logical_cpu") ) {
         gchar *name = sysobj_raw_from_fn(obj->path, "model_name");
-        str_shorten(name, "Intel(R)", "Intel");
+        while(str_shorten(name, "(R)", "")) {};
+        while(str_shorten(name, "(tm)", "")) {};
         util_compress_space(name);
         gchar *vac = sysobj_raw_from_fn(obj->path, "vendor/ansi_color");
         if (vac) {
