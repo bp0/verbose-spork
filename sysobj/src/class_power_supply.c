@@ -43,7 +43,7 @@ static sysobj_class cls_power_supply[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "power_supply", .pattern = "/sys/devices/*", .flags = OF_CONST | OF_GLOB_PATTERN | OF_HAS_VENDOR,
     .v_subsystem = "/sys/class/power_supply",
-    .s_vendors_from_child = "manufacturer", .s_node_format = "{{@vendors!manufacturer}}{{model_name}}",
+    .s_vendors_from_child = "manufacturer", .s_node_format = "{{@vendors!manufacturer}}{{model_name}}{{; |type}}{{; |technology}}",
     .s_halp = power_supply_reference_markup_text },
   { SYSOBJ_CLASS_DEF
     .tag = "power_supply:attr", .pattern = "/sys/devices/*", .flags = OF_CONST | OF_GLOB_PATTERN,
