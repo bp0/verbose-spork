@@ -622,6 +622,18 @@ name Cambridge Silicon Radio
     ansi_color 0;34;107
     match_string Cambridge Silicon Radio
 
+name Suprema
+    url www.supremainc.com
+    ansi_color 0;31;107
+    match_string suprema
+
+name Patriot Memory
+    name_short Patriot
+    url www.patriotmemory.com
+    wikipedia Patriot Memory
+    ansi_color 0;97;44
+    match_string Patriot Memory
+
 #
 # BIOS manufacturers
 #
