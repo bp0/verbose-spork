@@ -820,6 +820,14 @@ name DMP Electronics
 # x86 VM vendor strings
 #
 
+name VMware
+    url www.vmware.com
+    wikipedia VMware
+    ansi_color 0;90;47
+    match_string VMware
+    note x86 VM vendor string
+    match_string VMwareVMware
+
 name KVM
     url www.linux-kvm.org
     match_string KVMKVMKVM
@@ -831,10 +839,6 @@ name Microsoft Hyper-V
 name Parallels
     url www.parallels.com
     match_string lrpepyh vr
-
-name VMware
-    url www.vmware.com
-    match_string VMwareVMware
 
 name Xen HVM
     url www.xenproject.org
