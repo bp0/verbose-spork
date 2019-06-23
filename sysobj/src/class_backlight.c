@@ -52,6 +52,14 @@ static sysobj_class cls_backlight[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "backlight:attr", .pattern = "/sys/devices/*/backlight/*/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .attributes = backlight_items, .s_halp = backlight_reference_markup_text },
+
+  { SYSOBJ_CLASS_DEF
+    .tag = "backlight:dev:intel", .pattern = "/sys/devices/*/intel_backlight", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .s_node_format = "{{bl_power}}{{actual_brightness}}",
+    .s_halp = backlight_reference_markup_text },
+  { SYSOBJ_CLASS_DEF
+    .tag = "backlight:attr:intel", .pattern = "/sys/devices/*/intel_backlight/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .attributes = backlight_items, .s_halp = backlight_reference_markup_text },
 };
 
 static gchar *backlight_format(sysobj *obj, int fmt_opts) {
