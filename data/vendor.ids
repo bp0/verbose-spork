@@ -71,6 +71,7 @@ name G.Skill International Enterprise
     ansi_color 0;31;107
     match_string G.Skill
     match_string G-Skill
+    match_string G Skill
 
 name XFX Pine Group
     name_short XFX
