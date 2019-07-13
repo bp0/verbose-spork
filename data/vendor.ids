@@ -243,6 +243,7 @@ name TDK-Micronas
     match_string Micronas
 
 name Apacer Technology
+    name_short Apacer
     match_string Apacer
 
 name Bright Micron Technology
