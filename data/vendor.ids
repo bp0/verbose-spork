@@ -746,6 +746,7 @@ name Canonical
 
 name Ubuntu
     url www.ubuntu.com
+    url_support www.ubuntu.com/support/community-support
     ansi_color 0;97;45
     match_string ubuntu
 
