@@ -34,13 +34,12 @@
 #define ven_msg(msg, ...)  fprintf (stderr, "[%s] " msg "\n", __FUNCTION__, ##__VA_ARGS__) /**/
 #define ven_msg_debug(msg, ...)  /* fprintf (stderr, "[%s] " msg "\n", __FUNCTION__, ##__VA_ARGS__) */
 
-static GSList *vendors = NULL;
-const GSList *get_vendors_list() { return vendors; }
+static vendor_list vendors = NULL;
+const vendor_list get_vendors_list() { return vendors; }
 
 /* sort the vendor list by length of match_string,
  * LONGEST first */
-gint vendor_sort (gconstpointer a, gconstpointer b) {
-    const Vendor *ap = a, *bp = b;
+int vendor_sort (const Vendor *ap, const Vendor *bp) {
     int la = 0, lb = 0;
     if (ap && ap->match_string) la = strlen(ap->match_string);
     if (bp && bp->match_string) lb = strlen(bp->match_string);
@@ -196,7 +195,7 @@ void vendor_init(void) {
     /* sort the vendor list by length of match string so that short strings are
      * less likely to incorrectly match.
      * example: ST matches ASUSTeK but SEAGATE is not ASUS */
-    vendors = g_slist_sort(vendors, vendor_sort);
+    vendors = g_slist_sort(vendors, (GCompareFunc)vendor_sort);
 }
 
 void vendor_cleanup() {
