@@ -255,23 +255,22 @@ char *strcasestr_word(const char *haystack, const char *needle) {
 
 
 const Vendor *vendor_match(const gchar *id_str, ...) {
-    va_list ap, ap2;
-    GSList *vlp;
-    gchar *tmp[2] = {NULL, NULL}, *p = NULL;
-    int tl = 0, c = 0;
     Vendor *ret = NULL;
+    va_list ap, ap2;
+    gchar *tmp = NULL, *p = NULL;
+    int tl = 0, c = 0;
 
     if (id_str) {
         c++;
         tl += strlen(id_str);
-        tmp[0] = appf(tmp[0], "%s", id_str);
+        tmp = appf(tmp, "%s", id_str);
 
         va_start(ap, id_str);
         p = va_arg(ap, gchar*);
         while(p) {
             c++;
             tl += strlen(p);
-            tmp[0] = appf(tmp[0], "%s", p);
+            tmp = appf(tmp, "%s", p);
             p = va_arg(ap, gchar*);
         }
         va_end(ap);
@@ -279,54 +278,11 @@ const Vendor *vendor_match(const gchar *id_str, ...) {
     if (!c || tl == 0)
         return NULL;
 
-    g_strstrip(tmp[0]);
-    tmp[1] = g_strdup(tmp[0]);
-
-    int pass = 1;
-    do {
-        p = strstr(tmp[1], "(former");
-        if (!p) p = strstr(tmp[1], "(nee");
-        if (p) {
-            pass = 2;
-            p++;
-            while(*p && *p != ')') { *p = ' '; p++; }
-        } else break;
-    } while(1);
-
-    for (; pass > 0; pass--) {
-        for (vlp = vendors; vlp; vlp = vlp->next) {
-            sysobj_stats.ven_iter++;
-            Vendor *v = (Vendor *)vlp->data;
-
-            if (!v) continue;
-            if (!v->match_string) continue;
-
-            switch(v->match_rule) {
-                case 0:
-                    if (strcasestr_word(tmp[pass-1], v->match_string) ) {
-                        ret = v;
-                        goto vendor_match_finish;
-                    }
-                    break;
-                case 1: /* match case */
-                    if (strstr_word(tmp[pass-1], v->match_string) ) {
-                        ret = v;
-                        goto vendor_match_finish;
-                    }
-                    break;
-                case 2: /* match exact */
-                    if (SEQ(tmp[pass-1], v->match_string) ) {
-                        ret = v;
-                        goto vendor_match_finish;
-                    }
-                    break;
-            }
-        }
+    vendor_list vl = vendors_match_core(tmp, 1);
+    if (vl) {
+        ret = (Vendor*)vl->data;
+        vendor_list_free(vl);
     }
-vendor_match_finish:
-
-    g_free(tmp[0]);
-    g_free(tmp[1]);
     return ret;
 }
 
@@ -423,22 +379,20 @@ vendor_list vendor_list_remove_duplicates_deep(vendor_list vl) {
 
 vendor_list vendors_match(const gchar *id_str, ...) {
     va_list ap, ap2;
-    GSList *vlp;
-    gchar *tmp[2] = {NULL, NULL}, *p = NULL;
+    gchar *tmp = NULL, *p = NULL;
     int tl = 0, c = 0;
-    vendor_list ret = NULL;
 
     if (id_str) {
         c++;
         tl += strlen(id_str);
-        tmp[0] = appf(tmp[0], "%s", id_str);
+        tmp = appf(tmp, "%s", id_str);
 
         va_start(ap, id_str);
         p = va_arg(ap, gchar*);
         while(p) {
             c++;
             tl += strlen(p);
-            tmp[0] = appf(tmp[0], "%s", p);
+            tmp = appf(tmp, "%s", p);
             p = va_arg(ap, gchar*);
         }
         va_end(ap);
@@ -446,19 +400,24 @@ vendor_list vendors_match(const gchar *id_str, ...) {
     if (!c || tl == 0)
         return NULL;
 
-    g_strstrip(tmp[0]);
-    tmp[1] = g_strdup(tmp[0]);
+    return vendors_match_core(tmp, -1);
+}
 
-    int pass = 1;
-    do {
-        p = strstr(tmp[1], "(former");
-        if (!p) p = strstr(tmp[1], "(nee");
-        if (p) {
-            pass = 2;
-            p++;
-            while(*p && *p != ')') { *p = ' '; p++; }
-        } else break;
-    } while(1);
+vendor_list vendors_match_core(const gchar *str, int limit) {
+    gchar *p = NULL;
+    GSList *vlp;
+    int found = 0;
+    vendor_list ret = NULL;
+
+    /* first pass (passes[1]): ignore text in (),
+     *     like (formerly ...) or (nee ...)
+     * second pass (passes[0]): full text */
+    gchar *passes[2] = { g_strdup(str), g_strdup(str) };
+    int pass = 1; p = passes[1];
+    while(p = strchr(p, '(') ) {
+        pass = 2; p++;
+        while(*p && *p != ')') { *p = ' '; p++; }
+    }
 
     for (; pass > 0; pass--) {
         for (vlp = vendors; vlp; vlp = vlp->next) {
@@ -471,34 +430,41 @@ vendor_list vendors_match(const gchar *id_str, ...) {
 
             switch(v->match_rule) {
                 case 0:
-                    if (m = strcasestr_word(tmp[pass-1], v->match_string) ) {
+                    if (m = strcasestr_word(passes[pass-1], v->match_string) ) {
                         /* clear so it doesn't match again */
                         for(char *s = m; s < m + v->ms_length; s++) *s = ' ';
                         /* add to return list */
                         ret = vendor_list_append(ret, v);
+                        found++;
+                        if (limit > 0 && found >= limit)
+                            goto vendors_match_core_finish;
                     }
                     break;
                 case 1: /* match case */
-                    if (m = strstr_word(tmp[pass-1], v->match_string) ) {
+                    if (m = strstr_word(passes[pass-1], v->match_string) ) {
                         /* clear so it doesn't match again */
                         for(char *s = m; s < m + v->ms_length; s++) *s = ' ';
                         /* add to return list */
                         ret = vendor_list_append(ret, v);
+                        found++;
+                        if (limit > 0 && found >= limit)
+                            goto vendors_match_core_finish;
                     }
                     break;
                 case 2: /* match exact */
-                    if (SEQ(tmp[pass-1], v->match_string) ) {
+                    if (SEQ(passes[pass-1], v->match_string) ) {
                         ret = vendor_list_append(ret, v);
-                        goto vendors_match_finish; /* no way for any other match to happen */
+                        found++;
+                        goto vendors_match_core_finish; /* no way for any other match to happen */
                     }
                     break;
             }
         }
     }
 
-vendors_match_finish:
+vendors_match_core_finish:
 
-    g_free(tmp[0]);
-    g_free(tmp[1]);
+    g_free(passes[0]);
+    g_free(passes[1]);
     return ret;
 }

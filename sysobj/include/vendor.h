@@ -58,4 +58,6 @@ const gchar *vendor_get_shortest_name(const gchar *id_str);
 const gchar *vendor_get_url(const gchar *id_str);
 void vendor_free(Vendor *v);
 
+vendor_list vendors_match_core(const gchar *str, int limit);
+
 #endif /* __VENDOR_H__ */
