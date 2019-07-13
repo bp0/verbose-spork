@@ -136,6 +136,13 @@ target_link_libraries(bsysinfo
         ${SYSOB_GLIB_LIBRARIES}
         sysobj
 )
+add_executable(vendortest
+        src/vendortest.c
+)
+target_link_libraries(vendortest
+        ${SYSOB_GLIB_LIBRARIES}
+        sysobj
+)
 
 if(SYSOB_GTK3_FOUND)
 add_definitions(-DGTK_DISABLE_SINGLE_INCLUDES)

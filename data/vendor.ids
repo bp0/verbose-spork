@@ -177,6 +177,12 @@ name LG Electronics
     match_string Lucky-Goldstar
     match_string_case LG
 
+name LG Electronics (formerly Goldstar)
+    name_short LG (Goldstar)
+    url www.lge.com
+    ansi_color 0;97;41
+    match_string Goldstar
+
 name LG Display
     name_short LG Display
     url www.lgdisplay.com
@@ -213,9 +219,45 @@ name Creative Labs
     url www.creative.com
     match_string Creative Labs
 
-name Conexant
-    url www.brooktree.com
+name NXP Semiconductors
+    name_short NXP
+    url www.nxp.com
+    match_string_case NXP
+
+name Synaptics (formerly Brooktree)
+    name_short Synaptics (Brooktree)
+    url www.synaptics.com
     match_string Brooktree
+
+name Synaptics (formerly Conexant Systems)
+    name_short Synaptics (Conexant)
+    url www.synaptics.com
+    match_string Conexant
+
+name Synaptics
+    url www.synaptics.com
+    match_string Synaptics
+
+name TDK-Micronas
+    url www.micronas.com
+    match_string Micronas
+
+name Apacer Technology
+    match_string Apacer
+
+name Bright Micron Technology
+    name_short BMT
+    match_string Bright Micron
+
+name HT Micron
+    match_string HT Micron
+
+name Intellitech
+    match_string Intsellitech
+
+name Harmony Semiconductor
+    name_short Harmony
+    match_string Harmony
 
 name Atheros Communications
     url www.atheros.com
