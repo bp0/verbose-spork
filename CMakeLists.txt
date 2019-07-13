@@ -40,6 +40,7 @@ add_library(sysobj STATIC
         sysobj/src/util_sysobj.c
         sysobj/src/gg_file.c
         sysobj/src/gg_slist.c
+        sysobj/src/strstr_word.c
         sysobj/src/format_funcs.c
         sysobj/src/pin.c
         sysobj/src/classes.c

@@ -29,6 +29,7 @@
 #include <unistd.h>
 #include "sysobj.h"
 #include "vendor.h"
+#include "strstr_word.h"
 
 #define ven_msg(msg, ...)  fprintf (stderr, "[%s] " msg "\n", __FUNCTION__, ##__VA_ARGS__) /**/
 #define ven_msg_debug(msg, ...)  /* fprintf (stderr, "[%s] " msg "\n", __FUNCTION__, ##__VA_ARGS__) */
@@ -214,45 +215,6 @@ void vendor_free(Vendor *v) {
         g_free(v);
     }
 }
-
-char *strstr_word(const char *haystack, const char *needle) {
-    if (!haystack || !needle)
-        return NULL;
-
-    char *c;
-    const char *p = haystack;
-    size_t l = strlen(needle);
-    while(c = strstr(p, needle)) {
-        const char *before = (c == haystack) ? NULL : c-1;
-        const char *after = c + l;
-        int ok = 1;
-        if (isalnum(*after)) ok = 0;
-        if (before && isalnum(*before)) ok = 0;
-        if (ok) return c;
-        p++;
-    }
-    return NULL;
-}
-
-char *strcasestr_word(const char *haystack, const char *needle) {
-    if (!haystack || !needle)
-        return NULL;
-
-    char *c;
-    const char *p = haystack;
-    size_t l = strlen(needle);
-    while(c = strcasestr(p, needle)) {
-        const char *before = (c == haystack) ? NULL : c-1;
-        const char *after = c + l;
-        int ok = 1;
-        if (isalnum(*after)) ok = 0;
-        if (before && isalnum(*before)) ok = 0;
-        if (ok) return c;
-        p++;
-    }
-    return NULL;
-}
-
 
 const Vendor *vendor_match(const gchar *id_str, ...) {
     Vendor *ret = NULL;
