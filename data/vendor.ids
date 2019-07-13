@@ -254,7 +254,7 @@ name HT Micron
     match_string HT Micron
 
 name Intellitech
-    match_string Intsellitech
+    match_string Intellitech
 
 name Harmony Semiconductor
     name_short Harmony
@@ -683,6 +683,14 @@ name Patriot Memory
     wikipedia Patriot Memory
     ansi_color 0;97;44
     match_string Patriot Memory
+
+name SK Hynix
+    name_short SK hynix
+    url www.skhynix.com
+    wikipedia SK Hynix
+    ansi_color 0;31;43
+    match_string Hynix
+    match_string Hyundai
 
 #
 # BIOS manufacturers
