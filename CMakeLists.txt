@@ -92,6 +92,7 @@ add_library(sysobj STATIC
 # gen only
         sysobj/src/gen_arm_ids.c
         sysobj/src/gen_sdio_ids.c
+        sysobj/src/gen_sdcard_ids.c
         sysobj/src/gen_dt.c
         sysobj/src/gen_sysobj.c
         sysobj/src/gen_usb_ids.c
@@ -198,4 +199,5 @@ configure_file("data/dt.ids" ${CMAKE_CURRENT_BINARY_DIR}/ COPYONLY)
 configure_file("data/vendor.ids" ${CMAKE_CURRENT_BINARY_DIR}/ COPYONLY)
 configure_file("data/arm.ids" ${CMAKE_CURRENT_BINARY_DIR}/ COPYONLY)
 configure_file("data/sdio.ids" ${CMAKE_CURRENT_BINARY_DIR}/ COPYONLY)
+configure_file("data/sdcard.ids" ${CMAKE_CURRENT_BINARY_DIR}/ COPYONLY)
 configure_file("data/x86.funfacts" ${CMAKE_CURRENT_BINARY_DIR}/ COPYONLY)

@@ -91,7 +91,7 @@ gchar *mmc_format_id(sysobj *obj, int fmt_opts) {
     if (SEQ(obj->name, "oemid") ) {
         int id = strtol(obj->data.str, NULL, 16);
         char c2 = id & 0xff, c1 = (id >> 8) & 0xff;
-        gchar *vstr = sysobj_format_from_printf(fmt_opts | FMT_OPT_OR_NULL, ":/lookup/sdio.ids/OEMID %04x/name", id);
+        gchar *vstr = sysobj_format_from_printf(fmt_opts | FMT_OPT_OR_NULL, ":/lookup/sdcard.ids/OEMID %04x/name", id);
         gchar *ven_tag = vstr ? vendor_match_tag(vstr, fmt_opts) : NULL;
         if (ven_tag) {
             g_free(vstr);
@@ -104,7 +104,7 @@ gchar *mmc_format_id(sysobj *obj, int fmt_opts) {
     }
     if (SEQ(obj->name, "manfid") ) {
         int id = strtol(obj->data.str, NULL, 16);
-        gchar *vstr = sysobj_format_from_printf(fmt_opts | FMT_OPT_OR_NULL, ":/lookup/sdio.ids/MANFID %06x/name", id);
+        gchar *vstr = sysobj_format_from_printf(fmt_opts | FMT_OPT_OR_NULL, ":/lookup/sdcard.ids/MANFID %06x/name", id);
         gchar *ven_tag = vstr ? vendor_match_tag(vstr, fmt_opts) : NULL;
         if (ven_tag) {
             g_free(vstr);
@@ -131,13 +131,13 @@ vendor_list mmc_vendor_field(sysobj *obj) {
 
     if (SEQ(obj->name, "oemid") ) {
         int id = strtol(obj->data.str, NULL, 16);
-        gchar *cstr = sysobj_raw_from_printf(":/lookup/sdio.ids/OEMID %04x/name", id);
+        gchar *cstr = sysobj_raw_from_printf(":/lookup/sdcard.ids/OEMID %04x/name", id);
         vl = vendor_list_append(NULL, vendor_match(cstr, NULL));
         g_free(cstr);
     }
     if (SEQ(obj->name, "manfid") ) {
         int id = strtol(obj->data.str, NULL, 16);
-        gchar *cstr = sysobj_raw_from_printf(":/lookup/sdio.ids/MANFID %06x/name", id);
+        gchar *cstr = sysobj_raw_from_printf(":/lookup/sdcard.ids/MANFID %06x/name", id);
         vl = vendor_list_append(NULL, vendor_match(cstr, NULL));
         g_free(cstr);
     }

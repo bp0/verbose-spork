@@ -40,6 +40,13 @@ const gchar sdio_ids_reference_markup_text[] =
     BULLET REFLINK("https://github.com/systemd/systemd/blob/master/hwdb/sdio.ids")
     "\n";
 
+const gchar sdcard_ids_reference_markup_text[] =
+    " Items are generated on-demand and cached.\n"
+    "\n"
+    " :/lookup/sdcard.ids/MANID {vendor}/name\n"
+    " :/lookup/sdcard.ids/OEMID {vendor}/name\n"
+    "\n";
+
 const gchar dt_ids_reference_markup_text[] =
     " Items are generated on-demand and cached.\n"
     "\n"
@@ -79,6 +86,15 @@ static sysobj_class cls_lookup[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "sdio.ids:id", .pattern = ":/lookup/sdio.ids/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .s_halp = sdio_ids_reference_markup_text, .s_label = "sdio.ids lookup result",
+    .f_format = fmt_node_name },
+
+  { SYSOBJ_CLASS_DEF
+    .tag = "sdcard.ids", .pattern = ":/lookup/sdcard.ids", .flags = OF_CONST,
+    .s_halp = sdcard_ids_reference_markup_text, .s_label = "sdcard.ids lookup virtual tree",
+    .s_update_interval = 4.0 },
+  { SYSOBJ_CLASS_DEF
+    .tag = "sdcard.ids:id", .pattern = ":/lookup/sdcard.ids/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .s_halp = sdcard_ids_reference_markup_text, .s_label = "sdcard.ids lookup result",
     .f_format = fmt_node_name },
 
   { SYSOBJ_CLASS_DEF

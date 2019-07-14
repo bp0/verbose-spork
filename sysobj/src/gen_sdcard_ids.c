@@ -18,22 +18,21 @@
  *
  */
 
-/* Generator for ids from the sdio.ids file (https://github.com/systemd/systemd/blob/master/hwdb/sdio.ids)
- *  :/lookup/sdio.ids
+/* Generator for ids from the sdcard.ids file
+ *  :/lookup/sdcard.ids
  *
  * Items are generated on-demand and cached.
  *
- * :/lookup/sdio.ids/<vendor>/name
- * :/lookup/sdio.ids/<vendor>/<device>/name
- * :/lookup/sdio.ids/C <class>/name
+ * :/lookup/sdcard.ids/MANID <id>/name
+ * :/lookup/sdcard.ids/OEMID <id>/name
  *
  */
 #include "sysobj.h"
 #include "util_ids.h"
 
-static gchar *sdio_ids_file = NULL;
+static gchar *sdcard_ids_file = NULL;
 
-#define sdio_msg(msg, ...)  fprintf (stderr, "[%s] " msg "\n", __FUNCTION__, ##__VA_ARGS__) /**/
+#define sdcard_msg(msg, ...)  fprintf (stderr, "[%s] " msg "\n", __FUNCTION__, ##__VA_ARGS__) /**/
 
 enum {
     PT_NONE = 0,
@@ -46,23 +45,19 @@ static int _path_type(const gchar *path) {
     int mc = 0;
     unsigned int i1, i2;
 
-    mc = sscanf(path, ":/lookup/sdio.ids/C %02x/%4s", &i1, name);
+    mc = sscanf(path, ":/lookup/sdcard.ids/MANFID %06x/%4s", &i1, name);
     if (mc == 2 && SEQ(name, "name") ) return PT_NAME;
     if (mc == 1) return PT_DIR;
 
-    mc = sscanf(path, ":/lookup/sdio.ids/%04x/%04x/%4s", &i1, &i2, name);
-    if (mc == 3 && SEQ(name, "name") ) return PT_NAME;
-    if (mc == 2) return PT_DIR;
-
-    mc = sscanf(path, ":/lookup/sdio.ids/%04x/%4s", &i1, name);
+    mc = sscanf(path, ":/lookup/sdcard.ids/OEMID %04x/%4s", &i1, name);
     if (mc == 2 && SEQ(name, "name") ) return PT_NAME;
     if (mc == 1) return PT_DIR;
 
     return PT_NONE;
 }
 
-int gen_sdio_ids_lookup_type(const gchar *path) {
-    if (SEQ(path, ":/lookup/sdio.ids") )
+int gen_sdcard_ids_lookup_type(const gchar *path) {
+    if (SEQ(path, ":/lookup/sdcard.ids") )
         return VSO_TYPE_BASE;
     switch(_path_type(path)) {
         case PT_DIR: return VSO_TYPE_DIR;
@@ -71,23 +66,23 @@ int gen_sdio_ids_lookup_type(const gchar *path) {
     return VSO_TYPE_NONE;
 }
 
-gchar *gen_sdio_ids_lookup_value(const gchar *path) {
+gchar *gen_sdcard_ids_lookup_value(const gchar *path) {
     if (!path) {
         /* cleanup */
-        g_free(sdio_ids_file);
-        sdio_ids_file = NULL;
+        g_free(sdcard_ids_file);
+        sdcard_ids_file = NULL;
         return NULL;
     }
 
     /* find the data file, if not already found */
-    if (!sdio_ids_file)
-        sdio_ids_file = sysobj_find_data_file("sdio.ids");
-    if (!sdio_ids_file) {
-        sdio_msg("sdio.ids file not found");
+    if (!sdcard_ids_file)
+        sdcard_ids_file = sysobj_find_data_file("sdcard.ids");
+    if (!sdcard_ids_file) {
+        sdcard_msg("sdcard.ids file not found");
         return FALSE;
     }
 
-    const gchar *qpath = path + strlen(":/lookup/sdio.ids");
+    const gchar *qpath = path + strlen(":/lookup/sdcard.ids");
     if (!qpath)
         return NULL; /* auto-dir for lookup root */
 
@@ -97,10 +92,10 @@ gchar *gen_sdio_ids_lookup_value(const gchar *path) {
     int pt = _path_type(path);
     if (!pt) return NULL; /* type will have been VSO_TYPE_NONE */
 
-    scan_ids_file(sdio_ids_file, qpath, &result, -1);
+    scan_ids_file(sdcard_ids_file, qpath, &result, -1);
 
     gchar **qparts = g_strsplit(qpath, "/", -1);
-    gchar *svo_path = g_strdup(":/lookup/sdio.ids");
+    gchar *svo_path = g_strdup(":/lookup/sdcard.ids");
     for(int i = 0; qparts[i]; i++) {
         if (!SEQ(qparts[i], "name") ) {
             sysobj_virt_add_simple(svo_path, qparts[i], "*", VSO_TYPE_DIR);
@@ -116,12 +111,12 @@ gchar *gen_sdio_ids_lookup_value(const gchar *path) {
 }
 
 static sysobj_virt vol[] = {
-    { .path = ":/lookup/sdio.ids", .str = "*",
+    { .path = ":/lookup/sdcard.ids", .str = "*",
       .type =  VSO_TYPE_DIR | VSO_TYPE_DYN | VSO_TYPE_CONST | VSO_TYPE_CLEANUP,
-      .f_get_data = gen_sdio_ids_lookup_value, .f_get_type = gen_sdio_ids_lookup_type },
+      .f_get_data = gen_sdcard_ids_lookup_value, .f_get_type = gen_sdcard_ids_lookup_type },
 };
 
-void gen_sdio_ids() {
+void gen_sdcard_ids() {
     /* add virtual sysobj */
     for (int i = 0; i < (int)G_N_ELEMENTS(vol); i++)
         sysobj_virt_add(&vol[i]);
