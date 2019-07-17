@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
             //if (!strstr(vendor_str, "former")) continue;
             gchar *mstr = vendor_match_tag(vendor_str, FMT_OPT_ATERM);
             if (mstr)
-                printf("-- %s  ===  %s\n", vendor_str, mstr );
+                printf("-- [%02d,%03d] %s  ===  %s\n", b,i, vendor_str, mstr );
             g_free(mstr);
         }
     }

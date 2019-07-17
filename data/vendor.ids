@@ -621,11 +621,27 @@ name Embest Technology
     ansi_color 0;96;44
     match_string Embest
 
+# JEDEC mfgr [1][78]
 name Transcend Information
     name_short Transcend
     url transcend-info.com
     ansi_color 0;31;47
+    match_string Transcend Information
+    # More likely this one is T. Information than T. Technology
     match_string Transcend
+
+# JEDEC mfgr [7][105]
+name Transcend Technology
+    name_short Transcend
+    match_string Transcend Technology
+
+# JEDEC mfgr [0][64]
+name Infineon Technologies
+    name_short infineon
+    url www.infineon.com
+    wikipedia Infineon Technologies
+    ansi_color 0;34;107
+    match_string Infineon
 
 name ADATA Technology
     name_short ADATA

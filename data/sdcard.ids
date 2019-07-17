@@ -13,8 +13,8 @@ MANFID 000027 Phison
 MANFID 000028 Lexar
 MANFID 000031 Silicon Power
 MANFID 000041 Kingston
-MANFID 000074 Transcend
-MANFID 000076 Patriot
+MANFID 000074 Transcend Information
+MANFID 000076 Patriot Memory
 MANFID 000082 Sony
 MANFID 00009c Angelbird / Hoodman
 
@@ -33,7 +33,7 @@ OEMID 4144 ADATA # "AD"
 OEMID 4245 Lexar / Angelbird / Hoodman # "BE"
 OEMID 4a45 Transcend # "JE"
 OEMID 4a54 Sony # "JT"
-OEMID 4a60 Transcend # "J`"
+OEMID 4a60 Transcend Information # "J`"
 OEMID 5041 Panasonic # "PA"
 OEMID 5048 Phison # "PH"
 OEMID 5054 SanDisk # "PT"
