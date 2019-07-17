@@ -643,6 +643,20 @@ name Infineon Technologies
     ansi_color 0;34;107
     match_string Infineon
 
+name Cypress Semiconductor
+    name_short Cypress
+    url cypress.com
+    wikipedia Cypress Semiconductor
+    ansi_color 0;36;107
+    match_string Cypress
+
+name Renesas Electronics
+    name_short Renesas
+    url www.renesas.com
+    wikipedia Renesas Electronics
+    ansi_color 0;97;44
+    match_string Renesas
+
 name ADATA Technology
     name_short ADATA
     ansi_color 0;34;47
