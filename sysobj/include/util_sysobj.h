@@ -28,6 +28,8 @@
 #include <unistd.h>  /* for getuid() */
 #include <ctype.h>   /* for isxdigit(), etc. */
 
+#include "appf.h"
+
 /* string eq */
 #define SEQ(s1, s2) (g_strcmp0((s1), (s2)) == 0)
 
@@ -53,14 +55,5 @@ gchar *util_safe_name(const gchar *name, gboolean lower_case); /* make a string 
 
 /* to quiet -Wunused-parameter nagging.  */
 #define PARAM_NOT_UNUSED(p) (void)p
-
-/* appends an element to a string, adding a space (or sep)
- * if the string is not empty.
- * ex: ret = appf(ret, "%s", list_item);
- * ex: ret = appfs(ret, "\n", "%s=%s", name, value); */
-gchar *appf(gchar *src, const gchar *fmt, ...)
-    __attribute__ ((format (printf, 2, 3)));
-gchar *appfs(gchar *src, const gchar *sep, const gchar *fmt, ...)
-    __attribute__ ((format (printf, 3, 4)));
 
 #endif

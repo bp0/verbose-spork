@@ -295,33 +295,3 @@ gchar *util_find_line_value(gchar *data, gchar *key, gchar delim) {
     g_strfreev(lines);
     return ret;
 }
-
-gchar *appf(gchar *src, const gchar *fmt, ...) {
-    gchar *buf, *ret;
-    va_list args;
-    va_start(args, fmt);
-    buf = g_strdup_vprintf(fmt, args);
-    va_end(args);
-    if (src != NULL) {
-        ret = g_strdup_printf("%s%s%s", src, strlen(src) ? " " : "", buf);
-        g_free(buf);
-        g_free(src);
-    } else
-        ret = buf;
-    return ret;
-}
-
-gchar *appfs(gchar *src, const gchar *sep, const gchar *fmt, ...) {
-    gchar *buf, *ret;
-    va_list args;
-    va_start(args, fmt);
-    buf = g_strdup_vprintf(fmt, args);
-    va_end(args);
-    if (src != NULL) {
-        ret = g_strdup_printf("%s%s%s", src, strlen(src) ? sep : "", buf);
-        g_free(buf);
-        g_free(src);
-    } else
-        ret = buf;
-    return ret;
-}
