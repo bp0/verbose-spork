@@ -22,7 +22,7 @@
 #include "format_funcs.h"
 
 gchar *fmt_opts_str(int fmt_opts) {
-#define fmt_opts_str_chk(fo) if (fmt_opts & fo) { flags_list = appfs(flags_list, " | ", "%s", #fo); fchk |= fo; }
+#define fmt_opts_str_chk(fo) if (fmt_opts & fo) { flags_list = appf(flags_list, " | ", "%s", #fo); fchk |= fo; }
     int fchk = FMT_OPT_NONE;
     gchar *flags_list = NULL;
     gchar *ret = NULL;
@@ -40,7 +40,7 @@ gchar *fmt_opts_str(int fmt_opts) {
     fmt_opts_str_chk(FMT_OPT_PANGO);
     fmt_opts_str_chk(FMT_OPT_HTML);
     if (fchk != fmt_opts)
-        flags_list = appfs(flags_list, " | ", "?");
+        flags_list = appf(flags_list, " | ", "?");
     if (flags_list) {
         ret = g_strdup_printf("[%x] %s", fmt_opts, flags_list);
         g_free(flags_list);
@@ -398,7 +398,7 @@ gchar *fmt_frequencies_list_khz(sysobj *obj, int fmt_opts) {
             : fmt_opts | FMT_OPT_PART;
         gchar *tmp = format_data(list[i], -1, fmt_khz_to_mhz, fo);
         util_strchomp_float(tmp);
-        ret = appfs(ret, sep, "%s", tmp);
+        ret = appf(ret, sep, "%s", tmp);
         g_free(tmp);
     }
     g_strfreev(list);
@@ -425,7 +425,7 @@ gchar *fmt_frequencies_list_hz(sysobj *obj, int fmt_opts) {
             : fmt_opts | FMT_OPT_PART;
         gchar *tmp = format_data(list[i], -1, fmt_hz_to_mhz, fo);
         util_strchomp_float(tmp);
-        ret = appfs(ret, sep, "%s", tmp);
+        ret = appf(ret, sep, "%s", tmp);
         g_free(tmp);
     }
     g_strfreev(list);
@@ -450,7 +450,7 @@ gchar *fmt_word_list_spaces(sysobj *obj, int fmt_opts) {
         int fo = (oneline && i != len-1)
             ? fmt_opts | FMT_OPT_PART | FMT_OPT_NO_UNIT
             : fmt_opts | FMT_OPT_PART;
-        ret = appfs(ret, sep, "%s", list[i]);
+        ret = appf(ret, sep, "%s", list[i]);
     }
     g_strfreev(list);
     if (ret)
@@ -503,13 +503,13 @@ gchar *formatted_time_span(double real_seconds, gboolean short_version, gboolean
     }
 
     if (days > 0)
-        ret = appfs(ret, sep, days_fmt, days);
+        ret = appf(ret, sep, days_fmt, days);
     if (ret || hours > 0)
-        ret = appfs(ret, sep, hours_fmt, hours);
+        ret = appf(ret, sep, hours_fmt, hours);
     if (ret || minutes > 0 || !include_seconds)
-        ret = appfs(ret, sep, minutes_fmt, minutes);
+        ret = appf(ret, sep, minutes_fmt, minutes);
     if (include_seconds)
-        ret = appfs(ret, sep, seconds_fmt, seconds);
+        ret = appf(ret, sep, seconds_fmt, seconds);
 
     return ret;
 }
@@ -599,7 +599,7 @@ gchar *safe_ansi_color(gchar *ansi_color, gboolean free_in) {
             || ( c >= 40 && c <= 47)
             || ( c >= 90 && c <= 97)
             || ( c >= 100 && c <= 107) ) {
-                ret = appfs(ret, ";", "%s", codes[i]);
+                ret = appf(ret, ";", "%s", codes[i]);
         }
     }
     g_strfreev(codes);
@@ -685,7 +685,7 @@ gchar *format_node_fmt_str(sysobj *obj, int fmt_opts, const gchar *comp_str) {
         s = strstr(p, "{{");
         if (!s) {
             if (strlen(p))
-                ret = appfs(ret, "", "%s", p);
+                ret = appf(ret, "", "%s", p);
             break;
         }
         b = s + 2;
@@ -693,7 +693,7 @@ gchar *format_node_fmt_str(sysobj *obj, int fmt_opts, const gchar *comp_str) {
         while(*b == '{') b++;
         *(b - 2) = 0;
         if (strlen(p))
-            ret = appfs(ret, "", "%s", p);
+            ret = appf(ret, "", "%s", p);
         p = b;
         /* p starts {{ }} section */
         e = strstr(p, "}}");
@@ -717,7 +717,7 @@ gchar *format_node_fmt_str(sysobj *obj, int fmt_opts, const gchar *comp_str) {
                 gchar *vtags = vendor_list_ribbon(vl, fmt_opts);
                 vendor_list_free(vl);
                 if (vtags) {
-                    ret = appfs(ret, sep, "%s", vtags);
+                    ret = appf(ret, sep, "%s", vtags);
                     g_free(vtags);
                 } else if (x) {
                     /* set up to handle normal one */
@@ -728,7 +728,7 @@ gchar *format_node_fmt_str(sysobj *obj, int fmt_opts, const gchar *comp_str) {
             if (!special) {
                 gchar *fc = sysobj_format_from_fn(obj->path, cpath, fmt_opts | FMT_OPT_PART | FMT_OPT_OR_NULL);
                 if (fc)
-                    ret = appfs(ret, sep, "%s", fc);
+                    ret = appf(ret, sep, "%s", fc);
                 g_free(fc);
             }
         }
@@ -786,7 +786,7 @@ gchar *vendor_list_ribbon(const vendor_list vl_in, int fmt_opts) {
         /* vl is now a regular GSList of formatted vendor tag strings */
         vl = gg_slist_remove_duplicates_custom(vl, (GCompareFunc)g_strcmp0);
         for(l = vl; l; l = l->next)
-            ret = appf(ret, "%s", (gchar*)l->data);
+            ret = appfsp(ret, "%s", (gchar*)l->data);
     }
     g_slist_free_full(vl, g_free);
     return ret;

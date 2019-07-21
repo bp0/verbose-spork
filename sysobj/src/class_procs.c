@@ -95,9 +95,9 @@ static gchar *summarize_children_by_counting_uniq_format_strings(sysobj *obj, in
         } else {
             if(g_strcmp0(cur_str, model) ) {
                 if (cur_count > 1 && !nox)
-                    ret = appfs(ret, " + ", "%dx %s", cur_count, cur_str);
+                    ret = appf(ret, " + ", "%dx %s", cur_count, cur_str);
                 else
-                    ret = appfs(ret, " + ", "%s", cur_str);
+                    ret = appf(ret, " + ", "%s", cur_str);
                 cur_str = model;
                 cur_count = 1;
             } else
@@ -105,9 +105,9 @@ static gchar *summarize_children_by_counting_uniq_format_strings(sysobj *obj, in
         }
     }
     if (cur_count > 1 && !nox)
-        ret = appfs(ret, " + ", "%dx %s", cur_count, cur_str);
+        ret = appf(ret, " + ", "%dx %s", cur_count, cur_str);
     else
-        ret = appfs(ret, " + ", "%s", cur_str);
+        ret = appf(ret, " + ", "%s", cur_str);
     g_slist_free_full(models, g_free);
     return ret;
 }
@@ -155,29 +155,29 @@ static gchar *procs_format(sysobj *obj, int fmt_opts) {
 
         if (fmt_opts & FMT_OPT_COMPLETE) {
             if (soc_vendor) {
-                ret = appf(ret, "%s", soc_vendor);
-                ret = appf(ret, "%s", soc_name);
+                ret = appfsp(ret, "%s", soc_vendor);
+                ret = appfsp(ret, "%s", soc_name);
             }
             if (msum)
-                ret = appfs(ret, "\n", "%s", msum);
+                ret = appf(ret, "\n", "%s", msum);
             if (!threads && cisum)
-                ret = appfs(ret, "\n", "%s", cisum);
+                ret = appf(ret, "\n", "%s", cisum);
             if (funfacts)
-                ret = appfs(ret, "\n", "%s", funfacts);
-            ret = appfs(ret, "\n", "%s", tsum);
+                ret = appf(ret, "\n", "%s", funfacts);
+            ret = appf(ret, "\n", "%s", tsum);
         } else {
             /* not FMT_OPT_COMPLETE */
             if (soc_vendor) {
-                ret = appf(ret, "%s", soc_vendor);
-                ret = appf(ret, "%s", soc_name);
+                ret = appfsp(ret, "%s", soc_vendor);
+                ret = appfsp(ret, "%s", soc_name);
             }
             else if (msum)
-                ret = appf(ret, "%s", msum);
+                ret = appfsp(ret, "%s", msum);
             else if (!threads && cisum)
-                ret = appf(ret, "%s", cisum);
+                ret = appfsp(ret, "%s", cisum);
 
             if (!ret)
-                ret = appf(ret, "%s", tsum);
+                ret = appfsp(ret, "%s", tsum);
         }
 
         g_free(soc_name);

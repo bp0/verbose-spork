@@ -671,7 +671,7 @@ static gchar *gpu_data(const gchar *path) {
         gchar *ret = HIDE_STUFF ? g_strdup("") : g_strdup("found\n" "list\n");
         for(GSList *l = gpu_list; l; l = l->next) {
             gpud *g = (gpud*)l->data;
-            ret = appfs(ret, "\n", "%s", g->name);
+            ret = appf(ret, "\n", "%s", g->name);
         }
         return ret;
     }

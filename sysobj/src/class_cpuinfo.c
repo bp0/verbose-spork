@@ -173,14 +173,14 @@ static gchar *cpuinfo_describe_models(sysobj *obj, int fmt_opts) {
             cur_count = 1;
         } else {
             if(g_strcmp0(cur_str, model) ) {
-                ret = appfs(ret, " + ", "%dx %s", cur_count, cur_str);
+                ret = appf(ret, " + ", "%dx %s", cur_count, cur_str);
                 cur_str = model;
                 cur_count = 1;
             } else
                 cur_count++;
         }
     }
-    ret = appfs(ret, " + ", "%dx %s", cur_count, cur_str);
+    ret = appf(ret, " + ", "%dx %s", cur_count, cur_str);
     g_slist_free_full(models, g_free);
     return ret;
 }

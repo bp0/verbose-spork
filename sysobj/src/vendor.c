@@ -224,14 +224,14 @@ const Vendor *vendor_match(const gchar *id_str, ...) {
     if (id_str) {
         c++;
         tl += strlen(id_str);
-        tmp = appf(tmp, "%s", id_str);
+        tmp = appfsp(tmp, "%s", id_str);
 
         va_start(ap, id_str);
         p = va_arg(ap, gchar*);
         while(p) {
             c++;
             tl += strlen(p);
-            tmp = appf(tmp, "%s", p);
+            tmp = appfsp(tmp, "%s", p);
             p = va_arg(ap, gchar*);
         }
         va_end(ap);
@@ -346,14 +346,14 @@ vendor_list vendors_match(const gchar *id_str, ...) {
     if (id_str) {
         c++;
         tl += strlen(id_str);
-        tmp = appf(tmp, "%s", id_str);
+        tmp = appfsp(tmp, "%s", id_str);
 
         va_start(ap, id_str);
         p = va_arg(ap, gchar*);
         while(p) {
             c++;
             tl += strlen(p);
-            tmp = appf(tmp, "%s", p);
+            tmp = appfsp(tmp, "%s", p);
             p = va_arg(ap, gchar*);
         }
         va_end(ap);

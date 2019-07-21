@@ -62,7 +62,7 @@ gchar *mmc_format_oemid_old(sysobj *obj, int fmt_opts) {
     }
     if (vstr) {
         gchar *ven_tag = vendor_match_tag(vstr, fmt_opts);
-        ret = appf(ret, "%s", ven_tag ? ven_tag : vstr);
+        ret = appfsp(ret, "%s", ven_tag ? ven_tag : vstr);
         g_free(ven_tag);
     }
     return ret;

@@ -249,31 +249,31 @@ gchar *edid_format(sysobj *obj, int fmt_opts) {
         if (fmt_opts & FMT_OPT_PART || !(fmt_opts & FMT_OPT_COMPLETE) ) {
             gchar *ven_tag = vendor_match_tag(id.ven, fmt_opts);
             if (ven_tag)
-                ret = appf(ret, "%s", ven_tag);
+                ret = appfsp(ret, "%s", ven_tag);
             else
-                ret = appf(ret, "%s", id.ven);
+                ret = appfsp(ret, "%s", id.ven);
             g_free(ven_tag);
 
             if (id.name)
-                ret = appf(ret, "%s", id.name);
+                ret = appfsp(ret, "%s", id.name);
             else if (ret) {
-                ret = appf(ret, "%s %s", id.a_or_d ? "Digital" : "Analog", "Display");
+                ret = appfsp(ret, "%s %s", id.a_or_d ? "Digital" : "Analog", "Display");
             }
 
         } else if (fmt_opts & FMT_OPT_COMPLETE) {
-            ret = appfs(ret, "\n", "edid_version: %d.%d", id.ver_major, id.ver_minor);
-            ret = appfs(ret, "\n", "mfg: %s, model: %u, n_serial: %u, dom: week %d of %d", id.ven, id.product, id.n_serial, id.week, id.year);
+            ret = appf(ret, "\n", "edid_version: %d.%d", id.ver_major, id.ver_minor);
+            ret = appf(ret, "\n", "mfg: %s, model: %u, n_serial: %u, dom: week %d of %d", id.ven, id.product, id.n_serial, id.week, id.year);
 
-            ret = appfs(ret, "\n", "type: %s", id.a_or_d ? "digital" : "analog");
+            ret = appf(ret, "\n", "type: %s", id.a_or_d ? "digital" : "analog");
             if (id.bpc)
-                ret = appfs(ret, "\n", "bits per color channel: %d", id.bpc);
+                ret = appf(ret, "\n", "bits per color channel: %d", id.bpc);
 
             if (id.horiz_cm && id.vert_cm)
-                ret = appfs(ret, "\n", "size: %d cm × %d cm", id.horiz_cm, id.vert_cm);
-            ret = appfs(ret, "\n", "checkbyte: %d", id.check);
+                ret = appf(ret, "\n", "size: %d cm × %d cm", id.horiz_cm, id.vert_cm);
+            ret = appf(ret, "\n", "checkbyte: %d", id.check);
 
             for(int i = 0; i < 4; i++)
-                ret = appfs(ret, "\n", "descriptor[%d] (%s): %s", i, _(edid_descriptor_type(id.d_type[i])), *id.d_text[i] ? id.d_text[i] : "{...}");
+                ret = appf(ret, "\n", "descriptor[%d] (%s): %s", i, _(edid_descriptor_type(id.d_type[i])), *id.d_text[i] ? id.d_text[i] : "{...}");
 
         }
     }
@@ -306,9 +306,9 @@ static gchar *fmt_amdgpu_val(sysobj *obj, int fmt_opts) {
                     *c = 0;
                     if (!want_complete && a > c) *a = 0;
                     c = g_strstrip(c+1);
-                    ret = appfs(ret, "\n", "[%s] %s", list[i], c);
+                    ret = appf(ret, "\n", "[%s] %s", list[i], c);
                 } else
-                    ret = appfs(ret, "\n", "%s", list[i]);
+                    ret = appf(ret, "\n", "%s", list[i]);
         }
     }
     g_strfreev(list);
@@ -331,10 +331,10 @@ static gchar *fmt_amdgpu_clk(sysobj *obj, int fmt_opts) {
                     c = g_strstrip(c+1);
                     double mhz = c ? strtod(c, NULL) : 0.0;
                     ret = (fmt_opts & FMT_OPT_NO_UNIT)
-                        ? appfs(ret, "\n", "%0.3lf", mhz)
-                        : appfs(ret, "\n", "[%s] %0.3lf %s%s", list[i], mhz, _("MHz"), (a && want_complete) ? " *" : "");
+                        ? appf(ret, "\n", "%0.3lf", mhz)
+                        : appf(ret, "\n", "[%s] %0.3lf %s%s", list[i], mhz, _("MHz"), (a && want_complete) ? " *" : "");
                 } else
-                    ret = appfs(ret, "\n", "%s", list[i]);
+                    ret = appf(ret, "\n", "%s", list[i]);
         }
     }
     g_strfreev(list);
@@ -447,7 +447,7 @@ static gchar *gpu_list_format(sysobj *obj, int fmt_opts) {
         for(GSList *l = childs; l; l = l->next) {
             gchar *gpu = sysobj_format_from_fn(obj->path, l->data, fmt_opts);
             if (gpu)
-                ret = appfs(ret, " + ", "%s", gpu);
+                ret = appf(ret, " + ", "%s", gpu);
             g_free(gpu);
         }
         g_slist_free_full(childs, g_free);

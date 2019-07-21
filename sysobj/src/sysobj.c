@@ -1388,7 +1388,7 @@ int attr_tab_lookup(const attr_tab *attributes, const gchar *name) {
 }
 
 gchar *flags_str(int flags) {
-#define flags_str_chk(fo) if (flags & fo) { flags_list = appfs(flags_list, " | ", "%s", #fo); fchk |= fo; }
+#define flags_str_chk(fo) if (flags & fo) { flags_list = appf(flags_list, " | ", "%s", #fo); fchk |= fo; }
     int fchk = OF_NONE;
     gchar *flags_list = NULL;
     gchar *ret = NULL;
@@ -1398,7 +1398,7 @@ gchar *flags_str(int flags) {
     flags_str_chk(OF_REQ_ROOT);
     flags_str_chk(OF_HAS_VENDOR);
     if (fchk != flags)
-        flags_list = appfs(flags_list, " | ", "?");
+        flags_list = appf(flags_list, " | ", "?");
     if (flags_list) {
         ret = g_strdup_printf("[%x] %s", flags, flags_list);
         g_free(flags_list);

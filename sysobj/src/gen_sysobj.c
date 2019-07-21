@@ -191,7 +191,7 @@ static gchar *get_class_info(const gchar *path) {
         gchar *ret = NULL;
         for(l = cl; l; l = l->next) {
             sysobj_class *c = (sysobj_class *)l->data;
-            ret = appfs(ret, "\n", "%s", c->tag);
+            ret = appf(ret, "\n", "%s", c->tag);
         }
         return ret;
     }

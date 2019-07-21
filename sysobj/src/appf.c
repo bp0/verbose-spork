@@ -25,7 +25,7 @@
 #include <stdio.h>
 #include <string.h>
 
-char *appfs(char *src, const char *sep, const char *fmt, ...) {
+char *appf(char *src, const char *sep, const char *fmt, ...) {
     char *buf = NULL;
     int srclen, seplen, len;
     va_list args;

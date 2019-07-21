@@ -131,10 +131,10 @@ void wlh_mt(wlh_state *s, gboolean done) {
     if (!s || !s->valid) return;
     gchar *lmt = NULL;
     for(GSList *l = s->links; l; l = l->next) {
-        lmt = appfs(lmt, "\n", "<a href=\"sysobj:%s\">%s</a>", (gchar*)l->data, (gchar*)l->data);
+        lmt = appf(lmt, "\n", "<a href=\"sysobj:%s\">%s</a>", (gchar*)l->data, (gchar*)l->data);
     }
     if (!done) {
-        lmt = appfs(lmt, "\n", "...");
+        lmt = appf(lmt, "\n", "...");
     }
     gtk_label_set_markup(GTK_LABEL(s->priv->lbl_wlh), lmt ? lmt : "");
     g_free(lmt);
@@ -352,7 +352,7 @@ static gchar *print_hex(const uint8_t* bytes, gsize len) {
             snprintf(digits + dl*3, 4, "%02X ", (unsigned int)bytes[i]);
             snprintf(chars + dl*1, 4, "%c ", (unsigned int)c);
             if (dl == 7) {
-                ret = appfs(ret, "\n", "%04x: %s %s", (unsigned int)((i/8) * 8), digits, chars);
+                ret = appf(ret, "\n", "%04x: %s %s", (unsigned int)((i/8) * 8), digits, chars);
                 strcpy(digits, "");
                 strcpy(chars, "");
             }
@@ -362,7 +362,7 @@ static gchar *print_hex(const uint8_t* bytes, gsize len) {
             snprintf(digits + dl*3, 4, "   ");
             snprintf(chars + dl*1, 4, "  ");
             if (dl == 7)
-                ret = appfs(ret, "\n", "%04x: %s %s", (unsigned int)(((i-1)/8) * 8), digits, chars);
+                ret = appf(ret, "\n", "%04x: %s %s", (unsigned int)(((i-1)/8) * 8), digits, chars);
         }
     }
 
@@ -448,21 +448,21 @@ void bp_pin_inspect_do(bpPinInspect *s, const pin *p, int fmt_opts) {
                 gchar *full_link = NULL;
                 gchar *ven_tag = v->name_short ? g_strdup(v->name_short) : g_strdup(v->name);
                 tag_vendor(&ven_tag, 0, ven_tag, v->ansi_color, fmt_opts);
-                //ven_mt = appfs(ven_mt, "\n", "%p", v);
+                //ven_mt = appf(ven_mt, "\n", "%p", v);
                 if (v->name_short)
-                    ven_mt = appfs(ven_mt, "\n", "%s", v->name);
-                ven_mt = appfs(ven_mt, "\n", "%s", ven_tag);
+                    ven_mt = appf(ven_mt, "\n", "%s", v->name);
+                ven_mt = appf(ven_mt, "\n", "%s", ven_tag);
                 if (v->url) {
                     if (!g_str_has_prefix(v->url, "http") )
                         full_link = g_strdup_printf("http://%s", v->url);
-                    ven_mt = appfs(ven_mt, "\n", "<b>%s:</b> <a href=\"%s\">%s</a>", _("URL"), full_link ? full_link : v->url, v->url);
+                    ven_mt = appf(ven_mt, "\n", "<b>%s:</b> <a href=\"%s\">%s</a>", _("URL"), full_link ? full_link : v->url, v->url);
                     g_free(full_link);
                     full_link = NULL;
                 }
                 if (v->url_support) {
                     if (!g_str_has_prefix(v->url_support, "http") )
                         full_link = g_strdup_printf("http://%s", v->url_support);
-                    ven_mt = appfs(ven_mt, "\n", "<b>%s:</b> <a href=\"%s\">%s</a>", _("Support URL"), full_link ? full_link : v->url_support, v->url_support);
+                    ven_mt = appf(ven_mt, "\n", "<b>%s:</b> <a href=\"%s\">%s</a>", _("Support URL"), full_link ? full_link : v->url_support, v->url_support);
                     g_free(full_link);
                     full_link = NULL;
                 }
@@ -473,12 +473,12 @@ void bp_pin_inspect_do(bpPinInspect *s, const pin *p, int fmt_opts) {
                     for(gchar *p = full_link; *p; p++) {
                         if (*p == ' ') *p = '_';
                     }
-                    ven_mt = appfs(ven_mt, "\n", "<b>%s:</b> <a href=\"%s\">%s</a>", _("Wikipedia"), full_link ? full_link : v->wikipedia, v->wikipedia);
+                    ven_mt = appf(ven_mt, "\n", "<b>%s:</b> <a href=\"%s\">%s</a>", _("Wikipedia"), full_link ? full_link : v->wikipedia, v->wikipedia);
                     g_free(full_link);
                     full_link = NULL;
                 }
                 g_free(ven_tag);
-                ven_mt = appfs(ven_mt, "\n", " ");
+                ven_mt = appf(ven_mt, "\n", " ");
                 vcnt++;
             }
             vendor_list_free(vl);

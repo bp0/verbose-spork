@@ -38,7 +38,7 @@ static gchar *storage_list_format(sysobj *obj, int fmt_opts) {
         for(GSList *l = childs; l; l = l->next) {
             gchar *storage = sysobj_format_from_fn(obj->path, l->data, fmt_opts);
             if (storage)
-                ret = appfs(ret, " + ", "%s", storage);
+                ret = appf(ret, " + ", "%s", storage);
             g_free(storage);
         }
         g_slist_free_full(childs, g_free);

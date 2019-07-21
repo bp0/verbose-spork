@@ -21,17 +21,15 @@
 #ifndef _APPF_H_
 #define _APPF_H_
 
-/* appends a formatted element to a string, adding a separator string
- * if the string is not empty. The string is created if src is null.
- * ex: ret = appfs(ret, "; ", "%s = %d", name, value); */
-char *appfs(char *src, const char *sep, const char *fmt, ...)
+/* Appends a formatted element to a string, adding an optional
+ * separator string if the string is not empty.
+ * The string is created if src is null.
+ * ex: ret = appf(ret, "; ", "%s = %d", name, value); */
+char *appf(char *src, const char *sep, const char *fmt, ...)
     __attribute__ ((format (printf, 3, 4)));
 
 /* for convenience */
-#define appfsp(src, fmt, ...) appfs(src, " ", fmt, __VA_ARGS__)
-#define appfnl(src, fmt, ...) appfs(src, "\n", fmt, __VA_ARGS__)
-
-/* preserves the original appf() behavior, where separator was space. */
-#define appf(...) appfsp(__VA_ARGS__)
+#define appfsp(src, fmt, ...) appf(src, " ", fmt, __VA_ARGS__)
+#define appfnl(src, fmt, ...) appf(src, "\n", fmt, __VA_ARGS__)
 
 #endif

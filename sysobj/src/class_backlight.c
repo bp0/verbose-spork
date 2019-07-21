@@ -70,7 +70,7 @@ static gchar *backlight_format(sysobj *obj, int fmt_opts) {
             sysobj *bl = sysobj_new_from_fn(obj->path, l->data);
             if (bl->cls && SEQ(bl->cls->tag, "backlight:dev") ) {
                 gchar *blf = sysobj_format(bl, fmt_opts | FMT_OPT_PART);
-                ret = appfs(ret, ", ", "%s", blf );
+                ret = appf(ret, ", ", "%s", blf );
                 g_free(blf);
             }
             sysobj_free(bl);

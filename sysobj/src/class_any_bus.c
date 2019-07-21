@@ -78,9 +78,9 @@ static gchar *any_bus_dev_format(sysobj *obj, int fmt_opts) {
         gchar *model = sysobj_format_from_fn(obj->path, "model", fmt_opts | FMT_OPT_OR_NULL);
         gchar *ret = NULL;
         if (vendor)
-            ret = appf(ret, "%s", vendor);
+            ret = appfsp(ret, "%s", vendor);
         if (model)
-            ret = appf(ret, "%s", model);
+            ret = appfsp(ret, "%s", model);
         if (ret)
             return ret;
     }

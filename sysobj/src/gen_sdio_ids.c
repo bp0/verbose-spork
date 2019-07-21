@@ -104,7 +104,7 @@ gchar *gen_sdio_ids_lookup_value(const gchar *path) {
     for(int i = 0; qparts[i]; i++) {
         if (!SEQ(qparts[i], "name") ) {
             sysobj_virt_add_simple(svo_path, qparts[i], "*", VSO_TYPE_DIR);
-            svo_path = appfs(svo_path, "/", "%s", qparts[i]);
+            svo_path = appf(svo_path, "/", "%s", qparts[i]);
             n = result.results[i] ? result.results[i] : "";
             sysobj_virt_add_simple(svo_path, "name", n, VSO_TYPE_STRING);
         }

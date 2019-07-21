@@ -263,7 +263,7 @@ char *dtr_list_reg(sysobj *obj) {
     consumed = 0;
     while (consumed + (tup_len * 4) <= obj->data.len) {
         tup_str = dtr_list_hex(next, tup_len);
-        ret = appf(ret, "<%s>", tup_str);
+        ret = appfsp(ret, "<%s>", tup_str);
         g_free(tup_str);
         consumed += (tup_len * 4);
         next += tup_len;
@@ -327,7 +327,7 @@ char *dtr_list_phref(sysobj *obj, gchar *ext_cell_prop) {
         ph = dtr_elem_phref(obj->data.uint32[i], 0, NULL); i++;
         if (ext_cells > count - i) ext_cells = count - i;
         ext = dtr_list_hex((obj->data.uint32 + i), ext_cells); i+=ext_cells;
-        ret = appf(ret, "<%s%s%s>",
+        ret = appfsp(ret, "<%s%s%s>",
             ph, (ext_cells) ? " " : "", ext);
         g_free(ph);
         g_free(ext);
@@ -355,7 +355,7 @@ gchar *dtr_list_interrupts(sysobj *obj) {
     while (i < count) {
         icells = UMIN(icells, count - i);
         ext = dtr_list_hex((obj->data.uint32 + i), icells); i+=icells;
-        ret = appf(ret, "<%s>", ext);
+        ret = appfsp(ret, "<%s>", ext);
         g_free(ext);
     }
     return ret;
@@ -378,14 +378,14 @@ char *dtr_list_override(sysobj *obj) {
         src += 4; consumed += 4;
         l = strlen(src) + 1; /* consume the null */
         str = dtr_list_str0(src, l);
-        ret = appf(ret, "<%s -> %s>", ph, str);
+        ret = appfsp(ret, "<%s -> %s>", ph, str);
         src += l; consumed += l;
         g_free(ph);
         g_free(str);
     }
     if (consumed < obj->data.len) {
         str = dtr_list_byte((uint8_t*)src, obj->data.len - consumed);
-        ret = appf(ret, "%s", str);
+        ret = appfsp(ret, "%s", str);
         g_free(str);
     }
     return ret;
@@ -692,15 +692,15 @@ gchar *dtr_compat_decode(const gchar *compat_str_list, gsize len, gboolean show_
             }
 
             if (vendor && name && cls)
-                ret = appfs(ret, ", ", "%s %s (%s)", vendor, name, cls);
+                ret = appf(ret, ", ", "%s %s (%s)", vendor, name, cls);
             else if (name && cls)
-                ret = appfs(ret, ", ", "%s (%s)", name, cls);
+                ret = appf(ret, ", ", "%s (%s)", name, cls);
             else if (vendor && name)
-                ret = appfs(ret, ", ", "%s %s", vendor, name);
+                ret = appf(ret, ", ", "%s %s", vendor, name);
             else if (vendor)
-                ret = appfs(ret, ", ", "%s", vendor);
+                ret = appf(ret, ", ", "%s", vendor);
             else if (name)
-                ret = appfs(ret, ", ", "%s", name);
+                ret = appf(ret, ", ", "%s", name);
 
             g_free(vendor);
             g_free(name);
@@ -723,8 +723,8 @@ gchar *dtr_format(sysobj *obj, int fmt_opts) {
             al = dtr_alias_lookup_by_path(obj->path);
             if (sym || al)  {
                 gchar *tlist = g_strdup("{dt node}");
-                if (sym) tlist = appf(tlist, "symbol:%s", sym);
-                if (al) tlist = appf(tlist, "alias:%s", al);
+                if (sym) tlist = appfsp(tlist, "symbol:%s", sym);
+                if (al) tlist = appfsp(tlist, "alias:%s", al);
                 return tlist;
             }
             return g_strdup("{dt node}");
