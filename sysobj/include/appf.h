@@ -23,13 +23,18 @@
 
 /* Appends a formatted element to a string, adding an optional
  * separator string if the string is not empty.
- * The string is created if src is null.
+ * The string is created if str is null.
  * ex: ret = appf(ret, "; ", "%s = %d", name, value); */
-char *appf(char *src, const char *sep, const char *fmt, ...)
+char *appf(char *str, const char *sep, const char *fmt, ...)
+    __attribute__ ((format (printf, 3, 4)));
+
+/* Same as above except that str is untouched.
+ * ex: ret = appf(keeper, "; ", "%s = %d", name, value); */
+char *appfdup(const char *str, const char *sep, const char *fmt, ...)
     __attribute__ ((format (printf, 3, 4)));
 
 /* for convenience */
-#define appfsp(src, fmt, ...) appf(src, " ", fmt, __VA_ARGS__)
-#define appfnl(src, fmt, ...) appf(src, "\n", fmt, __VA_ARGS__)
+#define appfsp(str, fmt, ...) appf(str, " ", fmt, __VA_ARGS__)
+#define appfnl(str, fmt, ...) appf(str, "\n", fmt, __VA_ARGS__)
 
 #endif

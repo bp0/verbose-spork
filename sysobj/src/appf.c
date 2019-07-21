@@ -25,20 +25,39 @@
 #include <stdio.h>
 #include <string.h>
 
-char *appf(char *src, const char *sep, const char *fmt, ...) {
+char *appf(char *str, const char *sep, const char *fmt, ...) {
     char *buf = NULL;
-    int srclen, seplen, len;
+    int inlen, seplen, len;
     va_list args;
     va_start(args, fmt);
     len = vasprintf(&buf, fmt, args);
     va_end(args);
-    if (len < 0) return src;
-    if (!src) return buf;
-    srclen = strlen(src);
-    seplen = (*src && sep) ? strlen(sep) : 0;
-    src = realloc(src, srclen + seplen + len + 1);
-    if (seplen) strcpy(src + srclen, sep);
-    strcpy(src + srclen + seplen, buf);
+    if (len < 0) return str;
+    if (!str) return buf;
+    inlen = strlen(str);
+    seplen = (inlen && sep) ? strlen(sep) : 0;
+    str = realloc(str, inlen + seplen + len + 1);
+    if (seplen) strcpy(str + inlen, sep);
+    strcpy(str + inlen + seplen, buf);
     free(buf);
-    return src;
+    return str;
+}
+
+char *appfdup(const char *str, const char *sep, const char *fmt, ...) {
+    char *buf = NULL, *ret = NULL;
+    int inlen, seplen, len;
+    va_list args;
+    va_start(args, fmt);
+    len = vasprintf(&buf, fmt, args);
+    va_end(args);
+    if (len < 0) return NULL;
+    if (!str) return buf;
+    inlen = strlen(str);
+    seplen = (inlen && sep) ? strlen(sep) : 0;
+    ret = malloc(inlen + seplen + len + 1);
+    strcpy(ret, str);
+    if (seplen) strcpy(ret + inlen, sep);
+    strcpy(ret + inlen + seplen, buf);
+    free(buf);
+    return ret;
 }
