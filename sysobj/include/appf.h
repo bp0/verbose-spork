@@ -21,15 +21,17 @@
 #ifndef _APPF_H_
 #define _APPF_H_
 
-#include <glib.h>
-
-/* appends a formatted element to a string, adding a space (or sep)
+/* appends a formatted element to a string, adding a separator string
  * if the string is not empty. The string is created if src is null.
- * ex: ret = appf(ret, "%s", list_item);
- * ex: ret = appfs(ret, "\n", "%s=%s", name, value); */
-gchar *appf(gchar *src, const gchar *fmt, ...)
-    __attribute__ ((format (printf, 2, 3)));
-gchar *appfs(gchar *src, const gchar *sep, const gchar *fmt, ...)
+ * ex: ret = appfs(ret, "; ", "%s = %d", name, value); */
+char *appfs(char *src, const char *sep, const char *fmt, ...)
     __attribute__ ((format (printf, 3, 4)));
+
+/* for convenience */
+#define appfsp(src, fmt, ...) appfs(src, " ", fmt, __VA_ARGS__)
+#define appfnl(src, fmt, ...) appfs(src, "\n", fmt, __VA_ARGS__)
+
+/* preserves the original appf() behavior, where separator was space. */
+#define appf(...) appfsp(__VA_ARGS__)
 
 #endif

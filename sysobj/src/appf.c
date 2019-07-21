@@ -19,33 +19,26 @@
  */
 
 #include "appf.h"
+#define _GNU_SOURCE /* for vasprintf() */
+#include <stdlib.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <string.h>
 
-gchar *appf(gchar *src, const gchar *fmt, ...) {
-    gchar *buf, *ret;
+char *appfs(char *src, const char *sep, const char *fmt, ...) {
+    char *buf = NULL;
+    int srclen, seplen, len;
     va_list args;
     va_start(args, fmt);
-    buf = g_strdup_vprintf(fmt, args);
+    len = vasprintf(&buf, fmt, args);
     va_end(args);
-    if (src != NULL) {
-        ret = g_strconcat(src, strlen(src) ? " " : "", buf, NULL);
-        g_free(buf);
-        g_free(src);
-    } else
-        ret = buf;
-    return ret;
-}
-
-gchar *appfs(gchar *src, const gchar *sep, const gchar *fmt, ...) {
-    gchar *buf, *ret;
-    va_list args;
-    va_start(args, fmt);
-    buf = g_strdup_vprintf(fmt, args);
-    va_end(args);
-    if (src != NULL) {
-        ret = g_strconcat(src, strlen(src) ? sep : "", buf, NULL);
-        g_free(buf);
-        g_free(src);
-    } else
-        ret = buf;
-    return ret;
+    if (len < 0) return src;
+    if (!src) return buf;
+    srclen = strlen(src);
+    seplen = (*src && sep) ? strlen(sep) : 0;
+    src = realloc(src, srclen + seplen + len + 1);
+    if (seplen) strcpy(src + srclen, sep);
+    strcpy(src + srclen + seplen, buf);
+    free(buf);
+    return src;
 }
