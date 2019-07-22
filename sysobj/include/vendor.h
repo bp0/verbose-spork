@@ -51,8 +51,11 @@ typedef struct {
 
 void vendor_init(void);
 void vendor_cleanup(void);
-const Vendor *vendor_match(const gchar *id_str, ...); /* end list of strings with NULL */
-vendor_list vendors_match(const gchar *id_str, ...);  /* end list of strings with NULL */
+/* end list of strings with NULL */
+const Vendor *vendor_match(const gchar *id_str, ...)
+  __attribute__((sentinel));
+vendor_list vendors_match(const gchar *id_str, ...)
+  __attribute__((sentinel));
 const gchar *vendor_get_name(const gchar *id_str);
 const gchar *vendor_get_shortest_name(const gchar *id_str);
 const gchar *vendor_get_url(const gchar *id_str);
