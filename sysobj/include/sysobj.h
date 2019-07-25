@@ -33,6 +33,7 @@
 #include "sysobj_virt.h"
 #include "sysobj_filter.h"
 #include "vendor.h"
+#include "auto_free.h"
 
 #define UPDATE_INTERVAL_DEFAULT_VALUE  10.0   /* in seconds */
 #define UPDATE_INTERVAL_UNSPECIFIED 0
@@ -304,20 +305,6 @@ GSList *sysobj_children_ex(sysobj *s, GSList *filters, gboolean sort);
 
 sysobj_data *sysobj_data_dup(const sysobj_data *src);
 void sysobj_data_free(sysobj_data *d, gboolean and_self);
-
-#define DEBUG_AUTO_FREE 0
-#define AF_SECONDS 31
-#define AF_DELAY_SECONDS 20
-#ifdef DEBUG_AUTO_FREE
-#define auto_free(p) auto_free_(p, __FILE__, __LINE__, __FUNCTION__)
-#define auto_free_ex(p, f) auto_free_ex_(p, f, __FILE__, __LINE__, __FUNCTION__)
-#else
-#define auto_free(p) auto_free_(p, NULL, 0, NULL)
-#define auto_free_ex(p, f) auto_free_ex_(p, f, NULL, 0, NULL)
-#endif
-gpointer auto_free_(gpointer p, const char *file, int line, const char *func);
-gpointer auto_free_ex_(gpointer p, GDestroyNotify f, const char *file, int line, const char *func);
-void free_auto_free();
 
 typedef struct {
     long long unsigned

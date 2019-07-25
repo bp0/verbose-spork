@@ -38,6 +38,7 @@ add_library(sysobj STATIC
         sysobj/src/sysobj_filter.c
         sysobj/src/sysobj_foreach.c
         sysobj/src/util_sysobj.c
+        sysobj/src/auto_free.c
         sysobj/src/appf.c
         sysobj/src/gg_file.c
         sysobj/src/gg_slist.c
