@@ -23,10 +23,20 @@
 
 #include <glib.h>
 
+/* DEBUG_AUTO_FREE messages level:
+ * 0 - none
+ * 1 - some
+ * 2 - much
+ */
+#ifndef DEBUG_AUTO_FREE
 #define DEBUG_AUTO_FREE 0
+#endif
+/* the period between free_auto_free()s in the main loop */
 #define AF_SECONDS 31
+/* the minimum time between auto_free(p) and free(p) */
 #define AF_DELAY_SECONDS 20
-#ifdef DEBUG_AUTO_FREE
+
+#if (DEBUG_AUTO_FREE > 0)
 #define auto_free(p) auto_free_(p, __FILE__, __LINE__, __FUNCTION__)
 #define auto_free_ex(p, f) auto_free_ex_(p, f, __FILE__, __LINE__, __FUNCTION__)
 #else

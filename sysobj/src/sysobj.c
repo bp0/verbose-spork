@@ -125,7 +125,6 @@ int compare_str_base16(const sysobj_data *a, const sysobj_data *b) {
 }
 
 GSList *class_list = NULL;
-static guint free_event_source = 0; /* for the auto_free timer */
 
 GSList *class_get_list() {
     return class_list;
@@ -1119,13 +1118,6 @@ gboolean verify_subsystem_parent(sysobj *obj, const gchar *target) {
     return ret;
 }
 
-gboolean free_auto_free_sf(gpointer trash) {
-    PARAM_NOT_UNUSED(trash);
-    free_auto_free();
-    sysobj_stats.auto_free_next = sysobj_elapsed() + AF_SECONDS;
-    return G_SOURCE_CONTINUE;
-}
-
 void sysobj_init(const gchar *alt_root) {
     if (alt_root)
         sysobj_root_set(alt_root);
@@ -1156,14 +1148,6 @@ void sysobj_init(const gchar *alt_root) {
     sysobj_virt_init();
     vendor_init();
     class_init();
-
-    /* if there is a main loop, then this will call
-     * free_auto_free() in idle time every AF_SECONDS seconds.
-     * If there is no main loop, then free_auto_free()
-     * will be called at sysobj_cleanup() and when exiting
-     * threads, as in sysobj_foreach(). */
-    free_event_source = g_timeout_add_seconds(AF_SECONDS, (GSourceFunc)free_auto_free_sf, NULL);
-    sysobj_stats.auto_free_next = sysobj_elapsed() + AF_SECONDS;
 }
 
 double sysobj_elapsed() {

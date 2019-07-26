@@ -24,6 +24,11 @@
 static GMutex free_lock;
 static GSList *free_list = NULL;
 static gboolean free_final = FALSE;
+static GTimer *auto_free_timer = NULL;
+static guint free_event_source = 0;
+#define _elapsed() (auto_free_timer ? g_timer_elapsed(auto_free_timer, NULL) : 0)
+
+#define auto_free_msg(msg, ...)  fprintf (stderr, "[%s] " msg "\n", __FUNCTION__, ##__VA_ARGS__) /**/
 
 typedef struct {
     gpointer ptr;
@@ -36,8 +41,39 @@ typedef struct {
     const char *func;
 } auto_free_item;
 
+gboolean free_auto_free_sf(gpointer trash) {
+    (void)trash;
+    if (free_final) {
+        free_event_source = 0;
+        return G_SOURCE_REMOVE;
+    }
+    free_auto_free();
+    sysobj_stats.auto_free_next = sysobj_elapsed() + AF_SECONDS;
+    return G_SOURCE_CONTINUE;
+}
+
 gpointer auto_free_ex_(gpointer p, GDestroyNotify f, const char *file, int line, const char *func) {
     if (!p) return p;
+
+    /* an auto_free() after free_auto_free_final()?
+     * Changed mind, I guess, just go with it. */
+    if (free_final)
+        free_final = FALSE;
+
+    if (!auto_free_timer) {
+        auto_free_timer = g_timer_new();
+        g_timer_start(auto_free_timer);
+    }
+
+    if (!free_event_source) {
+        /* if there is a main loop, then this will call
+         * free_auto_free() in idle time every AF_SECONDS seconds.
+         * If there is no main loop, then free_auto_free()
+         * will be called at sysobj_cleanup() and when exiting
+         * threads, as in sysobj_foreach(). */
+        free_event_source = g_timeout_add_seconds(AF_SECONDS, (GSourceFunc)free_auto_free_sf, NULL);
+        sysobj_stats.auto_free_next = sysobj_elapsed() + AF_SECONDS;
+    }
 
     auto_free_item *z = g_new0(auto_free_item, 1);
     z->ptr = p;
@@ -46,7 +82,7 @@ gpointer auto_free_ex_(gpointer p, GDestroyNotify f, const char *file, int line,
     z->file = file;
     z->line = line;
     z->func = func;
-    z->stamp = sysobj_elapsed();
+    z->stamp = _elapsed();
     g_mutex_lock(&free_lock);
     free_list = g_slist_prepend(free_list, z);
     sysobj_stats.auto_free_len++;
@@ -71,24 +107,27 @@ static struct { GDestroyNotify fptr; char *name; }
 void free_auto_free_final() {
     free_final = TRUE;
     free_auto_free();
+    g_timer_destroy(auto_free_timer);
+    auto_free_timer = NULL;
 }
 
 void free_auto_free() {
     GThread *this_thread = g_thread_self();
     GSList *l = NULL, *n = NULL;
     long long unsigned fc = 0;
-    double now = sysobj_elapsed();
+    double now = _elapsed();
 
     if (!free_list) return;
 
     g_mutex_lock(&free_lock);
-    DEBUG("%llu total items in queue, but will free from thread %p only... ", sysobj_stats.auto_free_len, this_thread);
+    if (DEBUG_AUTO_FREE)
+        auto_free_msg("%llu total items in queue, but will free from thread %p only... ", sysobj_stats.auto_free_len, this_thread);
     for(l = free_list; l; l = n) {
         auto_free_item *z = (auto_free_item*)l->data;
         n = l->next;
         double age = now - z->stamp;
         if (free_final || (z->thread == this_thread && age > AF_DELAY_SECONDS) ) {
-            if (DEBUG_AUTO_FREE) {
+            if (DEBUG_AUTO_FREE == 2) {
                 char fptr[128] = "", *fname;
                 for(int i = 0; i < (int)G_N_ELEMENTS(free_function_tab); i++)
                     if (z->f_free == free_function_tab[i].fptr)
@@ -98,9 +137,9 @@ void free_auto_free() {
                     fname = fptr;
                 }
                 if (z->file || z->func)
-                    DEBUG("free: %s(%p) age:%lfs from %s:%d %s()", fname, z->ptr, age, z->file, z->line, z->func);
+                    auto_free_msg("free: %s(%p) age:%lfs from %s:%d %s()", fname, z->ptr, age, z->file, z->line, z->func);
                 else
-                    DEBUG("free: %s(%p) age:%lfs", fname, z->ptr, age);
+                    auto_free_msg("free: %s(%p) age:%lfs", fname, z->ptr, age);
             }
 
             z->f_free(z->ptr);
@@ -109,7 +148,8 @@ void free_auto_free() {
             fc++;
         }
     }
-    DEBUG("... freed %llu (from thread %p)", fc, this_thread);
+    if (DEBUG_AUTO_FREE)
+        auto_free_msg("... freed %llu (from thread %p)", fc, this_thread);
     sysobj_stats.auto_freed += fc;
     sysobj_stats.auto_free_len -= fc;
     g_mutex_unlock(&free_lock);
