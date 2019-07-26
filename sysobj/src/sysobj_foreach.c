@@ -174,7 +174,7 @@ static gpointer _sysobj_foreach_thread_main(mt_state *s) {
 
 foreach_main_finish:
     if (s->stats.threads != 1)
-        free_auto_free();
+        free_auto_free_thread_final();
     return NULL;
 }
 

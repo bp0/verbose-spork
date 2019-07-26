@@ -104,14 +104,7 @@ static struct { GDestroyNotify fptr; char *name; }
     { NULL, "(null)" },
 };
 
-void free_auto_free_final() {
-    free_final = TRUE;
-    free_auto_free();
-    g_timer_destroy(auto_free_timer);
-    auto_free_timer = NULL;
-}
-
-void free_auto_free() {
+static void free_auto_free_ex(gboolean thread_final) {
     GThread *this_thread = g_thread_self();
     GSList *l = NULL, *n = NULL;
     long long unsigned fc = 0;
@@ -126,7 +119,7 @@ void free_auto_free() {
         auto_free_item *z = (auto_free_item*)l->data;
         n = l->next;
         double age = now - z->stamp;
-        if (free_final || (z->thread == this_thread && age > AF_DELAY_SECONDS) ) {
+        if (free_final || (z->thread == this_thread && (thread_final || age > AF_DELAY_SECONDS) ) ) {
             if (DEBUG_AUTO_FREE == 2) {
                 char fptr[128] = "", *fname;
                 for(int i = 0; i < (int)G_N_ELEMENTS(free_function_tab); i++)
@@ -153,4 +146,19 @@ void free_auto_free() {
     sysobj_stats.auto_freed += fc;
     sysobj_stats.auto_free_len -= fc;
     g_mutex_unlock(&free_lock);
+}
+
+void free_auto_free_thread_final() {
+    free_auto_free_ex(TRUE);
+}
+
+void free_auto_free_final() {
+    free_final = TRUE;
+    free_auto_free_ex(TRUE);
+    g_timer_destroy(auto_free_timer);
+    auto_free_timer = NULL;
+}
+
+void free_auto_free() {
+    free_auto_free_ex(FALSE);
 }

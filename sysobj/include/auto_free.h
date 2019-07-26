@@ -49,6 +49,9 @@ gpointer auto_free_ex_(gpointer p, GDestroyNotify f, const char *file, int line,
 /* free all the auto_free marked items in the current thread */
 void free_auto_free();
 
+/* call at thread termination */
+void free_auto_free_thread_final();
+
 /* call at program termination */
 void free_auto_free_final();
 
