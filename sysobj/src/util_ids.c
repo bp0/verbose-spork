@@ -26,9 +26,9 @@
 
 #define ids_msg(msg, ...)  fprintf (stderr, "[%s] " msg "\n", __FUNCTION__, ##__VA_ARGS__) /**/
 
-ids_query *ids_query_new(gchar *qpath) {
+ids_query *ids_query_new(const gchar *qpath) {
     ids_query *s = g_new0(ids_query, 1);
-    s->qpath = qpath;
+    s->qpath = qpath ? g_strdup(qpath) : NULL;
     return s;
 }
 
@@ -164,7 +164,7 @@ static gint _ids_query_list_cmp(const ids_query *ql1, const ids_query *ql2) {
     return g_strcmp0(ql1->qpath, ql2->qpath);
 }
 
-long scan_ids_file_list(const gchar *file, GSList *query_list, long start_offset) {
+long scan_ids_file_list(const gchar *file, ids_query_list query_list, long start_offset) {
     GSList *tmp = g_slist_copy(query_list);
     tmp = g_slist_sort(tmp, (GCompareFunc)_ids_query_list_cmp);
 
@@ -179,7 +179,7 @@ long scan_ids_file_list(const gchar *file, GSList *query_list, long start_offset
     return offset;
 }
 
-long query_list_cound_found(GSList *query_list) {
+int query_list_count_found(ids_query_list query_list) {
     long count = 0;
     for (GSList *l = query_list; l; l = l->next) {
         ids_query *q = l->data;

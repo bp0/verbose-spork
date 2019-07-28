@@ -41,8 +41,10 @@ typedef struct {
  *
  * Works with:
  * - pci.ids "<vendor>/<device>/<subvendor> <subdevice>" or "C <class>/<subclass>/<prog-if>"
+ *     ... need to query "<subvendor>" separately
  * - arm.ids "<implementer>/<part>"
  * - sdio.ids "<vendor>/<device>", "C <class>"
+ * - sdcard.ids "OEMID <code>", "MANFID <code>"
  * - usb.ids "<vendor>/<device>", "C <class>" etc.
  */
 long scan_ids_file(const gchar *file, const gchar *qpath, ids_query_result *result, long start_offset);
@@ -52,10 +54,13 @@ typedef struct {
     ids_query_result result;
 } ids_query;
 
-ids_query *ids_query_new(gchar *qpath);
+ids_query *ids_query_new(const gchar *qpath);
 void ids_query_free(ids_query *s);
+typedef GSList* ids_query_list;
 
-long scan_ids_file_list(const gchar *file, GSList *query_list, long start_offset);
-long query_list_cound_found(GSList *query_list);
+/* query_list is a GSList of ids_query* */
+long scan_ids_file_list(const gchar *file, ids_query_list query_list, long start_offset);
+/* after scan_ids_file_list(), count hits */
+int query_list_count_found(ids_query_list query_list);
 
 #endif
