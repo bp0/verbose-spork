@@ -15,6 +15,7 @@ const gchar *linux_vendors[] = {
 };
 
 int main(int argc, char **argv) {
+    vendor_die_on_error = TRUE;
     sysobj_init(NULL);
 
     int b,i;

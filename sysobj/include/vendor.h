@@ -63,4 +63,6 @@ void vendor_free(Vendor *v);
 
 vendor_list vendors_match_core(const gchar *str, int limit);
 
+extern gboolean vendor_die_on_error;
+
 #endif /* __VENDOR_H__ */

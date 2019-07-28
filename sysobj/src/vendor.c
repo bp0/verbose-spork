@@ -33,9 +33,14 @@
 
 #define ven_msg(msg, ...)  fprintf (stderr, "[%s] " msg "\n", __FUNCTION__, ##__VA_ARGS__) /**/
 #define ven_msg_debug(msg, ...)  /* fprintf (stderr, "[%s] " msg "\n", __FUNCTION__, ##__VA_ARGS__) */
+#define ven_file_err(msg, ...) {       \
+    ven_msg(msg, ##__VA_ARGS__);       \
+    fflush(stderr);                    \
+    if (vendor_die_on_error) exit(-1); }
 
 static vendor_list vendors = NULL;
 const vendor_list get_vendors_list() { return vendors; }
+gboolean vendor_die_on_error = FALSE;
 
 /* sort the vendor list by length of match_string,
  * LONGEST first */
@@ -62,6 +67,7 @@ static int read_from_vendor_ids(const char *path) {
     char *wikipedia = vars[4];
     char *note = vars[5];
     char *ansi_color = vars[6];
+    int name_rule_count = -1;
 
     int count = 0;
     FILE *fd;
@@ -81,7 +87,7 @@ static int read_from_vendor_ids(const char *path) {
         if (b)
             *b = 0;
         else
-            ven_msg("%s:%d: line longer than VEN_BUFF_SIZE (%lu)", path, line, (unsigned long)VEN_BUFF_SIZE);
+            ven_file_err("%s:%d: line longer than VEN_BUFF_SIZE (%lu)", path, line, (unsigned long)VEN_BUFF_SIZE);
 
         b = strchr(buff, '#');
         if (b) *b = 0; /* line ends at comment */
@@ -89,6 +95,8 @@ static int read_from_vendor_ids(const char *path) {
         p = buff;
         VEN_FFWD();
         if (VEN_CHK("name ")) {
+            if (name_rule_count == 0)
+                ven_file_err("%s:%d: name \"%s\" had no match rules", path, line, name);
             strncpy(name, p + tl, VEN_BUFF_SIZE - 1);
             strcpy(name_short, "");
             strcpy(url, "");
@@ -96,6 +104,7 @@ static int read_from_vendor_ids(const char *path) {
             strcpy(wikipedia, "");
             strcpy(note, "");
             strcpy(ansi_color, "");
+            name_rule_count = 0;
         }
         if (VEN_CHK("name_short "))
             strncpy(name_short, p + tl, VEN_BUFF_SIZE - 1);
@@ -126,6 +135,7 @@ static int read_from_vendor_ids(const char *path) {
             v->note = dup_if_not_empty(note);
             v->ansi_color = dup_if_not_empty(ansi_color);
             vendors = g_slist_prepend(vendors, v);
+            name_rule_count++;
             count++;
         }
 
@@ -143,6 +153,7 @@ static int read_from_vendor_ids(const char *path) {
             v->note = dup_if_not_empty(note);
             v->ansi_color = dup_if_not_empty(ansi_color);
             vendors = g_slist_prepend(vendors, v);
+            name_rule_count++;
             count++;
         }
 
@@ -160,12 +171,13 @@ static int read_from_vendor_ids(const char *path) {
             v->note = dup_if_not_empty(note);
             v->ansi_color = dup_if_not_empty(ansi_color);
             vendors = g_slist_prepend(vendors, v);
+            name_rule_count++;
             count++;
         }
 
         g_strstrip(buff);
         if (!ok && *buff != 0)
-            ven_msg("unrecognised item at %s:%d, %s", path, line, p);
+            ven_file_err("unrecognised item at %s:%d, %s", path, line, p);
     }
 
     fclose(fd);
