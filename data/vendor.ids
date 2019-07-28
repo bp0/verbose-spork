@@ -260,8 +260,11 @@ name Harmony Semiconductor
     name_short Harmony
     match_string Harmony
 
-name Atheros Communications
-    url www.atheros.com
+name Qualcomm (formerly Atheros)
+    name_short Qualcomm (Atheros)
+    url www.qualcomm.com
+    wikipedia Qualcomm Atheros
+    ansi_color 0;94;47
     match_string Atheros
 
 name Panasonic Industry Company
