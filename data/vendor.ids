@@ -973,6 +973,26 @@ name Texas Instruments
     match_string Texas Instruments
     match_string_case TI
 
+name Allwinner Technology
+    name_short AllWinner
+    url www.allwinnertech.com
+    wikipedia Allwinner Technology
+    ansi_color 0;97;44
+    match_string AllWinner
+
+name Amlogic
+    name_short AMLogic
+    url www.amlogic.com
+    wikipedia Amlogic
+    ansi_color 0;94;107
+    match_string Amlogic
+
+name MediaTek
+    url www.mediatek.com
+    wikipedia MediaTek
+    ansi_color 0;97;43
+    match_string MediaTek
+
 #
 # x86 VM vendor strings
 #
