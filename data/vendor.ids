@@ -689,6 +689,21 @@ name Elitegroup Computer Systems
     ansi_color 0;36;41
     match_string_case ECS
 
+name JMicron Technology
+    name_short JMicron
+    url www.jmicron.com
+    wikipedia JMicron
+    ansi_color 0;34;107
+    match_string JMicron Technology
+    match_string JMicron USA Technology
+    match_string JMicron
+
+name Sabrent
+    url www.sabrent.com
+    wikipedia Sabrent
+    ansi_color 0;30;44
+    match_string Sabrent
+    match_string Arkview
 
 name Sanyo Electric
     name_short SANYO
