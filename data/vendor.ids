@@ -525,6 +525,71 @@ name STMicroelectronics
     match_string STMicroelectronics
     match_string ST Micro
 
+name ST-Ericsson
+    wikipedia ST-Ericsson
+    ansi_color 0;97;43
+    match_string ST-Ericsson
+    match_string ST Ericsson
+    match_string STEricsson
+
+name Telefonaktiebolaget LM Ericsson
+    name_short Ericsson
+    url ericsson.com
+    wikipedia Ericsson
+    ansi_color 0;94;107
+    match_string Ericsson
+
+name Socket Mobile
+    url www.socketmobile.com
+    match_string Socket Communications
+    match_string Socket Mobile
+    match_string Socket
+
+name GCT Semiconductor
+    name_short GCT
+    url www.gctsemi.com
+    match_string GCT Semiconductor
+    match_string_case GCT
+
+name Murata Manufacturing
+    name_short Murata
+    url www.murata.com
+    wikipedia Murata Manufacturing
+    ansi_color 0;31;107
+    match_string Murata
+
+name Murata Manufacturing (formerly SyChip Electronic Technology)
+    name_short Murata (SyChip)
+    ansi_color 0;31;107
+    match_string SyChip
+
+name Spectec Computer
+    name_short Spectec
+    url spectec.com.tw
+    match_string Spectec
+
+name Siano Mobile Silicon
+    match_string Siano Mobile Silicon
+
+# NOT Globalsat Group
+name Globalsat Technology
+    match_string Globalsat Technology
+
+name C-guys
+    url www.c-guys.net
+    match_string C-guys
+
+name Ricoh
+    url www.ricoh.com
+    wikipedia Ricoh
+    ansi_color 0;91;107
+    match_string Ricoh
+
+name AboCom Systems
+    url www.abocom.com.tw
+    match_string AboCom Systems
+    match_string AboCom
+
 name Micron Technology
     name_short Micron
     url www.micron.com
