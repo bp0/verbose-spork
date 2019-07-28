@@ -265,6 +265,7 @@ name Qualcomm (formerly Atheros)
     url www.qualcomm.com
     wikipedia Qualcomm Atheros
     ansi_color 0;94;47
+    match_string Qualcomm Atheros
     match_string Atheros
 
 name Panasonic Industry Company
