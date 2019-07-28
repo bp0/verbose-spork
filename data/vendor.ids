@@ -929,6 +929,50 @@ name DMP Electronics
     note x86 processor vendor ID
     match_string Vortex86 SoC
 
+name Digital Equipment Corporation
+    name_short DEC
+    note Dead; various parts to Intel, Compaq, HP
+    match_string_case DEC
+    match_string Digital Equipment
+    match_string Digital
+
+name Marvell Technology Group
+    name_short Marvell
+    url www.marvell.com
+    wikipedia Marvell Technology Group
+    ansi_color 0;97;41
+    match_string Marvell
+
+name Marvell (formerly Cavium)
+    name_short Marvell (Cavium)
+    url cavium.com
+    wikipedia Cavium
+    ansi_color 0;97;41
+    match_string Cavium
+
+name Applied Micro Circuits
+    name_short APM
+    wikipedia Applied Micro Circuits Corporation
+    match_string Applied Micro Circuits
+    match_string AppliedMicro
+    match_string_case APM
+    match_string_case AMCC
+
+name Faraday Technology
+    name_short Faraday
+    url www.faraday-tech.com
+    wikipedia Faraday Technology
+    match_string Faraday Technology
+    match_string Faraday
+
+name Texas Instruments
+    name_short TI
+    url ti.com
+    wikipedia Texas Instruments
+    ansi_color 0;97;40
+    match_string Texas Instruments
+    match_string_case TI
+
 #
 # x86 VM vendor strings
 #
