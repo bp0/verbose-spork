@@ -809,6 +809,7 @@ name Red Hat
     url www.redhat.com
     ansi_color 0;31;40
     match_string Red Hat
+    match_string RedHat
 
 name Sun Microsystems
     name_short Sun

@@ -3,13 +3,23 @@
 #include "format_funcs.h"
 #include "spd-vendors.c"
 
+const gchar *linux_vendors[] = {
+    "Debian", "Ubuntu", "Raspbian", "Canonical", "deepin",
+    "Red Hat", "Fedora",
+    "Arch",
+    "Gentoo",
+    "Slackware", "Zenwalk",
+    "Void",
+    "KDE", "GNOME", "X.org", "MATE",
+    "Linux",
+};
+
 int main(int argc, char **argv) {
     sysobj_init(NULL);
 
     int b,i;
 
     int spdv_total = 0, spdv_hit = 0;
-
     for(b = 0; b < VENDORS_BANKS; b++) {
         for(i = 0; i < VENDORS_ITEMS; i++) {
             const gchar *vendor_str = JEDEC_MFG_STR(b,i);
@@ -25,6 +35,20 @@ int main(int argc, char **argv) {
             }
             g_free(mstr);
         }
+    }
+
+    int osv_total = 0, osv_hit = 0;
+    for(i = 0; i < G_N_ELEMENTS(linux_vendors); i++) {
+            osv_total++;
+            vendor_list vl = vendors_match(linux_vendors[i], NULL);
+            vl = vendor_list_remove_duplicates_deep(vl);
+            int vc = g_slist_length(vl);
+            gchar *mstr = vendor_list_ribbon(vl, FMT_OPT_ATERM);
+            if (mstr) {
+                osv_hit++;
+                printf("-- os_release: %s  === (%d) %s\n", linux_vendors[i], vc, mstr );
+            }
+            g_free(mstr);
     }
 
     gchar *p = NULL, *next_nl = NULL;
@@ -205,6 +229,7 @@ int main(int argc, char **argv) {
     }
 
     printf("\n" "Coverage:\n"
+           "Linux/os_release: %d / %d\n"
            "JEDEC Mfgr: %d / %d\n"
            "PCI Vendor: %d / %d\n"
            "USB Vendor: %d / %d\n"
@@ -212,6 +237,7 @@ int main(int argc, char **argv) {
            "ARM Mfgr: %d / %d\n"
            "SD Card Vendor/Mfgr: %d / %d\n"
            "SDIO Vendor: %d / %d\n",
+           osv_hit, osv_total,
            spdv_hit, spdv_total,
            pci_hit, pci_total,
            usb_hit, usb_total,
