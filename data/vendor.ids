@@ -585,6 +585,13 @@ name Ricoh
     ansi_color 0;91;107
     match_string Ricoh
 
+name Brother Industries
+    name_short Brother
+    url www.brother.com
+    wikipedia Brother Industries
+    ansi_color 0;34;107
+    match_string Brother
+
 name AboCom Systems
     url www.abocom.com.tw
     match_string AboCom Systems
@@ -607,6 +614,7 @@ name Toshiba Samsung Storage Technology
     url www.tsst.co.kr
     wikipedia Toshiba Samsung Storage Technology
     ansi_color 0;34;107
+    match_string TSSTcorp
     match_string_case TSST
 
 name Seagate Technology
