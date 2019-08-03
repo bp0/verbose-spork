@@ -19,14 +19,26 @@
  */
 
 #include "auto_free.h"
+#if (AF_USE_SYSOBJ)
 #include "sysobj.h"
+#else
+#include <stdio.h>
+#define sysobj_elapsed() af_elapsed()
+#define sysobj_stats af_stats
+static struct {
+    double auto_free_next;
+    unsigned long long
+        auto_freed,
+        auto_free_len;
+} af_stats;
+#endif
 
 static GMutex free_lock;
 static GSList *free_list = NULL;
 static gboolean free_final = FALSE;
 static GTimer *auto_free_timer = NULL;
 static guint free_event_source = 0;
-#define _elapsed() (auto_free_timer ? g_timer_elapsed(auto_free_timer, NULL) : 0)
+#define af_elapsed() (auto_free_timer ? g_timer_elapsed(auto_free_timer, NULL) : 0)
 
 #define auto_free_msg(msg, ...)  fprintf (stderr, "[%s] " msg "\n", __FUNCTION__, ##__VA_ARGS__) /**/
 
@@ -82,7 +94,7 @@ gpointer auto_free_ex_(gpointer p, GDestroyNotify f, const char *file, int line,
     z->file = file;
     z->line = line;
     z->func = func;
-    z->stamp = _elapsed();
+    z->stamp = af_elapsed();
     g_mutex_lock(&free_lock);
     free_list = g_slist_prepend(free_list, z);
     sysobj_stats.auto_free_len++;
@@ -90,17 +102,33 @@ gpointer auto_free_ex_(gpointer p, GDestroyNotify f, const char *file, int line,
     return p;
 }
 
-gpointer auto_free_(gpointer p, const char *file, int line, const char *func) {
-    return auto_free_ex_(p, (GDestroyNotify)g_free, file, line, func);
+gpointer auto_free_on_exit_ex_(gpointer p, GDestroyNotify f, const char *file, int line, const char *func) {
+    if (!p) return p;
+
+    auto_free_item *z = g_new0(auto_free_item, 1);
+    z->ptr = p;
+    z->f_free = f;
+    z->thread = g_thread_self();
+    z->file = file;
+    z->line = line;
+    z->func = func;
+    z->stamp = -1.0;
+    g_mutex_lock(&free_lock);
+    free_list = g_slist_prepend(free_list, z);
+    sysobj_stats.auto_free_len++;
+    g_mutex_unlock(&free_lock);
+    return p;
 }
 
 static struct { GDestroyNotify fptr; char *name; }
     free_function_tab[] = {
     { (GDestroyNotify) g_free,             "g_free" },
+#if (AF_USE_SYSOBJ)
     { (GDestroyNotify) sysobj_free,        "sysobj_free" },
     { (GDestroyNotify) class_free,         "class_free" },
     { (GDestroyNotify) sysobj_filter_free, "sysobj_filter_free" },
     { (GDestroyNotify) sysobj_virt_free,   "sysobj_virt_free" },
+#endif
     { NULL, "(null)" },
 };
 
@@ -108,7 +136,7 @@ static void free_auto_free_ex(gboolean thread_final) {
     GThread *this_thread = g_thread_self();
     GSList *l = NULL, *n = NULL;
     long long unsigned fc = 0;
-    double now = _elapsed();
+    double now = af_elapsed();
 
     if (!free_list) return;
 
@@ -118,6 +146,7 @@ static void free_auto_free_ex(gboolean thread_final) {
     for(l = free_list; l; l = n) {
         auto_free_item *z = (auto_free_item*)l->data;
         n = l->next;
+        if (!free_final && z->stamp < 0) continue;
         double age = now - z->stamp;
         if (free_final || (z->thread == this_thread && (thread_final || age > AF_DELAY_SECONDS) ) ) {
             if (DEBUG_AUTO_FREE == 2) {
