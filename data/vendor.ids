@@ -814,6 +814,13 @@ name SK Hynix
     match_string Hynix
     match_string Hyundai
 
+name PNY Technologies
+    name_short PNY
+    url www.pny.com
+    wikipedia PNY Technologies
+    ansi_color 0;97;100
+    match_string_case PNY
+
 #
 # BIOS manufacturers
 #
