@@ -112,6 +112,7 @@ static struct {
     { "opp-microvolt-*", DTP_UINT, NULL }, /* opp-microvolt-<named> */
     { "opp-microamp", DTP_UINT, NULL },
     { "clock-latency-ns", DTP_UINT, NULL },
+    { "max-speed", DTP_UINT, NULL },
 };
 
 static struct {
