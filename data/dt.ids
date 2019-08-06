@@ -1,7 +1,7 @@
 #
 #    List of Device Tree ID's
 #
-#    Version: 2018.11.23
+#    Version: 2019.08.05
 #    Maintained by: Burt P. (pburt0@gmail.com)
 #    https://github.com/bp0/dtid
 #
@@ -18,14 +18,22 @@
 vendor allwinner   AllWinner
 vendor amlogic     AMLogic
 vendor arm         ARM
+    cpu arm,cortex-a72       Cortex A72
     cpu arm,cortex-a53       Cortex A53
     cpu arm,cortex*          Cortex family
     gpu arm,mali-450         Mali-450
 vendor brcm        Broadcom
+    soc brcm,bcm2838         BCM2838        # RPi 4
     soc brcm,bcm2837         BCM2837        # RPi 3
     soc brcm,bcm2836         BCM2836        # RPi 2
     soc brcm,bcm2835         BCM2835        # RPi 1
     gpu brcm,bcm2835-vc4     VideoCore IV   # RPi 1-3
+    gpu brcm,2711-v3d        VideoCore V3D  # RPi
+    net brcm,genet-v1        GENET v1 Ethernet Controller
+    net brcm,genet-v2        GENET v2 Ethernet Controller
+    net brcm,genet-v3        GENET v3 Ethernet Controller
+    net brcm,genet-v4        GENET v4 Ethernet Controller
+    net brcm,genet-v5        GENET v5 Ethernet Controller
 vendor linux       Linux Foundation
 vendor mediatek    MediaTek
     soc mediatek,mt6799      MT6799 Helio X30
