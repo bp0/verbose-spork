@@ -24,14 +24,14 @@
 #include "sysobj.h"
 
 enum {
-    SO_FOREACH_NORMAL = 0,
-    SO_FOREACH_MT     = 1,
+    SO_FOREACH_NORMAL = 0,  /* Single thread */
+    SO_FOREACH_MT     = 1,  /* Multiple threads */
 };
 
 enum {
     SO_FOREACH_END_UND = 0,
-    SO_FOREACH_END_INT = 1,
-    SO_FOREACH_END_EXH = 2,
+    SO_FOREACH_END_INT = 1, /* interrupted: SYSOBJ_FOREACH_STOP was returned */
+    SO_FOREACH_END_EXH = 2, /* exhausted */
 };
 
 typedef struct {
@@ -45,9 +45,16 @@ typedef struct {
     int end_type;
 } sysobj_foreach_stats;
 
+/* objects sent to the f_sysobj_foreach function are
+ * loaded with sysobj_new_fast():
+ * - use sysobj_classify(s) to classify
+ * - use sysobj_read(s, FALSE) to read data
+ * sysobj_foreach() will free the object
+ */
 #define SYSOBJ_FOREACH_STOP FALSE
 #define SYSOBJ_FOREACH_CONTINUE TRUE
 typedef gboolean (*f_sysobj_foreach)(const sysobj *s, gpointer user_data, gconstpointer stats);
+
 void sysobj_foreach(GSList *filters, f_sysobj_foreach callback, gpointer user_data, int opts);
 void sysobj_foreach_from(const gchar *root_path, GSList *filters, f_sysobj_foreach callback, gpointer user_data, int opts);
 
