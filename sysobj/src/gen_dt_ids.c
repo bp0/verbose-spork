@@ -192,8 +192,23 @@ static gchar *gen_dt_ids_lookup_value(const gchar *path) {
     if (mc == 1) {
         gchar *slash = strchr(compat_elem, '/');
         if (slash) *slash = 0;
+        dt_id *id = NULL;
 
-        dt_id *id = scan_dtids_file(compat_elem);
+        /* check if usb id values are used */
+        unsigned int usb_v = 0, usb_p = 0;
+        mc = sscanf(compat_elem, "usb%x,%x", &usb_v, &usb_p);
+        if(mc >= 1) {
+            id = dt_id_new();
+            id->compat_elem = g_strdup(compat_elem);
+            id->class = g_strdup("not-available");
+            id->vendor = sysobj_format_from_printf(FMT_OPT_NO_JUNK | FMT_OPT_NULL_IF_EMPTY, ":/lookup/usb.ids/%04x/name", usb_v);
+            if (mc >= 2)
+                id->name = sysobj_format_from_printf(FMT_OPT_NO_JUNK | FMT_OPT_NULL_IF_EMPTY, ":/lookup/usb.ids/%04x/%04x/name", usb_v, usb_p);
+        } else {
+            /* normal */
+            id = scan_dtids_file(compat_elem);
+        }
+
         if (id) {
             gen_dt_ids_cache_item(id);
             if (SEQ(name, "name") )

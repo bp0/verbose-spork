@@ -821,6 +821,12 @@ name PNY Technologies
     ansi_color 0;97;100
     match_string_case PNY
 
+name Linaro
+    url linero.org
+    wikipedia Linaro
+    ansi_color 0;32;107
+    match_string Linaro
+
 #
 # BIOS manufacturers
 #

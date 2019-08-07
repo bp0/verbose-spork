@@ -1,7 +1,7 @@
 #
 #    List of Device Tree ID's
 #
-#    Version: 2019.08.05
+#    Version: 2019.08.07
 #    Maintained by: Burt P. (pburt0@gmail.com)
 #    https://github.com/bp0/dtid
 #
@@ -14,7 +14,13 @@
 #
 
     subsys operating-points-v2   Operating Performance Points v2
+    subsys syscon                System Controller Registers
     bus    simple-bus            simple memory-mapped bus
+    frame  simple-framebuffer    simple frame buffer
+    audio  simple-audio-card     simple audio device
+    none   regulator-fixed       Fixed Voltage regulator
+    none   regulator-gpio        GPIO-controlled Voltage regulator
+    none   fixed-clock           simple fixed-rate clock source
 vendor allwinner   AllWinner
 vendor amlogic     AMLogic
 vendor arm         ARM
@@ -84,3 +90,4 @@ vendor ti          Texas Instruments
     soc ti,omap1*            OMAP1-family
     board ti,omap3-beagleboard-xm         Beagleboard
 vendor snps         Synopsys
+vendor linaro       Linaro
