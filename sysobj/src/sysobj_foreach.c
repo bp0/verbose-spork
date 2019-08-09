@@ -19,6 +19,7 @@
  */
 
 #include "sysobj_foreach.h"
+#include <unistd.h> /* for usleep() */
 
 static GList* __push_if_uniq(GList *l, const gchar *base, const gchar *name, long unsigned int *length) {
     gchar *path = name

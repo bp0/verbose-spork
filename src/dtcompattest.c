@@ -1,6 +1,7 @@
 
 #include "sysobj.h"
 #include "sysobj_foreach.h"
+#include <unistd.h> /* for isatty() */
 
 static int fmt_opts = FMT_OPT_NO_JUNK | FMT_OPT_LIST_ITEM;
 

@@ -19,6 +19,7 @@
  */
 
 #include "bsysinfo.h"
+#include <unistd.h> /* for isatty() */
 
 void print_obj(sysobj *s) {
     int fmt_opts = FMT_OPT_NO_JUNK | FMT_OPT_LIST_ITEM;

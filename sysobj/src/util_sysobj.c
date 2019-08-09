@@ -18,7 +18,11 @@
  *
  */
 
+#include <stdio.h>
+#include <unistd.h>  /* for getuid() */
 #include <string.h>
+#include <ctype.h>   /* for isxdigit(), etc. */
+
 #include "util_sysobj.h"
 
 gchar *util_build_fn(const gchar *base, const gchar *name) {
@@ -89,8 +93,8 @@ gsize util_count_lines(const gchar *str) {
     return count;
 }
 
-int32_t util_get_did(gchar *str, const gchar *lbl) {
-    int32_t id = -2;
+int util_get_did(gchar *str, const gchar *lbl) {
+    int id = -2;
     gchar tmpfmt[128] = "";
     gchar tmpchk[128] = "";
     sprintf(tmpfmt, "%s%s", lbl, "%d");
