@@ -18,9 +18,11 @@
  *
  */
 
-#include <stdio.h>
-#include <unistd.h>  /* for getuid() */
+#define _GNU_SOURCE
 #include <string.h>
+#include <stdio.h>
+#include <stdlib.h>  /* for realpath() */
+#include <unistd.h>  /* for getuid() */
 #include <ctype.h>   /* for isxdigit(), etc. */
 
 #include "util_sysobj.h"

@@ -6,7 +6,7 @@
 #include "nice_name.h"
 
 static const char *cpu_names[] = {
-    "AMD Athlon(tm)",
+/*  "AMD Athlon(tm)",
     "AMD Athlon(tm) 64 Processor 3000+",
     "AMD Athlon(tm) 64 Processor 3200+",
     "AMD Athlon(tm) 64 Processor 3500+",
@@ -177,7 +177,6 @@ static const char *cpu_names[] = {
     "Intel(R) Pentium(R) Dual CPU T2310 @ 1.46GHz",
     "Intel(R) Pentium(R) Dual CPU T2370 @ 1.73GHz",
     "Intel(R) Pentium(R) Dual CPU T3200 @ 2.00GHz",
-    "Intel(R) Pentium(R) III CPU - S         1400MHz",
     "Intel(R) Pentium(R) M processor 1600MHz",
     "Intel(R) Pentium(R) M processor 1700MHz",
     "Intel(R) Pentium(R) M processor 1.70GHz",
@@ -196,20 +195,28 @@ static const char *cpu_names[] = {
     "VIA Esther processor 1500MHz    ",
     "Transmeta(tm) Crusoe(tm) Processor TM5800",
     "Geode(TM) Integrated Processor by National Semi",
-    "Cyrix MediaGXtm MMXtm Enhanced",
     "Vortex86DX3",
     "IDT WinChip 2-3D",
     "VIA QuadCore C4650@2.0GHz",
     "VIA Nano processor L2200@1600MHz",
     "VIA Nano X2 L4350 @ 1.6+ GHz",
-    "AMD A10-8700P Radeon R6, 10 Compute Cores 4C+6G",
-    "AMD Turion(tm) 64 Mobile Technology ML-32",
     "AMD EPYC 7281 16-Core Processor ",
     "Mobile AMD Athlon(tm) XP 2400+",
-    "Embedded AMD Opteron(tm) Processor 23KS EE",
     "AMD Phenom(tm) II XLT Q54L Processor",
-    "QEMU Virtual CPU version 1.0",
+    "QEMU Virtual CPU version 1.0", */
+
+    "AMD Turion(tm) 64 Mobile Technology ML-32",
+    "Cyrix MediaGXtm MMXtm Enhanced",
+    "Transmeta(tm) Crusoe(tm) Processor TM5800",
+    "VIA Nano X2 L4350 @ 1.6+ GHz",
+    "AMD Athlon(tm) 64 X2 Dual-Core Processor TK-53",
+    "Embedded AMD Opteron(tm) Processor 23KS EE",
     "Intel(R) Atom(TM) x5-Z8300 CPU @ 1.44GHz",
+    "Intel(R) Pentium(R) III CPU - S         1400MHz",
+    "Dual Core AMD Opteron(tm) Processor 165",
+    "Genuine Intel(R) CPU T1350 @ 1.86GHz",
+    "AMD Phenom(tm) 9350e Quad-Core Processor",
+
 };
 
 static const char *intel_gpu_names[] = {
@@ -223,6 +230,7 @@ int main(int argc, char **argv) {
     sysobj_init(NULL);
 
     int i;
+    printf("x86 CPU:\n");
     for(i = 0; i < G_N_ELEMENTS(cpu_names); i++) {
         gchar *this_model = g_strdup(cpu_names[i]);
         printf("'%s' ---> ", cpu_names[i]);
@@ -230,7 +238,7 @@ int main(int argc, char **argv) {
         printf("'%s'\n", this_model);
         g_free(this_model);
     }
-
+    printf("Intel GPU:\n");
     for(i = 0; i < G_N_ELEMENTS(intel_gpu_names); i++) {
         gchar *this_model = g_strdup(intel_gpu_names[i]);
         printf("'%s' ---> ", intel_gpu_names[i]);

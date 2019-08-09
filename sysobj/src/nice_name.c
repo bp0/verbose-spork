@@ -74,12 +74,12 @@ void nice_name_x86_cpuid_model_string(char *cpuid_model_string) {
                 if (amd != cpuid_model_string) {
                     int l = amd - cpuid_model_string;
                     memmove(cpuid_model_string+4, cpuid_model_string, l);
-                    strncpy(cpuid_model_string, "AMD ", 4);
+                    memcpy(cpuid_model_string, "AMD ", 4);
                 }
             } else if (intel && !amd) {
                 int l = intel - cpuid_model_string;
                 memmove(cpuid_model_string+6, cpuid_model_string, l);
-                strncpy(cpuid_model_string, "Intel ", 6);
+                memcpy(cpuid_model_string, "Intel ", 6);
             }
         }
     }
