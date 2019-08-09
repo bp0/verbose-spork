@@ -19,8 +19,8 @@
  */
 
 #include "sysobj.h"
-#include "sysobj_extras.h"
 #include "format_funcs.h"
+#include "nice_name.h" /* for nice_name_x86_cpuid_model_string() */
 #include "arm_data.h"
 #include "x86_data.h"
 #include "riscv_data.h"
@@ -188,9 +188,7 @@ static gchar *cpuinfo_describe_models(sysobj *obj, int fmt_opts) {
 static gchar *cpuinfo_format(sysobj *obj, int fmt_opts) {
     if (verify_lblnum(obj, "logical_cpu") ) {
         gchar *name = sysobj_raw_from_fn(obj->path, "model_name");
-        while(str_shorten(name, "(R)", "")) {};
-        while(str_shorten(name, "(tm)", "")) {};
-        util_compress_space(name);
+        nice_name_x86_cpuid_model_string(name);
         gchar *vac = sysobj_raw_from_fn(obj->path, "vendor/ansi_color");
         if (vac) {
             gchar *vs = sysobj_raw_from_fn(obj->path, "vendor/name_short");

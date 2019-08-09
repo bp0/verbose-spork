@@ -43,6 +43,7 @@ add_library(sysobj STATIC
         sysobj/src/gg_file.c
         sysobj/src/gg_slist.c
         sysobj/src/strstr_word.c
+        sysobj/src/nice_name.c
         sysobj/src/format_funcs.c
         sysobj/src/pin.c
         sysobj/src/classes.c
@@ -151,6 +152,13 @@ add_executable(dtcompattest
         src/dtcompattest.c
 )
 target_link_libraries(dtcompattest
+        ${SYSOB_GLIB_LIBRARIES}
+        sysobj
+)
+add_executable(nametest
+        src/nametest.c
+)
+target_link_libraries(nametest
         ${SYSOB_GLIB_LIBRARIES}
         sysobj
 )

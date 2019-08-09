@@ -41,7 +41,7 @@ gboolean hwmon_attr_decode_name(const gchar *name, gchar **type, int *index, gch
 /* in gen_gpu.c */
 void sysobj_virt_add_vendor_match(gchar *base, gchar *name, const Vendor *vendor);
 
-/* in class_gpu.c */
+/* in nice_name.c */
 /* replaces the extra chars with spaces, then when done with a series of
  * str_shorten()s, use util_compress_space() to squeeze. */
 gboolean str_shorten(gchar *str, const gchar *find, const gchar *replace);

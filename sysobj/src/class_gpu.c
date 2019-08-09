@@ -20,6 +20,7 @@
 
 #include "sysobj.h"
 #include "sysobj_extras.h" /* for dtr_compat_decode() */
+#include "nice_name.h" /* for nice_name_intel_gpu_device() */
 #include "format_funcs.h"
 
 static gboolean gpu_list_verify(sysobj *obj);
@@ -530,23 +531,6 @@ static gboolean drm_conn_attr_verify(sysobj *obj) {
     return ret;
 }
 
-/* export */
-gboolean str_shorten(gchar *str, const gchar *find, const gchar *replace) {
-    if (!str || !find || !replace) return FALSE;
-    long unsigned lf = strlen(find);
-    long unsigned lr = strlen(replace);
-    gchar *p = strstr(str, find);
-    if (p) {
-        if (lr > lf) lr = lf;
-        gchar *buff = g_strnfill(lf, ' ');
-        strncpy(buff, replace, lr);
-        strncpy(p, buff, lf);
-        g_free(buff);
-        return TRUE;
-    }
-    return FALSE;
-}
-
 /* TODO: In the future, when there is more vendor specific information available in
  * the gpu struct, then more precise names can be given to each gpu */
 static gchar* gpu_format_nice_name(sysobj *gpu, int fmt_opts) {
@@ -610,18 +594,10 @@ static gchar* gpu_format_nice_name(sysobj *gpu, int fmt_opts) {
         // s->nice_name = g_strdup_printf("%s %s", "nVidia", device_str);
 
     if (strstr(vendor_str, "Intel")) {
-        /* Intel Graphics may have very long names,
-         * like "Intel Corporation Seventh Generation Something Core Something Something Integrated Graphics Processor Revision Ninety-four" */
-        gchar *full_name = strdup(device_str);
-        str_shorten(full_name, "(R)", ""); /* Intel(R) -> Intel */
-        str_shorten(full_name, "Integrated Graphics Controller", "Integrated Graphics");
-        str_shorten(full_name, "Generation", "Gen");
-        str_shorten(full_name, "Core Processor", "Core");
-        str_shorten(full_name, "Atom Processor", "Atom");
-        util_compress_space(full_name);
-        g_strstrip(full_name);
-        nice_name = g_strdup_printf("%s %s", vendor_str, full_name);
-        g_free(full_name);
+        gchar *device_str_clean = strdup(device_str);
+        nice_name_intel_gpu_device(device_str_clean);
+        nice_name = g_strdup_printf("%s %s", vendor_str, device_str_clean);
+        g_free(device_str_clean);
         goto nice_is_over;
     }
 
