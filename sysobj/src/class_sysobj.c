@@ -166,7 +166,14 @@ const GSList *get_vendors_list();
 
 void make_vendors_lookup() {
     static const gchar *match_rules[] = {
-        "ignore_case", "match_case", "exact"
+        [VENDOR_MATCH_RULE_WORD_IGNORE_CASE] = "ignore_case",
+        [VENDOR_MATCH_RULE_WORD_MATCH_CASE] = "match_case",
+        [VENDOR_MATCH_RULE_EXACT] = "exact",
+        [VENDOR_MATCH_RULE_WORD_PREFIX_MATCH_CASE] = "prefix_match_case",
+        [VENDOR_MATCH_RULE_WORD_PREFIX_IGNORE_CASE] = "prefix_ignore_case",
+        [VENDOR_MATCH_RULE_WORD_SUFFIX_MATCH_CASE] = "suffix_match_case",
+        [VENDOR_MATCH_RULE_WORD_SUFFIX_IGNORE_CASE] = "suffix_ignore_case",
+        [VENDOR_MATCH_RULE_NUM_PREFIX_MATCH_CASE] = "num_prefix_match_case",
     };
     gchar *vlpath = ":/lookup/vendor.ids/";
     sysobj_virt_add_simple(vlpath, NULL, "*", VSO_TYPE_DIR);

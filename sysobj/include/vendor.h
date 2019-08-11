@@ -34,9 +34,21 @@ vendor_list vendor_list_concat_va(int count, vendor_list vl, ...); /* count = -1
 #define vendor_list_remove_duplicates(vl) gg_slist_remove_duplicates(vl)
 vendor_list vendor_list_remove_duplicates_deep(vendor_list vl);
 
+enum {
+  VENDOR_MATCH_RULE_WORD_IGNORE_CASE   = 0,
+  VENDOR_MATCH_RULE_WORD_MATCH_CASE    = 1,
+  VENDOR_MATCH_RULE_EXACT              = 2,
+  VENDOR_MATCH_RULE_WORD_PREFIX_IGNORE_CASE = 3,
+  VENDOR_MATCH_RULE_WORD_PREFIX_MATCH_CASE  = 4,
+  VENDOR_MATCH_RULE_WORD_SUFFIX_IGNORE_CASE = 5,
+  VENDOR_MATCH_RULE_WORD_SUFFIX_MATCH_CASE  = 6,
+  VENDOR_MATCH_RULE_NUM_PREFIX_IGNORE_CASE  = 7,
+  VENDOR_MATCH_RULE_NUM_PREFIX_MATCH_CASE   = 8,
+};
+
 typedef struct {
   char *match_string;
-  int match_rule; /* 0 = ignore case, 1 = match case, 2 = exact */
+  int match_rule; /* VENDOR_MATCH_RULE_* enum */
   char *name;
   char *name_short;
   char *url;
