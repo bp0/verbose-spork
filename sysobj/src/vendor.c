@@ -305,6 +305,26 @@ vendor_list vendor_list_concat_va(int count, vendor_list vl, ...) {
     return ret;
 }
 
+int vendor_cmp_deep(const Vendor *a, const Vendor *b) {
+    int r;
+    if (a && !b) return 1;
+    if (!a && b) return -1;
+    if (!a && !b) return 0;
+    r = g_strcmp0(a->name, b->name);
+    if (!!r) return r;
+    r = g_strcmp0(a->name_short, b->name_short);
+    if (!!r) return r;
+    r = g_strcmp0(a->ansi_color, b->ansi_color);
+    if (!!r) return r;
+    r = g_strcmp0(a->url, b->url);
+    if (!!r) return r;
+    r = g_strcmp0(a->url_support, b->url_support);
+    if (!!r) return r;
+    r = g_strcmp0(a->wikipedia, b->wikipedia);
+    if (!!r) return r;
+    return 0;
+}
+
 vendor_list vendor_list_remove_duplicates_deep(vendor_list vl) {
     /* vendor_list is GSList* */
     GSList *tvl = vl;
@@ -314,13 +334,7 @@ vendor_list vendor_list_remove_duplicates_deep(vendor_list vl) {
         evl = tvl->next;
         while(evl) {
             const Vendor *ev = evl->data;
-            if ( SEQ(ev->name, tv->name)
-                 && SEQ(ev->name_short, tv->name_short)
-                 && SEQ(ev->ansi_color, tv->ansi_color)
-                 && SEQ(ev->url, tv->url)
-                 && SEQ(ev->url_support, tv->url_support)
-                 && SEQ(ev->wikipedia, tv->wikipedia)
-                 ) {
+            if (vendor_cmp_deep(ev, tv) == 0) {
                 GSList *next = evl->next;
                 vl = g_slist_delete_link(vl, evl);
                 evl = next;

@@ -73,6 +73,7 @@ const gchar *vendor_get_shortest_name(const gchar *id_str);
 const gchar *vendor_get_url(const gchar *id_str);
 void vendor_free(Vendor *v);
 
+int vendor_cmp_deep(const Vendor *a, const Vendor *b);
 vendor_list vendors_match_core(const gchar *str, int limit);
 
 extern gboolean vendor_die_on_error;
