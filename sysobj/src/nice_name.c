@@ -161,7 +161,7 @@ void nice_name_x86_cpuid_model_string(char *cpuid_model_string) {
         char *dash = strchr(buffer, '-');
         char *m = NULL;
 
-        int i = 0;
+        unsigned int i = 0;
         for(; i < G_N_ELEMENTS(count_strings); i++) {
             int l = strlen(count_strings[i]);
             m = dash-l;
