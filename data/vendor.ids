@@ -622,7 +622,7 @@ name Seagate Technology
     url www.seagate.com
     ansi_color 0;92;100
     match_string Seagate
-#    match_string_case ST
+    match_string_num_prefix_case ST
 
 name Silicon Integrated Systems Corporation
     name_short SIS
