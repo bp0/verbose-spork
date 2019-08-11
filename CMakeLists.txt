@@ -141,27 +141,13 @@ target_link_libraries(bsysinfo
         ${SYSOB_GLIB_LIBRARIES}
         sysobj
 )
-add_executable(vendortest
-        src/vendortest.c
-)
-target_link_libraries(vendortest
-        ${SYSOB_GLIB_LIBRARIES}
-        sysobj
-)
-add_executable(dtcompattest
-        src/dtcompattest.c
-)
-target_link_libraries(dtcompattest
-        ${SYSOB_GLIB_LIBRARIES}
-        sysobj
-)
-add_executable(nametest
-        src/nametest.c
-)
-target_link_libraries(nametest
-        ${SYSOB_GLIB_LIBRARIES}
-        sysobj
-)
+
+add_executable(test_vendor src/test_vendor.c)
+target_link_libraries(test_vendor ${SYSOB_GLIB_LIBRARIES} sysobj)
+add_executable(test_dt_compat src/test_dt_compat.c)
+target_link_libraries(test_dt_compat ${SYSOB_GLIB_LIBRARIES} sysobj)
+add_executable(test_nice_name src/test_nice_name.c)
+target_link_libraries(test_nice_name ${SYSOB_GLIB_LIBRARIES} sysobj)
 
 if(SYSOB_GTK3_FOUND)
 add_definitions(-DGTK_DISABLE_SINGLE_INCLUDES)
