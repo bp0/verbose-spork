@@ -14,11 +14,20 @@ const gchar *linux_vendors[] = {
     "Linux",
 };
 
+const struct { char *test_str, *compare; int match_means_fail; }
+special_case_tests[] = {
+    { "Harmony", "arm", 1 },
+    { "Transcend", "Transcend Information", 0 },
+    { "Transcend Technology Co. Ltd.", "Transcend Information", 1 },
+    { "ST3160023A", "Seagate", 0 },
+    { "STEC", "Seagate", 1 },
+};
+
 int main(int argc, char **argv) {
     vendor_die_on_error = TRUE;
     sysobj_init(NULL);
 
-    int b,i;
+    unsigned int b,i;
 
     int spdv_total = 0, spdv_hit = 0;
     for(b = 0; b < VENDORS_BANKS; b++) {
@@ -229,6 +238,30 @@ int main(int argc, char **argv) {
         g_free(arm_ids);
     }
 
+    int sc_total = 0, sc_hit = 0, sc_fail = 0;
+    for(i = 0; i < G_N_ELEMENTS(special_case_tests); i++) {
+            sc_total++;
+            vendor_list vl1 = vendors_match(special_case_tests[i].test_str, NULL);
+            vendor_list vl2 = vendors_match(special_case_tests[i].compare, NULL);
+            vl1 = vendor_list_remove_duplicates_deep(vl1);
+            vl2 = vendor_list_remove_duplicates_deep(vl2);
+            int vc = g_slist_length(vl1);
+            gchar *mstr = vendor_list_ribbon(vl1, FMT_OPT_ATERM);
+            if (mstr) sc_hit++;
+            printf("-- test: %s  === (%d) %s", special_case_tests[i].test_str, vc, mstr );
+            const Vendor *v1 = vl1 ? vl1->data : NULL;
+            const Vendor *v2 = vl2 ? vl2->data : NULL;
+            gboolean m = vendor_cmp_deep(v1, v2) == 0 ? 1 : 0;
+            if ((m && special_case_tests[i].match_means_fail)
+                || (!m && !special_case_tests[i].match_means_fail) ) {
+                sc_fail++;
+                printf(" ***** FAIL!\n");
+            } else {
+                printf(" ----- %s.\n", special_case_tests[i].match_means_fail ? "OK (probably)" : "OK");
+            }
+            g_free(mstr);
+    }
+
     printf("\n" "Coverage:\n"
            "Linux/os_release: %d / %d\n"
            "JEDEC Mfgr: %d / %d\n"
@@ -237,7 +270,8 @@ int main(int argc, char **argv) {
            "Device Tree Vendor: %d / %d\n"
            "ARM Mfgr: %d / %d\n"
            "SD Card Vendor/Mfgr: %d / %d\n"
-           "SDIO Vendor: %d / %d\n",
+           "SDIO Vendor: %d / %d\n"
+           "Special Test: %d / %d -- %d fails\n",
            osv_hit, osv_total,
            spdv_hit, spdv_total,
            pci_hit, pci_total,
@@ -245,7 +279,8 @@ int main(int argc, char **argv) {
            dt_hit, dt_total,
            arm_hit, arm_total,
            sdcard_hit, sdcard_total,
-           sdio_hit, sdio_total
+           sdio_hit, sdio_total,
+           sc_hit, sc_total, sc_fail
            );
 
     sysobj_cleanup();
