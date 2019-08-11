@@ -48,6 +48,15 @@ int vendor_sort (const Vendor *ap, const Vendor *bp) {
     int la = 0, lb = 0;
     if (ap && ap->match_string) la = strlen(ap->match_string);
     if (bp && bp->match_string) lb = strlen(bp->match_string);
+
+    /* NUM_PREFIX rules consider +1 characters */
+    if (ap->match_rule == VENDOR_MATCH_RULE_NUM_PREFIX_MATCH_CASE
+        || ap->match_rule == VENDOR_MATCH_RULE_NUM_PREFIX_IGNORE_CASE)
+        la++;
+    if (bp->match_rule == VENDOR_MATCH_RULE_NUM_PREFIX_MATCH_CASE
+        || bp->match_rule == VENDOR_MATCH_RULE_NUM_PREFIX_IGNORE_CASE)
+        lb++;
+
     if (la == lb) return 0;
     if (la > lb) return -1;
     return 1;
@@ -136,6 +145,8 @@ static int read_from_vendor_ids(const char *path) {
             mrule = VENDOR_MATCH_RULE_WORD_PREFIX_IGNORE_CASE;
         else if (VEN_CHK("match_string_suffix_case "))
             mrule = VENDOR_MATCH_RULE_WORD_PREFIX_MATCH_CASE;
+        else if (VEN_CHK("match_string_num_prefix "))
+            mrule = VENDOR_MATCH_RULE_NUM_PREFIX_IGNORE_CASE;
         else if (VEN_CHK("match_string_num_prefix_case "))
             mrule = VENDOR_MATCH_RULE_NUM_PREFIX_MATCH_CASE;
 
@@ -471,9 +482,22 @@ vendor_list vendors_match_core(const gchar *str, int limit) {
                             goto vendors_match_core_finish;
                     }
                     break;
+                case VENDOR_MATCH_RULE_NUM_PREFIX_IGNORE_CASE:
+                    if (m = strstr_word_prefix(passes[pass-1], v->match_string) ) {
+                        if (isdigit(m[v->ms_length])) {
+                            /* clear so it doesn't match again */
+                            for(char *s = m; s < m + v->ms_length; s++) *s = ' ';
+                            /* add to return list */
+                            ret = vendor_list_append(ret, v);
+                            found++;
+                            if (limit > 0 && found >= limit)
+                                goto vendors_match_core_finish;
+                        }
+                    }
+                    break;
                 case VENDOR_MATCH_RULE_NUM_PREFIX_MATCH_CASE:
                     /* "ST" hits for "ST3600A" but not "AST" or "STMicro" or "STEC" */
-                    if (m = strstr_word_prefix(passes[pass-1], v->match_string) ) {
+                    if (m = strcasestr_word_prefix(passes[pass-1], v->match_string) ) {
                         if (isdigit(m[v->ms_length])) {
                             /* clear so it doesn't match again */
                             for(char *s = m; s < m + v->ms_length; s++) *s = ' ';
