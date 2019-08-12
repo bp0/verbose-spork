@@ -238,7 +238,7 @@ int main(int argc, char **argv) {
         g_free(arm_ids);
     }
 
-    int sc_total = 0, sc_hit = 0, sc_fail = 0;
+    int sc_total = 0, sc_hit = 0, sc_success = 0, sc_fail = 0;
     for(i = 0; i < G_N_ELEMENTS(special_case_tests); i++) {
             sc_total++;
             vendor_list vl1 = vendors_match(special_case_tests[i].test_str, NULL);
@@ -257,6 +257,7 @@ int main(int argc, char **argv) {
                 sc_fail++;
                 printf(" ***** FAIL!\n");
             } else {
+                sc_success++;
                 printf(" ----- %s.\n", special_case_tests[i].match_means_fail ? "OK (probably)" : "OK");
             }
             g_free(mstr);
@@ -271,7 +272,7 @@ int main(int argc, char **argv) {
            "ARM Mfgr: %d / %d\n"
            "SD Card Vendor/Mfgr: %d / %d\n"
            "SDIO Vendor: %d / %d\n"
-           "Special Test: %d / %d -- %d fails\n",
+           "Special Test: %d tests; %d success; %d failure\n",
            osv_hit, osv_total,
            spdv_hit, spdv_total,
            pci_hit, pci_total,
@@ -280,7 +281,7 @@ int main(int argc, char **argv) {
            arm_hit, arm_total,
            sdcard_hit, sdcard_total,
            sdio_hit, sdio_total,
-           sc_hit, sc_total, sc_fail
+           sc_total, sc_success, sc_fail
            );
 
     sysobj_cleanup();

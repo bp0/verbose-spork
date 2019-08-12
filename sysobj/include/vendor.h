@@ -42,6 +42,7 @@ enum {
   VENDOR_MATCH_RULE_WORD_PREFIX_MATCH_CASE  = 4,
   VENDOR_MATCH_RULE_WORD_SUFFIX_IGNORE_CASE = 5,
   VENDOR_MATCH_RULE_WORD_SUFFIX_MATCH_CASE  = 6,
+  /* "ST" hits for "ST3600A" but not "AST" or "STMicro" or "STEC" */
   VENDOR_MATCH_RULE_NUM_PREFIX_IGNORE_CASE  = 7,
   VENDOR_MATCH_RULE_NUM_PREFIX_MATCH_CASE   = 8,
 };
@@ -59,6 +60,7 @@ typedef struct {
 
   unsigned long file_line;
   unsigned long ms_length;
+  unsigned long weight;
 } Vendor;
 
 void vendor_init(void);

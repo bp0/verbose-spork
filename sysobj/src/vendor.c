@@ -46,20 +46,9 @@ gboolean vendor_die_on_error = FALSE;
  * LONGEST first */
 int vendor_sort (const Vendor *ap, const Vendor *bp) {
     int la = 0, lb = 0;
-    if (ap && ap->match_string) la = strlen(ap->match_string);
-    if (bp && bp->match_string) lb = strlen(bp->match_string);
-
-    /* NUM_PREFIX rules consider +1 characters */
-    if (ap->match_rule == VENDOR_MATCH_RULE_NUM_PREFIX_MATCH_CASE
-        || ap->match_rule == VENDOR_MATCH_RULE_NUM_PREFIX_IGNORE_CASE)
-        la++;
-    if (bp->match_rule == VENDOR_MATCH_RULE_NUM_PREFIX_MATCH_CASE
-        || bp->match_rule == VENDOR_MATCH_RULE_NUM_PREFIX_IGNORE_CASE)
-        lb++;
-
-    if (la == lb) return 0;
-    if (la > lb) return -1;
-    return 1;
+    if (ap) la = ap->weight;
+    if (bp) lb = bp->weight;
+    return lb-la;
 }
 
 static int read_from_vendor_ids(const char *path) {
@@ -163,6 +152,13 @@ static int read_from_vendor_ids(const char *path) {
             v->wikipedia = dup_if_not_empty(wikipedia);
             v->note = dup_if_not_empty(note);
             v->ansi_color = dup_if_not_empty(ansi_color);
+
+            v->weight = v->ms_length;
+            /* NUM_PREFIX rules consider +1 characters */
+            if (v->match_rule == VENDOR_MATCH_RULE_NUM_PREFIX_MATCH_CASE
+                || v->match_rule == VENDOR_MATCH_RULE_NUM_PREFIX_IGNORE_CASE)
+                v->weight++;
+
             vendors = g_slist_prepend(vendors, v);
             name_rule_count++;
             count++;
@@ -408,106 +404,54 @@ vendor_list vendors_match_core(const gchar *str, int limit) {
             if (!v) continue;
             if (!v->match_string) continue;
 
+#define standard_match_work_inner(fn) {                       \
+    /* clear so it doesn't match again */                     \
+    for(char *s = m; s < m + v->ms_length; s++) *s = ' ';     \
+    /* add to return list */                                  \
+    ret = vendor_list_append(ret, v);                         \
+    found++;                                                  \
+    if (limit > 0 && found >= limit)                          \
+        goto vendors_match_core_finish; }
+#define standard_match_work(fn)                               \
+    if (m = fn(passes[pass-1], v->match_string) )             \
+        standard_match_work_inner();
+
             switch(v->match_rule) {
-                case VENDOR_MATCH_RULE_WORD_IGNORE_CASE:
-                    if (m = strcasestr_word(passes[pass-1], v->match_string) ) {
-                        /* clear so it doesn't match again */
-                        for(char *s = m; s < m + v->ms_length; s++) *s = ' ';
-                        /* add to return list */
-                        ret = vendor_list_append(ret, v);
-                        found++;
-                        if (limit > 0 && found >= limit)
-                            goto vendors_match_core_finish;
-                    }
-                    break;
-                case VENDOR_MATCH_RULE_WORD_MATCH_CASE: /* match case */
-                    if (m = strstr_word(passes[pass-1], v->match_string) ) {
-                        /* clear so it doesn't match again */
-                        for(char *s = m; s < m + v->ms_length; s++) *s = ' ';
-                        /* add to return list */
-                        ret = vendor_list_append(ret, v);
-                        found++;
-                        if (limit > 0 && found >= limit)
-                            goto vendors_match_core_finish;
-                    }
-                    break;
-                case VENDOR_MATCH_RULE_EXACT: /* match exact */
+                case VENDOR_MATCH_RULE_EXACT:
                     if (SEQ(passes[pass-1], v->match_string) ) {
+                        /* add to return list */
                         ret = vendor_list_append(ret, v);
                         found++;
                         goto vendors_match_core_finish; /* no way for any other match to happen */
                     }
                     break;
+                case VENDOR_MATCH_RULE_WORD_IGNORE_CASE:
+                    standard_match_work(strcasestr_word);
+                    break;
+                case VENDOR_MATCH_RULE_WORD_MATCH_CASE:
+                    standard_match_work(strstr_word);
+                    break;
                 case VENDOR_MATCH_RULE_WORD_PREFIX_MATCH_CASE:
-                    if (m = strstr_word_prefix(passes[pass-1], v->match_string) ) {
-                        /* clear so it doesn't match again */
-                        for(char *s = m; s < m + v->ms_length; s++) *s = ' ';
-                        /* add to return list */
-                        ret = vendor_list_append(ret, v);
-                        found++;
-                        if (limit > 0 && found >= limit)
-                            goto vendors_match_core_finish;
-                    }
+                    standard_match_work(strstr_word_prefix);
                     break;
                 case VENDOR_MATCH_RULE_WORD_PREFIX_IGNORE_CASE:
-                    if (m = strcasestr_word_prefix(passes[pass-1], v->match_string) ) {
-                        /* clear so it doesn't match again */
-                        for(char *s = m; s < m + v->ms_length; s++) *s = ' ';
-                        /* add to return list */
-                        ret = vendor_list_append(ret, v);
-                        found++;
-                        if (limit > 0 && found >= limit)
-                            goto vendors_match_core_finish;
-                    }
+                    standard_match_work(strcasestr_word_prefix);
                     break;
                 case VENDOR_MATCH_RULE_WORD_SUFFIX_MATCH_CASE:
-                    if (m = strstr_word_suffix(passes[pass-1], v->match_string) ) {
-                        /* clear so it doesn't match again */
-                        for(char *s = m; s < m + v->ms_length; s++) *s = ' ';
-                        /* add to return list */
-                        ret = vendor_list_append(ret, v);
-                        found++;
-                        if (limit > 0 && found >= limit)
-                            goto vendors_match_core_finish;
-                    }
+                    standard_match_work(strstr_word_suffix);
                     break;
                 case VENDOR_MATCH_RULE_WORD_SUFFIX_IGNORE_CASE:
-                    if (m = strcasestr_word_suffix(passes[pass-1], v->match_string) ) {
-                        /* clear so it doesn't match again */
-                        for(char *s = m; s < m + v->ms_length; s++) *s = ' ';
-                        /* add to return list */
-                        ret = vendor_list_append(ret, v);
-                        found++;
-                        if (limit > 0 && found >= limit)
-                            goto vendors_match_core_finish;
-                    }
+                    standard_match_work(strcasestr_word_suffix);
                     break;
                 case VENDOR_MATCH_RULE_NUM_PREFIX_IGNORE_CASE:
-                    if (m = strstr_word_prefix(passes[pass-1], v->match_string) ) {
-                        if (isdigit(m[v->ms_length])) {
-                            /* clear so it doesn't match again */
-                            for(char *s = m; s < m + v->ms_length; s++) *s = ' ';
-                            /* add to return list */
-                            ret = vendor_list_append(ret, v);
-                            found++;
-                            if (limit > 0 && found >= limit)
-                                goto vendors_match_core_finish;
-                        }
-                    }
+                    if (m = strstr_word_prefix(passes[pass-1], v->match_string) )
+                        if (isdigit(m[v->ms_length]))
+                            standard_match_work_inner();
                     break;
                 case VENDOR_MATCH_RULE_NUM_PREFIX_MATCH_CASE:
-                    /* "ST" hits for "ST3600A" but not "AST" or "STMicro" or "STEC" */
-                    if (m = strcasestr_word_prefix(passes[pass-1], v->match_string) ) {
-                        if (isdigit(m[v->ms_length])) {
-                            /* clear so it doesn't match again */
-                            for(char *s = m; s < m + v->ms_length; s++) *s = ' ';
-                            /* add to return list */
-                            ret = vendor_list_append(ret, v);
-                            found++;
-                            if (limit > 0 && found >= limit)
-                                goto vendors_match_core_finish;
-                        }
-                    }
+                    if (m = strcasestr_word_prefix(passes[pass-1], v->match_string) )
+                        if (isdigit(m[v->ms_length]))
+                            standard_match_work_inner();
                     break;
             }
         }
