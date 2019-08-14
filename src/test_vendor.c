@@ -14,13 +14,16 @@ const gchar *linux_vendors[] = {
     "Linux",
 };
 
-const struct { char *test_str, *compare; int match_means_fail; }
+const struct { char *test_str, *good, *bad; }
 special_case_tests[] = {
-    { "Harmony", "arm", 1 },
-    { "Transcend", "Transcend Information", 0 },
-    { "Transcend Technology Co. Ltd.", "Transcend Information", 1 },
-    { "ST3160023A", "Seagate", 0 },
-    { "STEC", "Seagate", 1 },
+    { "Harmony", .bad="arm" },
+    { "Transcend", .good="Transcend Information" },
+    { "Transcend Technology Co. Ltd.", .bad="Transcend Information" },
+    { "ST3160023A", .good="Seagate" },
+    { "STEC", .bad="Seagate" },
+    { "ST Whatever", .bad="Seagate" },
+    { "Digital", .good="Digital Equipment Corporation" },
+    { "American Computer & Digital Components Inc", .bad="Digital Equipment Corporation" },
 };
 
 int main(int argc, char **argv) {
@@ -41,7 +44,7 @@ int main(int argc, char **argv) {
             gchar *mstr = vendor_list_ribbon(vl, FMT_OPT_ATERM);
             if (mstr) {
                 spdv_hit++;
-                printf("-- jedec [%02d,%03d] %s  === (%d) %s\n", b,i, vendor_str, vc, mstr );
+                printf("-- jedec [%02d,%03d] %s  === (%d) %s \n", b,i, vendor_str, vc, mstr );
             }
             g_free(mstr);
         }
@@ -56,7 +59,7 @@ int main(int argc, char **argv) {
             gchar *mstr = vendor_list_ribbon(vl, FMT_OPT_ATERM);
             if (mstr) {
                 osv_hit++;
-                printf("-- os_release: %s  === (%d) %s\n", linux_vendors[i], vc, mstr );
+                printf("-- os_release: %s  === (%d) %s \n", linux_vendors[i], vc, mstr );
             }
             g_free(mstr);
     }
@@ -83,7 +86,7 @@ int main(int argc, char **argv) {
                     if (mstr) {
                         pci_hit++;
                         p[4] = 0;
-                        printf("-- pci [%s] %s  === (%d) %s\n", p, p+5, vc, mstr );
+                        printf("-- pci [%s] %s  === (%d) %s \n", p, p+5, vc, mstr );
                     }
                     g_free(mstr);
 
@@ -113,7 +116,7 @@ int main(int argc, char **argv) {
                     if (mstr) {
                         usb_hit++;
                         p[4] = 0;
-                        printf("-- usb [%s] %s  === (%d) %s\n", p, p+5, vc, mstr );
+                        printf("-- usb [%s] %s  === (%d) %s \n", p, p+5, vc, mstr );
                     }
                     g_free(mstr);
 
@@ -121,6 +124,35 @@ int main(int argc, char **argv) {
             p = next_nl + 1;
         }
         g_free(usb_ids);
+    }
+
+    gchar *edid_ids = NULL;
+    int edid_total = 0, edid_hit = 0;
+    if (g_file_get_contents("edid.ids", &edid_ids, NULL, NULL)) {
+        gchar *p = edid_ids;
+        while(next_nl = strchr(p, '\n')) {
+            *next_nl = 0;
+            if (strlen(p) > 5
+                && isalnum(p[0])
+                && isalnum(p[1])
+                && isalnum(p[2])
+                && isspace(p[3]) ) {
+                    edid_total++;
+                    vendor_list vl = vendors_match(p+4, NULL);
+                    vl = vendor_list_remove_duplicates_deep(vl);
+                    int vc = g_slist_length(vl);
+                    gchar *mstr = vendor_list_ribbon(vl, FMT_OPT_ATERM);
+                    if (mstr) {
+                        edid_hit++;
+                        p[3] = 0;
+                        printf("-- edid [%s] %s  === (%d) %s \n", p, p+4, vc, mstr );
+                    }
+                    g_free(mstr);
+
+            }
+            p = next_nl + 1;
+        }
+        g_free(edid_ids);
     }
 
     gchar *sdio_ids = NULL;
@@ -143,7 +175,7 @@ int main(int argc, char **argv) {
                     if (mstr) {
                         sdio_hit++;
                         p[4] = 0;
-                        printf("-- sdio [%s] %s  === (%d) %s\n", p, p+5, vc, mstr );
+                        printf("-- sdio [%s] %s  === (%d) %s \n", p, p+5, vc, mstr );
                     }
                     g_free(mstr);
 
@@ -172,7 +204,7 @@ int main(int argc, char **argv) {
                     gchar *mstr = vendor_list_ribbon(vl, FMT_OPT_ATERM);
                     if (mstr) {
                         sdcard_hit++;
-                        printf("-- sdcard [%s] %s  === (%d) %s\n", p, s+1, vc, mstr );
+                        printf("-- sdcard [%s] %s  === (%d) %s \n", p, s+1, vc, mstr );
                     }
                     g_free(mstr);
 
@@ -200,7 +232,7 @@ int main(int argc, char **argv) {
                     gchar *mstr = vendor_list_ribbon(vl, FMT_OPT_ATERM);
                     if (mstr) {
                         dt_hit++;
-                        printf("-- dt [%s] %s  === (%d) %s\n", p, s+1, vc, mstr );
+                        printf("-- dt [%s] %s  === (%d) %s \n", p, s+1, vc, mstr );
                     }
                     g_free(mstr);
 
@@ -228,7 +260,7 @@ int main(int argc, char **argv) {
                     if (mstr) {
                         arm_hit++;
                         p[2] = 0;
-                        printf("-- arm [%s] %s  === (%d) %s\n", p, p+3, vc, mstr );
+                        printf("-- arm [%s] %s  === (%d) %s \n", p, p+3, vc, mstr );
                     }
                     g_free(mstr);
 
@@ -241,26 +273,45 @@ int main(int argc, char **argv) {
     int sc_total = 0, sc_hit = 0, sc_success = 0, sc_fail = 0;
     for(i = 0; i < G_N_ELEMENTS(special_case_tests); i++) {
             sc_total++;
-            vendor_list vl1 = vendors_match(special_case_tests[i].test_str, NULL);
-            vendor_list vl2 = vendors_match(special_case_tests[i].compare, NULL);
-            vl1 = vendor_list_remove_duplicates_deep(vl1);
-            vl2 = vendor_list_remove_duplicates_deep(vl2);
-            int vc = g_slist_length(vl1);
-            gchar *mstr = vendor_list_ribbon(vl1, FMT_OPT_ATERM);
+            vendor_list vl = vendors_match(special_case_tests[i].test_str, NULL);
+            vendor_list vlg = vendors_match(special_case_tests[i].good, NULL);
+            vendor_list vlb = vendors_match(special_case_tests[i].bad, NULL);
+            vl = vendor_list_remove_duplicates_deep(vl);
+            vlg = vendor_list_remove_duplicates_deep(vlg);
+            const Vendor *v = vl ? vl->data : NULL;
+            const Vendor *vg = vlg ? vlg->data : NULL;
+            const Vendor *vb = vlb ? vlb->data : NULL;
+            int vc = g_slist_length(vl);
+            int vcg = g_slist_length(vlg);
+            int vcb = g_slist_length(vlb);
+            gchar *mstr = vendor_list_ribbon(vl, FMT_OPT_ATERM);
+            gchar *mstrg = vendor_list_ribbon(vlg, FMT_OPT_ATERM);
+            gchar *mstrb = vendor_list_ribbon(vlb, FMT_OPT_ATERM);
             if (mstr) sc_hit++;
-            printf("-- test: %s  === (%d) %s", special_case_tests[i].test_str, vc, mstr );
-            const Vendor *v1 = vl1 ? vl1->data : NULL;
-            const Vendor *v2 = vl2 ? vl2->data : NULL;
-            gboolean m = vendor_cmp_deep(v1, v2) == 0 ? 1 : 0;
-            if ((m && special_case_tests[i].match_means_fail)
-                || (!m && !special_case_tests[i].match_means_fail) ) {
-                sc_fail++;
-                printf(" ***** FAIL!\n");
-            } else {
+            printf("-- test: %s \n    --- result: (%d) %s \n", special_case_tests[i].test_str, vc, mstr );
+            gboolean mg = TRUE;
+            if (special_case_tests[i].good) {
+                mg = vendor_cmp_deep(v, vg) == 0 ? 1 : 0;
+                printf("    --- good: (%d) %s   ---> %s \n", vcg, mstrg, mg ? "[HIT]" : "[MISS]");
+            }
+            gboolean mb = FALSE;
+            if (special_case_tests[i].bad) {
+                mb = vendor_cmp_deep(v, vb) == 0 ? 1 : 0;
+                printf("    --- bad: (%d) %s   ---> %s \n", vcb, mstrb, mb ? "[HIT]" : "[MISS]");
+            }
+            gboolean pass = TRUE;
+            pass = pass && mg;
+            pass = pass && !mb;
+            if (pass) {
                 sc_success++;
-                printf(" ----- %s.\n", special_case_tests[i].match_means_fail ? "OK (probably)" : "OK");
+                printf("    ----- %s.\n", special_case_tests[i].good ? "OK" : "OK  (probably)");
+            } else {
+                sc_fail++;
+                printf("    ***** FAIL!\n");
             }
             g_free(mstr);
+            g_free(mstrg);
+            g_free(mstrb);
     }
 
     printf("\n" "Coverage:\n"
@@ -268,6 +319,7 @@ int main(int argc, char **argv) {
            "JEDEC Mfgr: %d / %d\n"
            "PCI Vendor: %d / %d\n"
            "USB Vendor: %d / %d\n"
+           "EDID Vendor: %d / %d\n"
            "Device Tree Vendor: %d / %d\n"
            "ARM Mfgr: %d / %d\n"
            "SD Card Vendor/Mfgr: %d / %d\n"
@@ -277,6 +329,7 @@ int main(int argc, char **argv) {
            spdv_hit, spdv_total,
            pci_hit, pci_total,
            usb_hit, usb_total,
+           edid_hit, edid_total,
            dt_hit, dt_total,
            arm_hit, arm_total,
            sdcard_hit, sdcard_total,

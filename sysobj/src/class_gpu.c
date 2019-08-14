@@ -18,6 +18,7 @@
  *
  */
 
+#include <endian.h>
 #include "sysobj.h"
 #include "sysobj_extras.h" /* for dtr_compat_decode() */
 #include "nice_name.h" /* for nice_name_intel_gpu_device() */

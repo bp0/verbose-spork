@@ -1,0 +1,30 @@
+#
+# https://github.com/bp0/verbose-spork/blob/master/data/edid.ids
+#
+
+#
+# List of known/observed EDID three-letter vendor codes
+#
+# Syntax:
+# VEN Vendor Name
+#
+# Please keep sorted.
+#
+
+ACR Acer Inc.
+APP Apple Inc.
+DEL Dell
+HTC Hitachi
+HWP Hewlett-Packard Company
+LEN Lenovo Group
+LGD LG Display
+MEI Panasonic Industry Company
+NEC NEC Corporation
+PHL Koninklijke Philips
+PIO Pioneer
+SAM Samsung
+SHP Sharp Corporation
+SNY Sony
+TSB Toshiba Corporation
+VIZ Vizio
+VSC ViewSonic Corporation

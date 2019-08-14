@@ -128,6 +128,7 @@ name Toshiba Corporation
 name Vizio
     name_short VIZIO
     ansi_color 0;30;107
+    match_string Vizio
     note EDID vendor: VIZ
     match_string_exact VIZ
 
@@ -135,6 +136,7 @@ name ViewSonic Corporation
     name_short ViewSonic
     url www.viewsonic.com
     ansi_color 0;35;103
+    match_string ViewSonic
     note EDID vendor: VSC
     match_string_exact VSC
 
@@ -269,9 +271,12 @@ name Qualcomm (formerly Atheros)
     match_string Atheros
 
 name Panasonic Industry Company
+# AKA: Matsushita Electric Industrial
     name_short Panasonic
     url www.panasonic.com
     ansi_color 0;30;107
+    match_string Panasonic
+    match_string Matsushita
     match_string MATSHITA
     note EDID vendor: MEI
     match_string_exact MEI
@@ -1021,7 +1026,15 @@ name Digital Equipment Corporation
     note Dead; various parts to Intel, Compaq, HP
     match_string_case DEC
     match_string Digital Equipment
-    match_string Digital
+    match_string_exact Digital
+
+name Western Digital
+    name_short WD
+    url www.westerndigital.com
+    wikipedia Western Digital
+    ansi_color 0;97;44
+    match_string Western Digital
+    match_string_num_prefix_case WD
 
 name Marvell Technology Group
     name_short Marvell
