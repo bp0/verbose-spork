@@ -749,6 +749,7 @@ name Victor Company of Japan
     url www.victor.co.jp
     ansi_color 0;91;107
     match_string_case JVC
+    match_string Victor
 
 name ASRock
     url www.asrock.com
