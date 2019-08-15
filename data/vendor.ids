@@ -833,6 +833,38 @@ name Linaro
     ansi_color 0;32;107
     match_string Linaro
 
+name Longsys
+    name_short longsys
+    url longsys.com
+    ansi_color 0;31;107
+    match_string Longsys
+
+name Longsys (formerly Micron Lexar)
+    name_short longsys/Lexar
+    url lexar.com
+    wikipedia Lexar
+    ansi_color 0;31;40
+    match_string Lexar
+
+name Angelbird Technologies
+    name_short Angelbird
+    url www.angelbird.com
+    ansi_color 0;97;100
+    match_string Angelbird
+
+name Hoodman Corporation
+    name_short Hoodman
+    url www.hoodmanusa.com
+    ansi_color 0;30;43
+    match_string Hoodman
+
+name Silicon Power
+    name_short SP
+    url www.silicon-power.com
+    wikipedia Silicon Power
+    ansi_color 0;97;40
+    match_string Silicon Power
+
 #
 # BIOS manufacturers
 #
