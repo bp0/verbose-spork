@@ -140,6 +140,7 @@ typedef struct sysobj_class {
     void (*f_cleanup) (void); /* shutdown/cleanup function */
     const gchar *(*f_halp) (sysobj *obj); /* markup text */
 
+    const gchar *v_name;  /* verify the obj's name (not name_req) */
     const gchar *v_subsystem;  /* verify that the obj's subsystem link points to a THIS (ex: /sys/bus/pci, /sys/class/block)  */
     const gchar *v_subsystem_parent;  /* verify that the parent obj's subsystem link points to a THIS (ex: /sys/bus/pci, /sys/class/block)  */
     const gchar *v_lblnum;           /* verify that the obj's name is label0 ( verify_lblnum(THIS) ) */

@@ -159,6 +159,7 @@ static const gchar class_item_list[] =
   ".f_cleanup\n"
   ".f_halp\n"
   ".f_vendors\n"
+  ".v_name\n"
   ".v_subsystem\n"
   ".v_subsystem_parent\n"
   ".v_lblnum\n"
@@ -262,6 +263,8 @@ static gchar *get_class_info(const gchar *path) {
             return g_strdup_printf("%p", match->f_halp);
         if (SEQ(name, ".f_vendors") )
             return g_strdup_printf("%p", match->f_vendors);
+        if (SEQ(name, ".v_name") )
+            return g_strdup(match->v_name);
         if (SEQ(name, ".v_subsystem") )
             return g_strdup(match->v_subsystem);
         if (SEQ(name, ".v_subsystem_parent") )

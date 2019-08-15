@@ -505,6 +505,8 @@ void sysobj_classify(sysobj *s) {
                 match = g_str_has_suffix(s->path, c->pattern);
 
             /* simple verifiers */
+            if (match && c->v_name)
+                match = SEQ(s->name, c->v_name);
             if (match && c->v_is_node)
                 match = s->data.is_dir;
             if (match && c->v_is_attr)
