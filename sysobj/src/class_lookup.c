@@ -99,9 +99,13 @@ static sysobj_class cls_lookup[] = {
     .s_halp = sdcard_ids_reference_markup_text, .s_label = "sdcard.ids lookup virtual tree",
     .s_update_interval = 4.0 },
   { SYSOBJ_CLASS_DEF
-    .tag = "sdcard.ids:id", .pattern = ":/lookup/sdcard.ids/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .tag = "sdcard.ids:id", .pattern = ":/lookup/sdcard.ids/*", .flags = OF_GLOB_PATTERN | OF_HAS_VENDOR | OF_CONST,
     .s_halp = sdcard_ids_reference_markup_text, .s_label = "sdcard.ids lookup result",
-    .f_format = fmt_node_name },
+    .v_is_node = TRUE, .f_format = fmt_node_name, .s_vendors_from_child = "name" },
+  { SYSOBJ_CLASS_DEF
+    .tag = "sdcard.ids:name", .pattern = ":/lookup/sdcard.ids/*", .flags = OF_GLOB_PATTERN | OF_HAS_VENDOR | OF_CONST,
+    .s_halp = sdcard_ids_reference_markup_text, .s_label = "sdcard.ids lookup result",
+    .v_is_attr = TRUE, .v_name = "name" },
 
   { SYSOBJ_CLASS_DEF
     .tag = "usb.ids", .pattern = ":/lookup/usb.ids", .flags = OF_CONST,
@@ -128,7 +132,7 @@ static sysobj_class cls_lookup[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "edid.ids:id", .pattern = ":/lookup/edid.ids/*", .flags = OF_GLOB_PATTERN | OF_HAS_VENDOR | OF_CONST,
     .s_halp = edid_ids_reference_markup_text, .s_label = "edid.ids lookup result",
-    .v_is_attr = FALSE, .f_format = fmt_node_name, .s_vendors_from_child = "name" },
+    .v_is_node = TRUE, .f_format = fmt_node_name, .s_vendors_from_child = "name" },
   { SYSOBJ_CLASS_DEF
     .tag = "edid.ids:name", .pattern = ":/lookup/edid.ids/*", .flags = OF_GLOB_PATTERN | OF_HAS_VENDOR | OF_CONST,
     .s_halp = edid_ids_reference_markup_text, .s_label = "edid.ids lookup result",
