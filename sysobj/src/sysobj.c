@@ -1242,9 +1242,10 @@ vendor_list simple_vendors(sysobj *s) {
         sysobj_read(s, FALSE);
         if (!s->data.is_utf8)
             return NULL;
-        const Vendor *v = vendor_match(s->data.str, NULL);
-        if (v)
-            return vendor_list_append(NULL, v);
+        //const Vendor *v = vendor_match(s->data.str, NULL);
+        //if (v)
+        //    return vendor_list_append(NULL, v);
+        return vendors_match(s->data.str, NULL);
     }
     return NULL;
 }
