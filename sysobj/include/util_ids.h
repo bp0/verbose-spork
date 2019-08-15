@@ -33,6 +33,7 @@ typedef struct {
 } ids_query_result;
 #define ids_query_result_new() g_new0(ids_query_result, 1)
 #define ids_query_result_free(s) g_free(s);
+void ids_query_result_cpy(ids_query_result *dest, ids_query_result *src);
 
 /* Given a qpath "/X/Y/Z", find names as:
  * X <name> ->result[0]
@@ -46,6 +47,7 @@ typedef struct {
  * - sdio.ids "<vendor>/<device>", "C <class>"
  * - sdcard.ids "OEMID <code>", "MANFID <code>"
  * - usb.ids "<vendor>/<device>", "C <class>" etc.
+ * - edid.ids "<3letter_vendor>"
  */
 long scan_ids_file(const gchar *file, const gchar *qpath, ids_query_result *result, long start_offset);
 
@@ -62,5 +64,9 @@ typedef GSList* ids_query_list;
 long scan_ids_file_list(const gchar *file, ids_query_list query_list, long start_offset);
 /* after scan_ids_file_list(), count hits */
 int query_list_count_found(ids_query_list query_list);
+
+/* returns GSList of ids_query* */
+typedef gchar* (*split_loc_function)(const char *line);
+GSList *ids_file_all_get_all(const gchar *file, split_loc_function split_loc_func);
 
 #endif

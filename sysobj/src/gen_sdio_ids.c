@@ -31,6 +31,7 @@
 #include "sysobj.h"
 #include "util_ids.h"
 
+gboolean sdio_ids_preload = TRUE;
 static gchar *sdio_ids_file = NULL;
 
 #define sdio_msg(msg, ...)  fprintf (stderr, "[%s] " msg "\n", __FUNCTION__, ##__VA_ARGS__) /**/
@@ -121,8 +122,42 @@ static sysobj_virt vol[] = {
       .f_get_data = gen_sdio_ids_lookup_value, .f_get_type = gen_sdio_ids_lookup_type },
 };
 
+gchar *split_loc_sdio(const char *line) {
+    unsigned int id = 0;
+    int mc;
+    mc = sscanf(line, "C %x", &id);
+    if (mc == 1)
+        return g_utf8_strchr(line+3, -1, ' ');
+    mc = sscanf(line, "%x", &id);
+    if (mc == 1)
+        return g_utf8_strchr(line, -1, ' ');
+    return NULL;
+}
+
 void gen_sdio_ids() {
     /* add virtual sysobj */
     for (int i = 0; i < (int)G_N_ELEMENTS(vol); i++)
         sysobj_virt_add(&vol[i]);
+
+    if (sdio_ids_preload) {
+        if (!sdio_ids_file)
+            sdio_ids_file = sysobj_find_data_file("sdio.ids");
+
+        GSList *all = ids_file_all_get_all(sdio_ids_file, split_loc_sdio);
+        GSList *l = all;
+        for(; l; l = l->next) {
+            ids_query *qr = l->data;
+            gchar *n = NULL;
+            gchar **qparts = g_strsplit(qr->qpath, "/", -1);
+            gchar *svo_path = g_strdup(":/lookup/sdio.ids");
+            for(int i = 0; qparts[i]; i++) {
+                sysobj_virt_add_simple(svo_path, qparts[i], "*", VSO_TYPE_DIR);
+                svo_path = appf(svo_path, "/", "%s", qparts[i]);
+                n = qr->result.results[i] ? qr->result.results[i] : "";
+                sysobj_virt_add_simple(svo_path, "name", n, VSO_TYPE_STRING);
+            }
+            g_strfreev(qparts);
+        }
+        g_slist_free_full(all, g_free);
+    }
 }

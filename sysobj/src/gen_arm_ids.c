@@ -30,6 +30,7 @@
 #include "sysobj.h"
 #include "util_ids.h"
 
+gboolean arm_ids_preload = TRUE;
 static gchar *arm_ids_file = NULL;
 
 #define arm_msg(msg, ...)  fprintf (stderr, "[%s] " msg "\n", __FUNCTION__, ##__VA_ARGS__) /**/
@@ -120,4 +121,26 @@ void gen_arm_ids() {
     /* add virtual sysobj */
     for (int i = 0; i < (int)G_N_ELEMENTS(vol); i++)
         sysobj_virt_add(&vol[i]);
+
+    if (!arm_ids_file)
+        arm_ids_file = sysobj_find_data_file("arm.ids");
+
+    if (arm_ids_preload) {
+        GSList *all = ids_file_all_get_all(arm_ids_file, NULL);
+        GSList *l = all;
+        for(; l; l = l->next) {
+            ids_query *qr = l->data;
+            gchar *n = NULL;
+            gchar **qparts = g_strsplit(qr->qpath, "/", -1);
+            gchar *svo_path = g_strdup(":/lookup/arm.ids");
+            for(int i = 0; qparts[i]; i++) {
+                sysobj_virt_add_simple(svo_path, qparts[i], "*", VSO_TYPE_DIR);
+                svo_path = appf(svo_path, "/", "%s", qparts[i]);
+                n = qr->result.results[i] ? qr->result.results[i] : "";
+                sysobj_virt_add_simple(svo_path, "name", n, VSO_TYPE_STRING);
+            }
+            g_strfreev(qparts);
+        }
+        g_slist_free_full(all, g_free);
+    }
 }

@@ -30,6 +30,7 @@
 #include "sysobj.h"
 #include "util_ids.h"
 
+gboolean sdcard_ids_preload = TRUE;
 static gchar *sdcard_ids_file = NULL;
 
 #define sdcard_msg(msg, ...)  fprintf (stderr, "[%s] " msg "\n", __FUNCTION__, ##__VA_ARGS__) /**/
@@ -116,8 +117,37 @@ static sysobj_virt vol[] = {
       .f_get_data = gen_sdcard_ids_lookup_value, .f_get_type = gen_sdcard_ids_lookup_type },
 };
 
+gchar *split_loc_sdcard(const char *line) {
+    gchar *fs = g_utf8_strchr(line, -1, ' ');
+    if (fs)
+        return g_utf8_strchr(fs+1, -1, ' ');
+    else return NULL;
+}
+
 void gen_sdcard_ids() {
     /* add virtual sysobj */
     for (int i = 0; i < (int)G_N_ELEMENTS(vol); i++)
         sysobj_virt_add(&vol[i]);
+
+    if (sdcard_ids_preload) {
+        if (!sdcard_ids_file)
+            sdcard_ids_file = sysobj_find_data_file("sdcard.ids");
+
+        GSList *all = ids_file_all_get_all(sdcard_ids_file, split_loc_sdcard);
+        GSList *l = all;
+        for(; l; l = l->next) {
+            ids_query *qr = l->data;
+            gchar *n = NULL;
+            gchar **qparts = g_strsplit(qr->qpath, "/", -1);
+            gchar *svo_path = g_strdup(":/lookup/sdcard.ids");
+            for(int i = 0; qparts[i]; i++) {
+                sysobj_virt_add_simple(svo_path, qparts[i], "*", VSO_TYPE_DIR);
+                svo_path = appf(svo_path, "/", "%s", qparts[i]);
+                n = qr->result.results[i] ? qr->result.results[i] : "";
+                sysobj_virt_add_simple(svo_path, "name", n, VSO_TYPE_STRING);
+            }
+            g_strfreev(qparts);
+        }
+        g_slist_free_full(all, g_free);
+    }
 }
