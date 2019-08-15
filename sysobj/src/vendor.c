@@ -159,6 +159,8 @@ static int read_from_vendor_ids(const char *path) {
                 || v->match_rule == VENDOR_MATCH_RULE_NUM_PREFIX_IGNORE_CASE)
                 v->weight++;
 
+            v->has_parens = g_utf8_strchr(v->match_string, -1, '(') ? TRUE : FALSE;
+
             vendors = g_slist_prepend(vendors, v);
             name_rule_count++;
             count++;
@@ -385,13 +387,15 @@ vendor_list vendors_match_core(const gchar *str, int limit) {
     int found = 0;
     vendor_list ret = NULL;
 
-    /* first pass (passes[1]): ignore text in (),
-     *     like (formerly ...) or (nee ...)
-     * second pass (passes[0]): full text */
-    gchar *passes[2] = { g_strdup(str), g_strdup(str) };
+    /* pass [array_index]: function
+     * 1st [3]: only check match strings that have () in them
+     * 2nd [2]: ignore text in (), like (formerly ...) or (nee ...),
+     *      but unfortunately also (now ...)
+     * 3rd [1]: (passes[0]): full text */
+    gchar *passes[3] = { g_strdup(str), g_strdup(str), g_strdup(str) };
     int pass = 1; p = passes[1];
     while(p = strchr(p, '(') ) {
-        pass = 2; p++;
+        pass = 3; p++;
         while(*p && *p != ')') { *p = ' '; p++; }
     }
 
@@ -404,12 +408,23 @@ vendor_list vendors_match_core(const gchar *str, int limit) {
             if (!v) continue;
             if (!v->match_string) continue;
 
+            if (v->has_parens)
+                if (pass != 3) continue;
+
+            //ven_msg("pass:%d <<%s>> EXAMINE: \"%s\"", pass, v->match_string, passes[pass-1]);
+
 #define standard_match_work_inner(fn) {                       \
     /* clear so it doesn't match again */                     \
-    for(char *s = m; s < m + v->ms_length; s++) *s = ' ';     \
+    for(int epass = pass; epass > 0; epass--)                 \
+    {   char *s = passes[epass-1] + (m - passes[pass-1]);     \
+        char *e = s + v->ms_length;                           \
+        for(; s < e; s++) *s = ' ';                           \
+        g_strstrip(passes[epass-1]);  }                       \
     /* add to return list */                                  \
     ret = vendor_list_append(ret, v);                         \
     found++;                                                  \
+    if (*passes[0] == 0)                                      \
+        goto vendors_match_core_finish;                       \
     if (limit > 0 && found >= limit)                          \
         goto vendors_match_core_finish; }
 #define standard_match_work(fn)                               \
@@ -461,5 +476,6 @@ vendors_match_core_finish:
 
     g_free(passes[0]);
     g_free(passes[1]);
+    g_free(passes[2]);
     return ret;
 }

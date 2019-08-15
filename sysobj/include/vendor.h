@@ -61,6 +61,7 @@ typedef struct {
   unsigned long file_line;
   unsigned long ms_length;
   unsigned long weight;
+  gboolean has_parens;
 } Vendor;
 
 void vendor_init(void);

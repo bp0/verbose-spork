@@ -24,6 +24,8 @@ special_case_tests[] = {
     { "ST Whatever", .bad="Seagate" },
     { "Digital", .good="Digital Equipment Corporation" },
     { "American Computer & Digital Components Inc", .bad="Digital Equipment Corporation" },
+    { "Oracle Corporation (former Sun Microsystems)", .good="Sun Microsystems", .bad="Oracle" },
+    { "LG Electronics [Lucky Goldstar Co. Ltd]", .good="LG", .bad="Goldstar" },
 };
 
 int main(int argc, char **argv) {

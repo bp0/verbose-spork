@@ -176,7 +176,10 @@ name LG Electronics
     name_short LG
     url www.lge.com
     ansi_color 0;97;41
+    match_string LG Electronics [Lucky Goldstar Co. Ltd]
+    match_string Lucky Goldstar
     match_string Lucky-Goldstar
+    match_string LG Semi
     match_string_case LG
 
 name LG Electronics (formerly Goldstar)
@@ -327,6 +330,8 @@ name Fujitsu
     url www.fujitsu.com
     ansi_color 0;31;107
     match_string FUJITSU
+    name_short Fujitsu/Siemens
+    match_string Fujitsu Siemens
 
 name Sony
     name_short SONY
@@ -336,6 +341,14 @@ name Sony
 #   match_string_case CDU
     note EDID vendor: SNY
     match_string_exact SNY
+
+name Sony Mobile
+    name_short SONY
+    url www.sony.com
+    ansi_color 0;30;107
+    match_string Sony Mobile
+    name_short SONY/Ericsson
+    match_string Sony Ericsson
 
 name SanDisk
     url www.sandisk.com
@@ -471,6 +484,13 @@ name BenQ
     url www.benq.com
     ansi_color 0;35;107
     match_string BENQ
+
+name BenQ (formerly Acer Peripherals)
+    name_short BenQ/acer
+    url www.benq.com
+    ansi_color 0;35;107
+    match_string Acer Peripherals
+    match_string Acer Peripherals Inc. (now BenQ Corp.)
 
 name Holtek Semiconductor
     name_short Holtek
@@ -613,6 +633,7 @@ name Crucial (Micron)
     url www.crucial.com
     ansi_color 0;37;44
     match_string Crucial
+    match_string Micron/Crucial
 
 name Toshiba Samsung Storage Technology
     name_short TSST
@@ -724,6 +745,7 @@ name Infineon Technologies
     wikipedia Infineon Technologies
     ansi_color 0;34;107
     match_string Infineon
+    match_string Infineon (former Siemens)
 
 name Cypress Semiconductor
     name_short Cypress
@@ -935,16 +957,19 @@ name Red Hat
     match_string Red Hat
     match_string RedHat
 
-name Sun Microsystems
-    name_short Sun
-    wikipedia Sun Microsystems
-    match_string Sun Microsystems
-
 name Oracle Corporation
     name_short Oracle
     url www.oracle.com
     ansi_color 0;97;41
     match_string Oracle
+
+name Oracle Corporation (formerly Sun Microsystems)
+    name_short Oracle (Sun)
+    url www.oracle.com
+    wikipedia Sun Microsystems
+    ansi_color 0;97;41
+    match_string Sun Microsystems
+    match_string Oracle Corporation (former Sun Microsystems)
 
 name Oracle Corporation (formerly InnoTek Systemberatung)
     name_short Oracle (InnoTek)
