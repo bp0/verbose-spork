@@ -35,6 +35,7 @@ void gen_arm_ids();
 void gen_sdio_ids();
 void gen_sdcard_ids();
 void gen_dt_ids();
+void gen_edid_ids();
 void gen_os_release();
 void gen_dmidecode();
 void gen_rpi();
@@ -55,6 +56,7 @@ void generators_init() {
     gen_sdio_ids();
     gen_sdcard_ids();
     gen_dt_ids();
+    gen_edid_ids();
     gen_os_release();
     gen_dmidecode();
     gen_rpi();

@@ -97,6 +97,7 @@ add_library(sysobj STATIC
         sysobj/src/gen_sdio_ids.c
         sysobj/src/gen_sdcard_ids.c
         sysobj/src/gen_dt.c
+        sysobj/src/gen_edid_ids.c
         sysobj/src/gen_sysobj.c
         sysobj/src/gen_usb_ids.c
         sysobj/src/gen_pci_ids.c

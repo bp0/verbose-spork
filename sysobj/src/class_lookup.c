@@ -67,6 +67,12 @@ const gchar usb_ids_reference_markup_text[] =
     BULLET REFLINKT("<i>The Linux USB Project</i>'s usb.ids", "http://www.linux-usb.org/")
     "\n";
 
+const gchar edid_ids_reference_markup_text[] =
+    " Items are generated on-demand and cached.\n"
+    "\n"
+    " :/lookup/edid.ids/{3-letter vendor}/name\n"
+    "\n";
+
 static gchar *dt_ids_format(sysobj *obj, int fmt_opts);
 
 static sysobj_class cls_lookup[] = {
@@ -114,6 +120,15 @@ static sysobj_class cls_lookup[] = {
     .tag = "dt.ids:id", .pattern = ":/lookup/dt.ids/*", .flags = OF_GLOB_PATTERN | OF_CONST,
     .s_halp = dt_ids_reference_markup_text, .s_label = "dt.ids lookup result",
     .f_format = dt_ids_format },
+
+  { SYSOBJ_CLASS_DEF
+    .tag = "edid.ids", .pattern = ":/lookup/edid.ids", .flags = OF_CONST,
+    .s_halp = edid_ids_reference_markup_text, .s_label = "edid.ids lookup virtual tree",
+    .s_update_interval = 4.0 },
+  { SYSOBJ_CLASS_DEF
+    .tag = "edid.ids:id", .pattern = ":/lookup/edid.ids/*", .flags = OF_GLOB_PATTERN | OF_CONST,
+    .s_halp = edid_ids_reference_markup_text, .s_label = "edid.ids lookup result",
+    .f_format = fmt_node_name },
 };
 
 static gchar *dt_ids_format(sysobj *obj, int fmt_opts) {
