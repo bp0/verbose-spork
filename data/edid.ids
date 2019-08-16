@@ -5,6 +5,7 @@
 
 #
 # List of known/observed EDID three-letter vendor codes
+# These codes are also the three-letter "EISA" or "PNP" codes.
 #
 # Syntax:
 # VEN Vendor Name
@@ -41,6 +42,7 @@ HPN Hewlett-Packard Company
 HSD HannStar Display Corporation
 HTC Hitachi
 HWP Hewlett-Packard Company
+IBM International Business Machines
 INO Innolab Pte Ltd
 INT Interphase Corporation
 INX Communications Supply Corporation (A division of WESCO)

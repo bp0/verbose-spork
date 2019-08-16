@@ -26,16 +26,45 @@
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
+#include <stdio.h>
+
+/* block must be 128 bytes */
+int block_check(const void *edid_block_bytes) {
+    if (!edid_block_bytes) return 0;
+    uint8_t sum = 0;
+    uint8_t *data = (uint8_t*)edid_block_bytes;
+    for(int i=0; i<128; i++)
+        sum += data[i];
+    return sum == 0 ? 1 : 0;
+}
 
 int edid_fill(struct edid *id_out, const void *edid_bytes, int edid_len) {
     if (!id_out) return 0;
 
     memset(id_out, 0, sizeof(struct edid));
+    id_out->size = edid_len;
 
     if (edid_len >= 128) {
         uint8_t *u8 = (uint8_t*)edid_bytes;
         uint16_t *u16 = (uint16_t*)edid_bytes;
         uint32_t *u32 = (uint32_t*)edid_bytes;
+
+        id_out->ver_major = u8[18];        /* byte 18 */
+        id_out->ver_minor = u8[19];        /* byte 19 */
+
+        /* checksum first block */
+        id_out->checksum_ok = block_check(edid_bytes);
+        if (edid_len > 128) {
+            int blocks = edid_len / 128;
+            blocks--;
+            for(; blocks; blocks--) {
+                int r = block_check(u8 + (blocks * 128));
+                if (r) id_out->ext_blocks_ok++;
+                else id_out->ext_blocks_fail++;
+            }
+        }
+
+        /* expect 1.3 */
 
         uint16_t vid = be16toh(u16[4]); /* bytes 8-9 */
         id_out->ven[2] = 64 + (vid & 0x1f);
@@ -46,8 +75,6 @@ int edid_fill(struct edid *id_out, const void *edid_bytes, int edid_len) {
         id_out->n_serial = le32toh(u32[3]);/* bytes 12-15 */
         id_out->week = u8[16];             /* byte 16 */
         id_out->year = u8[17] + 1990;      /* byte 17 */
-        id_out->ver_major = u8[18];        /* byte 18 */
-        id_out->ver_minor = u8[19];        /* byte 19 */
 
         id_out->a_or_d = (u8[20] & 0x80) ? 1 : 0;
         if (id_out->a_or_d == 1) {
@@ -70,8 +97,6 @@ int edid_fill(struct edid *id_out, const void *edid_bytes, int edid_len) {
                  + (id_out->vert_cm * id_out->vert_cm) );
             id_out->diag_in = id_out->diag_cm / 2.54;
         }
-
-        id_out->check = u8[127];
 
         uint16_t dh, dl;
 
@@ -143,11 +168,13 @@ int edid_fill(struct edid *id_out, const void *edid_bytes, int edid_len) {
     return 1;
 }
 
-int edid_fill_xrandr(struct edid *id_out, const char *xrandr_edid_dump) {
-    uint8_t buffer[256], *n = buffer;
+int edid_hex_to_bin(void **edid_bytes, int *edid_len, const char *hex_string) {
+    int blen = strlen(hex_string) / 2;
+    uint8_t *buffer = malloc(blen), *n = buffer;
+    memset(buffer, 0, blen);
     int len = 0;
 
-    const char *p = xrandr_edid_dump;
+    const char *p = hex_string;
     char byte[3] = "..";
 
     while(p && *p) {
@@ -162,6 +189,14 @@ int edid_fill_xrandr(struct edid *id_out, const char *xrandr_edid_dump) {
             p++;
     }
 
+    *edid_bytes = (void *)buffer;
+    *edid_len = len;
+}
+
+int edid_fill_xrandr(struct edid *id_out, const char *xrandr_edid_dump) {
+    void *buffer = NULL;
+    int len = 0;
+    edid_hex_to_bin(&buffer, &len, xrandr_edid_dump);
     return edid_fill(id_out, buffer, len);
 }
 
@@ -195,20 +230,51 @@ const char *edid_descriptor_type(int type) {
 char *edid_dump(struct edid *id) {
     char *ret = NULL;
     if (!id) return NULL;
-    ret = appf(ret, "\n", "edid_version: %d.%d", id->ver_major, id->ver_minor);
-    ret = appf(ret, "\n", "mfg: %s, model: %u, n_serial: %u, dom: week %d of %d", id->ven, id->product, id->n_serial, id->week, id->year);
+    ret = appfnl(ret, "edid_version: %d.%d (%d bytes)", id->ver_major, id->ver_minor, id->size);
+    ret = appfnl(ret, "mfg: %s, model: %u, n_serial: %u, dom: week %d of %d", id->ven, id->product, id->n_serial, id->week, id->year);
 
-    ret = appf(ret, "\n", "type: %s", id->a_or_d ? "digital" : "analog");
+    ret = appfnl(ret, "type: %s", id->a_or_d ? "digital" : "analog");
     if (id->bpc)
-        ret = appf(ret, "\n", "bits per color channel: %d", id->bpc);
+        ret = appfnl(ret, "bits per color channel: %d", id->bpc);
 
     if (id->horiz_cm && id->vert_cm)
-        ret = appf(ret, "\n", "size: %d cm × %d cm", id->horiz_cm, id->vert_cm);
+        ret = appfnl(ret, "size: %d cm × %d cm", id->horiz_cm, id->vert_cm);
     if (id->diag_cm)
-        ret = appf(ret, "\n", "diagonal: %0.2f cm (%0.2f in)", id->diag_cm, id->diag_in);
-    ret = appf(ret, "\n", "checkbyte: %d", id->check);
+        ret = appfnl(ret, "diagonal: %0.2f cm (%0.2f in)", id->diag_cm, id->diag_in);
+
+    ret = appfnl(ret, "checksum %s", id->checksum_ok ? "ok" : "failed!");
+    if (id->ext_blocks_ok || id->ext_blocks_fail)
+        ret = appf(ret, "", ", extension blocks: %d of %d ok", id->ext_blocks_ok, id->ext_blocks_ok + id->ext_blocks_fail);
 
     for(int i = 0; i < 4; i++)
-        ret = appf(ret, "\n", "descriptor[%d] (%s): %s", i, _(edid_descriptor_type(id->d_type[i])), *id->d_text[i] ? id->d_text[i] : "{...}");
+        ret = appfnl(ret, "descriptor[%d] (%s): %s", i, _(edid_descriptor_type(id->d_type[i])), *id->d_text[i] ? id->d_text[i] : "{...}");
+    return ret;
+}
+
+char *edid_bin_to_hex(const void *edid_bytes, int edid_len) {
+    int lines = edid_len / 16;
+    int blen = lines * 35 + 1;
+    int pc = 0;
+    char *ret = malloc(blen);
+    memset(ret, 0, blen);
+    uint8_t *u8 = (uint8_t*)edid_bytes;
+    char *p = ret;
+    for(; lines; lines--) {
+        sprintf(p, "\t\t");
+        p+=2;
+        for(int i = 0; i < 16; i++) {
+            sprintf(p, "%02x", (unsigned int)*u8);
+            p+=2;
+            u8++;
+            pc++;
+            if (pc == blen-1) {
+                sprintf(p, "\n");
+                goto edid_print_done;
+            }
+        }
+        sprintf(p, "\n");
+        p++;
+    }
+edid_print_done:
     return ret;
 }

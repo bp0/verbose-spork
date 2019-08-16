@@ -307,6 +307,7 @@ name International Business Machines Corporation
     name_short IBM
     url www.ibm.com
     ansi_color 0;94;107
+    match_string International Business Machines
     match_string_case IBM
 
 name Dell Computer

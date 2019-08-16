@@ -47,11 +47,17 @@ struct edid {
     int horiz_cm, vert_cm;
     float diag_cm, diag_in;
 
-    int check;
+    int checksum_ok; /* block 0 */
+    int ext_blocks_ok, ext_blocks_fail;
+    int size; /* bytes */
 };
 
 int edid_fill(struct edid *id_out, const void *edid_bytes, int edid_len);
 int edid_fill_xrandr(struct edid *id_out, const char *xrandr_edid_dump);
+
+int edid_hex_to_bin(void **edid_bytes, int *edid_len, const char *hex_string);
+char *edid_bin_to_hex(const void *edid_bytes, int edid_len);
+
 const char *edid_descriptor_type(int type);
 char *edid_dump(struct edid *id);
 
