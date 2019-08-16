@@ -489,12 +489,13 @@ void sysobj_free(sysobj *s) {
 void sysobj_classify(sysobj *s) {
     sysobj_class *c = NULL, *c_blast = NULL;
     gsize len = 0;
-    if (s) {
+    if (s && !s->cls) {
         len = strlen(s->path);
         for (GSList *l = class_list; l; l = l->next) {
             sysobj_stats.so_class_iter++;
             c = l->data;
             gboolean match = FALSE;
+            char *reason = "<none>"; /* first fail reason */
 
             if ( class_has_flag(c, OF_GLOB_PATTERN) ) {
                 if (!c->pspec)
@@ -504,30 +505,30 @@ void sysobj_classify(sysobj *s) {
             } else
                 match = g_str_has_suffix(s->path, c->pattern);
 
+            if (!match) { reason = "pattern"; }
+
+#define SIMPLE_VERIFY(SV, TEST_CODE) \
+    if (match && c->SV) { match = TEST_CODE; if (!match) reason = #SV; }
+
             /* simple verifiers */
-            if (match && c->v_name)
-                match = SEQ(s->name, c->v_name);
-            if (match && c->v_is_node)
-                match = s->data.is_dir;
-            if (match && c->v_is_attr)
-                match = !(s->data.is_dir);
-            if (match && c->v_lblnum)
-                match = verify_lblnum(s, c->v_lblnum);
-            if (match && c->v_lblnum_child)
-                match = verify_lblnum_child(s, c->v_lblnum_child);
-            if (match && c->v_subsystem)
-                match = verify_subsystem(s, c->v_subsystem);
-            if (match && c->v_subsystem_parent)
-                match = verify_subsystem_parent(s, c->v_subsystem_parent);
-            if (match && c->v_parent_path_suffix)
-                match = verify_parent(s, c->v_parent_path_suffix);
+            SIMPLE_VERIFY(v_name, SEQ(s->name, c->v_name) );
+            SIMPLE_VERIFY(v_is_node, s->data.is_dir );
+            SIMPLE_VERIFY(v_is_attr, !(s->data.is_dir) );
+            SIMPLE_VERIFY(v_lblnum, verify_lblnum(s, c->v_lblnum) );
+            SIMPLE_VERIFY(v_lblnum_child, verify_lblnum_child(s, c->v_lblnum_child) );
+            SIMPLE_VERIFY(v_subsystem, verify_subsystem(s, c->v_subsystem) );
+            SIMPLE_VERIFY(v_subsystem_parent, verify_subsystem_parent(s, c->v_subsystem_parent) );
+            SIMPLE_VERIFY(v_parent_path_suffix, verify_parent(s, c->v_parent_path_suffix) );
+            SIMPLE_VERIFY(v_parent_class, verify_parent_class(s, c->v_parent_class) );
 
             /* verify function, or verify by existence in attributes */
             if (match && c->f_verify)
                 match = c->f_verify(s);
+                if (!match) reason = "f_verify";
             else if (match && c->attributes) {
                 int i = attr_tab_lookup(c->attributes, s->name);
                 match = (i != -1) ? TRUE : FALSE;
+                if (!match) reason = "attributes";
             }
 
             if (match) {
@@ -1056,6 +1057,17 @@ gboolean verify_parent_name(sysobj *obj, const gchar *parent_name) {
         g_free(pn);
     }
     return verified;
+}
+
+gboolean verify_parent_class(sysobj *obj, const gchar *tag) {
+    gboolean ret = FALSE;
+    sysobj *pobj = sysobj_parent(obj, FALSE);
+    sysobj_classify(pobj); /* may be fast_mode */
+    if (pobj->cls)
+        if (SEQ(pobj->cls->tag, tag) )
+            ret = TRUE;
+    sysobj_free(pobj);
+    return ret;
 }
 
 gboolean verify_true(sysobj *obj) { return TRUE; }

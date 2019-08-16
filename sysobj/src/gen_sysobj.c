@@ -164,6 +164,7 @@ static const gchar class_item_list[] =
   ".v_subsystem_parent\n"
   ".v_lblnum\n"
   ".v_lblnum_child\n"
+  ".v_parent_class\n"
   ".v_parent_path_suffix\n"
   ".v_is_node\n"
   ".v_is_attr\n"
@@ -275,6 +276,8 @@ static gchar *get_class_info(const gchar *path) {
             return g_strdup(match->v_lblnum_child);
         if (SEQ(name, ".v_parent_path_suffix") )
             return g_strdup(match->v_parent_path_suffix);
+        if (SEQ(name, ".v_parent_class") )
+            return g_strdup(match->v_parent_class);
         if (SEQ(name, ".v_is_node") )
             return g_strdup(match->v_is_node ? "shall be" : "may be");
         if (SEQ(name, ".v_is_attr") )

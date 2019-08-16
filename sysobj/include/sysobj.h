@@ -146,6 +146,7 @@ typedef struct sysobj_class {
     const gchar *v_lblnum;           /* verify that the obj's name is label0 ( verify_lblnum(THIS) ) */
     const gchar *v_lblnum_child;     /* verify that the obj's parent is label0 ( verify_lblnum_child(THIS) ) */
     const gchar *v_parent_path_suffix;  /* verify by matching the end of the obj's parent path */
+    const gchar *v_parent_class; /* verify by the parent's class tag */
     gboolean v_is_node;  /* must be a directory */
     gboolean v_is_attr;  /* must not be a directory */
 
@@ -234,6 +235,7 @@ gboolean verify_lblnum(sysobj *obj, const gchar *lbl);
 gboolean verify_lblnum_child(sysobj *obj, const gchar *lbl);
 gboolean verify_parent_name(sysobj *obj, const gchar *parent_name);
 gboolean verify_parent(sysobj *obj, const gchar *parent_path_suffix);
+gboolean verify_parent_class(sysobj *obj, const gchar *tag);
 gboolean verify_in_attr_tab(sysobj *obj, attr_tab *attributes);
 gboolean verify_subsystem(sysobj *obj, const gchar *target);
 gboolean verify_subsystem_parent(sysobj *obj, const gchar *target);

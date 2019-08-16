@@ -116,6 +116,7 @@ add_library(sysobj STATIC
         sysobj/src/x86_data.c
         sysobj/src/riscv_data.c
 
+        sysobj/src/util_edid.c
         sysobj/src/util_dt.c
         sysobj/src/util_pci.c
         sysobj/src/util_usb.c
@@ -124,6 +125,7 @@ add_library(sysobj STATIC
 )
 target_link_libraries(sysobj
         ${SYSOB_GLIB_LIBRARIES}
+        m
 )
 set_target_properties(sysobj PROPERTIES COMPILE_FLAGS "-O3 -Werror=implicit-function-declaration")
 
@@ -149,6 +151,8 @@ add_executable(test_dt_compat src/test_dt_compat.c)
 target_link_libraries(test_dt_compat ${SYSOB_GLIB_LIBRARIES} sysobj)
 add_executable(test_nice_name src/test_nice_name.c)
 target_link_libraries(test_nice_name ${SYSOB_GLIB_LIBRARIES} sysobj)
+add_executable(test_edid src/test_edid.c)
+target_link_libraries(test_edid ${SYSOB_GLIB_LIBRARIES} sysobj)
 
 if(SYSOB_GTK3_FOUND)
 add_definitions(-DGTK_DISABLE_SINGLE_INCLUDES)
