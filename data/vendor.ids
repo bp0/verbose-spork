@@ -132,6 +132,66 @@ name Vizio
     note EDID vendor: VIZ
     match_string_exact VIZ
 
+name AOC International
+    name_short AOC
+    url www.aoc.com
+    wikipedia AOC International
+    ansi_color 0;97;44
+    match_string_case AOC
+    note formerly Admiral Overseas Corporation
+    match_string Admiral Overseas Corporation
+    match_string Admiral
+
+name Magewell
+    url www.magewell.com
+    ansi_color 0;34;107
+    match_string Magewell
+
+name Harman International
+    name_short Harman
+    url www.harman.com
+    ansi_color 0;34;107
+    match_string Harman International
+    match_string Harman
+
+name Oculus VR
+    name_short Oculus
+    url www.oculus.com
+    ansi_color 0;97;100
+    wikipedia Oculus VR
+    match_string Oculus VR
+    match_string Oculus
+
+name Yamaha Corporation
+    name_short Yamaha
+    url www.yamaha.com
+    wikipedia Yamaha Corporation
+    ansi_color 0;35;107
+    match_string Yamaha
+
+name AU Optronics Corporation
+    name_short AUO
+    url www.auo.com
+    wikipedia AU Optronics
+    ansi_color 0;34;107
+    match_string AU Optronics
+    match_string_case AUO
+
+name Planar
+    name_short PLANAR
+    url www.planar.com
+    ansi_color 0;91;40
+    match_string Planar
+
+name Seiko Epson Corporation
+    name_short EPSON
+    url epson.com
+    wikipedia Seiko Epson
+    ansi_color 0;34;107
+    match_string Seiko Epson
+    match_string Epson
+    match_string Seiko
+
 name ViewSonic Corporation
     name_short ViewSonic
     url www.viewsonic.com

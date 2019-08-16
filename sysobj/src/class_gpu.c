@@ -73,7 +73,9 @@ static attr_tab drm_items[] = {
 vendor_list edid_vendor(sysobj *obj) {
     struct edid id = {};
     edid_fill(&id, obj->data.any, obj->data.len);
-    const Vendor *v = vendor_match(id.ven, NULL);
+    gchar *vstr = sysobj_raw_from_printf(":/lookup/edid.ids/%s/name", id.ven);
+    const Vendor *v = vendor_match(vstr, NULL);
+    g_free(vstr);
     return vendor_list_append(NULL, v);
 }
 
@@ -83,11 +85,13 @@ gchar *edid_format(sysobj *obj, int fmt_opts) {
     gchar *ret = NULL;
     if (id.ver_major) {
         if (fmt_opts & FMT_OPT_PART || !(fmt_opts & FMT_OPT_COMPLETE) ) {
-            gchar *ven_tag = vendor_match_tag(id.ven, fmt_opts);
+            gchar *vstr = sysobj_raw_from_printf(":/lookup/edid.ids/%s/name", id.ven);
+            if (!vstr || !*vstr) vstr = g_strdup(id.ven);
+            gchar *ven_tag = vendor_match_tag(vstr, fmt_opts);
             if (ven_tag)
                 ret = appfsp(ret, "%s", ven_tag);
             else
-                ret = appfsp(ret, "%s", id.ven);
+                ret = appfsp(ret, "%s", vstr);
             g_free(ven_tag);
 
             if (id.diag_in) {
@@ -101,7 +105,7 @@ gchar *edid_format(sysobj *obj, int fmt_opts) {
             else if (ret) {
                 ret = appfsp(ret, "%s %s", id.a_or_d ? "Digital" : "Analog", "Display");
             }
-
+            g_free(vstr);
         } else if (fmt_opts & FMT_OPT_COMPLETE) {
             ret = edid_dump(&id);
         }

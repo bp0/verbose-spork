@@ -76,6 +76,9 @@ int edid_fill(struct edid *id_out, const void *edid_bytes, int edid_len) {
         id_out->week = u8[16];             /* byte 16 */
         id_out->year = u8[17] + 1990;      /* byte 17 */
 
+        if (id_out->week >= 52)
+            id_out->week = 0;
+
         id_out->a_or_d = (u8[20] & 0x80) ? 1 : 0;
         if (id_out->a_or_d == 1) {
             /* digital */
@@ -155,9 +158,11 @@ int edid_fill(struct edid *id_out, const void *edid_bytes, int edid_len) {
         }
 
         if (!id_out->name) {
-            /* LG may use "uspecified text" for name and model */
-            //SEQ(id_out->ven, "LGD")
             if (SEQ(id_out->ut1, "LG Display") && id_out->ut2)
+                /* LG may use "uspecified text" for name and model */
+                id_out->name = id_out->ut2;
+            else if (SEQ(id_out->ut1, "AUO") && id_out->ut2)
+                /* Same with AUO */
                 id_out->name = id_out->ut2;
             else {
                 if (id_out->ut1) id_out->name = id_out->ut1;
@@ -231,7 +236,12 @@ char *edid_dump(struct edid *id) {
     char *ret = NULL;
     if (!id) return NULL;
     ret = appfnl(ret, "edid_version: %d.%d (%d bytes)", id->ver_major, id->ver_minor, id->size);
-    ret = appfnl(ret, "mfg: %s, model: %u, n_serial: %u, dom: week %d of %d", id->ven, id->product, id->n_serial, id->week, id->year);
+
+    ret = appfnl(ret, "mfg: %s, model: %u, n_serial: %u", id->ven, id->product, id->n_serial);
+    if (id->week && id->year)
+        ret = appf(ret, "", ", dom: week %d of %d", id->week, id->year);
+    else if (id->year)
+        ret = appf(ret, "", ", dom: %d", id->year);
 
     ret = appfnl(ret, "type: %s", id->a_or_d ? "digital" : "analog");
     if (id->bpc)
