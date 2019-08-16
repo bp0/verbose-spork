@@ -57,6 +57,9 @@ static sysobj_filter path_filters[] = {
 
     { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     ":*", NULL }, /* sysobj_virt */
 
+    { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/.testing/*", NULL },
+    { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/.testing", NULL },
+
     { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc", NULL },
 
     { SO_FILTER_STATIC | SO_FILTER_INCLUDE,     "/proc/sys", NULL },
