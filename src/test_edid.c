@@ -4,6 +4,7 @@
 #include "sysobj_extras.h"
 #include "util_sysobj.h"
 #include "util_edid.h"
+#include <unistd.h> /* for isatty() */
 
 char xrr_test_data[] =
 "		00ffffffffffff002ac301001f000000\n"
@@ -23,8 +24,8 @@ char xrr_test_data[] =
 "		00000000000000000000000000000000\n"
 "		000000000000000000000000000000b4\n";
 
-static int fmt_opts_complete = FMT_OPT_NO_JUNK | FMT_OPT_ATERM | FMT_OPT_COMPLETE;
-static int fmt_opts_list = FMT_OPT_NO_JUNK | FMT_OPT_ATERM | FMT_OPT_LIST_ITEM;
+static int fmt_opts_complete = FMT_OPT_NO_JUNK | FMT_OPT_COMPLETE;
+static int fmt_opts_list = FMT_OPT_NO_JUNK | FMT_OPT_LIST_ITEM;
 
 gboolean examine(sysobj *s, gpointer user_data, gconstpointer stats) {
     if (SEQ(s->name, "edid")) {
@@ -40,7 +41,18 @@ gboolean examine(sysobj *s, gpointer user_data, gconstpointer stats) {
 }
 
 int main(int argc, char **argv) {
-    sysobj_init(NULL);
+    const gchar *altroot = NULL;
+
+    if (argc >= 2) {
+        altroot = argv[1];
+    }
+
+    if (isatty(fileno(stdout)) ) {
+        fmt_opts_list |= FMT_OPT_ATERM;
+        fmt_opts_complete |= FMT_OPT_ATERM;
+    }
+
+    sysobj_init(altroot);
 
     sysobj_foreach_from("/sys/devices", NULL, (f_sysobj_foreach)examine, NULL, SO_FOREACH_NORMAL);
 
