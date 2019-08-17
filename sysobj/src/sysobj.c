@@ -525,10 +525,10 @@ void sysobj_classify(sysobj *s) {
             SIMPLE_VERIFY(v_parent_class, verify_parent_class(s, c->v_parent_class) );
 
             /* verify function, or verify by existence in attributes */
-            if (match && c->f_verify)
+            if (match && c->f_verify) {
                 match = c->f_verify(s);
                 if (!match) reason = "f_verify";
-            else if (match && c->attributes) {
+            } else if (match && c->attributes) {
                 int i = attr_tab_lookup(c->attributes, s->name);
                 match = (i != -1) ? TRUE : FALSE;
                 if (!match) reason = "attributes";
