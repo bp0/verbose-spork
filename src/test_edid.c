@@ -129,8 +129,7 @@ int main(int argc, char **argv) {
     for(int i = 0; i < (int)G_N_ELEMENTS(test_data); i++) {
         edid_basic id;
         edid *e = edid_new_from_hex(test_data[i].edid_data);
-        edid_fill2(&id, e);
-        char *out = edid_dump(&id);
+        char *out = edid_dump2(e);
         printf("\n-- test_data[%d] %s --\n%s\n", i, test_data[i].tag, out);
         g_free(out);
         edid_free(e);

@@ -25,6 +25,15 @@
 
 #define EDID_MAX_EXT_BLOCKS 254
 
+struct edid_dtd {
+    uint8_t *ptr;
+};
+
+struct edid_cea_block {
+    uint8_t *ptr;
+    int type, len;
+};
+
 typedef struct {
     union {
         void* data;
@@ -35,6 +44,22 @@ typedef struct {
     unsigned int len;
     int ver_major, ver_minor;
     int checksum_ok; /* first 128-byte block only */
+    int ext_blocks, ext_blocks_ok, ext_blocks_fail;
+
+    int dtd_count;
+    struct edid_dtd *dtds;
+
+    int cea_block_count;
+    struct edid_cea_block *cea_blocks;
+
+    int d_type[4];
+    char d_text[4][14];
+    /* point into d_text */
+    char *name;
+    char *serial;
+    char *ut1;
+    char *ut2;
+
 } edid;
 edid *edid_new(const char *data, unsigned int len);
 edid *edid_new_from_hex(const char *hex_string);
@@ -77,5 +102,6 @@ int edid_fill2(edid_basic *id_out, edid* e);
 
 const char *edid_descriptor_type(int type);
 char *edid_dump(edid_basic *id);
+char *edid_dump2(edid *e);
 
 #endif

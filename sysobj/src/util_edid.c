@@ -40,6 +40,18 @@ static int block_check(const void *edid_block_bytes) {
     return sum == 0 ? 1 : 0;
 }
 
+
+char *hex_bytes(uint8_t *bytes, int count) {
+    char *buffer = malloc(count*3+1), *p = buffer;
+    memset(buffer, 0, count*3+1);
+    int i;
+    for(i = 0; i < count; i++) {
+        sprintf(p, "%02x ", (unsigned int)bytes[i]);
+        p += 3;
+    }
+    return buffer;
+}
+
 edid *edid_new(const char *data, unsigned int len) {
     if (len < 128) return NULL;
     edid *e = malloc(sizeof(edid));
@@ -49,7 +61,89 @@ edid *edid_new(const char *data, unsigned int len) {
     e->len = len;
     e->ver_major = e->u8[18];
     e->ver_minor = e->u8[19];
+
+    e->dtds = malloc(sizeof(struct edid_dtd) * 1000);
+    e->dtd_count = 0;
+
+    uint16_t dh, dl;
+#define CHECK_DESCRIPTOR(index, offset)       \
+    if (e->u8[offset] == 0) {                 \
+        dh = be16toh(e->u16[offset/2]);       \
+        dl = be16toh(e->u16[offset/2+1]);     \
+        e->d_type[index] = (dh << 16) + dl;   \
+        switch(e->d_type[index]) {            \
+            case 0xfc: case 0xff: case 0xfe:  \
+                strncpy(e->d_text[index], (char*)e->u8+offset+5, 13);  \
+        } \
+    } else e->dtds[e->dtd_count++].ptr = &e->u8[offset];
+
+    CHECK_DESCRIPTOR(0, 54);
+    CHECK_DESCRIPTOR(1, 72);
+    CHECK_DESCRIPTOR(2, 90);
+    CHECK_DESCRIPTOR(3, 108);
+
     e->checksum_ok = block_check(e->data); /* first 128-byte block only */
+    if (len > 128) {
+        /* check extension blocks */
+        int blocks = len / 128;
+        blocks--;
+        e->ext_blocks = blocks;
+        for(; blocks; blocks--) {
+            uint8_t *u8 = e->u8 + (blocks * 128);
+            int r = block_check(u8);
+            if (r) e->ext_blocks_ok++;
+            else e->ext_blocks_fail++;
+
+            if (u8[0] == 0x02) {
+                if (!e->cea_blocks) {
+                    e->cea_blocks = malloc(sizeof(struct edid_cea_block) * 1000);
+                    e->cea_block_count = 0;
+                }
+                /* CEA extension */
+                int db_end = u8[2];
+                printf("db_end: %d\n", db_end);
+                if (db_end) {
+                    int b = 4;
+                    while(b < db_end) {
+                        int db_type = u8[b] & 0xe0 >> 5;
+                        int db_size = u8[b] & 0x1f;
+                        printf("CEA BLK: %s\n", hex_bytes(&u8[b], db_size+1));
+                        e->cea_blocks[e->cea_block_count].ptr = &u8[b];
+                        e->cea_blocks[e->cea_block_count].type = db_type;
+                        e->cea_blocks[e->cea_block_count].len = db_size;
+                        e->cea_block_count++;
+                        b += db_size + 1;
+                    }
+                    if (b > db_end) b = db_end;
+                    /* DTDs */
+                    while(b < 127) {
+                        if (u8[b]) {
+                            printf("DTD: %s\n", hex_bytes(&u8[b], 18));
+                            e->dtds[e->dtd_count].ptr = &u8[b];
+                            e->dtd_count++;
+                        }
+                        b += 18;
+                    }
+                }
+            }
+        }
+    }
+
+    /* squeeze lists */
+    if (!e->dtd_count) {
+        free(e->dtds);
+        e->dtds = NULL;
+    } else {
+        e->dtds = realloc(e->dtds, sizeof(struct edid_dtd) * e->dtd_count);
+    }
+    if (!e->cea_block_count) {
+        if (e->cea_blocks)
+            free(e->cea_blocks);
+        e->cea_blocks = NULL;
+    } else {
+        e->cea_blocks = realloc(e->cea_blocks, sizeof(struct edid_cea_block) * e->cea_block_count);
+    }
+
     return e;
 }
 
@@ -334,3 +428,22 @@ char *edid_dump(edid_basic *id) {
 
     return ret;
 }
+
+char *edid_dump2(edid *e) {
+    char *ret = NULL;
+    int i;
+    if (!e) return NULL;
+
+    ret = appfnl(ret, "edid_version: %d.%d (%d bytes)", e->ver_major, e->ver_minor, e->len);
+    for(i = 0; i < e->dtd_count; i++) {
+        char *hb = hex_bytes(e->dtds[i].ptr, 18);
+        ret = appfnl(ret, "dtd[%d] %s", i, hb);
+        free(hb);
+    }
+    for(i = 0; i < e->cea_block_count; i++) {
+        ret = appfnl(ret, "cea_block[%d] type: %d, size: %d", i, e->cea_blocks[i].type, e->cea_blocks[i].len );
+    }
+
+    return ret;
+}
+
