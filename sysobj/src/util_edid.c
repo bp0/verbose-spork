@@ -19,8 +19,6 @@
  */
 
 #define _GNU_SOURCE
-#include "util_edid.h"
-#include "util_sysobj.h"
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
@@ -28,6 +26,8 @@
 #include <endian.h>
 #include <stdio.h>
 #include "gettext.h"
+#include "util_edid.h"
+#include "util_sysobj.h"
 
 /* block must be 128 bytes */
 int block_check(const void *edid_block_bytes) {

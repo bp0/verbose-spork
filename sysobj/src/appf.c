@@ -18,12 +18,12 @@
  *
  */
 
-#include "appf.h"
 #define _GNU_SOURCE /* for vasprintf() */
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#include "appf.h"
 
 char *appf(char *str, const char *sep, const char *fmt, ...) {
     char *buf = NULL;
