@@ -71,7 +71,7 @@ static attr_tab drm_items[] = {
 };
 
 vendor_list edid_vendor(sysobj *obj) {
-    struct edid id = {};
+    edid_basic id = {};
     edid_fill(&id, obj->data.any, obj->data.len);
     gchar *vstr = sysobj_raw_from_printf(":/lookup/edid.ids/%s/name", id.ven);
     const Vendor *v = vendor_match(vstr, NULL);
@@ -80,7 +80,7 @@ vendor_list edid_vendor(sysobj *obj) {
 }
 
 gchar *edid_format(sysobj *obj, int fmt_opts) {
-    struct edid id = {};
+    edid_basic id = {};
     edid_fill(&id, obj->data.any, obj->data.len);
     gchar *ret = NULL;
     if (id.ver_major) {

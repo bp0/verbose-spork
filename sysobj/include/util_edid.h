@@ -25,8 +25,24 @@
 
 #define EDID_MAX_EXT_BLOCKS 254
 
+typedef struct {
+    union {
+        void* data;
+        uint8_t* u8;
+        uint16_t* u16;
+        uint32_t* u32;
+    };
+    unsigned int len;
+    int ver_major, ver_minor;
+    int checksum_ok; /* first 128-byte block only */
+} edid;
+edid *edid_new(const char *data, unsigned int len);
+edid *edid_new_from_hex(const char *hex_string);
+edid *edid_free(edid *e);
+char *edid_dump_hex(edid *e, int tabs, int breaks);
+
 /* just enough edid decoding */
-struct edid {
+typedef struct {
     int ver_major, ver_minor;
     char ven[4];
 
@@ -54,15 +70,12 @@ struct edid {
 
     int ext_blocks, ext_blocks_ok, ext_blocks_fail;
     uint8_t ext[EDID_MAX_EXT_BLOCKS][2]; /* block type, checksum_ok */
-};
+} edid_basic;
 
-int edid_fill(struct edid *id_out, const void *edid_bytes, int edid_len);
-int edid_fill_xrandr(struct edid *id_out, const char *xrandr_edid_dump);
-
-int edid_hex_to_bin(void **edid_bytes, int *edid_len, const char *hex_string);
-char *edid_bin_to_hex(const void *edid_bytes, int edid_len);
+int edid_fill(edid_basic *id_out, const void *edid_bytes, int edid_len);
+int edid_fill2(edid_basic *id_out, edid* e);
 
 const char *edid_descriptor_type(int type);
-char *edid_dump(struct edid *id);
+char *edid_dump(edid_basic *id);
 
 #endif

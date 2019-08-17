@@ -95,12 +95,17 @@ gboolean examine(sysobj *s, gpointer user_data, gconstpointer stats) {
         gchar *nice = sysobj_format(s, fmt_opts_complete);
         printf("\n-- %s --\n-[ %s ]-\n%s\n", s->path, nice_li, nice);
 
-        char *hexver = edid_bin_to_hex(s->data.any, s->data.len);
-        printf("%s\n", hexver);
-        g_free(hexver);
+        edid *e = edid_new(s->data.any, s->data.len);
+        if (e) {
+            char *hexver = edid_dump_hex(e, 2, 1);
+            printf("%s\n", hexver);
+            g_free(hexver);
+            edid_free(e);
+        }
 
         g_free(nice_li);
         g_free(nice);
+
     }
     return SYSOBJ_FOREACH_CONTINUE;
 }
@@ -121,12 +126,14 @@ int main(int argc, char **argv) {
 
     sysobj_foreach_from("/sys/devices", NULL, (f_sysobj_foreach)examine, NULL, SO_FOREACH_NORMAL);
 
-    struct edid id = {};
     for(int i = 0; i < (int)G_N_ELEMENTS(test_data); i++) {
-        edid_fill_xrandr(&id, test_data[i].edid_data);
+        edid_basic id;
+        edid *e = edid_new_from_hex(test_data[i].edid_data);
+        edid_fill2(&id, e);
         char *out = edid_dump(&id);
         printf("\n-- test_data[%d] %s --\n%s\n", i, test_data[i].tag, out);
         g_free(out);
+        edid_free(e);
     }
 
     sysobj_cleanup();

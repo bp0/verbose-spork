@@ -30,7 +30,7 @@
 #include "util_sysobj.h"
 
 /* block must be 128 bytes */
-int block_check(const void *edid_block_bytes) {
+static int block_check(const void *edid_block_bytes) {
     if (!edid_block_bytes) return 0;
     uint8_t sum = 0;
     uint8_t *data = (uint8_t*)edid_block_bytes;
@@ -40,12 +40,91 @@ int block_check(const void *edid_block_bytes) {
     return sum == 0 ? 1 : 0;
 }
 
-int edid_fill(struct edid *id_out, const void *edid_bytes, int edid_len) {
+edid *edid_new(const char *data, unsigned int len) {
+    if (len < 128) return NULL;
+    edid *e = malloc(sizeof(edid));
+    memset(e, 0, sizeof(edid));
+    e->data = malloc(len);
+    memcpy(e->data, data, len);
+    e->len = len;
+    e->ver_major = e->u8[18];
+    e->ver_minor = e->u8[19];
+    e->checksum_ok = block_check(e->data); /* first 128-byte block only */
+    return e;
+}
+
+edid *edid_free(edid *e) {
+    if (e) {
+        g_free(e->data);
+        g_free(e);
+    }
+}
+
+edid *edid_new_from_hex(const char *hex_string) {
+    int blen = strlen(hex_string) / 2;
+    uint8_t *buffer = malloc(blen), *n = buffer;
+    memset(buffer, 0, blen);
+    int len = 0;
+
+    const char *p = hex_string;
+    char byte[3] = "..";
+
+    while(p && *p) {
+        if (isxdigit(p[0]) && isxdigit(p[1])) {
+            byte[0] = p[0];
+            byte[1] = p[1];
+            *n = strtol(byte, NULL, 16);
+            n++;
+            len++;
+            p += 2;
+        } else
+            p++;
+    }
+
+    edid *e = edid_new((char*)buffer, len);
+    free(buffer);
+    return e;
+}
+
+char *edid_dump_hex(edid *e, int tabs, int breaks) {
+    if (!e) return NULL;
+    int lines = e->len / 16;
+    int blen = lines * 35 + 1;
+    int pc = 0;
+    char *ret = malloc(blen);
+    memset(ret, 0, blen);
+    uint8_t *u8 = e->u8;
+    char *p = ret;
+    for(; lines; lines--) {
+        int i;
+        for(i = 0; i < tabs; i++)
+            sprintf(p++, "\t");
+        for(i = 0; i < 16; i++) {
+            sprintf(p, "%02x", (unsigned int)*u8);
+            p+=2;
+            u8++;
+            pc++;
+            if (pc == e->len) {
+                if (breaks) sprintf(p++, "\n");
+                goto edid_dump_hex_done;
+            }
+        }
+        if (breaks) sprintf(p++, "\n");
+    }
+edid_dump_hex_done:
+    return ret;
+}
+
+int edid_fill2(edid_basic *id_out, edid *e) {
+    edid_fill(id_out, e->data, e->len);
+}
+
+int edid_fill(edid_basic *id_out, const void *edid_bytes, int edid_len) {
     int i;
 
     if (!id_out) return 0;
 
-    memset(id_out, 0, sizeof(struct edid));
+    memset(id_out, 0, sizeof(edid_basic));
     id_out->size = edid_len;
 
     if (edid_len >= 128) {
@@ -181,39 +260,6 @@ int edid_fill(struct edid *id_out, const void *edid_bytes, int edid_len) {
     return 1;
 }
 
-int edid_hex_to_bin(void **edid_bytes, int *edid_len, const char *hex_string) {
-    int blen = strlen(hex_string) / 2;
-    uint8_t *buffer = malloc(blen), *n = buffer;
-    memset(buffer, 0, blen);
-    int len = 0;
-
-    const char *p = hex_string;
-    char byte[3] = "..";
-
-    while(p && *p) {
-        if (isxdigit(p[0]) && isxdigit(p[1])) {
-            byte[0] = p[0];
-            byte[1] = p[1];
-            *n = strtol(byte, NULL, 16);
-            n++;
-            len++;
-            p += 2;
-        } else
-            p++;
-    }
-
-    *edid_bytes = (void *)buffer;
-    *edid_len = len;
-    return 1;
-}
-
-int edid_fill_xrandr(struct edid *id_out, const char *xrandr_edid_dump) {
-    void *buffer = NULL;
-    int len = 0;
-    edid_hex_to_bin(&buffer, &len, xrandr_edid_dump);
-    return edid_fill(id_out, buffer, len);
-}
-
 const char *edid_ext_block_type(int type) {
     switch(type) {
         case 0xf0:
@@ -251,7 +297,7 @@ const char *edid_descriptor_type(int type) {
     return N_("detailed timing descriptor");
 }
 
-char *edid_dump(struct edid *id) {
+char *edid_dump(edid_basic *id) {
     char *ret = NULL;
     int i;
 
@@ -286,34 +332,5 @@ char *edid_dump(struct edid *id) {
         }
     }
 
-    return ret;
-}
-
-char *edid_bin_to_hex(const void *edid_bytes, int edid_len) {
-    int lines = edid_len / 16;
-    int blen = lines * 35 + 1;
-    int pc = 0;
-    char *ret = malloc(blen);
-    memset(ret, 0, blen);
-    uint8_t *u8 = (uint8_t*)edid_bytes;
-    char *p = ret;
-    for(; lines; lines--) {
-        sprintf(p, "\t\t");
-        p+=2;
-        int i;
-        for(i = 0; i < 16; i++) {
-            sprintf(p, "%02x", (unsigned int)*u8);
-            p+=2;
-            u8++;
-            pc++;
-            if (pc == blen-1) {
-                sprintf(p, "\n");
-                goto edid_print_done;
-            }
-        }
-        sprintf(p, "\n");
-        p++;
-    }
-edid_print_done:
     return ret;
 }
