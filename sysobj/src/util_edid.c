@@ -41,6 +41,8 @@ int block_check(const void *edid_block_bytes) {
 }
 
 int edid_fill(struct edid *id_out, const void *edid_bytes, int edid_len) {
+    int i;
+
     if (!id_out) return 0;
 
     memset(id_out, 0, sizeof(struct edid));
@@ -58,9 +60,12 @@ int edid_fill(struct edid *id_out, const void *edid_bytes, int edid_len) {
         id_out->checksum_ok = block_check(edid_bytes);
         if (edid_len > 128) {
             int blocks = edid_len / 128;
+            if (blocks > EDID_MAX_EXT_BLOCKS) blocks = EDID_MAX_EXT_BLOCKS;
             blocks--;
             for(; blocks; blocks--) {
+                id_out->ext[blocks-1][0] = *(u8 + (blocks * 128));
                 int r = block_check(u8 + (blocks * 128));
+                id_out->ext[blocks-1][1] = (uint8_t)r;
                 if (r) id_out->ext_blocks_ok++;
                 else id_out->ext_blocks_fail++;
             }
@@ -141,7 +146,6 @@ int edid_fill(struct edid *id_out, const void *edid_bytes, int edid_len) {
                 strncpy(id_out->d_text[3], (char*)u8+108+5, 13);
         }
 
-        int i;
         for(i = 0; i < 4; i++) {
             g_strstrip(id_out->d_text[i]);
             switch(id_out->d_type[i]) {
@@ -209,6 +213,16 @@ int edid_fill_xrandr(struct edid *id_out, const char *xrandr_edid_dump) {
     return edid_fill(id_out, buffer, len);
 }
 
+const char *edid_ext_block_type(int type) {
+    switch(type) {
+        case 0xf0:
+            return N_("extension block map");
+        case 0x02:
+            return N_("EIA/CEA-861 extension block");
+    }
+    return N_("unknown block type");
+}
+
 const char *edid_descriptor_type(int type) {
     switch(type) {
         case 0xff:
@@ -238,6 +252,8 @@ const char *edid_descriptor_type(int type) {
 
 char *edid_dump(struct edid *id) {
     char *ret = NULL;
+    int i;
+
     if (!id) return NULL;
     ret = appfnl(ret, "edid_version: %d.%d (%d bytes)", id->ver_major, id->ver_minor, id->size);
 
@@ -260,9 +276,15 @@ char *edid_dump(struct edid *id) {
     if (id->ext_blocks_ok || id->ext_blocks_fail)
         ret = appf(ret, "", ", extension blocks: %d of %d ok", id->ext_blocks_ok, id->ext_blocks_ok + id->ext_blocks_fail);
 
-    int i;
     for(i = 0; i < 4; i++)
         ret = appfnl(ret, "descriptor[%d] (%s): %s", i, _(edid_descriptor_type(id->d_type[i])), *id->d_text[i] ? id->d_text[i] : "{...}");
+
+    for(i = 0; i < EDID_MAX_EXT_BLOCKS; i++) {
+        if (id->ext[i][0]) {
+            ret = appfnl(ret, "ext_block[%d]: (%s): %s", i, _(edid_ext_block_type(id->ext[i][0])), id->ext[i][1] ? "ok" : "fail");
+        }
+    }
+
     return ret;
 }
 

@@ -23,6 +23,8 @@
 
 #include <stdint.h>  /* for *int*_t types */
 
+#define EDID_MAX_EXT_BLOCKS 254
+
 /* just enough edid decoding */
 struct edid {
     int ver_major, ver_minor;
@@ -47,9 +49,11 @@ struct edid {
     int horiz_cm, vert_cm;
     float diag_cm, diag_in;
 
-    int checksum_ok; /* block 0 */
-    int ext_blocks_ok, ext_blocks_fail;
     int size; /* bytes */
+    int checksum_ok; /* block 0 */
+
+    int ext_blocks, ext_blocks_ok, ext_blocks_fail;
+    uint8_t ext[EDID_MAX_EXT_BLOCKS][2]; /* block type, checksum_ok */
 };
 
 int edid_fill(struct edid *id_out, const void *edid_bytes, int edid_len);
