@@ -62,6 +62,7 @@ int edid_fill(struct edid *id_out, const void *edid_bytes, int edid_len) {
             int blocks = edid_len / 128;
             if (blocks > EDID_MAX_EXT_BLOCKS) blocks = EDID_MAX_EXT_BLOCKS;
             blocks--;
+            id_out->ext_blocks = blocks;
             for(; blocks; blocks--) {
                 id_out->ext[blocks-1][0] = *(u8 + (blocks * 128));
                 int r = block_check(u8 + (blocks * 128));
