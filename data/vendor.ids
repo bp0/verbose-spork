@@ -192,6 +192,20 @@ name Seiko Epson Corporation
     match_string Epson
     match_string Seiko
 
+# Company defunct, now brand name of Chinese company
+name Eastman Kodak Company
+    name_short Kodak
+    wikipedia Kodak
+    ansi_color 0;31;43
+    match_string Kodak
+
+# Company defunct, now brand name of Chinese company
+name Westinghouse Electronics
+    name_short W
+    wikipedia Westinghouse Electronics
+    ansi_color 0;97;44
+    match_string Westinghouse
+
 name ViewSonic Corporation
     name_short ViewSonic
     url www.viewsonic.com
@@ -225,12 +239,6 @@ name Pioneer
 name Plextor
     url www.plextor.be
     match_string Plextor
-
-name Western Digital
-    name_short WD
-    url www.wdc.com
-    ansi_color 0;37;40
-    match_string_case WDC
 
 name LG Electronics
     name_short LG
@@ -1151,8 +1159,10 @@ name Western Digital
     name_short WD
     url www.westerndigital.com
     wikipedia Western Digital
-    ansi_color 0;97;44
+    ansi_color 0;37;40
+#   ansi_color 0;97;44
     match_string Western Digital
+    match_string_case WDC
     match_string_num_prefix_case WD
 
 name Marvell Technology Group
