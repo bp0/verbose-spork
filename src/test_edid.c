@@ -127,7 +127,6 @@ int main(int argc, char **argv) {
     sysobj_foreach_from("/sys/devices", NULL, (f_sysobj_foreach)examine, NULL, SO_FOREACH_NORMAL);
 
     for(int i = 0; i < (int)G_N_ELEMENTS(test_data); i++) {
-        edid_basic id;
         edid *e = edid_new_from_hex(test_data[i].edid_data);
         char *out = edid_dump2(e);
         printf("\n-- test_data[%d] %s --\n%s\n", i, test_data[i].tag, out);

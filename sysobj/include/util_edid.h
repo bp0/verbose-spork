@@ -27,11 +27,24 @@
 
 struct edid_dtd {
     uint8_t *ptr;
+    int pixel_clock_khz;
+    int horiz_pixels;
+    int vert_lines;
+};
+
+struct edid_cea_header {
+    uint8_t *ptr;
+    int type, len;
 };
 
 struct edid_cea_block {
-    uint8_t *ptr;
-    int type, len;
+    struct edid_cea_header header;
+    int reserved[8];
+};
+
+struct edid_cea_audio {
+    struct edid_cea_header header;
+    int format, channels, freq_bits;
 };
 
 typedef struct {
@@ -45,6 +58,7 @@ typedef struct {
     int ver_major, ver_minor;
     int checksum_ok; /* first 128-byte block only */
     int ext_blocks, ext_blocks_ok, ext_blocks_fail;
+    uint8_t *ext_ok;
 
     int dtd_count;
     struct edid_dtd *dtds;
@@ -52,28 +66,9 @@ typedef struct {
     int cea_block_count;
     struct edid_cea_block *cea_blocks;
 
-    int d_type[4];
-    char d_text[4][14];
-    /* point into d_text */
-    char *name;
-    char *serial;
-    char *ut1;
-    char *ut2;
-
-} edid;
-edid *edid_new(const char *data, unsigned int len);
-edid *edid_new_from_hex(const char *hex_string);
-edid *edid_free(edid *e);
-char *edid_dump_hex(edid *e, int tabs, int breaks);
-
-/* just enough edid decoding */
-typedef struct {
-    int ver_major, ver_minor;
     char ven[4];
-
     int d_type[4];
     char d_text[4][14];
-
     /* point into d_text */
     char *name;
     char *serial;
@@ -82,26 +77,26 @@ typedef struct {
 
     int a_or_d; /* 0 = analog, 1 = digital */
     int bpc;
-
     uint16_t product;
     uint32_t n_serial;
     int week, year;
-
     int horiz_cm, vert_cm;
     float diag_cm, diag_in;
 
-    int size; /* bytes */
-    int checksum_ok; /* block 0 */
-
-    int ext_blocks, ext_blocks_ok, ext_blocks_fail;
-    uint8_t ext[EDID_MAX_EXT_BLOCKS][2]; /* block type, checksum_ok */
-} edid_basic;
-
-int edid_fill(edid_basic *id_out, const void *edid_bytes, int edid_len);
-int edid_fill2(edid_basic *id_out, edid* e);
+} edid;
+edid *edid_new(const char *data, unsigned int len);
+edid *edid_new_from_hex(const char *hex_string);
+edid *edid_free(edid *e);
+char *edid_dump_hex(edid *e, int tabs, int breaks);
 
 const char *edid_descriptor_type(int type);
-char *edid_dump(edid_basic *id);
+const char *edid_ext_block_type(int type);
+const char *edid_cea_block_type(int type);
+const char *edid_cea_audio_type(int type);
+
+char *edid_dtd_describe(struct edid_dtd *dtd);
+char *edid_cea_block_describe(struct edid_cea_block *blk);
+
 char *edid_dump2(edid *e);
 
 #endif

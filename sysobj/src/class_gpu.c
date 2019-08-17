@@ -71,22 +71,21 @@ static attr_tab drm_items[] = {
 };
 
 vendor_list edid_vendor(sysobj *obj) {
-    edid_basic id = {};
-    edid_fill(&id, obj->data.any, obj->data.len);
-    gchar *vstr = sysobj_raw_from_printf(":/lookup/edid.ids/%s/name", id.ven);
+    edid *e = edid_new(obj->data.any, obj->data.len);
+    gchar *vstr = sysobj_raw_from_printf(":/lookup/edid.ids/%s/name", e->ven);
     const Vendor *v = vendor_match(vstr, NULL);
     g_free(vstr);
+    edid_free(e);
     return vendor_list_append(NULL, v);
 }
 
 gchar *edid_format(sysobj *obj, int fmt_opts) {
-    edid_basic id = {};
-    edid_fill(&id, obj->data.any, obj->data.len);
+    edid *e = edid_new(obj->data.any, obj->data.len);
     gchar *ret = NULL;
-    if (id.ver_major) {
+    if (e) {
         if (fmt_opts & FMT_OPT_PART || !(fmt_opts & FMT_OPT_COMPLETE) ) {
-            gchar *vstr = sysobj_raw_from_printf(":/lookup/edid.ids/%s/name", id.ven);
-            if (!vstr || !*vstr) vstr = g_strdup(id.ven);
+            gchar *vstr = sysobj_raw_from_printf(":/lookup/edid.ids/%s/name", e->ven);
+            if (!vstr || !*vstr) vstr = g_strdup(e->ven);
             gchar *ven_tag = vendor_match_tag(vstr, fmt_opts);
             if (ven_tag)
                 ret = appfsp(ret, "%s", ven_tag);
@@ -94,21 +93,22 @@ gchar *edid_format(sysobj *obj, int fmt_opts) {
                 ret = appfsp(ret, "%s", vstr);
             g_free(ven_tag);
 
-            if (id.diag_in) {
-                gchar *din = util_strchomp_float(g_strdup_printf("%0.1f", id.diag_in));
+            if (e->diag_in) {
+                gchar *din = util_strchomp_float(g_strdup_printf("%0.1f", e->diag_in));
                 ret = appfsp(ret, "%s\"", din);
                 g_free(din);
             }
 
-            if (id.name)
-                ret = appfsp(ret, "%s", id.name);
+            if (e->name)
+                ret = appfsp(ret, "%s", e->name);
             else if (ret) {
-                ret = appfsp(ret, "%s %s", id.a_or_d ? "Digital" : "Analog", "Display");
+                ret = appfsp(ret, "%s %s", e->a_or_d ? "Digital" : "Analog", "Display");
             }
             g_free(vstr);
         } else if (fmt_opts & FMT_OPT_COMPLETE) {
-            ret = edid_dump(&id);
+            ret = edid_dump2(e);
         }
+        edid_free(e);
     }
     if (ret)
         return ret;
