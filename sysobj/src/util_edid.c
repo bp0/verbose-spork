@@ -18,22 +18,24 @@
  *
  */
 
-#include "gettext.h"
+#define _GNU_SOURCE
 #include "util_edid.h"
 #include "util_sysobj.h"
-#include <endian.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
+#include <endian.h>
 #include <stdio.h>
+#include "gettext.h"
 
 /* block must be 128 bytes */
 int block_check(const void *edid_block_bytes) {
     if (!edid_block_bytes) return 0;
     uint8_t sum = 0;
     uint8_t *data = (uint8_t*)edid_block_bytes;
-    for(int i=0; i<128; i++)
+    int i;
+    for(i=0; i<128; i++)
         sum += data[i];
     return sum == 0 ? 1 : 0;
 }
@@ -109,7 +111,7 @@ int edid_fill(struct edid *id_out, const void *edid_bytes, int edid_len) {
         id_out->d_type[0] = (dh << 16) + dl;
         switch(id_out->d_type[0]) {
             case 0xfc: case 0xff: case 0xfe:
-                strncpy(id_out->d_text[0], u8+54+5, 13);
+                strncpy(id_out->d_text[0], (char*)u8+54+5, 13);
         }
 
         /* descriptor at byte 72 */
@@ -118,7 +120,7 @@ int edid_fill(struct edid *id_out, const void *edid_bytes, int edid_len) {
         id_out->d_type[1] = (dh << 16) + dl;
         switch(id_out->d_type[1]) {
             case 0xfc: case 0xff: case 0xfe:
-                strncpy(id_out->d_text[1], u8+72+5, 13);
+                strncpy(id_out->d_text[1], (char*)u8+72+5, 13);
         }
 
         /* descriptor at byte 90 */
@@ -127,7 +129,7 @@ int edid_fill(struct edid *id_out, const void *edid_bytes, int edid_len) {
         id_out->d_type[2] = (dh << 16) + dl;
         switch(id_out->d_type[2]) {
             case 0xfc: case 0xff: case 0xfe:
-                strncpy(id_out->d_text[2], u8+90+5, 13);
+                strncpy(id_out->d_text[2], (char*)u8+90+5, 13);
         }
 
         /* descriptor at byte 108 */
@@ -136,10 +138,11 @@ int edid_fill(struct edid *id_out, const void *edid_bytes, int edid_len) {
         id_out->d_type[3] = (dh << 16) + dl;
         switch(id_out->d_type[3]) {
             case 0xfc: case 0xff: case 0xfe:
-                strncpy(id_out->d_text[3], u8+108+5, 13);
+                strncpy(id_out->d_text[3], (char*)u8+108+5, 13);
         }
 
-        for(int i = 0; i < 4; i++) {
+        int i;
+        for(i = 0; i < 4; i++) {
             g_strstrip(id_out->d_text[i]);
             switch(id_out->d_type[i]) {
                 case 0xfc:
@@ -196,6 +199,7 @@ int edid_hex_to_bin(void **edid_bytes, int *edid_len, const char *hex_string) {
 
     *edid_bytes = (void *)buffer;
     *edid_len = len;
+    return 1;
 }
 
 int edid_fill_xrandr(struct edid *id_out, const char *xrandr_edid_dump) {
@@ -256,7 +260,8 @@ char *edid_dump(struct edid *id) {
     if (id->ext_blocks_ok || id->ext_blocks_fail)
         ret = appf(ret, "", ", extension blocks: %d of %d ok", id->ext_blocks_ok, id->ext_blocks_ok + id->ext_blocks_fail);
 
-    for(int i = 0; i < 4; i++)
+    int i;
+    for(i = 0; i < 4; i++)
         ret = appfnl(ret, "descriptor[%d] (%s): %s", i, _(edid_descriptor_type(id->d_type[i])), *id->d_text[i] ? id->d_text[i] : "{...}");
     return ret;
 }
@@ -272,7 +277,8 @@ char *edid_bin_to_hex(const void *edid_bytes, int edid_len) {
     for(; lines; lines--) {
         sprintf(p, "\t\t");
         p+=2;
-        for(int i = 0; i < 16; i++) {
+        int i;
+        for(i = 0; i < 16; i++) {
             sprintf(p, "%02x", (unsigned int)*u8);
             p+=2;
             u8++;
