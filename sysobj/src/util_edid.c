@@ -59,6 +59,12 @@ static void cea_block_decode(struct edid_cea_block *blk) {
                 blk_audio->format = (blk->header.ptr[1] & 0x78) >> 3;
                 blk_audio->channels = 1 + blk->header.ptr[1] & 0x7;
                 blk_audio->freq_bits = blk->header.ptr[2];
+                if (blk_audio->format == 1) {
+                    blk_audio->depth_bits = blk->header.ptr[3];
+                } else if (blk_audio->format >= 2
+                        && blk_audio->format <= 8) {
+                    blk_audio->max_kbps = blk->header.ptr[3] * 8;
+                }
                 break;
             case 0x4:
             case 0x3:
@@ -383,14 +389,16 @@ const char *edid_descriptor_type(int type) {
 
 char *edid_cea_block_describe(struct edid_cea_block *blk) {
     gchar *ret = NULL;
-    gchar *tmp = NULL;
+    gchar *tmp[3] = {};
     struct edid_cea_audio *blk_audio = (void*)blk;
 
     if (blk) {
         char *hb = hex_bytes(blk->header.ptr, blk->header.len);
         switch(blk->header.type) {
             case 0x1:
-#define appfreq(b, f) if (blk_audio->freq_bits & (1 << b)) tmp = appf(tmp, ",", "%d", f);
+
+#define appfreq(b, f) if (blk_audio->freq_bits & (1 << b)) tmp[0] = appf(tmp[0], ", ", "%d", f);
+#define appdepth(b, f) if (blk_audio->depth_bits & (1 << b)) tmp[1] = appf(tmp[1], ", ", "%d%s", f, _("-bit"));
                 appfreq(0, 32);
                 appfreq(1, 44);
                 appfreq(2, 48);
@@ -399,12 +407,27 @@ char *edid_cea_block_describe(struct edid_cea_block *blk) {
                 appfreq(5, 176);
                 appfreq(6, 192);
 
-                ret = g_strdup_printf("([%x] %s) len:%d format:([%x] %s) channels:%d rates:%s %s -- %s",
+                if (blk_audio->format == 1) {
+                    appdepth(0, 16);
+                    appdepth(1, 20);
+                    appdepth(2, 24);
+                    tmp[2] = g_strdup_printf("depths: %s", tmp[1]);
+                } else if (blk_audio->format >= 2
+                            && blk_audio->format <= 8 ) {
+                    tmp[2] = g_strdup_printf("max_bitrate: %d %s", blk_audio->max_kbps, _("kbps"));
+                } else
+                    tmp[2] = g_strdup("");
+
+                ret = g_strdup_printf("([%x] %s) len:%d format:([%x] %s) channels:%d rates:%s %s %s -- %s",
                     blk->header.type, _(edid_cea_block_type(blk->header.type)),
                     blk->header.len,
                     blk_audio->format, _(edid_cea_audio_type(blk_audio->format)),
-                    blk_audio->channels, tmp, _("kHz"),
+                    blk_audio->channels, tmp[0], _("kHz"),
+                    tmp[2],
                     hb);
+                g_free(tmp[0]);
+                g_free(tmp[1]);
+                g_free(tmp[2]);
                 break;
             case 0x4:
             case 0x3:

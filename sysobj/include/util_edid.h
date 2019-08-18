@@ -45,6 +45,8 @@ struct edid_cea_block {
 struct edid_cea_audio {
     struct edid_cea_header header;
     int format, channels, freq_bits;
+    int depth_bits; /* format 1 */
+    int max_kbps;   /* formats 2-8 */
 };
 
 typedef struct {
