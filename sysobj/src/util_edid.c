@@ -162,7 +162,7 @@ edid *edid_new(const char *data, unsigned int len) {
                 if (db_end) {
                     int b = 4;
                     while(b < db_end) {
-                        int db_type = u8[b] & 0xe0 >> 5;
+                        int db_type = (u8[b] & 0xe0) >> 5;
                         int db_size = u8[b] & 0x1f;
                         printf("CEA BLK: %s\n", hex_bytes(&u8[b], db_size+1));
                         e->cea_blocks[e->cea_block_count].header.ptr = &u8[b];
