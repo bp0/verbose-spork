@@ -53,6 +53,9 @@ char *hex_bytes(uint8_t *bytes, int count) {
 
 static void cea_block_decode(struct edid_cea_block *blk) {
     struct edid_cea_audio *blk_audio = (void*)blk;
+    struct edid_cea_video *blk_video = (void*)blk;
+    struct edid_cea_speaker *blk_speaker = (void*)blk;
+    struct edid_cea_vendor_spec *blk_vendor_spec = (void*)blk;
     if (blk) {
         switch(blk->header.type) {
             case 0x1:
@@ -67,6 +70,8 @@ static void cea_block_decode(struct edid_cea_block *blk) {
                 }
                 break;
             case 0x4:
+                blk_speaker->alloc_bits = blk->header.ptr[1];
+                break;
             case 0x3:
             case 0x2:
             default:
@@ -391,14 +396,17 @@ char *edid_cea_block_describe(struct edid_cea_block *blk) {
     gchar *ret = NULL;
     gchar *tmp[3] = {};
     struct edid_cea_audio *blk_audio = (void*)blk;
+    struct edid_cea_video *blk_video = (void*)blk;
+    struct edid_cea_speaker *blk_speaker = (void*)blk;
+    struct edid_cea_vendor_spec *blk_vendor_spec = (void*)blk;
 
     if (blk) {
-        char *hb = hex_bytes(blk->header.ptr, blk->header.len);
+        char *hb = hex_bytes(blk->header.ptr, blk->header.len+1);
         switch(blk->header.type) {
             case 0x1:
 
 #define appfreq(b, f) if (blk_audio->freq_bits & (1 << b)) tmp[0] = appf(tmp[0], ", ", "%d", f);
-#define appdepth(b, f) if (blk_audio->depth_bits & (1 << b)) tmp[1] = appf(tmp[1], ", ", "%d%s", f, _("-bit"));
+#define appdepth(b, d) if (blk_audio->depth_bits & (1 << b)) tmp[1] = appf(tmp[1], ", ", "%d%s", d, _("-bit"));
                 appfreq(0, 32);
                 appfreq(1, 44);
                 appfreq(2, 48);
@@ -430,6 +438,21 @@ char *edid_cea_block_describe(struct edid_cea_block *blk) {
                 g_free(tmp[2]);
                 break;
             case 0x4:
+#define appspk(b, s) if (blk_speaker->alloc_bits & (1 << b)) tmp[0] = appf(tmp[0], ", ", "%s", s);
+                appspk(0, _("LF+LR: Front left and right"));
+                appspk(1, _("LFE: Low-frequency effects"));
+                appspk(2, _("FC: Front center"));
+                appspk(3, _("LR+LR: Rear left and right"));
+                appspk(4, _("RC: Rear center"));
+                appspk(5, _("???"));
+                appspk(6, _("???"));
+                ret = g_strdup_printf("([%x] %s) len:%d %s -- %s",
+                    blk->header.type, _(edid_cea_block_type(blk->header.type)),
+                    blk->header.len,
+                    tmp[0],
+                    hb);
+                g_free(tmp[0]);
+                break;
             case 0x3:
             case 0x2:
             default:

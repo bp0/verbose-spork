@@ -49,6 +49,19 @@ struct edid_cea_audio {
     int max_kbps;   /* formats 2-8 */
 };
 
+struct edid_cea_video {
+    struct edid_cea_header header;
+};
+
+struct edid_cea_vendor_spec {
+    struct edid_cea_header header;
+};
+
+struct edid_cea_speaker {
+    struct edid_cea_header header;
+    int alloc_bits;
+};
+
 typedef struct {
     union {
         void* data;
