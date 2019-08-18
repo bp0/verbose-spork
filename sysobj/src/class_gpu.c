@@ -93,11 +93,8 @@ gchar *edid_format(sysobj *obj, int fmt_opts) {
                 ret = appfsp(ret, "%s", vstr);
             g_free(ven_tag);
 
-            if (e->diag_in) {
-                gchar *din = util_strchomp_float(g_strdup_printf("%0.1f", e->diag_in));
-                ret = appfsp(ret, "%s\"", din);
-                g_free(din);
-            }
+            if (e->img_max.diag_in)
+                ret = appfsp(ret, "%s", e->img_max.class_inch);
 
             if (e->name)
                 ret = appfsp(ret, "%s", e->name);
