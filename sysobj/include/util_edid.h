@@ -23,8 +23,6 @@
 
 #include <stdint.h>  /* for *int*_t types */
 
-#define EDID_MAX_EXT_BLOCKS 254
-
 struct edid_dtd {
     uint8_t *ptr;
     int pixel_clock_khz;
@@ -70,6 +68,13 @@ typedef struct {
         uint32_t* u32;
     };
     unsigned int len;
+
+    /* 0 - EDID
+     * 1 - EIA/CEA-861
+     * 2 - DisplayID
+     */
+    int std;
+
     int ver_major, ver_minor;
     int checksum_ok; /* first 128-byte block only */
     int ext_blocks, ext_blocks_ok, ext_blocks_fail;
@@ -101,9 +106,10 @@ typedef struct {
 } edid;
 edid *edid_new(const char *data, unsigned int len);
 edid *edid_new_from_hex(const char *hex_string);
-edid *edid_free(edid *e);
+void edid_free(edid *e);
 char *edid_dump_hex(edid *e, int tabs, int breaks);
 
+const char *edid_standard(int type);
 const char *edid_descriptor_type(int type);
 const char *edid_ext_block_type(int type);
 const char *edid_cea_block_type(int type);

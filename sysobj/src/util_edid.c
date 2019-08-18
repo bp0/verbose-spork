@@ -160,16 +160,23 @@ edid *edid_new(const char *data, unsigned int len) {
             if (r) e->ext_blocks_ok++;
             else e->ext_blocks_fail++;
 
+            if (u8[0] == 0x70) {
+                e->std = MAX(e->std, 2);
+                /* DisplayID */
+                // TODO: ...
+            }
+
             if (u8[0] == 0x02) {
+                e->std = MAX(e->std, 1);
                 /* CEA extension */
                 int db_end = u8[2];
-                printf("db_end: %d\n", db_end);
+                //printf("db_end: %d\n", db_end);
                 if (db_end) {
                     int b = 4;
                     while(b < db_end) {
                         int db_type = (u8[b] & 0xe0) >> 5;
                         int db_size = u8[b] & 0x1f;
-                        printf("CEA BLK: %s\n", hex_bytes(&u8[b], db_size+1));
+                        //printf("CEA BLK: %s\n", hex_bytes(&u8[b], db_size+1));
                         e->cea_blocks[e->cea_block_count].header.ptr = &u8[b];
                         e->cea_blocks[e->cea_block_count].header.type = db_type;
                         e->cea_blocks[e->cea_block_count].header.len = db_size;
@@ -178,11 +185,11 @@ edid *edid_new(const char *data, unsigned int len) {
                         b += db_size + 1;
                     }
                     if (b > db_end) b = db_end;
-                    printf("dtd start: %d\n", b);
+                    //printf("dtd start: %d\n", b);
                     /* DTDs */
                     while(b < 127) {
                         if (u8[b]) {
-                            printf("DTD: %s\n", hex_bytes(&u8[b], 18));
+                            //printf("DTD: %s\n", hex_bytes(&u8[b], 18));
                             e->dtds[e->dtd_count].ptr = &u8[b];
                             e->dtd_count++;
                         }
@@ -254,7 +261,7 @@ edid *edid_new(const char *data, unsigned int len) {
     return e;
 }
 
-edid *edid_free(edid *e) {
+void edid_free(edid *e) {
     if (e) {
         g_free(e->ext_ok);
         g_free(e->cea_blocks);
@@ -294,7 +301,7 @@ char *edid_dump_hex(edid *e, int tabs, int breaks) {
     if (!e) return NULL;
     int lines = e->len / 16;
     int blen = lines * 35 + 1;
-    int pc = 0;
+    unsigned int pc = 0;
     char *ret = malloc(blen);
     memset(ret, 0, blen);
     uint8_t *u8 = e->u8;
@@ -317,6 +324,15 @@ char *edid_dump_hex(edid *e, int tabs, int breaks) {
     }
 edid_dump_hex_done:
     return ret;
+}
+
+const char *edid_standard(int std) {
+    switch(std) {
+        case 0: return N_("VESA EDID");
+        case 1: return N_("EIA/CEA-861");
+        case 2: return N_("VESA DisplayID");
+    };
+    return N_("unknown");
 }
 
 const char *edid_cea_audio_type(int type) {
@@ -356,10 +372,30 @@ const char *edid_cea_block_type(int type) {
 
 const char *edid_ext_block_type(int type) {
     switch(type) {
-        case 0xf0:
-            return N_("extension block map");
+        case 0x00:
+            return N_("timing extension");
         case 0x02:
             return N_("EIA/CEA-861 extension block");
+        case 0x10:
+            return N_("video timing block");
+        case 0x20:
+            return N_("EDID 2.0 extension");
+        case 0x40:
+            return N_("DVI feature data/display information");
+        case 0x50:
+            return N_("localized strings");
+        case 0x60:
+            return N_("microdisplay interface");
+        case 0x70:
+            return N_("DisplayID");
+        case 0xa7:
+        case 0xaf:
+        case 0xbf:
+            return N_("display transfer characteristics data block");
+        case 0xf0:
+            return N_("extension block map");
+        case 0xff:
+            return N_("manufacturer-defined extension/display device data block");
     }
     return N_("unknown block type");
 }
@@ -485,6 +521,7 @@ char *edid_dump2(edid *e) {
     if (!e) return NULL;
 
     ret = appfnl(ret, "edid_version: %d.%d (%d bytes)", e->ver_major, e->ver_minor, e->len);
+    ret = appfnl(ret, "standard: %s", _(edid_standard(e->std)) );
 
     ret = appfnl(ret, "mfg: %s, model: %u, n_serial: %u", e->ven, e->product, e->n_serial);
     if (e->week && e->year)
@@ -510,8 +547,9 @@ char *edid_dump2(edid *e) {
 
     for(i = 0; i < e->ext_blocks; i++) {
         int type = e->u8[(i+1)*128];
-        ret = appfnl(ret, "ext[%d] ([%02x] %s) %s", i,
-            type, _(edid_ext_block_type(type)),
+        int version = e->u8[(i+1)*128 + 1];
+        ret = appfnl(ret, "ext[%d] ([%02x:v%02x] %s) %s", i,
+            type, version, _(edid_ext_block_type(type)),
             e->ext_ok[i] ? "ok" : "fail"
         );
     }
