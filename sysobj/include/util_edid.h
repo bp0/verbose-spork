@@ -121,6 +121,7 @@ char *edid_dump_hex(edid *e, int tabs, int breaks);
 
 const char *edid_standard(int type);
 const char *edid_output_src(int src);
+const char *edid_interface(int type);
 const char *edid_descriptor_type(int type);
 const char *edid_ext_block_type(int type);
 const char *edid_cea_block_type(int type);

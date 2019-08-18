@@ -562,7 +562,7 @@ char *edid_cea_block_describe(struct edid_cea_block *blk) {
 char *edid_output_describe(edid_output *out) {
     gchar *ret = NULL;
     if (out) {
-        ret = g_strdup_printf("%dx%d, %0.2fx%0.2f%s (%0.1f\") %s %s",
+        ret = g_strdup_printf("%dx%d, %0.1fx%0.1f%s (%0.1f\") %s %s",
             out->horiz_pixels, out->vert_pixels,
             out->horiz_cm, out->vert_cm, _("cm"), out->diag_in,
             out->is_interlaced ? "interlaced" : "non-interlaced",
@@ -576,7 +576,7 @@ char *edid_dtd_describe(struct edid_dtd *dtd, int dump_bytes) {
     if (dtd) {
         edid_output *out = &dtd->out;
         char *hb = hex_bytes(dtd->ptr, 18);
-        ret = g_strdup_printf("%dx%d, %0.2fx%0.2f%s (%0.1f\") %s %s (%s)%s%s",
+        ret = g_strdup_printf("%dx%d, %0.1fx%0.1f%s (%0.1f\") %s %s (%s)%s%s",
             out->horiz_pixels, out->vert_lines,
             out->horiz_cm, out->vert_cm, _("cm"), out->diag_in,
             out->is_interlaced ? "interlaced" : "non-interlaced",
@@ -637,6 +637,7 @@ char *edid_dump2(edid *e) {
         ret = appfnl(ret, "dtd[%d] %s", i, desc);
         free(desc);
     }
+
     for(i = 0; i < e->cea_block_count; i++) {
         char *desc = edid_cea_block_describe(&e->cea_blocks[i]);
         ret = appfnl(ret, "cea_block[%d] %s", i, desc);
