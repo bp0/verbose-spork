@@ -102,9 +102,11 @@ static void edid_output_fill(edid_output *out) {
     if (!out->vert_freq_hz && out->pixel_clock_khz) {
         uint64_t h = out->horiz_pixels + out->horiz_blanking;
         uint64_t v = out->vert_lines + out->vert_blanking;
-        uint64_t work = out->pixel_clock_khz * 1000;
-        work /= (h*v);
-        out->vert_freq_hz = work;
+        if (h && v) {
+            uint64_t work = out->pixel_clock_khz * 1000;
+            work /= (h*v);
+            out->vert_freq_hz = work;
+        }
     }
 
     out->pixels = out->horiz_pixels;
@@ -221,7 +223,7 @@ edid *edid_new(const char *data, unsigned int len) {
     /* standard timings */
     for(i = 38; i < 53; i+=2) {
         /* 0101 is unused */
-        if (e->u8[i] == 0x01 && e->u8[i] == 0x01)
+        if (e->u8[i] == 0x01 && e->u8[i+1] == 0x01)
             continue;
         double xres = (e->u8[i] + 31) * 8;
         double yres = 0;
