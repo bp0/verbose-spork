@@ -286,7 +286,7 @@ gchar *sysobj_format_from_fn(const gchar *base, const gchar *name, int fmt_opts)
 gchar *sysobj_format_from_printf(int fmt_opts, gchar *path_fmt, ...)
     __attribute__ ((format (printf, 2, 3)));
 gchar *sysobj_raw_from_fn(const gchar *base, const gchar *name);
-gchar *sysobj_raw_from_printf(gchar *path_fmt, ...)
+gchar *sysobj_raw_from_printf(const gchar *path_fmt, ...)
     __attribute__ ((format (printf, 1, 2)));
 uint32_t sysobj_uint32_from_fn(const gchar *base, const gchar *name, int nbase);
 uint32_t sysobj_uint32_from_printf(int nbase, gchar *path_fmt, ...)

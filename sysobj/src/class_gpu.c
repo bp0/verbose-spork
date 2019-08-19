@@ -72,6 +72,7 @@ static attr_tab drm_items[] = {
 
 vendor_list edid_vendor(sysobj *obj) {
     edid *e = edid_new(obj->data.any, obj->data.len);
+    if (!e) return NULL;
     gchar *vstr = sysobj_raw_from_printf(":/lookup/edid.ids/%s/name", e->ven);
     const Vendor *v = vendor_match(vstr, NULL);
     g_free(vstr);

@@ -212,7 +212,7 @@ gchar *sysobj_raw_from_fn(const gchar *base, const gchar *name) {
     return ret;
 }
 
-gchar *sysobj_raw_from_printf(gchar *path_fmt, ...) {
+gchar *sysobj_raw_from_printf(const gchar *path_fmt, ...) {
     gchar *ret = NULL;
     gchar *path = NULL;
     va_list args;
