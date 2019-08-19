@@ -26,8 +26,9 @@
 typedef struct {
     float horiz_cm, vert_cm;
     float diag_cm, diag_in;
+    int horiz_blanking, vert_blanking;
     int horiz_pixels, vert_lines, vert_pixels;
-    int vert_freq_hz;
+    float vert_freq_hz;
     int is_interlaced;
     int stereo_mode;
     int pixel_clock_khz;

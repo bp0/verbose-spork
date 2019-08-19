@@ -98,6 +98,14 @@ static void edid_output_fill(edid_output *out) {
             out->vert_lines = out->vert_pixels;
     }
 
+    if (!out->vert_freq_hz && out->pixel_clock_khz) {
+        uint64_t h = out->horiz_pixels + out->horiz_blanking;
+        uint64_t v = out->vert_lines + out->vert_blanking;
+        uint64_t work = out->pixel_clock_khz * 1000;
+        work /= (h*v);
+        out->vert_freq_hz = work;
+    }
+
     out->pixels = out->horiz_pixels;
     out->pixels *= out->vert_pixels;
 
@@ -328,12 +336,16 @@ edid *edid_new(const char *data, unsigned int len) {
 
     /* largest in ETB */
     for (i = 0; i < e->etb_count; i++) {
+        if (e->etbs[i].pixels > e->img.pixels)
+            e->img = e->etbs[i];
         if (e->etbs[i].pixels > e->img_max.pixels)
             e->img_max = e->etbs[i];
     }
 
     /* largest in STDs */
     for (i = 0; i < e->std_count; i++) {
+        if (e->stds[i].out.pixels > e->img.pixels)
+            e->img = e->stds[i].out;
         if (e->stds[i].out.pixels > e->img_max.pixels)
             e->img_max = e->stds[i].out;
     }
@@ -341,14 +353,21 @@ edid *edid_new(const char *data, unsigned int len) {
     /* dtds */
     for(i = 0; i < e->dtd_count; i++) {
         uint8_t *u8 = e->dtds[i].ptr;
+        uint16_t *u16 = (uint16_t*)e->dtds[i].ptr;
         edid_output *out = &e->dtds[i].out;
         if (e->dtds[i].cea_ext) out->src = 4;
         else out->src = 3;
-        out->pixel_clock_khz = u8[0] * 10;
+        out->pixel_clock_khz = le16toh(u16[0]) * 10;
         out->horiz_pixels =
             ((u8[4] & 0xf0) << 4) + u8[2];
         out->vert_lines =
             ((u8[7] & 0xf0) << 4) + u8[5];
+
+        out->horiz_blanking =
+            ((u8[4] & 0x0f) << 8) + u8[3];
+        out->vert_blanking =
+            ((u8[7] & 0x0f) << 8) + u8[6];
+
         out->horiz_cm =
             ((u8[14] & 0xf0) << 4) + u8[12];
         out->horiz_cm /= 10;
@@ -362,7 +381,7 @@ edid *edid_new(const char *data, unsigned int len) {
     }
 
     if (e->dtd_count) {
-        /* first DTD is "prefered" */
+        /* first DTD is "preferred" */
         e->img_max = e->dtds[0].out;
     }
 
@@ -651,10 +670,10 @@ char *edid_cea_block_describe(struct edid_cea_block *blk) {
 char *edid_output_describe(edid_output *out) {
     gchar *ret = NULL;
     if (out) {
-        ret = g_strdup_printf("%dx%d@%d%s, %0.1fx%0.1f%s (%0.1f\") %s %s",
+        ret = g_strdup_printf("%dx%d@%.0f%s, %0.1fx%0.1f%s (%0.1f\") %s %s",
             out->horiz_pixels, out->vert_pixels, out->vert_freq_hz, _("Hz"),
             out->horiz_cm, out->vert_cm, _("cm"), out->diag_in,
-            out->is_interlaced ? "interlaced" : "non-interlaced",
+            out->is_interlaced ? "interlaced" : "progressive",
             out->stereo_mode ? "stereo" : "normal");
     }
     return ret;
@@ -665,10 +684,10 @@ char *edid_dtd_describe(struct edid_dtd *dtd, int dump_bytes) {
     if (dtd) {
         edid_output *out = &dtd->out;
         char *hb = hex_bytes(dtd->ptr, 18);
-        ret = g_strdup_printf("%dx%d, %0.1fx%0.1f%s (%0.1f\") %s %s (%s)%s%s",
-            out->horiz_pixels, out->vert_lines,
+        ret = g_strdup_printf("%dx%d@%.0f%s, %0.1fx%0.1f%s (%0.1f\") %s %s (%s)%s%s",
+            out->horiz_pixels, out->vert_lines, out->vert_freq_hz, _("Hz"),
             out->horiz_cm, out->vert_cm, _("cm"), out->diag_in,
-            out->is_interlaced ? "interlaced" : "non-interlaced",
+            out->is_interlaced ? "interlaced" : "progressive",
             out->stereo_mode ? "stereo" : "normal",
             _(edid_output_src(out->src)),
             dump_bytes ? " -- " : "",
