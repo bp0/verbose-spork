@@ -1222,6 +1222,14 @@ name MediaTek
     ansi_color 0;97;43
     match_string MediaTek
 
+name Valve Corporation
+    name_short VALVE
+    url valvesoftware.com
+    wikipedia Valve Corporation
+    ansi_color 0;97;41
+    match_string Valve Corporation
+    match_string Valve
+
 #
 # x86 VM vendor strings
 #
