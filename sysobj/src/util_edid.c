@@ -56,6 +56,13 @@ char *hex_bytes(uint8_t *bytes, int count) {
     return buffer;
 }
 
+#define OUTPUT_CPY_SIZE(DEST, SRC)  \
+    (DEST).horiz_cm = (SRC).horiz_cm; \
+    (DEST).vert_cm = (SRC).vert_cm; \
+    (DEST).diag_cm = (SRC).diag_cm; \
+    (DEST).diag_in = (SRC).diag_in; \
+    edid_output_fill(&(DEST));
+
 static void edid_output_fill(edid_output *out) {
     out->diag_cm =
         sqrt( (out->horiz_cm * out->horiz_cm)
@@ -132,7 +139,7 @@ static void cea_block_decode(struct edid_cea_block *blk, edid *e) {
 }
 
 static void did_block_decode(DisplayIDBlock *blk, edid *e) {
-    int i, b = 3;
+    int b = 3;
     uint8_t *u8 = blk->ptr;
     edid_output out = {};
     if (blk) {
@@ -166,6 +173,7 @@ static void did_block_decode(DisplayIDBlock *blk, edid *e) {
                 out.src = OUTSRC_DID_TYPE_VI;
                 edid_output_fill(&out);
                 e->didts[e->didt_count++] = out;
+                break;
             case 0x22: /* Type VII Detailed timings (super 0x13) */
                 /* UNTESTED */
                 out.pixel_clock_khz = u8[b+2] << 16;
@@ -200,7 +208,7 @@ static void did_block_decode(DisplayIDBlock *blk, edid *e) {
     }
 }
 
-edid_output edid_output_from_svd(uint8_t index) {
+static edid_output edid_output_from_svd(uint8_t index) {
     int i;
     if (index >= 128 && index <= 192) index &= 0x7f; /* "native" flag for 0-64 */
     for(i = 0; i < (int)G_N_ELEMENTS(cea_standard_timings); i++) {
@@ -529,14 +537,16 @@ edid *edid_new(const char *data, unsigned int len) {
 
     /* svds */
     for(i = 0; i < e->svd_count; i++) {
+        e->svds[i].out = edid_output_from_svd(e->svds[i].v);
         if (e->svds[i].v >= 128 &&
             e->svds[i].v <= 192) {
             e->svds[i].is_native = 1;
-        }
-        e->svds[i].out = edid_output_from_svd(e->svds[i].v);
-        if (e->svds[i].is_native) {
+
+            edid_output tmp = e->img_max;
             /* native res is max real res, right? */
             e->img_max = e->svds[i].out;
+            e->img_max.is_preferred = 1;
+            OUTPUT_CPY_SIZE(e->img_max, tmp);
         }
     }
 
@@ -548,8 +558,11 @@ edid *edid_new(const char *data, unsigned int len) {
         int better = (e->didts[i].src > e->img_max.src);
         if (bigger && !max_pref
             || pref && !max_pref
-            || pref && better)
+            || pref && better) {
+            edid_output tmp = e->img_max;
             e->img_max = e->didts[i];
+            OUTPUT_CPY_SIZE(e->img_max, tmp);
+        }
     }
 
     if (!e->speaker_alloc_bits && e->sad_count) {
@@ -656,6 +669,7 @@ const char *edid_output_src(int src) {
         case OUTSRC_STD: return N_("VESA EDID STD");
         case OUTSRC_DTD: return N_("VESA EDID DTD");
         case OUTSRC_CEA_DTD: return N_("EIA/CEA-861 DTD");
+        case OUTSRC_SVD: return N_("EIA/CEA-861 SVD");
         case OUTSRC_DID_TYPE_I: return N_("DisplayID Type I");
         case OUTSRC_DID_TYPE_VI: return N_("DisplayID Type VI");
         case OUTSRC_DID_TYPE_VII: return N_("DisplayID Type VII");
