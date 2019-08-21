@@ -199,6 +199,7 @@ const char *edid_cea_block_type(int type);
 const char *edid_cea_audio_type(int type);
 
 char *edid_output_describe(edid_output *out);
+char *edid_base_descriptor_describe(struct edid_descriptor *d);
 char *edid_dtd_describe(struct edid_dtd *dtd, int dump_bytes);
 char *edid_cea_block_describe(struct edid_cea_block *blk);
 char *edid_cea_audio_describe(struct edid_sad *sad);
