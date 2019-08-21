@@ -31,6 +31,58 @@
 
 #include "util_edid_svd_table.c"
 
+#define NOMASK (~0U)
+#define BFMASK(LSB, MASK) (MASK << LSB)
+
+static inline
+uint32_t bf_value(uint32_t value, uint32_t mask) {
+    uint32_t result = value & mask;
+    if (result)
+        while(!(mask & 1)) {
+            result >>= 1;
+            mask >>= 1;
+        }
+    return result;
+}
+
+static inline
+uint32_t bf16le(uint8_t *u8, uint32_t mask) {
+    uint32_t v = (u8[1] << 8) + u8[0];
+    return bf_value(v, mask);
+}
+
+static inline
+uint32_t bf16be(uint8_t *u8, uint32_t mask) {
+    uint32_t v = (u8[0] << 8) + u8[1];
+    return bf_value(v, mask);
+}
+
+static inline
+uint32_t bf24le(uint8_t *u8, uint32_t mask) {
+    uint32_t v = (u8[2] << 16) + (u8[1] << 8) + u8[0];
+    return bf_value(v, mask);
+}
+
+static inline
+uint32_t bf24be(uint8_t *u8, uint32_t mask) {
+    uint32_t result = (u8[0] << 16) + (u8[1] << 8) + u8[2];
+    return bf_value(result, mask);
+}
+
+static inline
+uint32_t bf32le(uint8_t *u8, uint32_t mask) {
+    uint32_t v = (u8[3] << 24) + (u8[2] << 16)
+        + (u8[1] << 8) + u8[0];
+    return bf_value(v, mask);
+}
+
+static inline
+uint32_t bf32be(uint8_t *u8, uint32_t mask) {
+    uint32_t v = (u8[0] << 24) + (u8[1] << 16)
+        + (u8[2] << 8) + u8[3];
+    return bf_value(v, mask);
+}
+
 static int block_check_n(const void *edid_block_bytes, int len) {
     if (!edid_block_bytes) return 0;
     uint8_t sum = 0;
@@ -40,12 +92,13 @@ static int block_check_n(const void *edid_block_bytes, int len) {
         sum += data[i];
     return sum == 0 ? 1 : 0;
 }
+
 static int block_check(const void *edid_block_bytes) {
     /* block must be 128 bytes */
     return block_check_n(edid_block_bytes, 128);
 }
 
-char *hex_bytes(uint8_t *bytes, int count) {
+static char *hex_bytes(uint8_t *bytes, int count) {
     char *buffer = malloc(count*3+1), *p = buffer;
     memset(buffer, 0, count*3+1);
     int i;
@@ -95,7 +148,7 @@ static void edid_output_fill(edid_output *out) {
     out->pixels *= out->vert_pixels;
 
     if (out->diag_in) {
-        static const char *inlbl = "\""; /* TODO: unicode */
+        static const char *inlbl = "\u2033"; /* double prime */
         sprintf(out->class_inch, "%0.1f%s", out->diag_in, inlbl);
         util_strchomp_float(out->class_inch);
     }
@@ -111,8 +164,8 @@ static void cea_block_decode(struct edid_cea_block *blk, edid *e) {
                     sad->v[0] = blk->header.ptr[i];
                     sad->v[1] = blk->header.ptr[i+1];
                     sad->v[2] = blk->header.ptr[i+2];
-                    sad->format = (sad->v[0] & 0x78) >> 3;
-                    sad->channels = 1 + sad->v[0] & 0x7;
+                    sad->format = bf_value(sad->v[0], 0x78);
+                    sad->channels = 1 + bf_value(sad->v[0], 0x07);
                     sad->freq_bits = sad->v[1];
                     if (sad->format == 1) {
                         sad->depth_bits = sad->v[2];
@@ -145,17 +198,14 @@ static void did_block_decode(DisplayIDBlock *blk, edid *e) {
     if (blk) {
         switch(blk->type) {
             case 0x03: /* Type I Detailed timings */
-                out.pixel_clock_khz = u8[b+2] << 16;
-                out.pixel_clock_khz += u8[b+1] << 8;
-                out.pixel_clock_khz += u8[b];
-                out.pixel_clock_khz *= 10;
-                out.horiz_pixels = (u8[b+5] << 8) + u8[b+4];
-                out.horiz_blanking = (u8[b+7] << 8) + u8[b+6];
-                out.vert_lines = (u8[b+13] << 8) + u8[b+12];
-                out.vert_blanking = (u8[b+15] << 8) + u8[b+14];
-                out.is_interlaced = (u8[b+3] >> 4) & 0x1;
-                out.stereo_mode = (u8[b+3] >> 5) & 0x2;
-                out.is_preferred = (u8[b+3] >> 7) & 0x1;
+                out.pixel_clock_khz = 10 * bf24le(&u8[b], NOMASK);
+                out.horiz_pixels    = (u8[b+5] << 8) + u8[b+4];
+                out.horiz_blanking  = (u8[b+7] << 8) + u8[b+6];
+                out.vert_lines      = (u8[b+13] << 8) + u8[b+12];
+                out.vert_blanking   = (u8[b+15] << 8) + u8[b+14];
+                out.is_interlaced   = bf_value(u8[b+3], BFMASK(4, 0x1));
+                out.stereo_mode     = bf_value(u8[b+3], BFMASK(5, 0x3));
+                out.is_preferred    = bf_value(u8[b+3], BFMASK(7, 0x1));
                 out.src = OUTSRC_DID_TYPE_I;
                 edid_output_fill(&out);
                 e->didts[e->didt_count++] = out;
@@ -193,7 +243,7 @@ static void did_block_decode(DisplayIDBlock *blk, edid *e) {
             case 0x81: /* CTA DisplayID, ... Embedded CEA Blocks */
                 while(b < blk->len) {
                     int db_type = (u8[b] & 0xe0) >> 5;
-                    int db_size = u8[b] & 0x1f;
+                    int db_size =  u8[b] & 0x1f;
                     e->cea_blocks[e->cea_block_count].header.ptr = &u8[b];
                     e->cea_blocks[e->cea_block_count].header.type = db_type;
                     e->cea_blocks[e->cea_block_count].header.len = db_size;
@@ -391,7 +441,7 @@ edid *edid_new(const char *data, unsigned int len) {
                 else e->std = MAX(e->std, STD_DISPLAYID);
                 e->did.extension_length = u8[2];
                 e->did.primary_use_case = u8[3];
-                e->did.extension_count = u8[4];
+                e->did.extension_count  = u8[4];
                 int db_end = u8[2] + 5;
                 int b = 5;
                 while(b < db_end) {
@@ -425,7 +475,7 @@ edid *edid_new(const char *data, unsigned int len) {
                     int b = 4;
                     while(b < db_end) {
                         int db_type = (u8[b] & 0xe0) >> 5;
-                        int db_size = u8[b] & 0x1f;
+                        int db_size =  u8[b] & 0x1f;
                         e->cea_blocks[e->cea_block_count].header.ptr = &u8[b];
                         e->cea_blocks[e->cea_block_count].header.type = db_type;
                         e->cea_blocks[e->cea_block_count].header.len = db_size;

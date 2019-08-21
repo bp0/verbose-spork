@@ -24,6 +24,13 @@
 #include <stdint.h>  /* for *int*_t types */
 
 typedef struct {
+    char *str;
+    int len;
+    uint8_t is_product_name;
+    uint8_t is_serial;
+} edid_string;
+
+typedef struct {
     uint8_t version;
     uint8_t extension_length;
     uint8_t primary_use_case;
