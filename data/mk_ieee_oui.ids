@@ -1,0 +1,3 @@
+
+grep "(base 16)" ieee_oui.txt | sed 's/\(\w\+\)[ \t]\+(base 16)[ \t]\+\(.*\)/\L\1\E \2/g' | sort >ieee_oui.ids
+wc -l ieee_oui.ids

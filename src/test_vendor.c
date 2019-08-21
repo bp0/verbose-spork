@@ -128,6 +128,38 @@ int main(int argc, char **argv) {
         g_free(usb_ids);
     }
 
+    gchar *ieee_oui_ids = NULL;
+    int ieee_oui_total = 0, ieee_oui_hit = 0;
+    if (g_file_get_contents("ieee_oui.ids", &ieee_oui_ids, NULL, NULL)) {
+        gchar *p = ieee_oui_ids;
+        while(next_nl = strchr(p, '\n')) {
+            *next_nl = 0;
+            if (strlen(p) > 5
+                && isxdigit(p[0])
+                && isxdigit(p[1])
+                && isxdigit(p[2])
+                && isxdigit(p[3])
+                && isxdigit(p[4])
+                && isxdigit(p[5])
+                && isspace(p[6]) ) {
+                    ieee_oui_total++;
+                    vendor_list vl = vendors_match(p+4, NULL);
+                    vl = vendor_list_remove_duplicates_deep(vl);
+                    int vc = g_slist_length(vl);
+                    gchar *mstr = vendor_list_ribbon(vl, FMT_OPT_ATERM);
+                    if (mstr) {
+                        ieee_oui_hit++;
+                        p[6] = 0;
+                        printf("-- ieee_oui [%s] %s  === (%d) %s \n", p, g_strstrip(p+7), vc, mstr );
+                    }
+                    g_free(mstr);
+
+            }
+            p = next_nl + 1;
+        }
+        g_free(ieee_oui_ids);
+    }
+
     gchar *edid_ids = NULL;
     int edid_total = 0, edid_hit = 0;
     if (g_file_get_contents("edid.ids", &edid_ids, NULL, NULL)) {
@@ -321,6 +353,7 @@ int main(int argc, char **argv) {
            "JEDEC Mfgr: %d / %d\n"
            "PCI Vendor: %d / %d\n"
            "USB Vendor: %d / %d\n"
+           "IEEE OUI Vendor: %d / %d\n"
            "EDID Vendor: %d / %d\n"
            "Device Tree Vendor: %d / %d\n"
            "ARM Mfgr: %d / %d\n"
@@ -331,6 +364,7 @@ int main(int argc, char **argv) {
            spdv_hit, spdv_total,
            pci_hit, pci_total,
            usb_hit, usb_total,
+           ieee_oui_hit, ieee_oui_total,
            edid_hit, edid_total,
            dt_hit, dt_total,
            arm_hit, arm_total,

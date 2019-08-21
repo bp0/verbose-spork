@@ -73,6 +73,12 @@ const gchar edid_ids_reference_markup_text[] =
     " :/lookup/edid.ids/{3-letter vendor}/name\n"
     "\n";
 
+const gchar ieee_oui_ids_reference_markup_text[] =
+    " Items are generated on-demand and cached.\n"
+    "\n"
+    " :/lookup/ieee_oui.ids/{vendor}/name\n"
+    "\n";
+
 static gchar *dt_ids_format(sysobj *obj, int fmt_opts);
 
 static sysobj_class cls_lookup[] = {
@@ -136,6 +142,19 @@ static sysobj_class cls_lookup[] = {
   { SYSOBJ_CLASS_DEF
     .tag = "edid.ids:name", .pattern = ":/lookup/edid.ids/*", .flags = OF_GLOB_PATTERN | OF_HAS_VENDOR | OF_CONST,
     .s_halp = edid_ids_reference_markup_text, .s_label = "edid.ids lookup result",
+    .v_is_attr = TRUE, .v_name = "name" },
+
+  { SYSOBJ_CLASS_DEF
+    .tag = "ieee_oui.ids", .pattern = ":/lookup/ieee_oui.ids", .flags = OF_CONST,
+    .s_halp = ieee_oui_ids_reference_markup_text, .s_label = "ieee_oui.ids lookup virtual tree",
+    .s_update_interval = 4.0 },
+  { SYSOBJ_CLASS_DEF
+    .tag = "ieee_oui.ids:id", .pattern = ":/lookup/ieee_oui.ids/*", .flags = OF_GLOB_PATTERN | OF_HAS_VENDOR | OF_CONST,
+    .s_halp = ieee_oui_ids_reference_markup_text, .s_label = "ieee_oui.ids lookup result",
+    .v_is_node = TRUE, .f_format = fmt_node_name, .s_vendors_from_child = "name" },
+  { SYSOBJ_CLASS_DEF
+    .tag = "ieee_oui.ids:name", .pattern = ":/lookup/ieee_oui.ids/*", .flags = OF_GLOB_PATTERN | OF_HAS_VENDOR | OF_CONST,
+    .s_halp = ieee_oui_ids_reference_markup_text, .s_label = "ieee_oui.ids lookup result",
     .v_is_attr = TRUE, .v_name = "name" },
 };
 
