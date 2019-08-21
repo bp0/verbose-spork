@@ -111,6 +111,12 @@ struct edid_cea_block {
     int reserved[8];
 };
 
+struct edid_descriptor {
+    uint8_t *ptr;
+    uint8_t type;
+    char text[14];
+};
+
 enum {
     STD_EDID         = 0,
     STD_EEDID        = 1,
@@ -155,9 +161,8 @@ typedef struct {
     struct edid_sad *sads;
 
     char ven[4];
-    int d_type[4];
-    char d_text[4][14];
-    /* point into d_text */
+    struct edid_descriptor d[4];
+    /* point into d[].text */
     char *name;
     char *serial;
     char *ut1;

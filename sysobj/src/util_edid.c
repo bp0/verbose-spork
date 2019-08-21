@@ -404,13 +404,14 @@ edid *edid_new(const char *data, unsigned int len) {
 
     uint16_t dh, dl;
 #define CHECK_DESCRIPTOR(index, offset)       \
+    e->d[index].ptr = &e->u8[offset];         \
     if (e->u8[offset] == 0) {                 \
         dh = be16toh(e->u16[offset/2]);       \
         dl = be16toh(e->u16[offset/2+1]);     \
-        e->d_type[index] = (dh << 16) + dl;   \
-        switch(e->d_type[index]) {            \
+        e->d[index].type = (dh << 16) + dl;   \
+        switch(e->d[index].type) {            \
             case 0xfc: case 0xff: case 0xfe:  \
-                strncpy(e->d_text[index], (char*)e->u8+offset+5, 13);  \
+                strncpy(e->d[index].text, (char*)e->u8+offset+5, 13);  \
         } \
     } else e->dtds[e->dtd_count++].ptr = &e->u8[offset];
 
@@ -503,19 +504,19 @@ edid *edid_new(const char *data, unsigned int len) {
 
     /* strings */
     for(i = 0; i < 4; i++) {
-        g_strstrip(e->d_text[i]);
-        switch(e->d_type[i]) {
+        g_strstrip(e->d[i].text);
+        switch(e->d[i].type) {
             case 0xfc:
-                e->name = e->d_text[i];
+                e->name = e->d[i].text;
                 break;
             case 0xff:
-                e->serial = e->d_text[i];
+                e->serial = e->d[i].text;
                 break;
             case 0xfe:
                 if (e->ut1)
-                    e->ut2 = e->d_text[i];
+                    e->ut2 = e->d[i].text;
                 else
-                    e->ut1 = e->d_text[i];
+                    e->ut1 = e->d[i].text;
                 break;
         }
     }
@@ -942,8 +943,12 @@ char *edid_cea_block_describe(struct edid_cea_block *blk) {
                     blk->header.type, _(edid_cea_block_type(blk->header.type)),
                     blk->header.len);
                 break;
+            case 0x4: /* speaker allocation */
+                ret = g_strdup_printf("([%x] %s) len:%d",
+                    blk->header.type, _(edid_cea_block_type(blk->header.type)),
+                    blk->header.len);
+                break;
             case 0x3: //TODO
-            case 0x4:
             default:
                 ret = g_strdup_printf("([%x] %s) len:%d -- %s",
                     blk->header.type, _(edid_cea_block_type(blk->header.type)),
@@ -951,6 +956,30 @@ char *edid_cea_block_describe(struct edid_cea_block *blk) {
                     hb);
                 break;
         }
+        free(hb);
+    }
+    return ret;
+}
+
+char *edid_base_descriptor_describe(struct edid_descriptor *d) {
+    gchar *ret = NULL;
+    if (d) {
+        char *hb = hex_bytes(d->ptr, 18);
+        char *txt = NULL;
+        switch(d->type) {
+            case 0: /* DTD */
+                txt = "{...}"; /* displayed elsewhere */
+                break;
+            case 0x10: /* dummy */
+                txt = "";
+                break;
+            default:
+                txt = (*d->text) ? d->text : hb;
+                break;
+        };
+        ret = g_strdup_printf("([%02x] %s) %s",
+            d->type, _(edid_descriptor_type(d->type)),
+            txt);
         free(hb);
     }
     return ret;
@@ -1054,8 +1083,11 @@ char *edid_dump2(edid *e) {
     if (e->ext_blocks_ok || e->ext_blocks_fail)
         ret = appf(ret, "", ", extension blocks: %d of %d ok", e->ext_blocks_ok, e->ext_blocks_ok + e->ext_blocks_fail);
 
-    for(i = 0; i < 4; i++)
-        ret = appfnl(ret, "descriptor[%d] ([%02x] %s): %s", i, e->d_type[i], _(edid_descriptor_type(e->d_type[i])), *e->d_text[i] ? e->d_text[i] : "{...}");
+    for(i = 0; i < 4; i++) {
+        char *desc = edid_base_descriptor_describe(&e->d[i]);
+        ret = appfnl(ret, "descriptor[%d] %s", i, desc);
+        g_free(desc);
+    }
 
     for(i = 0; i < e->ext_blocks; i++) {
         int type = e->u8[(i+1)*128];
