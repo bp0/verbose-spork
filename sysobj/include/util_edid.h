@@ -192,6 +192,8 @@ typedef struct _edid {
     DisplayIDMeta did;
     int did_block_count;
     DisplayIDBlock *did_blocks;
+    int did_string_count;
+    DisplayIDString *did_strings;
 
     int didt_count;
     edid_output *didts;

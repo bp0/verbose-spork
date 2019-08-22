@@ -246,6 +246,15 @@ static void did_block_decode(DisplayIDBlock *blk) {
     edid_output out = {};
     if (blk) {
         switch(blk->type) {
+            case 0x0A: /* Serial Number (ASCII String) */
+                e->did_strings[e->did_string_count].is_serial = 1;
+            case 0x0B: /* General Purpose ASCII String */
+                e->did_strings[e->did_string_count].len = blk->len;
+                e->did_strings[e->did_string_count].str = malloc(blk->len+1);
+                strncpy(e->did_strings[e->did_string_count].str, u8, blk->len);
+                e->did_strings[e->did_string_count].str[blk->len] = 0;
+                e->did_string_count++;
+                break;
             case 0x03: /* Type I Detailed timings */
                 out.pixel_clock_khz = 10 * r24le(e, a+3, NOMASK);
                 out.horiz_pixels    = (u8[b+5] << 8) + u8[b+4];
@@ -347,12 +356,14 @@ edid *edid_new(const char *data, unsigned int len) {
     e->sads = malloc(sizeof(struct edid_sad) * RESERVE_COUNT);
     e->did_blocks = malloc(sizeof(DisplayIDBlock) * RESERVE_COUNT);
     e->didts = malloc(sizeof(edid_output) * RESERVE_COUNT);
+    e->did_strings = malloc(sizeof(edid_output) * RESERVE_COUNT);
     memset(e->dtds, 0, sizeof(struct edid_dtd) * RESERVE_COUNT);
     memset(e->cea_blocks, 0, sizeof(struct edid_cea_block) * RESERVE_COUNT);
     memset(e->svds, 0, sizeof(struct edid_svd) * RESERVE_COUNT);
     memset(e->sads, 0, sizeof(struct edid_sad) * RESERVE_COUNT);
     memset(e->did_blocks, 0, sizeof(DisplayIDBlock) * RESERVE_COUNT);
     memset(e->didts, 0, sizeof(edid_output) * RESERVE_COUNT);
+    memset(e->did_strings, 0, sizeof(edid_output) * RESERVE_COUNT);
 
     uint16_t vid = be16toh(e->u16[4]); /* bytes 8-9 */
     e->ven[2] = 64 + (vid & 0x1f);
@@ -685,10 +696,12 @@ edid *edid_new(const char *data, unsigned int len) {
     SQUEEZE(sad_count, sads);
     SQUEEZE(did_block_count, did_blocks);
     SQUEEZE(didt_count, didts);
+    SQUEEZE(did_string_count, did_strings);
     return e;
 }
 
 void edid_free(edid *e) {
+    int i;
     if (e) {
         g_free(e->ext_ok);
         g_free(e->cea_blocks);
@@ -697,6 +710,9 @@ void edid_free(edid *e) {
         g_free(e->sads);
         g_free(e->did_blocks);
         g_free(e->didts);
+        for(i = 0; i < e->did_string_count; i++)
+            g_free(e->did_strings[i].str);
+        g_free(e->did_strings);
         g_free(e->data);
         g_free(e);
     }
@@ -1198,6 +1214,10 @@ char *edid_dump2(edid *e) {
         char *desc = edid_output_describe(&e->didts[i]);
         ret = appfnl(ret, "did_timing[%d]: %s", i, desc);
         g_free(desc);
+    }
+
+    for(i = 0; i < e->did_string_count; i++) {
+        ret = appfnl(ret, "did_string[%d]: %s", i, e->did_strings[i].str);
     }
 
     return ret;
