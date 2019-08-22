@@ -693,6 +693,10 @@ void edid_free(edid *e) {
         g_free(e->ext_ok);
         g_free(e->cea_blocks);
         g_free(e->dtds);
+        g_free(e->svds);
+        g_free(e->sads);
+        g_free(e->did_blocks);
+        g_free(e->didts);
         g_free(e->data);
         g_free(e);
     }
