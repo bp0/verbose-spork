@@ -62,6 +62,25 @@ uint8_t bounds_check(edid *e, uint32_t offset) {
 }
 
 static inline
+char *rstr(edid *e, uint32_t offset, uint32_t len) {
+    if (!bounds_check(e, offset+len)) return NULL;
+    char *ret = malloc(len+1);
+    strncpy(ret, &e->u8[offset], len);
+    ret[len] = 0;
+    return ret;
+}
+
+static inline
+char *rstr_strip(edid *e, uint32_t offset, uint32_t len) {
+    if (!bounds_check(e, offset+len)) return NULL;
+    char *ret = malloc(len+1);
+    strncpy(ret, &e->u8[offset], len);
+    ret[len] = 0;
+    g_strstrip(ret);
+    return ret;
+}
+
+static inline
 uint32_t r8(edid *e, uint32_t offset, uint32_t mask) {
     if (!bounds_check(e, offset)) return 0;
     return bf_value(e->u8[offset], mask);
@@ -246,13 +265,29 @@ static void did_block_decode(DisplayIDBlock *blk) {
     edid_output out = {};
     if (blk) {
         switch(blk->type) {
+            case 0:     /* Product ID (1.x) */
+                //TODO:
+                e->did_strings[e->did_string_count].is_product_name = 1;
+                e->did_strings[e->did_string_count].len = blk->len;
+                e->did_strings[e->did_string_count].str = rstr_strip(e, a+15, u8[b+14]);
+                e->did_string_count++;
+                break;
+            case 0x20:  /* Product ID (1.x) */
+                //TODO:
+                e->did_strings[e->did_string_count].is_product_name = 1;
+                e->did_strings[e->did_string_count].len = blk->len;
+                e->did_strings[e->did_string_count].str = rstr_strip(e, a+15, u8[b+14]);
+                e->did_string_count++;
+                break;
             case 0x0A: /* Serial Number (ASCII String) */
                 e->did_strings[e->did_string_count].is_serial = 1;
+                e->did_strings[e->did_string_count].len = blk->len;
+                e->did_strings[e->did_string_count].str = rstr_strip(e, a, blk->len);
+                e->did_string_count++;
+                break;
             case 0x0B: /* General Purpose ASCII String */
                 e->did_strings[e->did_string_count].len = blk->len;
-                e->did_strings[e->did_string_count].str = malloc(blk->len+1);
-                strncpy(e->did_strings[e->did_string_count].str, u8, blk->len);
-                e->did_strings[e->did_string_count].str[blk->len] = 0;
+                e->did_strings[e->did_string_count].str = rstr(e, a, blk->len);
                 e->did_string_count++;
                 break;
             case 0x03: /* Type I Detailed timings */
