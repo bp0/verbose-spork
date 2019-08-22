@@ -117,6 +117,7 @@ gchar *gen_usb_ids_lookup_value(const gchar *path) {
             sysobj_virt_add_simple(svo_path, "name", n, VSO_TYPE_STRING);
         }
     }
+    g_free(svo_path);
     g_strfreev(qparts);
 
     if (pt == PT_NAME) return g_strdup(n);

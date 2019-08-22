@@ -105,6 +105,7 @@ gchar *gen_arm_ids_lookup_value(const gchar *path) {
             sysobj_virt_add_simple(svo_path, "name", n, VSO_TYPE_STRING);
         }
     }
+    g_free(svo_path);
     g_strfreev(qparts);
 
     if (pt == PT_NAME) return g_strdup(n);
@@ -139,6 +140,7 @@ void gen_arm_ids() {
                 n = qr->result.results[i] ? qr->result.results[i] : "";
                 sysobj_virt_add_simple(svo_path, "name", n, VSO_TYPE_STRING);
             }
+            g_free(svo_path);
             g_strfreev(qparts);
         }
         g_slist_free_full(all, g_free);
