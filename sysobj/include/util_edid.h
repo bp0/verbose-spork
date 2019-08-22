@@ -128,6 +128,14 @@ struct edid_manf_date {
     int std; /* enum STD_* */
 };
 
+struct edid_vendor {
+    union {
+        char ven[4];
+        uint32_t oui;
+    };
+    int std; /* enum STD_* */
+};
+
 enum {
     STD_EDID         = 0,
     STD_EEDID        = 1,

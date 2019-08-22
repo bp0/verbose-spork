@@ -267,6 +267,11 @@ static void did_block_decode(DisplayIDBlock *blk) {
         switch(blk->type) {
             case 0:     /* Product ID (1.x) */
                 //TODO:
+                // pnp = r24le(e, a, NOMASK);
+                // e->ven[2] = 64 + (pnp & 0x1f);
+                // e->ven[1] = 64 + ((pnp >> 5) & 0x1f);
+                // e->ven[0] = 64 + ((pnp >> 10) & 0x1f);
+
                 e->did_strings[e->did_string_count].is_product_name = 1;
                 e->did_strings[e->did_string_count].len = blk->len;
                 e->did_strings[e->did_string_count].str = rstr_strip(e, a+15, u8[b+14]);
@@ -274,6 +279,8 @@ static void did_block_decode(DisplayIDBlock *blk) {
                 break;
             case 0x20:  /* Product ID (1.x) */
                 //TODO:
+                // oui = r24le(e, a, NOMASK);
+
                 e->did_strings[e->did_string_count].is_product_name = 1;
                 e->did_strings[e->did_string_count].len = blk->len;
                 e->did_strings[e->did_string_count].str = rstr_strip(e, a+15, u8[b+14]);
@@ -291,7 +298,7 @@ static void did_block_decode(DisplayIDBlock *blk) {
                 e->did_string_count++;
                 break;
             case 0x03: /* Type I Detailed timings */
-                out.pixel_clock_khz = 10 * r24le(e, a+3, NOMASK);
+                out.pixel_clock_khz = 10 * r24le(e, a, NOMASK);
                 out.horiz_pixels    = (u8[b+5] << 8) + u8[b+4];
                 out.horiz_blanking  = (u8[b+7] << 8) + u8[b+6];
                 out.vert_lines      = (u8[b+13] << 8) + u8[b+12];
