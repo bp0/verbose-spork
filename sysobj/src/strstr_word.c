@@ -40,7 +40,7 @@ static char *_strstr_word(const char *haystack, const char *needle,
     char *c;
     const char *p = haystack;
     size_t l = strlen(needle);
-    while(c = _strstr(p, needle, anycase)) {
+    while((c = _strstr(p, needle, anycase))) {
         const char *before = (c == haystack) ? NULL : c-1;
         const char *after = c + l;
         int ok = 1, wbs = 1, wbe = 1;

@@ -362,7 +362,6 @@ edid *edid_new(const char *data, unsigned int len) {
     e->n_serial = le32toh(e->u32[3]);/* bytes 12-15 */
     e->week = e->u8[16];             /* byte 16 */
     e->year = e->u8[17] + 1990;      /* byte 17 */
-
     if (e->week >= 52)
         e->week = 0;
 
@@ -660,9 +659,9 @@ edid *edid_new(const char *data, unsigned int len) {
         int max_pref = e->img_max.is_preferred;
         int bigger = (e->didts[i].pixels > e->img_max.pixels);
         int better = (e->didts[i].src > e->img_max.src);
-        if (bigger && !max_pref
-            || pref && !max_pref
-            || pref && better) {
+        if ((bigger && !max_pref)
+            || (pref && !max_pref)
+            || (pref && better)) {
             edid_output tmp = e->img_max;
             e->img_max = e->didts[i];
             OUTPUT_CPY_SIZE(e->img_max, tmp);

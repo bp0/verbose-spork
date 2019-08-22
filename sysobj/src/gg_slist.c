@@ -23,7 +23,7 @@
 GSList *gg_slist_remove_duplicates(GSList *sl) {
     for (GSList *l = sl; l; l = l->next) {
         GSList *d = NULL;
-        while(d = g_slist_find(l->next, l->data) )
+        while((d = g_slist_find(l->next, l->data)))
             sl = g_slist_delete_link(sl, d);
     }
     return sl;
@@ -32,7 +32,7 @@ GSList *gg_slist_remove_duplicates(GSList *sl) {
 GSList *gg_slist_remove_duplicates_custom(GSList *sl, GCompareFunc func) {
     for (GSList *l = sl; l; l = l->next) {
         GSList *d = NULL;
-        while(d = g_slist_find_custom(l->next, l->data, func) )
+        while((d = g_slist_find_custom(l->next, l->data, func)))
             sl = g_slist_delete_link(sl, d);
     }
     return sl;

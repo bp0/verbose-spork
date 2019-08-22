@@ -394,7 +394,7 @@ vendor_list vendors_match_core(const gchar *str, int limit) {
      * 3rd [1]: (passes[0]): full text */
     gchar *passes[3] = { g_strdup(str), g_strdup(str), g_strdup(str) };
     int pass = 1; p = passes[1];
-    while(p = strchr(p, '(') ) {
+    while((p = strchr(p, '('))) {
         pass = 3; p++;
         while(*p && *p != ')') { *p = ' '; p++; }
     }
@@ -428,7 +428,7 @@ vendor_list vendors_match_core(const gchar *str, int limit) {
     if (limit > 0 && found >= limit)                          \
         goto vendors_match_core_finish; }
 #define standard_match_work(fn)                               \
-    if (m = fn(passes[pass-1], v->match_string) )             \
+    if ((m = fn(passes[pass-1], v->match_string)))            \
         standard_match_work_inner();
 
             switch(v->match_rule) {
@@ -459,12 +459,12 @@ vendor_list vendors_match_core(const gchar *str, int limit) {
                     standard_match_work(strcasestr_word_suffix);
                     break;
                 case VENDOR_MATCH_RULE_NUM_PREFIX_IGNORE_CASE:
-                    if (m = strstr_word_prefix(passes[pass-1], v->match_string) )
+                    if ((m = strstr_word_prefix(passes[pass-1], v->match_string)))
                         if (isdigit(m[v->ms_length]))
                             standard_match_work_inner();
                     break;
                 case VENDOR_MATCH_RULE_NUM_PREFIX_MATCH_CASE:
-                    if (m = strcasestr_word_prefix(passes[pass-1], v->match_string) )
+                    if ((m = strcasestr_word_prefix(passes[pass-1], v->match_string)))
                         if (isdigit(m[v->ms_length]))
                             standard_match_work_inner();
                     break;
