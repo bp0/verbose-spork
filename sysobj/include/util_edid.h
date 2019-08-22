@@ -23,6 +23,13 @@
 
 #include <stdint.h>  /* for *int*_t types */
 
+typedef struct _edid edid;
+
+typedef struct {
+    edid *e;
+    uint32_t offset;
+} edid_addy;
+
 typedef struct {
     char *str;
     int len;
@@ -40,13 +47,14 @@ typedef struct {
 } DisplayIDMeta;
 
 typedef struct {
-    uint8_t *ptr;
+    edid_addy addy;
     union {
         uint8_t tag;
         uint8_t type;
     };
     uint8_t revision;
     uint8_t len;
+    uint8_t bc_ok;
 } DisplayIDBlock;
 
 /* order by rising priority */
@@ -101,14 +109,10 @@ struct edid_sad {
     int max_kbps;   /* formats 2-8 */
 };
 
-struct edid_cea_header {
-    uint8_t *ptr;
-    int type, len;
-};
-
 struct edid_cea_block {
-    struct edid_cea_header header;
-    int reserved[8];
+    edid_addy addy;
+    int type, len;
+    uint8_t bc_ok;
 };
 
 struct edid_descriptor {
@@ -125,7 +129,7 @@ enum {
     STD_DISPLAYID20  = 4,
 };
 
-typedef struct {
+typedef struct _edid {
     union {
         void* data;
         uint8_t* u8;
