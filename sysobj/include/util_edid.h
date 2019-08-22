@@ -32,18 +32,18 @@ typedef struct {
 
 typedef struct {
     char *str;
-    int len;
+    uint16_t len;
     uint8_t is_product_name;
     uint8_t is_serial;
-} edid_string;
+} DisplayIDString;
 
 typedef struct {
     uint8_t version;
     uint8_t extension_length;
     uint8_t primary_use_case;
     uint8_t extension_count;
-    int blocks;
-    int checksum_ok;
+    uint16_t blocks;
+    uint8_t checksum_ok;
 } DisplayIDMeta;
 
 typedef struct {
@@ -54,7 +54,7 @@ typedef struct {
     };
     uint8_t revision;
     uint8_t len;
-    uint8_t bc_ok;
+    uint8_t bounds_ok;
 } DisplayIDBlock;
 
 /* order by rising priority */
@@ -112,13 +112,20 @@ struct edid_sad {
 struct edid_cea_block {
     edid_addy addy;
     int type, len;
-    uint8_t bc_ok;
+    uint8_t bounds_ok;
 };
 
 struct edid_descriptor {
     uint8_t *ptr;
     uint8_t type;
     char text[14];
+};
+
+struct edid_manf_date {
+    uint8_t week;
+    uint8_t is_model_year; /* ignore week */
+    uint16_t year;
+    int std; /* enum STD_* */
 };
 
 enum {
@@ -177,7 +184,7 @@ typedef struct _edid {
     int bpc;       /* digital bpc */
     uint16_t product;
     uint32_t n_serial;
-    int week, year;
+    struct edid_manf_date dom;
     edid_output img;
     edid_output img_max;
     int speaker_alloc_bits;

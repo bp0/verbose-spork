@@ -189,10 +189,10 @@ static void edid_output_fill(edid_output *out) {
 
 static void cea_block_decode(struct edid_cea_block *blk) {
     if (!blk) return;
-    if (!blk->bc_ok)
-        blk->bc_ok =
+    if (!blk->bounds_ok)
+        blk->bounds_ok =
         bounds_check(blk->addy.e, blk->addy.offset + blk->len);
-    if (!blk->bc_ok) return;
+    if (!blk->bounds_ok) return;
 
     edid *e = blk->addy.e;
     uint8_t *ptr = DPTR(blk->addy);
@@ -232,10 +232,10 @@ static void cea_block_decode(struct edid_cea_block *blk) {
 
 static void did_block_decode(DisplayIDBlock *blk) {
     if (!blk) return;
-    if (!blk->bc_ok)
-        blk->bc_ok =
+    if (!blk->bounds_ok)
+        blk->bounds_ok =
         bounds_check(blk->addy.e, blk->addy.offset + blk->len);
-    if (!blk->bc_ok) return;
+    if (!blk->bounds_ok) return;
 
     edid *e = blk->addy.e;
     uint32_t a = blk->addy.offset + 3;
@@ -360,10 +360,10 @@ edid *edid_new(const char *data, unsigned int len) {
     e->ven[0] = 64 + ((vid >> 10) & 0x1f);
     e->product = le16toh(e->u16[5]); /* bytes 10-11 */
     e->n_serial = le32toh(e->u32[3]);/* bytes 12-15 */
-    e->week = e->u8[16];             /* byte 16 */
-    e->year = e->u8[17] + 1990;      /* byte 17 */
-    if (e->week >= 52)
-        e->week = 0;
+    e->dom.week = e->u8[16];             /* byte 16 */
+    e->dom.year = e->u8[17] + 1990;      /* byte 17 */
+    e->dom.is_model_year = (e->dom.week > 52);
+    e->dom.std = STD_EDID;
 
     e->a_or_d = (e->u8[20] & 0x80) ? 1 : 0;
     if (e->a_or_d == 1) {
@@ -1090,6 +1090,15 @@ char *edid_dtd_describe(struct edid_dtd *dtd, int dump_bytes) {
     return ret;
 }
 
+char *edid_manf_date_describe(struct edid_manf_date dom) {
+    if (!dom.year) return g_strdup("unspecified");
+    if (dom.is_model_year)
+        return g_strdup_printf(_("model year %d"), dom.year);
+    if (dom.week <= 52)
+        return g_strdup_printf(_("week %d of %d"), dom.week, dom.year);
+    return g_strdup_printf("%d", dom.year);
+}
+
 char *edid_dump2(edid *e) {
     char *ret = NULL;
     int i;
@@ -1099,10 +1108,9 @@ char *edid_dump2(edid *e) {
     ret = appfnl(ret, "extended to: %s", _(edid_standard(e->std)) );
 
     ret = appfnl(ret, "mfg: %s, model: [%04x-%08x] %u-%u", e->ven, e->product, e->n_serial, e->product, e->n_serial);
-    if (e->week && e->year)
-        ret = appf(ret, "", ", dom: week %d of %d", e->week, e->year);
-    else if (e->year)
-        ret = appf(ret, "", ", dom: %d", e->year);
+    char *dom_desc = edid_manf_date_describe(e->dom);
+    ret = appfnl(ret, "date: %s", dom_desc);
+    g_free(dom_desc);
 
     ret = appfnl(ret, "type: %s", e->a_or_d ? "digital" : "analog");
     if (e->bpc)
