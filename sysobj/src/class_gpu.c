@@ -242,7 +242,7 @@ static sysobj_class cls_gpu[] = {
     .attributes = pci_amdgpu_items },
 
   { SYSOBJ_CLASS_DEF
-    .tag = ".testing:edid", .pattern = "/.testing/edid/*", .flags = OF_GLOB_PATTERN | OF_HAS_VENDOR | OF_CONST,
+    .tag = ".testing:edid", .pattern = "/.testing/edid*/*", .flags = OF_GLOB_PATTERN | OF_HAS_VENDOR | OF_CONST,
     .f_format = edid_format, .f_vendors = edid_vendor },
 };
 

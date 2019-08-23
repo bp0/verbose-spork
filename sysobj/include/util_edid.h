@@ -65,6 +65,7 @@ enum {
     OUTSRC_DTD,
     OUTSRC_CEA_DTD,
     OUTSRC_SVD,
+
     OUTSRC_DID_TYPE_I,
     OUTSRC_DID_TYPE_VI,
     OUTSRC_DID_TYPE_VII,
@@ -76,9 +77,9 @@ typedef struct {
     int horiz_blanking, vert_blanking;
     int horiz_pixels, vert_lines, vert_pixels;
     float vert_freq_hz;
-    int is_interlaced;
+    uint8_t is_interlaced;
+    uint8_t is_preferred;
     int stereo_mode;
-    int is_preferred;
     uint64_t pixel_clock_khz;
     int src; /* enum OUTSRC_* */
     uint64_t pixels; /* h*v: easier to compare */
@@ -91,20 +92,21 @@ struct edid_std {
 };
 
 struct edid_dtd {
-    uint8_t *ptr;
-    int cea_ext;
+    edid_addy addy;
+    uint8_t cea_ext; /* in a CEA block vs one of the regular EDID descriptors */
     edid_output out;
+    uint8_t bounds_ok;
 };
 
 struct edid_svd {
     uint8_t v;
-    int is_native;
+    uint8_t is_native;
     edid_output out;
 };
 
 struct edid_sad {
     uint8_t v[3];
-    int format, channels, freq_bits;
+    uint8_t format, channels, freq_bits;
     int depth_bits; /* format 1 */
     int max_kbps;   /* formats 2-8 */
 };
@@ -116,7 +118,7 @@ struct edid_cea_block {
 };
 
 struct edid_descriptor {
-    uint8_t *ptr;
+    edid_addy addy;
     uint8_t type;
     char text[14];
 };
@@ -128,13 +130,19 @@ struct edid_manf_date {
     int std; /* enum STD_* */
 };
 
-struct edid_vendor {
+enum {
+    VEN_TYPE_INVALID = 0,
+    VEN_TYPE_PNP,
+    VEN_TYPE_OUI,
+};
+
+typedef struct {
     union {
         char ven[4];
         uint32_t oui;
     };
-    int std; /* enum STD_* */
-};
+    uint8_t type; /* enum VEN_TYPE_* */
+} edid_ven;
 
 enum {
     STD_EDID         = 0,
@@ -156,9 +164,9 @@ typedef struct _edid {
     /* enum STD_* */
     int std;
 
-    int ver_major, ver_minor;
-    int checksum_ok; /* first 128-byte block only */
-    int ext_blocks, ext_blocks_ok, ext_blocks_fail;
+    uint8_t ver_major, ver_minor;
+    uint8_t checksum_ok; /* first 128-byte block only */
+    uint8_t ext_blocks, ext_blocks_ok, ext_blocks_fail;
     uint8_t *ext_ok;
 
     int etb_count;
@@ -187,15 +195,16 @@ typedef struct _edid {
     char *ut1;
     char *ut2;
 
-    int a_or_d; /* 0 = analog, 1 = digital */
-    int interface; /* digital interface */
-    int bpc;       /* digital bpc */
+    uint8_t a_or_d; /* 0 = analog, 1 = digital */
+    uint8_t interface; /* digital interface */
+    uint8_t bpc;       /* digital bpc */
     uint16_t product;
     uint32_t n_serial;
     struct edid_manf_date dom;
     edid_output img;
+    edid_output img_svd;
     edid_output img_max;
-    int speaker_alloc_bits;
+    uint32_t speaker_alloc_bits;
 
     DisplayIDMeta did;
     int did_block_count;
