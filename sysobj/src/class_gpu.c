@@ -73,7 +73,7 @@ static attr_tab drm_items[] = {
 vendor_list edid_vendor(sysobj *obj) {
     edid *e = edid_new(obj->data.any, obj->data.len);
     if (!e) return NULL;
-    gchar *vstr = sysobj_raw_from_printf(":/lookup/edid.ids/%s/name", e->ven);
+    gchar *vstr = sysobj_raw_from_printf(":/lookup/edid.ids/%s/name", e->ven.pnp);
     const Vendor *v = vendor_match(vstr, NULL);
     g_free(vstr);
     edid_free(e);
@@ -85,8 +85,8 @@ gchar *edid_format(sysobj *obj, int fmt_opts) {
     gchar *ret = NULL;
     if (e) {
         if (fmt_opts & FMT_OPT_PART || !(fmt_opts & FMT_OPT_COMPLETE) ) {
-            gchar *vstr = sysobj_raw_from_printf(":/lookup/edid.ids/%s/name", e->ven);
-            if (!vstr || !*vstr) vstr = g_strdup(e->ven);
+            gchar *vstr = sysobj_raw_from_printf(":/lookup/edid.ids/%s/name", e->ven.pnp);
+            if (!vstr || !*vstr) vstr = g_strdup(e->ven.pnp);
             gchar *ven_tag = vendor_match_tag(vstr, fmt_opts);
             if (ven_tag)
                 ret = appfsp(ret, "%s", ven_tag);

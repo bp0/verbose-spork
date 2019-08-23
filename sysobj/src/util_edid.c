@@ -37,6 +37,11 @@
 #define DPTR(ADDY) (uint8_t*)(&((ADDY).e->u8[(ADDY).offset]))
 #define OFMT "@%03d" /* for addy.offset */
 
+#define EDID_MSG_STDERR 0
+#define edid_msg(e, msg, ...) {\
+    if (EDID_MSG_STDERR) fprintf (stderr, ">[%s;L%d] " msg "\n", __FUNCTION__, __LINE__, ##__VA_ARGS__); \
+    g_string_append_printf(e->msg_log, "[%s;L%d] " msg "\n", __FUNCTION__, __LINE__, ##__VA_ARGS__); }
+
 static inline
 uint32_t bf_value(uint32_t value, uint32_t mask) {
     uint32_t result = value & mask;
@@ -46,13 +51,6 @@ uint32_t bf_value(uint32_t value, uint32_t mask) {
             mask >>= 1;
         }
     return result;
-}
-
-// OLD //
-static inline
-uint32_t bf24le(uint8_t *u8, uint32_t mask) {
-    uint32_t v = (u8[2] << 16) + (u8[1] << 8) + u8[0];
-    return bf_value(v, mask);
 }
 
 static inline
@@ -135,23 +133,29 @@ uint32_t r32be(edid *e, uint32_t offset, uint32_t mask) {
 }
 
 static inline
-edid_ven rpnp(edid *e, uint32_t offset) {
-    uint32_t pnp = r24le(e, offset, NOMASK);
+int rpnpcpy(edid_ven *dest, edid *e, uint32_t offset) {
+    uint32_t pnp = r16be(e, offset, NOMASK);
     edid_ven ret = {.type = VEN_TYPE_INVALID};
     if (pnp) {
         ret.type = VEN_TYPE_PNP;
-        ret.ven[2] = 64 + (pnp & 0x1f);
-        ret.ven[1] = 64 + ((pnp >> 5) & 0x1f);
-        ret.ven[0] = 64 + ((pnp >> 10) & 0x1f);
+        ret.pnp[2] = 64 + (pnp & 0x1f);
+        ret.pnp[1] = 64 + ((pnp >> 5) & 0x1f);
+        ret.pnp[0] = 64 + ((pnp >> 10) & 0x1f);
+        *dest = ret;
+        return 1;
     }
-    return ret;
+    return 0;
 }
 
 static inline
-edid_ven roui(edid *e, uint32_t offset) {
+int rouicpy(edid_ven *dest, edid *e, uint32_t offset) {
     edid_ven ret = {.type = VEN_TYPE_OUI};
     ret.oui = r24be(e, offset, NOMASK);
-    return ret;
+    if (ret.oui) {
+        *dest = ret;
+        return 1;
+    }
+    return 0;
 }
 
 static int _block_check_n(const void *bytes, int len) {
@@ -288,35 +292,35 @@ static void did_block_decode(DisplayIDBlock *blk) {
 
     uint8_t *u8 = DPTR(blk->addy);
     int b = 3;
-
+    edid_ven ven = {};
     edid_output out = {};
     if (blk) {
         switch(blk->type) {
             case 0:     /* Product ID (1.x) */
-                //TODO:
-                // pnp = r24le(e, a, NOMASK);
-                // e->ven[2] = 64 + (pnp & 0x1f);
-                // e->ven[1] = 64 + ((pnp >> 5) & 0x1f);
-                // e->ven[0] = 64 + ((pnp >> 10) & 0x1f);
-
+                /* UNTESTED */
+                if (rpnpcpy(&ven, e, a) )
+                    e->ven = ven;
                 e->did_strings[e->did_string_count].is_product_name = 1;
                 e->did_strings[e->did_string_count].len = blk->len;
-                //e->did_strings[e->did_string_count].str = rstr_strip(e, a+12, u8[b+11]);
+                e->did_strings[e->did_string_count].str = rstr_strip(e, a+12, u8[b+11]);
+                e->name = e->did_strings[e->did_string_count].str;
                 e->did_string_count++;
                 break;
-            case 0x20:  /* Product ID (1.x) */
-                //TODO:
-                // oui = r24le(e, a, NOMASK);
-
+            case 0x20:  /* Product ID */
+                /* UNTESTED */
+                if (rouicpy(&ven, e, a) )
+                    e->ven = ven;
                 e->did_strings[e->did_string_count].is_product_name = 1;
                 e->did_strings[e->did_string_count].len = blk->len;
-                //e->did_strings[e->did_string_count].str = rstr_strip(e, a+12, u8[b+11]);
+                e->did_strings[e->did_string_count].str = rstr_strip(e, a+12, u8[b+11]);
+                e->name = e->did_strings[e->did_string_count].str;
                 e->did_string_count++;
                 break;
             case 0x0a: /* Serial Number (ASCII String) */
                 e->did_strings[e->did_string_count].is_serial = 1;
                 e->did_strings[e->did_string_count].len = blk->len;
                 e->did_strings[e->did_string_count].str = rstr_strip(e, a, blk->len);
+                e->serial = e->did_strings[e->did_string_count].str;
                 e->did_string_count++;
                 break;
             case 0x0b: /* General Purpose ASCII String */
@@ -418,6 +422,8 @@ edid *edid_new(const char *data, unsigned int len) {
     e->ver_major = e->u8[18];
     e->ver_minor = e->u8[19];
 
+    e->msg_log = g_string_new(NULL);
+
 #define RESERVE_COUNT 300
     e->dtds = malloc(sizeof(struct edid_dtd) * RESERVE_COUNT);
     e->cea_blocks = malloc(sizeof(struct edid_cea_block) * RESERVE_COUNT);
@@ -434,14 +440,12 @@ edid *edid_new(const char *data, unsigned int len) {
     memset(e->didts, 0, sizeof(edid_output) * RESERVE_COUNT);
     memset(e->did_strings, 0, sizeof(edid_output) * RESERVE_COUNT);
 
-    uint16_t vid = be16toh(e->u16[4]); /* bytes 8-9 */
-    e->ven[2] = 64 + (vid & 0x1f);
-    e->ven[1] = 64 + ((vid >> 5) & 0x1f);
-    e->ven[0] = 64 + ((vid >> 10) & 0x1f);
-    e->product = le16toh(e->u16[5]); /* bytes 10-11 */
-    e->n_serial = le32toh(e->u32[3]);/* bytes 12-15 */
-    e->dom.week = e->u8[16];             /* byte 16 */
-    e->dom.year = e->u8[17] + 1990;      /* byte 17 */
+    /* base product information */
+    rpnpcpy(&e->ven, e, 8);             /* bytes 8-9 */
+    e->product = r16le(e, 10, NOMASK);  /* bytes 10-11 */
+    e->n_serial = r32le(e, 12, NOMASK); /* bytes 12-15 */
+    e->dom.week = e->u8[16];            /* byte 16 */
+    e->dom.year = e->u8[17] + 1990;     /* byte 17 */
     e->dom.is_model_year = (e->dom.week > 52);
     e->dom.std = STD_EDID;
 
@@ -592,10 +596,8 @@ edid *edid_new(const char *data, unsigned int len) {
                     e->did.blocks++;
                     b += db_size + 3;
                 }
-                if (b > db_end) {
-                    // over-run ...
-                    //printf("NONONO...\n");
-                }
+                if (b > db_end)
+                    edid_msg(e, "DID block overrun [in ext " OFMT "], expect to end at +%d, but last ends at +%d" , offset, db_end-1, b-1);
                 //printf("DID: v:%02x el:%d uc:%d ec:%d, blocks:%d ok:%d\n",
                 //    e->did.version, e->did.extension_length,
                 //    e->did.primary_use_case, e->did.extension_count,
@@ -619,7 +621,10 @@ edid *edid_new(const char *data, unsigned int len) {
                         e->cea_block_count++;
                         b += db_size + 1;
                     }
-                    if (b > db_end) b = db_end;
+                    if (b > db_end) {
+                        b = db_end;
+                        edid_msg(e, "CEA block overrun [in ext " OFMT "], expect to end at +%d, but last ends at +%d" , offset, db_end-1, b-1);
+                    }
                     /* DTDs */
                     while(b < 127) {
                         if (u8[b]) {
@@ -803,6 +808,7 @@ void edid_free(edid *e) {
             g_free(e->did_strings[i].str);
         g_free(e->did_strings);
         g_free(e->data);
+        g_string_free(e->msg_log, TRUE);
         g_free(e);
     }
 }
@@ -831,6 +837,17 @@ edid *edid_new_from_hex(const char *hex_string) {
     edid *e = edid_new((char*)buffer, len);
     free(buffer);
     return e;
+}
+
+edid *edid_new_from_file(const char *path) {
+    char *bin = NULL;
+    gsize len = 0;
+    if (g_file_get_contents(path, &bin, &len, NULL) ) {
+        edid *ret = edid_new(bin, len);
+        g_free(bin);
+        return ret;
+    }
+    return NULL;
 }
 
 char *edid_dump_hex(edid *e, int tabs, int breaks) {
@@ -1234,7 +1251,7 @@ char *edid_dump2(edid *e) {
     if (e->std)
         ret = appfnl(ret, "extended to: %s", _(edid_standard(e->std)) );
 
-    ret = appfnl(ret, "mfg: %s, model: [%04x-%08x] %u-%u", e->ven, e->product, e->n_serial, e->product, e->n_serial);
+    ret = appfnl(ret, "mfg: %s, model: [%04x-%08x] %u-%u", e->ven.pnp, e->product, e->n_serial, e->product, e->n_serial);
     char *dom_desc = edid_manf_date_describe(e->dom);
     ret = appfnl(ret, "date: %s", dom_desc);
     g_free(dom_desc);
@@ -1339,6 +1356,8 @@ char *edid_dump2(edid *e) {
     for(i = 0; i < e->did_string_count; i++) {
         ret = appfnl(ret, "did_string[%d]: %s", i, e->did_strings[i].str);
     }
+
+    ret = appfnl(ret, "parse messages:\n%s---", e->msg_log->str);
 
     return ret;
 }

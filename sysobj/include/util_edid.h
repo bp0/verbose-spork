@@ -21,7 +21,9 @@
 #ifndef __UTIL_EDID_H__
 #define __UTIL_EDID_H__
 
+#define _GNU_SOURCE
 #include <stdint.h>  /* for *int*_t types */
+#include <glib.h>
 
 typedef struct _edid edid;
 
@@ -137,10 +139,9 @@ enum {
 };
 
 typedef struct {
-    union {
-        char ven[4];
-        uint32_t oui;
-    };
+    //TODO: union?
+    char pnp[4];
+    uint32_t oui;
     uint8_t type; /* enum VEN_TYPE_* */
 } edid_ven;
 
@@ -157,7 +158,6 @@ typedef struct _edid {
         void* data;
         uint8_t* u8;
         uint16_t* u16;
-        uint32_t* u32;
     };
     unsigned int len;
 
@@ -187,7 +187,7 @@ typedef struct _edid {
     int sad_count;
     struct edid_sad *sads;
 
-    char ven[4];
+    edid_ven ven;
     struct edid_descriptor d[4];
     /* point into d[].text */
     char *name;
@@ -214,9 +214,12 @@ typedef struct _edid {
 
     int didt_count;
     edid_output *didts;
+
+    GString *msg_log;
 } edid;
 edid *edid_new(const char *data, unsigned int len);
 edid *edid_new_from_hex(const char *hex_string);
+edid *edid_new_from_file(const char *path);
 void edid_free(edid *e);
 char *edid_dump_hex(edid *e, int tabs, int breaks);
 
