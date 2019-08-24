@@ -64,7 +64,7 @@ static inline
 char *rstr(edid *e, uint32_t offset, uint32_t len) {
     if (!bounds_check(e, offset+len)) return NULL;
     char *raw = malloc(len+1), *ret = NULL;
-    strncpy(raw, &e->u8[offset], len);
+    strncpy(raw, (char*)&e->u8[offset], len);
     raw[len] = 0;
     ret = g_utf8_make_valid(raw, len);
     g_free(raw);
@@ -75,7 +75,7 @@ static inline
 char *rstr_strip(edid *e, uint32_t offset, uint32_t len) {
     if (!bounds_check(e, offset+len)) return NULL;
     char *raw = malloc(len+1), *ret = NULL;
-    strncpy(raw, &e->u8[offset], len);
+    strncpy(raw, (char*)&e->u8[offset], len);
     raw[len] = 0;
     ret = g_strstrip(g_utf8_make_valid(raw, len));
     g_free(raw);

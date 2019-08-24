@@ -128,7 +128,7 @@ target_link_libraries(sysobj
         ${SYSOB_GLIB_LIBRARIES}
         m
 )
-set_target_properties(sysobj PROPERTIES COMPILE_FLAGS "-O3 -Wparentheses -Werror=implicit-function-declaration -Wno-missing-field-initializers")
+set_target_properties(sysobj PROPERTIES COMPILE_FLAGS "-O3 -Wpointer-sign -Wparentheses -Werror=implicit-function-declaration -Wno-missing-field-initializers")
 
 #set_target_properties(sysobj PROPERTIES COMPILE_FLAGS "-Wall -Wextra -Werror")
 
