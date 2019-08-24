@@ -84,6 +84,7 @@ gchar *edid_format(sysobj *obj, int fmt_opts) {
     edid *e = edid_new(obj->data.any, obj->data.len);
     gchar *ret = NULL;
     if (e) {
+        //printf("%s\n", edid_dump_hex(e, 2, 1));
         if (fmt_opts & FMT_OPT_PART || !(fmt_opts & FMT_OPT_COMPLETE) ) {
             gchar *vstr = sysobj_raw_from_printf(":/lookup/edid.ids/%s/name", e->ven.pnp);
             if (!vstr || !*vstr) vstr = g_strdup(e->ven.pnp);
