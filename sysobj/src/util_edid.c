@@ -300,6 +300,12 @@ static void did_block_decode(DisplayIDBlock *blk) {
                 /* UNTESTED */
                 if (rpnpcpy(&ven, e, a) )
                     e->ven = ven;
+                if (u8[12] || u8[13]) {
+                    e->dom.week = u8[12];
+                    e->dom.year = u8[13] + 2000;
+                    e->dom.is_model_year = (e->dom.week == 255);
+                    e->dom.std = STD_DISPLAYID;
+                }
                 e->did_strings[e->did_string_count].is_product_name = 1;
                 e->did_strings[e->did_string_count].len = blk->len;
                 e->did_strings[e->did_string_count].str = rstr_strip(e, a+12, u8[b+11]);
@@ -310,6 +316,12 @@ static void did_block_decode(DisplayIDBlock *blk) {
                 /* UNTESTED */
                 if (rouicpy(&ven, e, a) )
                     e->ven = ven;
+                if (u8[12] || u8[13]) {
+                    e->dom.week = u8[12];
+                    e->dom.year = u8[13] + 2000;
+                    e->dom.is_model_year = (e->dom.week == 255);
+                    e->dom.std = STD_DISPLAYID20;
+                }
                 e->did_strings[e->did_string_count].is_product_name = 1;
                 e->did_strings[e->did_string_count].len = blk->len;
                 e->did_strings[e->did_string_count].str = rstr_strip(e, a+12, u8[b+11]);
@@ -446,7 +458,7 @@ edid *edid_new(const char *data, unsigned int len) {
     e->n_serial = r32le(e, 12, NOMASK); /* bytes 12-15 */
     e->dom.week = e->u8[16];            /* byte 16 */
     e->dom.year = e->u8[17] + 1990;     /* byte 17 */
-    e->dom.is_model_year = (e->dom.week > 52);
+    e->dom.is_model_year = (e->dom.week == 255);
     e->dom.std = STD_EDID;
 
     e->a_or_d = (e->u8[20] & 0x80) ? 1 : 0;
@@ -1252,7 +1264,7 @@ char *edid_manf_date_describe(struct edid_manf_date dom) {
     if (!dom.year) return g_strdup("unspecified");
     if (dom.is_model_year)
         return g_strdup_printf(_("model year %d"), dom.year);
-    if (dom.week <= 52)
+    if (dom.week && dom.week <= 53)
         return g_strdup_printf(_("week %d of %d"), dom.week, dom.year);
     return g_strdup_printf("%d", dom.year);
 }
