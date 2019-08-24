@@ -407,7 +407,7 @@ static edid_output edid_output_from_svd(uint8_t index) {
             return out;
         }
     }
-    return (edid_output){};
+    return (edid_output){.src = OUTSRC_INVALID};
 }
 
 edid *edid_new(const char *data, unsigned int len) {
@@ -503,6 +503,9 @@ edid *edid_new(const char *data, unsigned int len) {
     for(i = 38; i < 53; i+=2) {
         /* 0101 is unused */
         if (e->u8[i] == 0x01 && e->u8[i+1] == 0x01)
+            continue;
+        /* 00.. is invalid/"reserved" */
+        if (e->u8[i] == 0x00)
             continue;
         double xres = (e->u8[i] + 31) * 8;
         double yres = 0;
@@ -739,6 +742,9 @@ edid *edid_new(const char *data, unsigned int len) {
     /* svds */
     for(i = 0; i < e->svd_count; i++) {
         e->svds[i].out = edid_output_from_svd(e->svds[i].v);
+        if (e->svds[i].out.src == OUTSRC_INVALID)
+            continue;
+
         if (e->svds[i].v >= 128 &&
             e->svds[i].v <= 192) {
             e->svds[i].is_native = 1;
@@ -757,6 +763,15 @@ edid *edid_new(const char *data, unsigned int len) {
             OUTPUT_CPY_SIZE(e->img_svd, e->img_max);
         }
     }
+    /* remove invalid SVDs */
+    int d = 0;
+    for(i = 0; i < e->svd_count; i++) {
+        if (d != i)
+            e->svds[d].out = e->svds[i].out;
+        if (e->svds[i].out.src != OUTSRC_INVALID)
+            d++;
+    }
+    e->svd_count -= (i-d);
 
     /* didts */
     for(i = 0; i < e->didt_count; i++) {
