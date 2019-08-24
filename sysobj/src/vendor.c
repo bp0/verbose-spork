@@ -168,7 +168,7 @@ static int read_from_vendor_ids(const char *path) {
 
         g_strstrip(buff);
         if (!ok && *buff != 0)
-            ven_file_err("unrecognised item at %s:%d, %s", path, line, p);
+            ven_file_err("unrecognised item at %s:%d, %s", path, line, buff);
     }
 
     fclose(fd);
