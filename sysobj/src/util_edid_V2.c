@@ -40,6 +40,8 @@
     if (EDID_MSG_STDERR) fprintf (stderr, ">[%s;L%d] " msg "\n", __FUNCTION__, __LINE__, ##__VA_ARGS__); \
     g_string_append_printf(e->msg_log, "[%s;L%d] " msg "\n", __FUNCTION__, __LINE__, ##__VA_ARGS__); }
 
+#define ADD_BLOCK(EPTR, ...) { EPTR->blocks[EPTR->block_count++] = (V2_EDIDBlock){.e = EPTR, __VA_ARGS__}; }
+
 static int str_make_printable(char *str) {
     int rc = 0;
     char *p;
@@ -203,12 +205,114 @@ static char *hex_bytes(uint8_t *bytes, int count) {
     return buffer;
 }
 
-#define ADD_BLOCK(EPTR, ...) { EPTR->blocks[EPTR->block_count++] = (V2_EDIDBlock){__VA_ARGS__}; }
+static void walk_cea_block(V2_EDID *e, uint16_t bi) {
+    V2_EDIDBlock *blk = &e->blocks[bi];
+    uint8_t *u8 = e->u8;
+    int f = blk->first;
+    uint16_t pi = bi+1;
+
+
+}
+
+static void walk_did_block(V2_EDID *e, uint16_t bi) {
+    V2_EDIDBlock *blk = &e->blocks[bi];
+    uint8_t *u8 = e->u8;
+    int f = blk->first;
+    uint16_t pi = bi+1;
+
+    int b;
+
+    switch(u8[f]) {
+        case 0x03: /* Type I Detailed Timing */
+            ADD_BLOCK(e,
+                .type = EDID_BLK_DID_T1, .first = f+3, .length = blk->length-3,
+                .parent = pi, .checksum_ok = -1, .bounds_ok = blk->bounds_ok);
+            break;
+        case 0x81: /* CTA DisplayID, ... Embedded CEA Blocks */
+            b = 3;
+            while(b < blk->length) {
+                int db_type = (u8[f+b] & 0xe0) >> 5;
+                int db_size =  u8[f+b] & 0x1f;
+                int nbi = e->block_count;
+                ADD_BLOCK(e,
+                    .type = EDID_BLK_CEA, .first = f+b, .length = 1+db_size,
+                    .parent = pi, .checksum_ok = -1, .bounds_ok = blk->bounds_ok,
+                    .header_length = 1);
+                walk_cea_block(e, nbi);
+                b += db_size + 1;
+            }
+            break;
+    }
+}
+
+static void walk_ext_block(V2_EDID *e, uint16_t bi) {
+    V2_EDIDBlock *blk = &e->blocks[bi];
+    uint8_t *u8 = e->u8;
+    int f = blk->first;
+    uint16_t pi = bi+1;
+
+    int b, db_end;
+
+    switch(blk->type) {
+        case EDID_BLK_EXT_CEA:
+            if (!blk->bounds_ok) return;
+            db_end = u8[f+2];
+            if (db_end) {
+                b = 4;
+                while(b < db_end) {
+                    int db_type = (u8[f+b] & 0xe0) >> 5;
+                    int db_size =  u8[f+b] & 0x1f;
+                    int nbi = e->block_count;
+                    ADD_BLOCK(e,
+                        .type = EDID_BLK_CEA, .first = f+b, .length = 1+db_size,
+                        .parent = pi, .checksum_ok = -1, .bounds_ok = 1,
+                        .header_length = 1);
+                    walk_cea_block(e, nbi);
+                    b += db_size + 1;
+                }
+                if (b > db_end) {
+                    b = db_end;
+                    edid_msg(e, "CEA block overrun [in ext " OFMT "], expect to end at +%d, but last ends at +%d" , f, db_end-1, b-1);
+                }
+                /* DTDs */
+                while(b < 127) {
+                    if (u8[f+b]) {
+                        ADD_BLOCK(e,
+                            .type = EDID_BLK_DTD, .first = f+b, .length = 18,
+                            .parent = pi, .checksum_ok = -1, .bounds_ok = 1);
+                    }
+                    b += 18;
+                }
+            }
+            break;
+        case EDID_BLK_EXT_DID:
+            /* note: f is from the EXT block start, so the DisplayID spec table offsets need +1 */
+            //TODO: may actually be longer than 128
+            db_end = u8[f+2] + 5;
+            b = 5;
+            while(b < db_end) {
+                if (r24le(e, f + b, NOMASK) == 0) break;
+                int db_type = u8[f+b];
+                int db_revision = u8[f+b+1] & 0x7;
+                int db_size = u8[f+b+2];
+                int nbi = e->block_count;
+                ADD_BLOCK(e,
+                    .type = EDID_BLK_DID, .first = f+b, .length = 3+db_size,
+                    .parent = pi, .checksum_ok = -1, .bounds_ok = 1,
+                    .header_length = 3);
+                walk_did_block(e, nbi);
+                b += db_size + 3;
+            }
+            if (b > db_end)
+                edid_msg(e, "DID block overrun [in ext " OFMT "], expect to end at +%d, but last ends at +%d" , f, db_end-1, b-1);
+            break;
+    }
+}
 
 V2_EDID *V2_edid_new(const char *data, unsigned int len) {
     if (len < 128) return NULL;
 
-    int i;
+    int i, j;
     V2_EDID *e = malloc(sizeof(V2_EDID));
     memset(e, 0, sizeof(V2_EDID));
     e->data = malloc(len);
@@ -225,7 +329,8 @@ V2_EDID *V2_edid_new(const char *data, unsigned int len) {
 
     ADD_BLOCK(e,
         .type = EDID_BLK_BASE, .first = 0, .length = 128,
-        .checksum_ok = block_check(e, 0), .bounds_ok = 1 );
+        .checksum_ok = block_check(e, 0), .bounds_ok = 1,
+        .footer_length = 1);
     ADD_BLOCK(e,
         .type = EDID_BLK_HEADER, .first = 0, .length = 8,
         .parent = 1, .checksum_ok = -1, .bounds_ok = 1 );
@@ -237,13 +342,13 @@ V2_EDID *V2_edid_new(const char *data, unsigned int len) {
         .parent = 3, .checksum_ok = -1, .bounds_ok = 1 );
     ADD_BLOCK(e,
         .type = EDID_BLK_PROD_CODE, .first = 10, .length = 2,
-        .parent = 4, .checksum_ok = -1, .bounds_ok = 1 );
+        .parent = 3, .checksum_ok = -1, .bounds_ok = 1 );
     ADD_BLOCK(e,
         .type = EDID_BLK_PROD_SERIAL, .first = 12, .length = 4,
-        .parent = 4, .checksum_ok = -1, .bounds_ok = 1 );
+        .parent = 3, .checksum_ok = -1, .bounds_ok = 1 );
     ADD_BLOCK(e,
         .type = EDID_BLK_DOM90, .first = 16, .length = 2,
-        .parent = 4, .checksum_ok = -1, .bounds_ok = 1 );
+        .parent = 3, .checksum_ok = -1, .bounds_ok = 1 );
     ADD_BLOCK(e,
         .type = EDID_BLK_VERSION, .first = 18, .length = 2,
         .parent = 1, .checksum_ok = -1, .bounds_ok = 1 );
@@ -256,10 +361,76 @@ V2_EDID *V2_edid_new(const char *data, unsigned int len) {
             .parent = 1, .checksum_ok = -1, .bounds_ok = 1 );
     }
     for(i = 54; i < 126; i+=18) {
-        int next_blk = e->block_count;
+        if (e->u8[i] != 0) {
+            /* DTD */
+            ADD_BLOCK(e,
+                .type = EDID_BLK_DTD, .first = i, .length = 18,
+                .parent = 1, .checksum_ok = -1, .bounds_ok = 1);
+            continue;
+        }
+        int pblk = e->block_count+1;
         ADD_BLOCK(e,
             .type = EDID_BLK_DESC, .first = i, .length = 18,
-            .parent = 1, .checksum_ok = -1, .bounds_ok = 1 );
+            .parent = 1, .checksum_ok = -1, .bounds_ok = 1,
+            .header_length = 4 );
+        switch (e->u8[i+3]) {
+            case 0xfc:
+                ADD_BLOCK(e,
+                    .type = EDID_BLK_STR_NAME, .first = i+5, .length = 13,
+                    .parent = pblk, .checksum_ok = -1, .bounds_ok = 1);
+                break;
+            case 0xff:
+                ADD_BLOCK(e,
+                    .type = EDID_BLK_STR_SERIAL, .first = i+5, .length = 13,
+                    .parent = pblk, .checksum_ok = -1, .bounds_ok = 1);
+                break;
+            case 0xfe:
+                ADD_BLOCK(e,
+                    .type = EDID_BLK_STR, .first = i+5, .length = 13,
+                    .parent = pblk, .checksum_ok = -1, .bounds_ok = 1);
+                break;
+            case 0xfa: /* 6 more STDs */
+                for(j = 0; j < 6; j++) {
+                    ADD_BLOCK(e,
+                        .type = EDID_BLK_STD, .first = i + 5 + (j*2), .length = 2,
+                        .parent = pblk, .checksum_ok = -1, .bounds_ok = 1 );
+                }
+                break;
+        }
+    }
+
+    /* extension blocks */
+    int ext = len / 128;
+    for(i = 1; i < ext; i++) {
+        int ext_type = r8(e, i*128, NOMASK);
+        int blk_type = 0;
+        int head_size = 1;
+        switch (ext_type) {
+            case 0x02: /* CEA-EXT */
+                blk_type = EDID_BLK_EXT_CEA;
+                head_size = 3;
+                break;
+            case 0x40: /* DI-EXT */
+                blk_type = EDID_BLK_EXT_DI;
+                head_size = 2;
+                break;
+            case 0x70: /* DisplayID */
+                blk_type = EDID_BLK_EXT_DID;
+                head_size = 4;
+                break;
+            case 0xf0: /* EXT map */
+                blk_type = EDID_BLK_EXT_MAP;
+                break;
+            default:
+                blk_type = EDID_BLK_EXT;
+        }
+        int bi = e->block_count;
+        ADD_BLOCK(e,
+            .type = blk_type, .first = i*128, .length = 128,
+            .parent = 0, .checksum_ok = block_check(e, i*128),
+            .bounds_ok = bounds_check(e, (i*128)+127),
+            .header_length = head_size, .footer_length = 1 );
+        walk_ext_block(e, bi);
     }
 
     /* squeeze lists */
@@ -365,6 +536,7 @@ const char *V2_edid_block_type(int type) {
         BTQ( EDID_BLK_DOM90 )
         BTQ( EDID_BLK_DOM2K )
         BTQ( EDID_BLK_EXT )
+        BTQ( EDID_BLK_EXT_MAP )
         BTQ( EDID_BLK_EXT_CEA )
         BTQ( EDID_BLK_EXT_DID )
         BTQ( EDID_BLK_EXT_DI )
@@ -394,13 +566,58 @@ static char *V2_edid_dump_block_tree(V2_EDID *e, int depth, int parent) {
 
     for(i = 0; i < e->block_count; i++) {
         if (e->blocks[i].parent == parent) {
-            ret = appfnl(ret, "%s+- blk[%d] %s", bar, i, V2_edid_block_type(e->blocks[i].type) );
+            gchar *checks = g_strdup("");
+            int ok = 1;
+            if (!e->blocks[i].checksum_ok) {
+                ok = 0;
+                checks = appfsp(checks, "%s", "sum_fail!");
+            }
+            if (!e->blocks[i].bounds_ok) {
+                ok = 0;
+                checks = appfsp(checks, "%s", "bounds_fail!");
+            }
+            if (ok) {
+                checks = appfsp(checks, "%s", "ok");
+            }
+            ret = appfnl(ret, "%s+- blk[%d] %s [%d-%d] %s",
+                bar, i,
+                V2_edid_block_type(e->blocks[i].type),
+                e->blocks[i].first, e->blocks[i].first + e->blocks[i].length - 1,
+                checks
+                );
             gchar *childs = V2_edid_dump_block_tree(e, depth+1, i+1);
             if (childs)
                 ret = appfnl(ret, "%s", childs);
             g_free(childs);
         }
     }
+    return ret;
+}
+
+char *V2_edid_blk_dump(V2_EDIDBlock *blk) {
+    gchar *hb_head = NULL, *hb_payload = NULL, *hb_foot = NULL;
+    if (blk->header_length) {
+        hb_head = hex_bytes(blk->e->u8 + blk->first, blk->header_length);
+    } else
+        hb_head = g_strdup("");
+
+    hb_payload = hex_bytes(
+        blk->e->u8 + blk->first + blk->header_length,
+        blk->length - blk->header_length - blk->footer_length);
+
+    if (blk->footer_length) {
+        hb_foot = hex_bytes(
+            blk->e->u8 + blk->first + blk->length - blk->footer_length,
+            blk->footer_length);
+    } else
+        hb_foot = g_strdup("");
+
+    gchar *ret = g_strdup_printf("%s|%s|%s",
+        g_strstrip(hb_head), g_strstrip(hb_payload), g_strstrip(hb_foot) );
+
+    g_free(hb_head);
+    g_free(hb_payload);
+    g_free(hb_foot);
     return ret;
 }
 
@@ -414,7 +631,7 @@ char *V2_edid_dump(V2_EDID *e) {
         ret = appfnl(ret, "extended to: %s", _(edid_standard(e->extends_to)) );
 
     for(i = 0; i < e->block_count; i++) {
-        char *hb = hex_bytes(e->u8 + e->blocks[i].first, e->blocks[i].length);
+        char *hb = V2_edid_blk_dump(&e->blocks[i]);
         ret = appfnl(ret, "blk[%d]: parent:[%d], type:%02x, length:%d, range:%d-%d, checksum_ok:%d, bounds_ok:%d -- %s",
                 i, e->blocks[i].parent ? e->blocks[i].parent-1 : -1,
                 e->blocks[i].type, e->blocks[i].length,

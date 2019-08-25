@@ -35,7 +35,7 @@ enum {
     EDID_BLK_VERSION    = 0x04,
     EDID_BLK_PROD_CODE  = 0x05,
     EDID_BLK_PROD_SERIAL= 0x06,
-    EDID_BLK_DESC       = 0x07, /* display descriptor */
+    EDID_BLK_DESC       = 0x07, /* display descriptor that is not a DTD */
 
     EDID_BLK_VENDOR_PNP3 = 0x51, /* 3 chars, 2 bytes */
     EDID_BLK_VENDOR_PNP4 = 0x52, /* 4 chars, 3 bytes */
@@ -45,9 +45,10 @@ enum {
     EDID_BLK_DOM2K      = 0x32, /* DisplayID, base year 2000 */
 
     EDID_BLK_EXT        = 0x10,
-    EDID_BLK_EXT_CEA    = 0x11,
-    EDID_BLK_EXT_DID    = 0x12,
-    EDID_BLK_EXT_DI     = 0x13,
+    EDID_BLK_EXT_MAP    = 0x11,
+    EDID_BLK_EXT_CEA    = 0x12,
+    EDID_BLK_EXT_DID    = 0x13,
+    EDID_BLK_EXT_DI     = 0x14,
 
     EDID_BLK_ETB        = 0x80,
     EDID_BLK_STD        = 0x81,
@@ -70,7 +71,8 @@ typedef struct {
     uint8_t type; /* enum EDID_BLK_* */
     uint16_t first;
     uint16_t length;
-    uint16_t header_length;
+    uint16_t header_length; /* non-payload bytes at start of block */
+    uint16_t footer_length; /* non-payload bytes at end of block */
     uint16_t parent; /* parent's index+1, 0 is none, n is blocks[n-1] */
     int8_t checksum_ok; /* 0: no, 1: yes, -1: n/a */
     uint8_t bounds_ok;
