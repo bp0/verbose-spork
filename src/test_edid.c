@@ -265,7 +265,7 @@ int main(int argc, char **argv) {
 
     for(int i = 0; i < (int)G_N_ELEMENTS(test_data); i++) {
         edid *e = edid_new_from_hex(test_data[i].edid_data);
-        char *out = edid_dump2(e);
+        char *out = V2_edid_dump(e->e2);
         printf("\n-- test_data[%d] %s --\n%s\n", i, test_data[i].tag, out);
         g_free(out);
         edid_free(e);

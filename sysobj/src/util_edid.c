@@ -856,12 +856,16 @@ edid *edid_new(const char *data, unsigned int len) {
     SQUEEZE(did_block_count, did_blocks);
     SQUEEZE(didt_count, didts);
     SQUEEZE(did_string_count, did_strings);
+
+    e->e2 = V2_edid_new(e->data, e->len);
+
     return e;
 }
 
 void edid_free(edid *e) {
     int i;
     if (e) {
+        V2_edid_free(e->e2);
         g_free(e->ext_ok);
         g_free(e->cea_blocks);
         g_free(e->dtds);

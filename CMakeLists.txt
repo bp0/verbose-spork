@@ -118,6 +118,7 @@ add_library(sysobj STATIC
         sysobj/src/riscv_data.c
 
         sysobj/src/util_edid.c
+        sysobj/src/util_edid_V2.c
         sysobj/src/util_dt.c
         sysobj/src/util_pci.c
         sysobj/src/util_usb.c
