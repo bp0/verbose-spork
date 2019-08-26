@@ -29,6 +29,10 @@
 #include "util_edid.h"
 #include "util_sysobj.h"
 
+static const int dont_mark_invalid_std_blocks = 1;
+
+static const char edid_header[] = { 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00 };
+
 #define NOMASK (~0U)
 #define BFMASK(LSB, MASK) (MASK << LSB)
 
@@ -61,6 +65,25 @@ uint32_t bf_value(uint32_t value, uint32_t mask) {
         while(!(mask & 1)) {
             result >>= 1;
             mask >>= 1;
+        }
+    return result;
+}
+
+static inline
+uint32_t bf_pop(uint32_t value, uint32_t mask) {
+    uint32_t chk = value & mask;
+    uint32_t result = 0;
+    int bit;
+    if (chk)
+        while(!(mask & 1)) {
+            chk >>= 1;
+            mask >>= 1;
+        }
+    if (chk)
+        for(bit = 0; bit < 32; bit++) {
+            chk = chk >> 1;
+            if (chk & 1)
+                result++;
         }
     return result;
 }
@@ -211,7 +234,45 @@ static void walk_cea_block(V2_EDID *e, uint16_t bi) {
     int f = blk->first;
     uint16_t pi = bi+1;
 
+    int b;
 
+    switch((u8[f+b] & 0xe0) >> 5) {
+        case 0x1: /* SADs */
+            b = 1;
+            while(b < blk->length) {
+                ADD_BLOCK(e,
+                    .type = EDID_BLK_SAD, .first = f+b, .length = 3,
+                    .parent = pi, .checksum_ok = -1, .bounds_ok = blk->bounds_ok);
+                b += 3;
+            }
+            break;
+        case 0x2: /* SVDs */
+            b = 1;
+            while(b < blk->length) {
+                ADD_BLOCK(e,
+                    .type = EDID_BLK_SVD, .first = f+b, .length = 1,
+                    .parent = pi, .checksum_ok = -1, .bounds_ok = blk->bounds_ok);
+                b += 1;
+            }
+            break;
+        case 0x4: /* Speaker Alloc */
+            b = 1;
+            ADD_BLOCK(e,
+                .type = EDID_BLK_SPEAKERS, .first = f+b, .length = 3,
+                .parent = pi, .checksum_ok = -1, .bounds_ok = blk->bounds_ok);
+            break;
+        case 0x3: /* Vender Specific */
+            b = 1;
+            int ppi = e->block_count+1;
+            ADD_BLOCK(e,
+                .type = EDID_BLK_VSPEC, .first = f+b, .length = blk->length-1,
+                .parent = pi, .checksum_ok = -1, .bounds_ok = blk->bounds_ok,
+                .header_length = 3);
+            ADD_BLOCK(e,
+                .type = EDID_BLK_VENDOR_OUI, .first = f+b, .length = 3,
+                .parent = ppi, .checksum_ok = -1, .bounds_ok = blk->bounds_ok);
+            break;
+    }
 }
 
 static void walk_did_block(V2_EDID *e, uint16_t bi) {
@@ -223,10 +284,66 @@ static void walk_did_block(V2_EDID *e, uint16_t bi) {
     int b;
 
     switch(u8[f]) {
+        case 0:     /* Product ID (1.x) */
+            ADD_BLOCK(e,
+                .type = EDID_BLK_VENDOR_PNP4, .first = f+3, .length = 3,
+                .parent = pi, .checksum_ok = -1, .bounds_ok = blk->bounds_ok);
+            ADD_BLOCK(e,
+                .type = EDID_BLK_PROD_CODE, .first = f+6, .length = 2,
+                .parent = pi, .checksum_ok = -1, .bounds_ok = blk->bounds_ok);
+            ADD_BLOCK(e,
+                .type = EDID_BLK_PROD_SERIAL, .first = f+8, .length = 4,
+                .parent = pi, .checksum_ok = -1, .bounds_ok = blk->bounds_ok);
+            ADD_BLOCK(e,
+                .type = EDID_BLK_DOM2K, .first = f+12, .length = 2,
+                .parent = pi, .checksum_ok = -1, .bounds_ok = blk->bounds_ok);
+            ADD_BLOCK(e,
+                .type = EDID_BLK_STR_NAME, .first = f+15, .length = u8[14],
+                .parent = pi, .checksum_ok = -1, .bounds_ok = blk->bounds_ok);
+            break;
+        case 0x20:  /* Product ID */
+            ADD_BLOCK(e,
+                .type = EDID_BLK_VENDOR_OUI, .first = f+b, .length = 3,
+                .parent = pi, .checksum_ok = -1, .bounds_ok = blk->bounds_ok);
+            ADD_BLOCK(e,
+                .type = EDID_BLK_PROD_CODE, .first = f+6, .length = 2,
+                .parent = pi, .checksum_ok = -1, .bounds_ok = blk->bounds_ok);
+            ADD_BLOCK(e,
+                .type = EDID_BLK_PROD_SERIAL, .first = f+8, .length = 4,
+                .parent = pi, .checksum_ok = -1, .bounds_ok = blk->bounds_ok);
+            ADD_BLOCK(e,
+                .type = EDID_BLK_DOM2K, .first = f+12, .length = 2,
+                .parent = pi, .checksum_ok = -1, .bounds_ok = blk->bounds_ok);
+            ADD_BLOCK(e,
+                .type = EDID_BLK_STR_NAME, .first = f+15, .length = u8[14],
+                .parent = pi, .checksum_ok = -1, .bounds_ok = blk->bounds_ok);
+            break;
         case 0x03: /* Type I Detailed Timing */
             ADD_BLOCK(e,
                 .type = EDID_BLK_DID_T1, .first = f+3, .length = blk->length-3,
                 .parent = pi, .checksum_ok = -1, .bounds_ok = blk->bounds_ok);
+            break;
+        case 0x0a: /* Serial Number (ASCII String) */
+            ADD_BLOCK(e,
+                .type = EDID_BLK_STR_SERIAL, .first = f+3, .length = blk->length-3,
+                .parent = pi, .checksum_ok = -1, .bounds_ok = blk->bounds_ok);
+            break;
+        case 0x0b: /* General Purpose ASCII String */
+            ADD_BLOCK(e,
+                .type = EDID_BLK_STR, .first = f+3, .length = blk->length-3,
+                .parent = pi, .checksum_ok = -1, .bounds_ok = blk->bounds_ok);
+            break;
+        case 0x7e: /* Vender Specific */
+        case 0x7f:
+            b = 3;
+            int ppi = e->block_count+1;
+            ADD_BLOCK(e,
+                .type = EDID_BLK_VSPEC, .first = f+b, .length = blk->length-3,
+                .parent = pi, .checksum_ok = -1, .bounds_ok = blk->bounds_ok,
+                .header_length = 3);
+            ADD_BLOCK(e,
+                .type = EDID_BLK_VENDOR_OUI, .first = f+b, .length = 3,
+                .parent = ppi, .checksum_ok = -1, .bounds_ok = blk->bounds_ok);
             break;
         case 0x81: /* CTA DisplayID, ... Embedded CEA Blocks */
             b = 3;
@@ -253,9 +370,13 @@ static void walk_ext_block(V2_EDID *e, uint16_t bi) {
 
     int b, db_end;
 
+    if (blk->checksum_ok)
+        e->extends_to = MAX(e->extends_to, STD_EEDID);
+
     switch(blk->type) {
         case EDID_BLK_EXT_CEA:
             if (!blk->bounds_ok) return;
+            e->extends_to = MAX(e->extends_to, STD_EIACEA861);
             db_end = u8[f+2];
             if (db_end) {
                 b = 4;
@@ -288,6 +409,9 @@ static void walk_ext_block(V2_EDID *e, uint16_t bi) {
         case EDID_BLK_EXT_DID:
             /* note: f is from the EXT block start, so the DisplayID spec table offsets need +1 */
             //TODO: may actually be longer than 128
+            if (u8[f+1] >= 0x20)
+                e->extends_to = MAX(e->extends_to, STD_DISPLAYID20);
+            else e->extends_to = MAX(e->extends_to, STD_DISPLAYID);
             db_end = u8[f+2] + 5;
             b = 5;
             while(b < db_end) {
@@ -356,8 +480,14 @@ V2_EDID *V2_edid_new(const char *data, unsigned int len) {
         .type = EDID_BLK_ETB, .first = 35, .length = 3,
         .parent = 1, .checksum_ok = -1, .bounds_ok = 1 );
     for(i = 0; i < 8; i++) {
+        int f = 38 + (i*2);
+        if (dont_mark_invalid_std_blocks) {
+            int vchk = r16le(e, f, NOMASK);
+            if (vchk == 0x0101 || !(vchk & 0xff00))
+                continue;
+        }
         ADD_BLOCK(e,
-            .type = EDID_BLK_STD, .first = 38 + (i*2), .length = 2,
+            .type = EDID_BLK_STD, .first = f, .length = 2,
             .parent = 1, .checksum_ok = -1, .bounds_ok = 1 );
     }
     for(i = 54; i < 126; i+=18) {
@@ -391,8 +521,14 @@ V2_EDID *V2_edid_new(const char *data, unsigned int len) {
                 break;
             case 0xfa: /* 6 more STDs */
                 for(j = 0; j < 6; j++) {
+                    int f = i + 5 + (j*2);
+                    if (dont_mark_invalid_std_blocks) {
+                        int vchk = r16le(e, f, NOMASK);
+                        if (vchk == 0x0101 || !(vchk & 0xff00))
+                            continue;
+                    }
                     ADD_BLOCK(e,
-                        .type = EDID_BLK_STD, .first = i + 5 + (j*2), .length = 2,
+                        .type = EDID_BLK_STD, .first = f, .length = 2,
                         .parent = pblk, .checksum_ok = -1, .bounds_ok = 1 );
                 }
                 break;
@@ -445,6 +581,8 @@ V2_EDID *V2_edid_new(const char *data, unsigned int len) {
 void V2_edid_free(V2_EDID *e) {
     int i;
     if (e) {
+        for(i = 0; i < e->block_count; i++)
+            g_free(e->blocks[i].decoded);
         g_free(e->blocks);
         g_free(e->data);
         g_string_free(e->msg_log, TRUE);
@@ -519,81 +657,6 @@ edid_dump_hex_done:
     return ret;
 }
 
-#define BTQ(BTE) case BTE: return #BTE;
-const char *V2_edid_block_type(int type) {
-    switch(type) {
-        BTQ( EDID_BLK_INVALID )
-        BTQ( EDID_BLK_BASE )
-        BTQ( EDID_BLK_HEADER )
-        BTQ( EDID_BLK_PROD )
-        BTQ( EDID_BLK_VERSION )
-        BTQ( EDID_BLK_PROD_CODE )
-        BTQ( EDID_BLK_PROD_SERIAL )
-        BTQ( EDID_BLK_DESC )
-        BTQ( EDID_BLK_VENDOR_PNP3 )
-        BTQ( EDID_BLK_VENDOR_PNP4 )
-        BTQ( EDID_BLK_VENDOR_OUI )
-        BTQ( EDID_BLK_DOM90 )
-        BTQ( EDID_BLK_DOM2K )
-        BTQ( EDID_BLK_EXT )
-        BTQ( EDID_BLK_EXT_MAP )
-        BTQ( EDID_BLK_EXT_CEA )
-        BTQ( EDID_BLK_EXT_DID )
-        BTQ( EDID_BLK_EXT_DI )
-        BTQ( EDID_BLK_ETB )
-        BTQ( EDID_BLK_STD )
-        BTQ( EDID_BLK_DTD )
-        BTQ( EDID_BLK_SVD )
-        BTQ( EDID_BLK_SAD )
-        BTQ( EDID_BLK_DID_T1 )
-        BTQ( EDID_BLK_STR )
-        BTQ( EDID_BLK_STR_NAME )
-        BTQ( EDID_BLK_STR_SERIAL )
-        BTQ( EDID_BLK_CEA )
-        BTQ( EDID_BLK_DID )
-    }
-    return "unknown";
-}
-
-static char *V2_edid_dump_block_tree(V2_EDID *e, int depth, int parent) {
-    char *ret = NULL;
-    char bar[256] = "", *p = bar;
-    int i;
-    for(i = 0; i < depth; i++) {
-        strcpy(p, "|  ");
-        p = p + strlen(p);
-    }
-
-    for(i = 0; i < e->block_count; i++) {
-        if (e->blocks[i].parent == parent) {
-            gchar *checks = g_strdup("");
-            int ok = 1;
-            if (!e->blocks[i].checksum_ok) {
-                ok = 0;
-                checks = appfsp(checks, "%s", "sum_fail!");
-            }
-            if (!e->blocks[i].bounds_ok) {
-                ok = 0;
-                checks = appfsp(checks, "%s", "bounds_fail!");
-            }
-            if (ok) {
-                checks = appfsp(checks, "%s", "ok");
-            }
-            ret = appfnl(ret, "%s+- blk[%d] %s [%d-%d] %s",
-                bar, i,
-                V2_edid_block_type(e->blocks[i].type),
-                e->blocks[i].first, e->blocks[i].first + e->blocks[i].length - 1,
-                checks
-                );
-            gchar *childs = V2_edid_dump_block_tree(e, depth+1, i+1);
-            if (childs)
-                ret = appfnl(ret, "%s", childs);
-            g_free(childs);
-        }
-    }
-    return ret;
-}
-
 char *V2_edid_blk_dump(V2_EDIDBlock *blk) {
     gchar *hb_head = NULL, *hb_payload = NULL, *hb_foot = NULL;
     if (blk->header_length) {
@@ -621,6 +684,237 @@ char *V2_edid_blk_dump(V2_EDIDBlock *blk) {
     return ret;
 }
 
+/* +n from start, -n from end */
+int V2_edid_find_nth_block(V2_EDID *e, uint8_t type, uint16_t parent, int n) {
+    uint16_t i, c = 0;
+
+    if (n > 0) {
+        for(i = 0; i < e->block_count; i++) {
+            if (e->blocks[i].type == type
+                && e->blocks[i].parent == parent) {
+                if (c == n)
+                    return i;
+                c++;
+            }
+        }
+    } else if (n < 0) {
+        n = abs(n);
+        for(i = e->block_count-1; i >= 0; i--) {
+            if (e->blocks[i].type == type
+                && e->blocks[i].parent == parent) {
+                if (c == n)
+                    return i;
+                c++;
+            }
+        }
+    }
+    return -1;
+}
+
+static char *blk_desc_pnp3(V2_EDIDBlock *blk) {
+    V2_EDIDVendor ven;
+    rpnpcpy(&ven, blk->e, blk->first);
+    return g_strdup(ven.pnp);
+}
+
+static char *blk_desc_oui(V2_EDIDBlock *blk) {
+    V2_EDIDVendor ven;
+    rouicpy(&ven, blk->e, blk->first);
+    return g_strdup(ven.oui_str);
+}
+
+static char *blk_desc_dom(V2_EDIDBlock *blk, int base_year) {
+    if (!blk->bounds_ok) return NULL;
+    int week = blk->e->u8[blk->first];
+    int year = blk->e->u8[blk->first+1];
+    int is_model_year = (week == 255);
+
+    if (!year) return g_strdup("unspecified");
+    if (is_model_year)
+        return g_strdup_printf(_("Model of %d"), year + base_year);
+    if (week && week <= 53)
+        return g_strdup_printf(_("Week %d of %d"), week, year + base_year);
+    return g_strdup_printf("%d", year + base_year);
+}
+
+static char *blk_desc_popcount(V2_EDIDBlock *blk, const char *fmt) {
+    if (!blk->bounds_ok) return NULL;
+
+    uint8_t *u8 = blk->e->u8;
+    int f = blk->first;
+
+    int c = 0;
+
+    int b;
+    for(b = blk->header_length; b < blk->length - blk->footer_length; b++) {
+        //TODO: more than one byte at a time
+        c += bf_pop(u8[f+b], NOMASK);
+    }
+    return g_strdup_printf(fmt ? fmt : "%d", c);
+}
+
+static char *blk_desc_str(V2_EDIDBlock *blk, int strip, int esc_and_quote) {
+    char *ret = NULL;
+    if (strip)
+        ret = rstr_strip(blk->e, blk->first, blk->length);
+    else
+        ret = rstr(blk->e, blk->first, blk->length);
+    if (esc_and_quote) {
+        char *tmp = g_strescape(ret, "\uFFFD");
+        g_free(ret);
+        ret = g_strdup_printf("\"%s\"", tmp);
+    }
+    return ret;
+}
+
+char *V2_edid_blk_describe(V2_EDID *e, int bi) {
+    V2_EDIDBlock *blk = &e->blocks[bi];
+    uint8_t *u8 = e->u8;
+    int f = blk->first;
+
+    char *ret = NULL;
+    uint32_t u;
+
+    switch(blk->type) {
+        case EDID_BLK_BASE:
+        case EDID_BLK_HEADER:
+        case EDID_BLK_PROD:
+            break;
+        case EDID_BLK_DESC:
+            ret = g_strdup(edid_descriptor_type(u8[f+3]));
+            break;
+        case EDID_BLK_EXT_DID:
+        case EDID_BLK_EXT_CEA:
+        case EDID_BLK_EXT_DI:
+            ret = g_strdup(edid_ext_block_type(u8[f]));
+            break;
+        case EDID_BLK_VENDOR_PNP3:
+            ret = blk_desc_pnp3(blk);
+            break;
+        case EDID_BLK_VENDOR_OUI:
+            ret = blk_desc_oui(blk);
+            break;
+        case EDID_BLK_VERSION:
+            ret = g_strdup_printf("EDID %d.%d", u8[f+0], u8[f+1]);
+            break;
+        case EDID_BLK_PROD_CODE:
+            u = r16le(e, f+0, NOMASK);
+            ret = g_strdup_printf("%04x (%u)", u, u);
+            break;
+        case EDID_BLK_PROD_SERIAL:
+            u = r32le(e, f+0, NOMASK);
+            ret = g_strdup_printf("%08x (%u)", u, u);
+            break;
+        case EDID_BLK_DOM90:
+            ret = blk_desc_dom(blk, 1990);
+            break;
+        case EDID_BLK_DOM2K:
+            ret = blk_desc_dom(blk, 2000);
+            break;
+        case EDID_BLK_ETB:
+            ret = blk_desc_popcount(blk, "%d timings");
+            break;
+        case EDID_BLK_STR:
+            ret = blk_desc_str(blk, 0, 1);
+            break;
+        case EDID_BLK_STR_NAME:
+        case EDID_BLK_STR_SERIAL:
+            ret = blk_desc_str(blk, 1, 1);
+            break;
+        case EDID_BLK_CEA:
+            ret = g_strdup(edid_cea_block_type(r8(e, f, 0xe0)));
+            break;
+        case EDID_BLK_DID:
+            ret = g_strdup(edid_did_block_type(u8[f]));
+            break;
+        default:
+            ret = V2_edid_blk_dump(blk);
+    }
+    return ret;
+}
+
+#define BTQ(BTE) case BTE: return #BTE;
+const char *V2_edid_block_type(int type) {
+    switch(type) {
+        BTQ( EDID_BLK_INVALID )
+        BTQ( EDID_BLK_BASE )
+        BTQ( EDID_BLK_HEADER )
+        BTQ( EDID_BLK_PROD )
+        BTQ( EDID_BLK_VERSION )
+        BTQ( EDID_BLK_PROD_CODE )
+        BTQ( EDID_BLK_PROD_SERIAL )
+        BTQ( EDID_BLK_DESC )
+        BTQ( EDID_BLK_VENDOR_PNP3 )
+        BTQ( EDID_BLK_VENDOR_PNP4 )
+        BTQ( EDID_BLK_VENDOR_OUI )
+        BTQ( EDID_BLK_DOM90 )
+        BTQ( EDID_BLK_DOM2K )
+        BTQ( EDID_BLK_EXT )
+        BTQ( EDID_BLK_EXT_MAP )
+        BTQ( EDID_BLK_EXT_CEA )
+        BTQ( EDID_BLK_EXT_DID )
+        BTQ( EDID_BLK_EXT_DI )
+        BTQ( EDID_BLK_ETB )
+        BTQ( EDID_BLK_STD )
+        BTQ( EDID_BLK_DTD )
+        BTQ( EDID_BLK_SVD )
+        BTQ( EDID_BLK_DID_T1 )
+        BTQ( EDID_BLK_SAD )
+        BTQ( EDID_BLK_SPEAKERS )
+        BTQ( EDID_BLK_STR )
+        BTQ( EDID_BLK_STR_NAME )
+        BTQ( EDID_BLK_STR_SERIAL )
+        BTQ( EDID_BLK_CEA )
+        BTQ( EDID_BLK_DID )
+        BTQ( EDID_BLK_VSPEC )
+    }
+    return "unknown";
+}
+
+static char *V2_edid_dump_block_tree(V2_EDID *e, int depth, int parent) {
+    char *ret = NULL;
+    char bar[256] = "", *p = bar;
+    int i;
+    for(i = 0; i < depth; i++) {
+        strcpy(p, "|  ");
+        p = p + strlen(p);
+    }
+
+    for(i = 0; i < e->block_count; i++) {
+        if (e->blocks[i].parent == parent) {
+            gchar *checks = g_strdup("");
+            int ok = 1;
+            if (e->blocks[i].error) {
+                ok = 0;
+                checks = appfsp(checks, "%s", "invalid");
+            }
+            if (!e->blocks[i].checksum_ok) {
+                ok = 0;
+                checks = appfsp(checks, "%s", "sum_fail!");
+            }
+            if (!e->blocks[i].bounds_ok) {
+                ok = 0;
+                checks = appfsp(checks, "%s", "bounds_fail!");
+            }
+            ret = appfnl(ret, "%s+- blk[%d] %s [%d-%d] %s",
+                bar, i,
+                V2_edid_block_type(e->blocks[i].type),
+                e->blocks[i].first, e->blocks[i].first + e->blocks[i].length - 1,
+                checks );
+            char *desc = V2_edid_blk_describe(e, i);
+            if (desc) {
+                ret = appf(ret, " -- ", "%s", desc);
+                free(desc);
+            }
+            gchar *childs = V2_edid_dump_block_tree(e, depth+1, i+1);
+            if (childs)
+                ret = appfnl(ret, "%s", childs);
+            g_free(childs);
+        }
+    }
+    return ret;
+}
+
 char *V2_edid_dump(V2_EDID *e) {
     char *ret = NULL;
     int i;
@@ -630,16 +924,19 @@ char *V2_edid_dump(V2_EDID *e) {
     if (e->extends_to)
         ret = appfnl(ret, "extended to: %s", _(edid_standard(e->extends_to)) );
 
-    for(i = 0; i < e->block_count; i++) {
-        char *hb = V2_edid_blk_dump(&e->blocks[i]);
-        ret = appfnl(ret, "blk[%d]: parent:[%d], type:%02x, length:%d, range:%d-%d, checksum_ok:%d, bounds_ok:%d -- %s",
-                i, e->blocks[i].parent ? e->blocks[i].parent-1 : -1,
-                e->blocks[i].type, e->blocks[i].length,
-                e->blocks[i].first, e->blocks[i].first + e->blocks[i].length - 1,
-                e->blocks[i].checksum_ok, e->blocks[i].bounds_ok,
-                hb);
-        free(hb);
+    if (0) {
+        for(i = 0; i < e->block_count; i++) {
+            char *hb = V2_edid_blk_dump(&e->blocks[i]);
+            ret = appfnl(ret, "blk[%d]: parent:[%d], type:%02x, length:%d, range:%d-%d, checksum_ok:%d, bounds_ok:%d -- %s",
+                    i, e->blocks[i].parent ? e->blocks[i].parent-1 : -1,
+                    e->blocks[i].type, e->blocks[i].length,
+                    e->blocks[i].first, e->blocks[i].first + e->blocks[i].length - 1,
+                    e->blocks[i].checksum_ok, e->blocks[i].bounds_ok,
+                    hb);
+            free(hb);
+        }
     }
+
     gchar *childs = V2_edid_dump_block_tree(e, 0, 0);
     if (childs)
         ret = appfnl(ret, "%s", childs);

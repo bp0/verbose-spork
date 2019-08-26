@@ -1028,13 +1028,13 @@ const char *edid_cea_audio_type(int type) {
 const char *edid_cea_block_type(int type) {
     switch(type) {
         case 0x01:
-            return N_("audio");
+            return N_("Short Audio Descriptors");
         case 0x02:
-            return N_("video");
+            return N_("Short Video Descriptors");
         case 0x03:
-            return N_("vendor specific");
+            return N_("Vendor Specific");
         case 0x04:
-            return N_("speaker allocation");
+            return N_("Speaker Allocation");
     }
     return N_("unknown type");
 }
@@ -1326,7 +1326,7 @@ char *edid_dtd_describe(struct edid_dtd *dtd, int dump_bytes) {
 }
 
 char *edid_manf_date_describe(struct edid_manf_date dom) {
-    if (!dom.year) return g_strdup("unspecified");
+    if (!dom.year) return g_strdup("unspecified"); //FIXME: year will always be something... 1990 or 2000
     if (dom.is_model_year)
         return g_strdup_printf(_("model year %d"), dom.year);
     if (dom.week && dom.week <= 53)

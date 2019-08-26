@@ -54,8 +54,10 @@ enum {
     EDID_BLK_STD        = 0x81,
     EDID_BLK_DTD        = 0x82,
     EDID_BLK_SVD        = 0x83,
-    EDID_BLK_SAD        = 0x84,
     EDID_BLK_DID_T1     = 0x85, /* DisplayID Type I */
+
+    EDID_BLK_SAD        = 0x41,
+    EDID_BLK_SPEAKERS   = 0x42,
 
     EDID_BLK_STR        = 0x20,
     EDID_BLK_STR_NAME   = 0x21,
@@ -64,6 +66,8 @@ enum {
     EDID_BLK_CEA        = 0x60,
 
     EDID_BLK_DID        = 0x70,
+
+    EDID_BLK_VSPEC      = 0xe0,
 };
 
 typedef struct {
@@ -99,6 +103,16 @@ typedef struct {
     uint32_t oui;
     uint8_t type; /* enum VEN_TYPE_* */
 } V2_EDIDVendor;
+
+typedef struct {
+    uint64_t pixels; /* horiz_pixels * vert_pixels */
+    uint32_t horiz_pixels, vert_pixels, vert_lines, rate_hz;
+    uint8_t is_interlaced;
+
+    uint32_t horiz_active, horiz_blanking, horiz_fporch, horiz_total;
+    uint32_t vert_active, vert_blanking, vert_border, vert_total;
+
+} V2_EDIDTiming;
 
 enum {
     STD_EDID         = 0,
