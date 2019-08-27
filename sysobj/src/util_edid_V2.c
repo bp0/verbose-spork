@@ -44,7 +44,9 @@ static const char edid_header[] = { 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x
     if (EDID_MSG_STDERR) fprintf (stderr, ">[%s;L%d] " msg "\n", __FUNCTION__, __LINE__, ##__VA_ARGS__); \
     g_string_append_printf(e->msg_log, "[%s;L%d] " msg "\n", __FUNCTION__, __LINE__, ##__VA_ARGS__); }
 
-#define ADD_BLOCK(EPTR, ...) { EPTR->blocks[EPTR->block_count++] = (V2_EDIDBlock){.e = EPTR, __VA_ARGS__}; }
+#define ADD_BLOCK(EPTR, ...) { EPTR->blocks[EPTR->block_count] = (V2_EDIDBlock){.e = EPTR, .bi = EPTR->block_count++, __VA_ARGS__}; }
+#define ADD_TIMING(EPTR, ...) { EPTR->timings[EPTR->timing_count] = (V2_EDIDTiming){.e = EPTR, .ti = EPTR->timing_count++, __VA_ARGS__}; }
+#define ADD_TIMING2(T) { T.e->timings[T.e->timing_count] = T; T.e->timings[T.e->timing_count].ti = T.e->timing_count++; }
 
 static int str_make_printable(char *str) {
     int rc = 0;
@@ -81,9 +83,9 @@ uint32_t bf_pop(uint32_t value, uint32_t mask) {
         }
     if (chk)
         for(bit = 0; bit < 32; bit++) {
-            chk = chk >> 1;
             if (chk & 1)
                 result++;
+            chk = chk >> 1;
         }
     return result;
 }
@@ -101,7 +103,7 @@ char *rstr(V2_EDID *e, uint32_t offset, uint32_t len) {
     char *raw = malloc(len+1), *ret = NULL;
     strncpy(raw, (char*)&e->u8[offset], len);
     raw[len] = 0;
-    ret = g_utf8_make_valid(raw, len);
+    ret = g_utf8_make_valid(raw, -1);
     g_free(raw);
     return ret;
 }
@@ -112,7 +114,7 @@ char *rstr_strip(V2_EDID *e, uint32_t offset, uint32_t len) {
     char *raw = malloc(len+1), *ret = NULL;
     strncpy(raw, (char*)&e->u8[offset], len);
     raw[len] = 0;
-    ret = g_strstrip(g_utf8_make_valid(raw, len));
+    ret = g_strstrip(g_utf8_make_valid(raw, -1));
     g_free(raw);
     return ret;
 }
@@ -275,13 +277,22 @@ static void walk_cea_block(V2_EDID *e, uint16_t bi) {
     }
 }
 
+#define TIMING_LIST(BT, L)   \
+    while(b < blk->length) { \
+        ADD_BLOCK(e,         \
+            .type = BT, .first = f+b, .length = L,  \
+            .parent = pi, .checksum_ok = -1,        \
+            .bounds_ok = blk->bounds_ok);           \
+        b += L; }
+
 static void walk_did_block(V2_EDID *e, uint16_t bi) {
     V2_EDIDBlock *blk = &e->blocks[bi];
     uint8_t *u8 = e->u8;
     int f = blk->first;
     uint16_t pi = bi+1;
 
-    int b;
+    int b = 3; /* blk->header_length */
+    int i;
 
     switch(u8[f]) {
         case 0:     /* Product ID (1.x) */
@@ -319,9 +330,22 @@ static void walk_did_block(V2_EDID *e, uint16_t bi) {
                 .parent = pi, .checksum_ok = -1, .bounds_ok = blk->bounds_ok);
             break;
         case 0x03: /* Type I Detailed Timing */
-            ADD_BLOCK(e,
-                .type = EDID_BLK_DID_T1, .first = f+3, .length = blk->length-3,
-                .parent = pi, .checksum_ok = -1, .bounds_ok = blk->bounds_ok);
+            TIMING_LIST(EDID_BLK_DID_T1, 20);
+            break;
+        case 0x04: /* Type II Detailed Timing */
+            TIMING_LIST(EDID_BLK_DID_T2, 11);
+            break;
+        case 0x05: /* Type III Short Timings */
+            TIMING_LIST(EDID_BLK_DID_T3, 3);
+            break;
+        case 0x06: /* Type IV Enumerated Timings */
+            TIMING_LIST(EDID_BLK_DID_T4, 1);
+            break;
+        case 0x11: /* Type V Short Timings */
+            TIMING_LIST(EDID_BLK_DID_T5, 7);
+            break;
+        case 0x13: /* Type VI Detailed Timing */
+            TIMING_LIST(EDID_BLK_DID_T6, 17);
             break;
         case 0x0a: /* Serial Number (ASCII String) */
             ADD_BLOCK(e,
@@ -333,9 +357,24 @@ static void walk_did_block(V2_EDID *e, uint16_t bi) {
                 .type = EDID_BLK_STR, .first = f+3, .length = blk->length-3,
                 .parent = pi, .checksum_ok = -1, .bounds_ok = blk->bounds_ok);
             break;
+        case 0x22: /* Type VII Detailed Timing */
+            TIMING_LIST(EDID_BLK_DID_T7, 20);
+            break;
+        case 0x23: /* Type VIII Enumerated Timing */
+            b = 3; /* next is int */
+            int i = r8(e, f+1, 0x4); /* bit 3 */
+            if (i) {
+                TIMING_LIST(EDID_BLK_DID_T8_2, 2);
+            } else {
+                TIMING_LIST(EDID_BLK_DID_T8_1, 1);
+            }
+            break;
+        case 0x24: /* Type IX Detailed Timing */
+            TIMING_LIST(EDID_BLK_DID_T9, 6);
+            break;
         case 0x7e: /* Vender Specific */
         case 0x7f:
-            b = 3;
+            b = 3; /* next is int */
             int ppi = e->block_count+1;
             ADD_BLOCK(e,
                 .type = EDID_BLK_VSPEC, .first = f+b, .length = blk->length-3,
@@ -346,7 +385,6 @@ static void walk_did_block(V2_EDID *e, uint16_t bi) {
                 .parent = ppi, .checksum_ok = -1, .bounds_ok = blk->bounds_ok);
             break;
         case 0x81: /* CTA DisplayID, ... Embedded CEA Blocks */
-            b = 3;
             while(b < blk->length) {
                 int db_type = (u8[f+b] & 0xe0) >> 5;
                 int db_size =  u8[f+b] & 0x1f;
@@ -433,6 +471,220 @@ static void walk_ext_block(V2_EDID *e, uint16_t bi) {
     }
 }
 
+static void fill_timings_etb(V2_EDIDBlock *blk_etb) {
+    V2_EDIDTiming t = {
+        .e = blk_etb->e,
+        .bi = blk_etb->bi,
+        .src = OUTSRC_ETB };
+
+    uint16_t f = blk_etb->first;
+
+    /* established timing bitmap */
+#define ETB_CHECK(BYT, BIT, HP, VP, RF, IL) \
+    if ((blk_etb->e->u8[f+BYT]) & (1<<BIT)) { \
+        t.horiz_pixels = HP;  \
+        t.vert_pixels = VP;   \
+        t.rate_hz = RF;       \
+        t.is_interlaced = IL; \
+        ADD_TIMING2(t); };
+    ETB_CHECK(0, 7, 720, 400, 70, 0); //(VGA)
+    ETB_CHECK(0, 6, 720, 400, 88, 0); //(XGA)
+    ETB_CHECK(0, 5, 640, 480, 60, 0); //(VGA)
+    ETB_CHECK(0, 4, 640, 480, 67, 0); //(Apple Macintosh II)
+    ETB_CHECK(0, 3, 640, 480, 72, 0);
+    ETB_CHECK(0, 2, 640, 480, 75, 0);
+    ETB_CHECK(0, 1, 800, 600, 56, 0);
+    ETB_CHECK(0, 0, 800, 600, 60, 0);
+    ETB_CHECK(1, 7, 800, 600, 72, 0);
+    ETB_CHECK(1, 6, 800, 600, 75, 0);
+    ETB_CHECK(1, 5, 832, 624, 75, 0); //(Apple Macintosh II)
+    ETB_CHECK(1, 4, 1024, 768, 87, 1); //(1024×768i)
+    ETB_CHECK(1, 3, 1024, 768, 60, 0);
+    ETB_CHECK(1, 2, 1024, 768, 70, 0);
+    ETB_CHECK(1, 1, 1024, 768, 75, 0);
+    ETB_CHECK(1, 0, 1280, 1024, 75, 0);
+    ETB_CHECK(2, 7, 1152, 870, 75, 0); //(Apple Macintosh II)
+    t.src = OUTSRC_MSP;
+    ETB_CHECK(2, 6, 0, 0, 0, 0);
+    ETB_CHECK(2, 5, 0, 0, 0, 0);
+    ETB_CHECK(2, 4, 0, 0, 0, 0);
+    ETB_CHECK(2, 3, 0, 0, 0, 0);
+    ETB_CHECK(2, 2, 0, 0, 0, 0);
+    ETB_CHECK(2, 1, 0, 0, 0, 0);
+    ETB_CHECK(2, 0, 0, 0, 0, 0);
+}
+
+static void fill_timings_ast3b(V2_EDIDBlock *blk_ast3b) {
+    V2_EDIDTiming t = {
+        .e = blk_ast3b->e,
+        .bi = blk_ast3b->bi,
+        .src = OUTSRC_AST3B };
+
+    uint16_t f = blk_ast3b->first;
+
+    /* established timing bitmap */
+#define ATB_CHECK(BYT, BIT, HP, VP, RF) \
+    if ((blk_ast3b->e->u8[f+BYT]) & (1<<BIT)) { \
+        t.horiz_pixels = HP;  \
+        t.vert_pixels = VP;   \
+        t.rate_hz = RF;      \
+        ADD_TIMING2(t); };
+    ATB_CHECK(6, 7, 640, 350, 85);
+    ATB_CHECK(6, 6, 640, 400, 85);
+    ATB_CHECK(6, 5, 720, 400, 85);
+    ATB_CHECK(6, 4, 640, 480, 85);
+    ATB_CHECK(6, 3, 848, 480, 60);
+    ATB_CHECK(6, 2, 800, 600, 85);
+    ATB_CHECK(6, 1, 1024, 768, 85);
+    ATB_CHECK(6, 0, 1152, 864, 85);
+    ATB_CHECK(7, 7, 1280, 768, 60); /* (CVT-RB) */
+    ATB_CHECK(7, 6, 1280, 768, 60);
+    ATB_CHECK(7, 5, 1280, 768, 75);
+    ATB_CHECK(7, 4, 1280, 768, 85);
+    ATB_CHECK(7, 3, 1280, 960, 60);
+    ATB_CHECK(7, 2, 1280, 960, 85);
+    ATB_CHECK(7, 1, 1280, 1024, 60);
+    ATB_CHECK(7, 0, 1280, 1024, 85);
+    ATB_CHECK(8, 7, 1360, 768, 60); /* (CVT-RB) */
+    ATB_CHECK(8, 6, 1280, 768, 60);
+    ATB_CHECK(8, 5, 1440, 900, 60); /* (CVT-RB) */
+    ATB_CHECK(8, 4, 1440, 900, 75);
+    ATB_CHECK(8, 3, 1440, 900, 85);
+    ATB_CHECK(8, 2, 1440, 1050, 60); /* (CVT-RB) */
+    ATB_CHECK(8, 1, 1440, 1050, 60);
+    ATB_CHECK(8, 0, 1440, 1050, 75);
+    ATB_CHECK(9, 7, 1440, 1050, 85);
+    ATB_CHECK(9, 6, 1680, 1050, 60); /* (CVT-RB) */
+    ATB_CHECK(9, 5, 1680, 1050, 60);
+    ATB_CHECK(9, 4, 1680, 1050, 75);
+    ATB_CHECK(9, 3, 1680, 1050, 85);
+    ATB_CHECK(9, 2, 1600, 1200, 60);
+    ATB_CHECK(9, 1, 1600, 1200, 65);
+    ATB_CHECK(9, 0, 1600, 1200, 70);
+    ATB_CHECK(10, 7, 1600, 1200, 75);
+    ATB_CHECK(10, 6, 1600, 1200, 85);
+    ATB_CHECK(10, 5, 1792, 1344, 60);
+    ATB_CHECK(10, 4, 1792, 1344, 75);
+    ATB_CHECK(10, 3, 1856, 1392, 60);
+    ATB_CHECK(10, 2, 1856, 1392, 75);
+    ATB_CHECK(10, 1, 1920, 1200, 60); /* (CVT-RB) */
+    ATB_CHECK(10, 0, 1920, 1200, 60);
+    ATB_CHECK(11, 7, 1920, 1200, 75);
+    ATB_CHECK(11, 6, 1920, 1200, 75);
+    ATB_CHECK(11, 5, 1920, 1440, 60);
+    ATB_CHECK(11, 4, 1920, 1440, 75);
+}
+
+static void fill_timing_std(V2_EDIDBlock *blk_std) {
+    V2_EDID *e = blk_std->e;
+    V2_EDIDTiming t = {
+        .e = e,
+        .bi = blk_std->bi,
+        .src = OUTSRC_STD };
+    int i;
+    for(i = 0; i < blk_std->length; i+=2) {
+        int b1 = r8(e, blk_std->first + i, NOMASK);
+        int b2 = r8(e, blk_std->first + i + 1, NOMASK);
+        /* 0101 is unused, 00.. is invalid/"reserved" */
+        if (!b1 || (b1 == 0x01 && b2 == 0x01)) continue;
+        double xres = (b1 + 31) * 8;
+        double yres = 0;
+        int iar = (b2 >> 6) & 0x3;
+        int vf = (b2 & 0x3f) + 60;
+        switch(iar) {
+            case 0: /* 16:10 (v<1.3 1:1) */
+                if (e->ver_major == 1 && e->ver_minor < 3)
+                    yres = xres;
+                else
+                    yres = xres*10/16;
+                break;
+            case 0x1: /* 4:3 */
+                yres = xres*4/3;
+                break;
+            case 0x2: /* 5:4 */
+                yres = xres*4/5;
+                break;
+            case 0x3: /* 16:9 */
+                yres = xres*9/16;
+                break;
+        }
+        t.horiz_pixels = xres;
+        t.vert_pixels = yres;
+        t.rate_hz = vf;
+        ADD_TIMING2(t);
+    }
+}
+
+static void fill_timing_dtd(V2_EDIDBlock *blk_dtd) {
+    V2_EDID *e = blk_dtd->e;
+    V2_EDIDTiming t = {
+        .e = e,
+        .bi = blk_dtd->bi,
+        .src = OUTSRC_DTD };
+    uint16_t f = blk_dtd->first;
+
+    if (e->blocks[blk_dtd->parent-1].type == EDID_BLK_EXT_CEA)
+        t.src = OUTSRC_CEA_DTD;
+
+    t.pixel_clock_khz = 10 * r16le(e, f, NOMASK);
+    t.horiz_pixels =
+        r8(e, f+2, NOMASK) +
+        (r8(e, f+4, 0xf0) << 8);
+    t.vert_lines =
+        r8(e, f+5, NOMASK) +
+        (r8(e, f+7, 0xf0) << 8);
+
+    t.is_interlaced = r8(e, f+17, 0x80);
+    if (t.is_interlaced)
+        t.vert_pixels = t.vert_lines * 2;
+    else
+        t.vert_pixels = t.vert_lines;
+
+/*
+        out->horiz_blanking =
+            ((u8[4] & 0x0f) << 8) + u8[3];
+        out->vert_blanking =
+            ((u8[7] & 0x0f) << 8) + u8[6];
+        out->horiz_cm =
+            ((u8[14] & 0xf0) << 4) + u8[12];
+        out->horiz_cm /= 10;
+        out->vert_cm =
+            ((u8[14] & 0x0f) << 8) + u8[13];
+        out->vert_cm /= 10;
+*/
+
+        //out->stereo_mode = (u8[17] & 0x60) >> 4;
+        //out->stereo_mode += u8[17] & 0x01;
+    ADD_TIMING2(t);
+}
+
+static void fill_timing_svd(V2_EDIDBlock *blk_svd) {
+
+}
+
+static void fill_timings(V2_EDID *e) {
+    int i;
+    for(i = 0; i < e->block_count; i++) {
+        V2_EDIDBlock *blk = &e->blocks[i];
+        if ((blk->type & 0xf0) != 0x80) continue;
+
+        switch(blk->type) {
+            case EDID_BLK_ETB:
+                fill_timings_etb(blk);
+                break;
+            case EDID_BLK_STD:
+                fill_timing_std(blk);
+                break;
+            case EDID_BLK_DTD:
+                fill_timing_dtd(blk);
+                break;
+            case EDID_BLK_SVD:
+                fill_timing_svd(blk);
+                break;
+        }
+    }
+}
+
 V2_EDID *V2_edid_new(const char *data, unsigned int len) {
     if (len < 128) return NULL;
 
@@ -450,6 +702,10 @@ V2_EDID *V2_edid_new(const char *data, unsigned int len) {
 #define RESERVE_COUNT 300
     e->blocks = malloc(sizeof(V2_EDIDBlock) * RESERVE_COUNT);
     memset(e->blocks, 0, sizeof(V2_EDIDBlock) * RESERVE_COUNT);
+    e->attrs = malloc(sizeof(V2_EDIDBlockAttribute) * RESERVE_COUNT);
+    memset(e->attrs, 0, sizeof(V2_EDIDBlockAttribute) * RESERVE_COUNT);
+    e->timings = malloc(sizeof(V2_EDIDTiming) * RESERVE_COUNT);
+    memset(e->timings, 0, sizeof(V2_EDIDTiming) * RESERVE_COUNT);
 
     ADD_BLOCK(e,
         .type = EDID_BLK_BASE, .first = 0, .length = 128,
@@ -569,12 +825,16 @@ V2_EDID *V2_edid_new(const char *data, unsigned int len) {
         walk_ext_block(e, bi);
     }
 
+    fill_timings(e);
+
     /* squeeze lists */
 #define SQUEEZE(C, L) \
     if (!e->C) { free(e->L); e->L = NULL; } \
     else { e->L = realloc(e->L, sizeof(e->L[0]) * (e->C)); }
 
     SQUEEZE(block_count, blocks);
+    SQUEEZE(attr_count, attrs);
+    SQUEEZE(timing_count, timings);
     return e;
 }
 
@@ -819,7 +1079,7 @@ char *V2_edid_blk_describe(V2_EDID *e, int bi) {
             break;
         case EDID_BLK_STR_NAME:
         case EDID_BLK_STR_SERIAL:
-            ret = blk_desc_str(blk, 1, 1);
+            ret = blk_desc_str(blk, 0, 1);
             break;
         case EDID_BLK_CEA:
             ret = g_strdup(edid_cea_block_type(r8(e, f, 0xe0)));
@@ -859,6 +1119,11 @@ const char *V2_edid_block_type(int type) {
         BTQ( EDID_BLK_DTD )
         BTQ( EDID_BLK_SVD )
         BTQ( EDID_BLK_DID_T1 )
+        BTQ( EDID_BLK_DID_T2 )
+        BTQ( EDID_BLK_DID_T3 )
+        BTQ( EDID_BLK_DID_T4 )
+        BTQ( EDID_BLK_DID_T5 )
+        BTQ( EDID_BLK_DID_T6 )
         BTQ( EDID_BLK_SAD )
         BTQ( EDID_BLK_SPEAKERS )
         BTQ( EDID_BLK_STR )
@@ -867,6 +1132,23 @@ const char *V2_edid_block_type(int type) {
         BTQ( EDID_BLK_CEA )
         BTQ( EDID_BLK_DID )
         BTQ( EDID_BLK_VSPEC )
+    }
+    return "unknown";
+}
+
+#define TTQ(TTE) case TTE: return #TTE;
+const char *V2_edid_timing_type(int type) {
+    switch(type) {
+        TTQ( OUTSRC_MSP )
+        TTQ( OUTSRC_INVALID )
+        TTQ( OUTSRC_EDID )
+        TTQ( OUTSRC_ETB )
+        TTQ( OUTSRC_STD )
+        TTQ( OUTSRC_AST3B )
+        TTQ( OUTSRC_DTD )
+        TTQ( OUTSRC_CEA_DTD )
+        TTQ( OUTSRC_SVD )
+
     }
     return "unknown";
 }
@@ -915,6 +1197,27 @@ static char *V2_edid_dump_block_tree(V2_EDID *e, int depth, int parent) {
     return ret;
 }
 
+char *V2_edid_timing_describe(V2_EDIDTiming *t) {
+    gchar *ret = NULL;
+    if (t) {
+        if (t->src == OUTSRC_MSP)
+            ret = g_strdup_printf("manufacturer specific");
+        else if (t->src == OUTSRC_INVALID)
+            ret = g_strdup_printf("invalid!");
+        else {
+            ret = g_strdup_printf("%dx%d@%.0f%s",
+                t->horiz_pixels, t->vert_pixels, t->rate_hz, _("Hz") );
+            /*
+            if (t->diag_cm)
+                ret = appfsp(ret, "%0.1fx%0.1f%s (%0.1f\")",
+                    t->horiz_cm, t->vert_cm, _("cm"), t->diag_in ); */
+            ret = appfsp(ret, "%s", t->is_interlaced ? "interlaced" : "progressive");
+            //ret = appfsp(ret, "%s", t->stereo_mode ? "stereo" : "normal");
+        }
+    }
+    return ret;
+}
+
 char *V2_edid_dump(V2_EDID *e) {
     char *ret = NULL;
     int i;
@@ -924,7 +1227,7 @@ char *V2_edid_dump(V2_EDID *e) {
     if (e->extends_to)
         ret = appfnl(ret, "extended to: %s", _(edid_standard(e->extends_to)) );
 
-    if (0) {
+    if (1) {
         for(i = 0; i < e->block_count; i++) {
             char *hb = V2_edid_blk_dump(&e->blocks[i]);
             ret = appfnl(ret, "blk[%d]: parent:[%d], type:%02x, length:%d, range:%d-%d, checksum_ok:%d, bounds_ok:%d -- %s",
@@ -940,6 +1243,13 @@ char *V2_edid_dump(V2_EDID *e) {
     gchar *childs = V2_edid_dump_block_tree(e, 0, 0);
     if (childs)
         ret = appfnl(ret, "%s", childs);
+
+    for(i = 0; i < e->timing_count; i++) {
+        char *desc = V2_edid_timing_describe(&e->timings[i]);
+        ret = appfnl(ret, "timing[%d] (blk[%d]) src:%s: %s",
+            i, e->timings[i].bi, V2_edid_timing_type(e->timings[i].src), desc);
+        free(desc);
+    }
 
     return ret;
 }

@@ -509,7 +509,7 @@ edid *edid_new(const char *data, unsigned int len) {
 
     /* established timing bitmap */
 #define ETB_CHECK(byte, bit, h, v, f, i)         \
-    if (byte & (1<<bit)) {                       \
+    if (e->u8[byte] & (1<<bit)) {                \
         e->etbs[e->etb_count] = e->img;          \
         e->etbs[e->etb_count].horiz_pixels = h;  \
         e->etbs[e->etb_count].vert_pixels = v;   \
@@ -534,7 +534,7 @@ edid *edid_new(const char *data, unsigned int len) {
     ETB_CHECK(36, 2, 1024, 768, 70, 0);
     ETB_CHECK(36, 1, 1024, 768, 75, 0);
     ETB_CHECK(36, 0, 1280, 1024, 75, 0);
-    ETB_CHECK(35, 7, 1152, 870, 75, 0); //(Apple Macintosh II)
+    ETB_CHECK(37, 7, 1152, 870, 75, 0); //(Apple Macintosh II)
 
     /* standard timings */
     for(i = 38; i < 53; i+=2) {
@@ -1045,10 +1045,10 @@ const char *edid_did_block_type(int type) {
         case 0x00: return N_("Product Identification (1.x)");
         case 0x01: return N_("Display Parameters (1.x)");
         case 0x02: return N_("Color Characteristics (1.x)");
-        case 0x03: return N_("Type I Timing - Detailed (1.x)");
-        case 0x04: return N_("Type II Timing - Detailed (1.x)");
-        case 0x05: return N_("Type III Timing - Short (1.x)");
-        case 0x06: return N_("Type IV Timing - DMT ID Code (1.x)");
+        case 0x03: return N_("Type I Timings - Detailed (1.x)");
+        case 0x04: return N_("Type II Timings - Detailed (1.x)");
+        case 0x05: return N_("Type III Timings - Short (1.x)");
+        case 0x06: return N_("Type IV Timings - DMT ID Code (1.x)");
         case 0x07: return N_("VESA Timing Standard (1.x)");
         case 0x08: return N_("CEA Timing Standard (1.x)");
         case 0x09: return N_("Video Timing Range (1.x)");
@@ -1059,9 +1059,9 @@ const char *edid_did_block_type(int type) {
         case 0x0E: return N_("Transfer Characteristics (1.x)");
         case 0x0F: return N_("Display Interface Data (1.x)");
         case 0x10: return N_("Stereo Display Interface (1.x)");
-        case 0x11: return N_("Type V Timing - Short (1.x)");
+        case 0x11: return N_("Type V Timings - Short (1.x)");
         case 0x12: return N_("Tiled Display Topology (1.x)");
-        case 0x13: return N_("Type VI Timing - Detailed (1.x)");
+        case 0x13: return N_("Type VI Timings - Detailed (1.x)");
         case 0x7F: return N_("Vendor specific (1.x)");
         /* 2.x */
         case 0x20: return N_("Product Identification");
@@ -1129,7 +1129,7 @@ const char *edid_descriptor_type(int type) {
         case 0xf8:
             return N_("CVT 3-byte timing codes");
         case 0xf7:
-            return N_("additional standard timing");
+            return N_("Additional Standard Timings 3");
         case 0x10:
             return N_("dummy");
     }

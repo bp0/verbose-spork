@@ -54,7 +54,16 @@ enum {
     EDID_BLK_STD        = 0x81,
     EDID_BLK_DTD        = 0x82,
     EDID_BLK_SVD        = 0x83,
-    EDID_BLK_DID_T1     = 0x85, /* DisplayID Type I */
+    EDID_BLK_DID_T1     = 0x85,
+    EDID_BLK_DID_T2     = 0x86,
+    EDID_BLK_DID_T3     = 0x87,
+    EDID_BLK_DID_T4     = 0x88,
+    EDID_BLK_DID_T5     = 0x89,
+    EDID_BLK_DID_T6     = 0x8a,
+    EDID_BLK_DID_T7     = 0x8b,
+    EDID_BLK_DID_T8_1   = 0x8c,
+    EDID_BLK_DID_T8_2   = 0x8d,
+    EDID_BLK_DID_T9     = 0x8e,
 
     EDID_BLK_SAD        = 0x41,
     EDID_BLK_SPEAKERS   = 0x42,
@@ -82,8 +91,18 @@ typedef struct {
     uint8_t bounds_ok;
     uint8_t error; /* something is wrong inside this block
                     * TODO: perhaps type << 8 + error could be decoded. */
+
+    uint16_t bi; /* self */
     void *decoded;
 } V2_EDIDBlock;
+
+typedef struct {
+    V2_EDID *e;
+    uint16_t bi;
+    char *name;
+    char *value;
+    uint32_t offset, size, mask;
+} V2_EDIDBlockAttribute;
 
 enum {
     VEN_TYPE_INVALID = 0,
@@ -104,10 +123,34 @@ typedef struct {
     uint8_t type; /* enum VEN_TYPE_* */
 } V2_EDIDVendor;
 
+/* order by rising priority */
+enum {
+    OUTSRC_MSP     = -2,
+    OUTSRC_INVALID = -1,
+    OUTSRC_EDID    =  0,
+    OUTSRC_ETB,
+    OUTSRC_STD,
+    OUTSRC_AST3B,
+    OUTSRC_DTD,
+    OUTSRC_CEA_DTD,
+    OUTSRC_SVD,
+
+    OUTSRC_DID_TYPE_I,
+    OUTSRC_DID_TYPE_VI,
+    OUTSRC_DID_TYPE_VII,
+};
+
 typedef struct {
-    uint64_t pixels; /* horiz_pixels * vert_pixels */
-    uint32_t horiz_pixels, vert_pixels, vert_lines, rate_hz;
+    V2_EDID *e;
+    uint16_t bi, ai, ti;
+
+    int8_t src;
+
+    uint32_t horiz_pixels, vert_pixels, vert_lines;
+    double rate_hz;
     uint8_t is_interlaced;
+
+    double pixel_clock_khz;
 
     uint32_t horiz_active, horiz_blanking, horiz_fporch, horiz_total;
     uint32_t vert_active, vert_blanking, vert_border, vert_total;
@@ -134,6 +177,12 @@ struct _V2_EDID {
 
     uint16_t block_count;
     V2_EDIDBlock *blocks;
+
+    uint16_t attr_count;
+    V2_EDIDBlockAttribute *attrs;
+
+    uint16_t timing_count;
+    V2_EDIDTiming *timings;
 
     GString *msg_log;
 };
@@ -196,21 +245,6 @@ typedef struct {
     uint8_t supports_hdcp;
     uint8_t exists;
 } DIExtData;
-
-/* order by rising priority */
-enum {
-    OUTSRC_INVALID = -1,
-    OUTSRC_EDID    =  0,
-    OUTSRC_ETB,
-    OUTSRC_STD,
-    OUTSRC_DTD,
-    OUTSRC_CEA_DTD,
-    OUTSRC_SVD,
-
-    OUTSRC_DID_TYPE_I,
-    OUTSRC_DID_TYPE_VI,
-    OUTSRC_DID_TYPE_VII,
-};
 
 typedef struct {
     float horiz_cm, vert_cm;
