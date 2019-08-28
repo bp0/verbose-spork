@@ -93,6 +93,7 @@ typedef struct {
                     * TODO: perhaps type << 8 + error could be decoded. */
 
     uint16_t bi; /* self */
+    uint16_t ti; /* if the block is a single timing */
     void *decoded;
 } V2_EDIDBlock;
 
@@ -125,6 +126,7 @@ typedef struct {
 
 /* order by rising priority */
 enum {
+    OUTSRC_SVD_UNK = -3,
     OUTSRC_MSP     = -2,
     OUTSRC_INVALID = -1,
     OUTSRC_EDID    =  0,

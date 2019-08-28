@@ -1,5 +1,5 @@
 
-struct {
+static struct {
     int index;
     const char *short_name;
     const char *disp_ratio, *pixel_ratio;

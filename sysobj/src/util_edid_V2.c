@@ -33,6 +33,8 @@ static const int dont_mark_invalid_std_blocks = 1;
 
 static const char edid_header[] = { 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00 };
 
+#include "util_edid_svd_table.c"
+
 #define NOMASK (~0U)
 #define BFMASK(LSB, MASK) (MASK << LSB)
 
@@ -45,8 +47,11 @@ static const char edid_header[] = { 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x
     g_string_append_printf(e->msg_log, "[%s;L%d] " msg "\n", __FUNCTION__, __LINE__, ##__VA_ARGS__); }
 
 #define ADD_BLOCK(EPTR, ...) { EPTR->blocks[EPTR->block_count] = (V2_EDIDBlock){.e = EPTR, .bi = EPTR->block_count++, __VA_ARGS__}; }
-#define ADD_TIMING(EPTR, ...) { EPTR->timings[EPTR->timing_count] = (V2_EDIDTiming){.e = EPTR, .ti = EPTR->timing_count++, __VA_ARGS__}; }
-#define ADD_TIMING2(T) { T.e->timings[T.e->timing_count] = T; T.e->timings[T.e->timing_count].ti = T.e->timing_count++; }
+//#define ADD_TIMING(EPTR, ...) { EPTR->timings[EPTR->timing_count] = (V2_EDIDTiming){.e = EPTR, .ti = EPTR->timing_count++, __VA_ARGS__}; }
+#define ADD_TIMING2(T) { \
+    edid_timing_autofill(&T); \
+    T.e->timings[T.e->timing_count] = T; \
+    T.e->timings[T.e->timing_count].ti = T.e->timing_count++; }
 
 static int str_make_printable(char *str) {
     int rc = 0;
@@ -230,6 +235,30 @@ static char *hex_bytes(uint8_t *bytes, int count) {
     return buffer;
 }
 
+static void edid_timing_autofill(V2_EDIDTiming *t) {
+    if (t->is_interlaced) {
+        if (t->vert_lines)
+            t->vert_pixels = t->vert_lines * 2;
+        else
+            t->vert_lines = t->vert_pixels / 2;
+    } else {
+        if (t->vert_lines)
+            t->vert_pixels = t->vert_lines;
+        else
+            t->vert_lines = t->vert_pixels;
+    }
+
+    if (!t->rate_hz && t->pixel_clock_khz) {
+        uint64_t h = t->horiz_pixels + t->horiz_blanking;
+        uint64_t v = t->vert_lines + t->vert_blanking;
+        if (h && v) {
+            uint64_t work = t->pixel_clock_khz * 1000;
+            work /= (h*v);
+            t->rate_hz = work;
+        }
+    }
+}
+
 static void walk_cea_block(V2_EDID *e, uint16_t bi) {
     V2_EDIDBlock *blk = &e->blocks[bi];
     uint8_t *u8 = e->u8;
@@ -251,9 +280,11 @@ static void walk_cea_block(V2_EDID *e, uint16_t bi) {
         case 0x2: /* SVDs */
             b = 1;
             while(b < blk->length) {
-                ADD_BLOCK(e,
-                    .type = EDID_BLK_SVD, .first = f+b, .length = 1,
-                    .parent = pi, .checksum_ok = -1, .bounds_ok = blk->bounds_ok);
+                if (u8[f+b]) {
+                    ADD_BLOCK(e,
+                        .type = EDID_BLK_SVD, .first = f+b, .length = 1,
+                        .parent = pi, .checksum_ok = -1, .bounds_ok = blk->bounds_ok);
+                }
                 b += 1;
             }
             break;
@@ -611,6 +642,7 @@ static void fill_timing_std(V2_EDIDBlock *blk_std) {
         t.horiz_pixels = xres;
         t.vert_pixels = yres;
         t.rate_hz = vf;
+        e->blocks[blk_std->bi].ti = e->timing_count;
         ADD_TIMING2(t);
     }
 }
@@ -633,18 +665,15 @@ static void fill_timing_dtd(V2_EDIDBlock *blk_dtd) {
     t.vert_lines =
         r8(e, f+5, NOMASK) +
         (r8(e, f+7, 0xf0) << 8);
-
-    t.is_interlaced = r8(e, f+17, 0x80);
-    if (t.is_interlaced)
-        t.vert_pixels = t.vert_lines * 2;
-    else
-        t.vert_pixels = t.vert_lines;
+    t.horiz_blanking =
+        r8(e, f+3, NOMASK) +
+        (r8(e, f+4, 0xf) << 8);
+    t.vert_blanking =
+        r8(e, f+6, NOMASK) +
+        (r8(e, f+7, 0xf) << 8);
+    t.is_interlaced = r8(e, f+17, BFMASK(7, 0x1));
 
 /*
-        out->horiz_blanking =
-            ((u8[4] & 0x0f) << 8) + u8[3];
-        out->vert_blanking =
-            ((u8[7] & 0x0f) << 8) + u8[6];
         out->horiz_cm =
             ((u8[14] & 0xf0) << 4) + u8[12];
         out->horiz_cm /= 10;
@@ -652,14 +681,55 @@ static void fill_timing_dtd(V2_EDIDBlock *blk_dtd) {
             ((u8[14] & 0x0f) << 8) + u8[13];
         out->vert_cm /= 10;
 */
-
         //out->stereo_mode = (u8[17] & 0x60) >> 4;
         //out->stereo_mode += u8[17] & 0x01;
+    e->blocks[blk_dtd->bi].ti = e->timing_count;
+    ADD_TIMING2(t);
+}
+
+static void fill_timing_did_t1(V2_EDIDBlock *blk) {
+    V2_EDID *e = blk->e;
+    V2_EDIDTiming t = {
+        .e = e,
+        .bi = blk->bi,
+        .src = OUTSRC_DID_TYPE_I };
+    uint16_t f = blk->first;
+    uint8_t *u8 = e->u8;
+
+    t.pixel_clock_khz = 10 * r24le(e, f, NOMASK);
+    t.horiz_pixels    = 1 + (u8[f+5] << 8) + u8[f+4];
+    t.horiz_blanking  = (u8[f+7] << 8) + u8[f+6];
+    t.vert_lines      = 1 + (u8[f+13] << 8) + u8[f+12];
+    t.vert_blanking   = (u8[f+15] << 8) + u8[f+14];
+    t.is_interlaced   = bf_value(u8[f+3], BFMASK(4, 0x1));
+    //t.stereo_mode     = bf_value(u8[b+3], BFMASK(5, 0x3));
+    //t.is_preferred    = bf_value(u8[b+3], BFMASK(7, 0x1));
+    e->blocks[blk->bi].ti = e->timing_count;
     ADD_TIMING2(t);
 }
 
 static void fill_timing_svd(V2_EDIDBlock *blk_svd) {
-
+    V2_EDID *e = blk_svd->e;
+    V2_EDIDTiming t = {
+        .e = e,
+        .bi = blk_svd->bi,
+        .src = OUTSRC_SVD_UNK };
+    uint8_t index = r8(e, blk_svd->first, NOMASK);
+    if (index >= 128 && index <= 192) index &= 0x7f; /* "native" flag for 0-64 */
+    int i;
+    for(i = 0; i < (int)G_N_ELEMENTS(cea_standard_timings); i++) {
+        if (cea_standard_timings[i].index == index) {
+            t.src = OUTSRC_SVD;
+            t.horiz_pixels = cea_standard_timings[i].horiz_active;
+            t.vert_lines = cea_standard_timings[i].vert_active;
+            if (strchr(cea_standard_timings[i].short_name, 'i'))
+                t.is_interlaced = 1;
+            t.pixel_clock_khz = cea_standard_timings[i].pixel_clock_mhz * 1000;
+            t.rate_hz = cea_standard_timings[i].vert_freq_hz;
+        }
+    }
+    e->blocks[blk_svd->bi].ti = e->timing_count;
+    ADD_TIMING2(t);
 }
 
 static void fill_timings(V2_EDID *e) {
@@ -680,6 +750,9 @@ static void fill_timings(V2_EDID *e) {
                 break;
             case EDID_BLK_SVD:
                 fill_timing_svd(blk);
+                break;
+            case EDID_BLK_DID_T1:
+                fill_timing_did_t1(blk);
                 break;
         }
     }
@@ -1027,6 +1100,27 @@ static char *blk_desc_str(V2_EDIDBlock *blk, int strip, int esc_and_quote) {
     return ret;
 }
 
+char *V2_edid_timing_describe(V2_EDIDTiming *t) {
+    gchar *ret = NULL;
+    if (t) {
+        if (t->src == OUTSRC_MSP)
+            ret = g_strdup_printf("manufacturer specific");
+        else if (t->src == OUTSRC_INVALID)
+            ret = g_strdup_printf("invalid!");
+        else {
+            ret = g_strdup_printf("%dx%d@%.0f%s",
+                t->horiz_pixels, t->vert_pixels, t->rate_hz, _("Hz") );
+            /*
+            if (t->diag_cm)
+                ret = appfsp(ret, "%0.1fx%0.1f%s (%0.1f\")",
+                    t->horiz_cm, t->vert_cm, _("cm"), t->diag_in ); */
+            ret = appfsp(ret, "%s", t->is_interlaced ? "interlaced" : "progressive");
+            //ret = appfsp(ret, "%s", t->stereo_mode ? "stereo" : "normal");
+        }
+    }
+    return ret;
+}
+
 char *V2_edid_blk_describe(V2_EDID *e, int bi) {
     V2_EDIDBlock *blk = &e->blocks[bi];
     uint8_t *u8 = e->u8;
@@ -1086,6 +1180,12 @@ char *V2_edid_blk_describe(V2_EDID *e, int bi) {
             break;
         case EDID_BLK_DID:
             ret = g_strdup(edid_did_block_type(u8[f]));
+            break;
+        case EDID_BLK_STD:
+        case EDID_BLK_DTD:
+        case EDID_BLK_SVD:
+            if (blk->ti) //FIXME:
+                ret = V2_edid_timing_describe(&e->timings[blk->ti]);
             break;
         default:
             ret = V2_edid_blk_dump(blk);
@@ -1148,7 +1248,8 @@ const char *V2_edid_timing_type(int type) {
         TTQ( OUTSRC_DTD )
         TTQ( OUTSRC_CEA_DTD )
         TTQ( OUTSRC_SVD )
-
+        TTQ( OUTSRC_SVD_UNK )
+        TTQ( OUTSRC_DID_TYPE_I )
     }
     return "unknown";
 }
@@ -1197,27 +1298,6 @@ static char *V2_edid_dump_block_tree(V2_EDID *e, int depth, int parent) {
     return ret;
 }
 
-char *V2_edid_timing_describe(V2_EDIDTiming *t) {
-    gchar *ret = NULL;
-    if (t) {
-        if (t->src == OUTSRC_MSP)
-            ret = g_strdup_printf("manufacturer specific");
-        else if (t->src == OUTSRC_INVALID)
-            ret = g_strdup_printf("invalid!");
-        else {
-            ret = g_strdup_printf("%dx%d@%.0f%s",
-                t->horiz_pixels, t->vert_pixels, t->rate_hz, _("Hz") );
-            /*
-            if (t->diag_cm)
-                ret = appfsp(ret, "%0.1fx%0.1f%s (%0.1f\")",
-                    t->horiz_cm, t->vert_cm, _("cm"), t->diag_in ); */
-            ret = appfsp(ret, "%s", t->is_interlaced ? "interlaced" : "progressive");
-            //ret = appfsp(ret, "%s", t->stereo_mode ? "stereo" : "normal");
-        }
-    }
-    return ret;
-}
-
 char *V2_edid_dump(V2_EDID *e) {
     char *ret = NULL;
     int i;
@@ -1227,7 +1307,7 @@ char *V2_edid_dump(V2_EDID *e) {
     if (e->extends_to)
         ret = appfnl(ret, "extended to: %s", _(edid_standard(e->extends_to)) );
 
-    if (1) {
+    if (0) {
         for(i = 0; i < e->block_count; i++) {
             char *hb = V2_edid_blk_dump(&e->blocks[i]);
             ret = appfnl(ret, "blk[%d]: parent:[%d], type:%02x, length:%d, range:%d-%d, checksum_ok:%d, bounds_ok:%d -- %s",
