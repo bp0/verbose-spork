@@ -56,6 +56,8 @@ typedef struct {
     ids_query_result result;
 } ids_query;
 
+void ids_query_result_cpy(ids_query_result *dest, ids_query_result *src);
+
 ids_query *ids_query_new(const gchar *qpath);
 void ids_query_free(ids_query *s);
 typedef GSList* ids_query_list;
@@ -67,6 +69,10 @@ int query_list_count_found(ids_query_list query_list);
 
 /* returns GSList of ids_query* */
 typedef gchar* (*split_loc_function)(const char *line);
-GSList *ids_file_all_get_all(const gchar *file, split_loc_function split_loc_func);
+ids_query_list ids_file_all_get_all(const gchar *file, split_loc_function split_loc_func);
+
+/* debugging */
+void ids_trace_start();
+void ids_trace_stop();
 
 #endif

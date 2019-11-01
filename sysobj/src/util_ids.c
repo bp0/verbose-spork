@@ -25,6 +25,9 @@
 #include <ctype.h>
 
 #define ids_msg(msg, ...)  fprintf (stderr, "[%s] " msg "\n", __FUNCTION__, ##__VA_ARGS__) /**/
+static int ids_tracing = 0;
+void ids_trace_start() { ids_tracing = 1; }
+void ids_trace_stop() { ids_tracing = 0; }
 
 ids_query *ids_query_new(const gchar *qpath) {
     ids_query *s = g_new0(ids_query, 1);
@@ -35,6 +38,13 @@ ids_query *ids_query_new(const gchar *qpath) {
 void ids_query_free(ids_query *s) {
     if (s) g_free(s->qpath);
     g_free(s);
+}
+
+void ids_query_result_cpy(ids_query_result *dest, ids_query_result *src) {
+    if (!dest || !src) return;
+    memcpy(dest, src, sizeof(ids_query_result));
+    for(int i = 0; dest->results[i]; i++)
+        dest->results[i] = dest->_strs + (src->results[i] - src->_strs);
 }
 
 /* c001 < C 01 */
@@ -49,7 +59,7 @@ static int ids_cmp(const char *s1, const char *s2) {
         return cmp;
 }
 
-void ids_query_result_set_str(ids_query_result *ret, int tabs, gchar *p) {
+static void ids_query_result_set_str(ids_query_result *ret, int tabs, gchar *p) {
     if (!p) {
         ret->results[tabs] = p;
     } else {
@@ -137,8 +147,10 @@ long scan_ids_file(const gchar *file, const gchar *qpath, ids_query_result *resu
         if (tabs >= qdepth) continue; /* too deep */
         if (tabs != 0 && !ret.results[tabs-1])
             continue; /* not looking at this depth, yet */
+        if (ret.results[tabs])
+            goto ids_lookup_done; /* answered at this level */
 
-        //ids_msg("looking at (%d) %s...", tabs, p);
+        if (ids_tracing) ids_msg("[%s] looking at (%d) %s...", file, tabs, p);
 
         if (g_str_has_prefix(p, qparts[tabs])
             && isspace(*(p + qpartlen[tabs])) ) {
@@ -148,18 +160,28 @@ long scan_ids_file(const gchar *file, const gchar *qpath, ids_query_result *resu
 
             if (tabs == 0) last_root_fpos = fpos;
             ids_query_result_set_str(&ret, tabs, p);
+
+            if (ids_tracing) {
+                int i = 0;
+                for(; i < IDS_LOOKUP_MAX_DEPTH; i++) {
+                    if (!qparts[i]) break;
+                    ids_msg(" ...[%d]: %s\t--> %s", i, qparts[i], ret.results[i]);
+                }
+            }
             continue;
         }
 
         if (ids_cmp(p, qparts[tabs]) == 1) {
-            //ids_msg("will not be found p = %s (%d) qparts[tabs] = %s", p, qparts[tabs]);
+            if (ids_tracing)
+                ids_msg("will not be found qparts[tabs] = %s, p = %s", qparts[tabs], p);
             goto ids_lookup_done; /* will not be found */
         }
 
     } /* for each line */
 
 ids_lookup_done:
-    //ids_msg("bailed at line %ld...", line);
+    if (ids_tracing)
+        ids_msg("bailed at line %ld...", line);
     fclose(fd);
 
     if (result) {
@@ -197,7 +219,7 @@ int query_list_count_found(ids_query_list query_list) {
     return count;
 }
 
-gchar *split_loc_default(const char *line) {
+static gchar *split_loc_default(const char *line) {
     return g_utf8_strchr(line, -1, ' ');
 }
 
@@ -208,7 +230,7 @@ GSList *ids_file_all_get_all(const gchar *file, split_loc_function split_loc_fun
 
     FILE *fd;
     int tabs = 0, tabs_last = 0;
-    long last_root_fpos = -1, fpos, line = -1;
+    long fpos, line = -1;
 
     fd = fopen(file, "r");
     if (!fd) {
@@ -284,17 +306,9 @@ GSList *ids_file_all_get_all(const gchar *file, split_loc_function split_loc_fun
         tabs_last = tabs;
     } /* for each line */
 
-ids_get_all_done:
     fclose(fd);
     g_strfreev(qparts);
     ids_query_result_free(working);
 
     return ret;
-}
-
-void ids_query_result_cpy(ids_query_result *dest, ids_query_result *src) {
-    if (!dest || !src) return;
-    memcpy(dest, src, sizeof(ids_query_result));
-    for(int i = 0; dest->results[i]; i++)
-        dest->results[i] = dest->_strs + (src->results[i] - src->_strs);
 }
