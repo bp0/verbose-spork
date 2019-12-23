@@ -216,7 +216,9 @@ static const char *cpu_names[] = {
     "Dual Core AMD Opteron(tm) Processor 165",
     "Genuine Intel(R) CPU T1350 @ 1.86GHz",
     "AMD Phenom(tm) 9350e Quad-Core Processor",
-
+    "AMD E2-1800 APU with Radeon(tm) HD Graphics",
+    "AMD FX-9800P RADEON R7, 12 COMPUTE CORES 4C+8G",
+    "AMD Ryzen 5 3500U with Radeon Vega Mobile Gfx",
 };
 
 static const char *intel_gpu_names[] = {
