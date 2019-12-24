@@ -52,6 +52,11 @@ static const char edid_header[] = { 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x
     edid_timing_autofill(&T); \
     T.e->timings[T.e->timing_count] = T; \
     T.e->timings[T.e->timing_count].ti = T.e->timing_count++; }
+#define ADD_TIMING3(T, BI) { \
+    edid_timing_autofill(&T); \
+    T.e->blocks[(BI)].ti = T.e->timing_count; \
+    T.e->timings[T.e->timing_count] = T; \
+    T.e->timings[T.e->timing_count].ti = T.e->timing_count++; }
 
 static int str_make_printable(char *str) {
     int rc = 0;
@@ -259,6 +264,24 @@ static void edid_timing_autofill(V2_EDIDTiming *t) {
     }
 }
 
+static void walk_vspec_block(V2_EDID *e, uint16_t bi) {
+    V2_EDIDBlock *blk = &e->blocks[bi];
+    uint8_t *u8 = e->u8;
+    int f = blk->first;
+    uint16_t pi = bi+1;
+
+    uint32_t oui = r24le(e, f, NOMASK);
+
+    switch(oui) {
+        case 0x000c03: /* HDMI CEC address */
+            ADD_BLOCK(e,
+                .type = EDID_BLK_PHYS_ADDY, .first = f+3, .length = 2,
+                .parent = pi, .checksum_ok = -1, .bounds_ok = 1,
+                .header_length = 0);
+            break;
+    }
+}
+
 static void walk_cea_block(V2_EDID *e, uint16_t bi) {
     V2_EDIDBlock *blk = &e->blocks[bi];
     uint8_t *u8 = e->u8;
@@ -296,7 +319,8 @@ static void walk_cea_block(V2_EDID *e, uint16_t bi) {
             break;
         case 0x3: /* Vender Specific */
             b = 1;
-            int ppi = e->block_count+1;
+            int nbi = e->block_count;
+            int ppi = nbi+1;
             ADD_BLOCK(e,
                 .type = EDID_BLK_VSPEC, .first = f+b, .length = blk->length-1,
                 .parent = pi, .checksum_ok = -1, .bounds_ok = blk->bounds_ok,
@@ -304,6 +328,7 @@ static void walk_cea_block(V2_EDID *e, uint16_t bi) {
             ADD_BLOCK(e,
                 .type = EDID_BLK_VENDOR_OUI, .first = f+b, .length = 3,
                 .parent = ppi, .checksum_ok = -1, .bounds_ok = blk->bounds_ok);
+            walk_vspec_block(e, nbi);
             break;
     }
 }
@@ -642,8 +667,7 @@ static void fill_timing_std(V2_EDIDBlock *blk_std) {
         t.horiz_pixels = xres;
         t.vert_pixels = yres;
         t.rate_hz = vf;
-        e->blocks[blk_std->bi].ti = e->timing_count;
-        ADD_TIMING2(t);
+        ADD_TIMING3(t, blk_std->bi);
     }
 }
 
@@ -683,8 +707,7 @@ static void fill_timing_dtd(V2_EDIDBlock *blk_dtd) {
 */
         //out->stereo_mode = (u8[17] & 0x60) >> 4;
         //out->stereo_mode += u8[17] & 0x01;
-    e->blocks[blk_dtd->bi].ti = e->timing_count;
-    ADD_TIMING2(t);
+    ADD_TIMING3(t, blk_dtd->bi);
 }
 
 static void fill_timing_did_t1(V2_EDIDBlock *blk) {
@@ -704,8 +727,7 @@ static void fill_timing_did_t1(V2_EDIDBlock *blk) {
     t.is_interlaced   = bf_value(u8[f+3], BFMASK(4, 0x1));
     //t.stereo_mode     = bf_value(u8[b+3], BFMASK(5, 0x3));
     //t.is_preferred    = bf_value(u8[b+3], BFMASK(7, 0x1));
-    e->blocks[blk->bi].ti = e->timing_count;
-    ADD_TIMING2(t);
+    ADD_TIMING3(t, blk->bi);
 }
 
 static void fill_timing_svd(V2_EDIDBlock *blk_svd) {
@@ -728,8 +750,7 @@ static void fill_timing_svd(V2_EDIDBlock *blk_svd) {
             t.rate_hz = cea_standard_timings[i].vert_freq_hz;
         }
     }
-    e->blocks[blk_svd->bi].ti = e->timing_count;
-    ADD_TIMING2(t);
+    ADD_TIMING3(t, blk_svd->bi);
 }
 
 static void fill_timings(V2_EDID *e) {
@@ -917,6 +938,8 @@ void V2_edid_free(V2_EDID *e) {
         for(i = 0; i < e->block_count; i++)
             g_free(e->blocks[i].decoded);
         g_free(e->blocks);
+        g_free(e->timings);
+        g_free(e->attrs);
         g_free(e->data);
         g_string_free(e->msg_log, TRUE);
         g_free(e);
@@ -1056,6 +1079,11 @@ static char *blk_desc_oui(V2_EDIDBlock *blk) {
     return g_strdup(ven.oui_str);
 }
 
+static char *blk_desc_hdmi_addy(V2_EDIDBlock *blk) {
+    int u = r16be(blk->e, blk->first, NOMASK);
+    return g_strdup_printf("%1x.%1x.%1x.%1x", (u>>12)&0xf, (u>>8)&0xf, (u>>4)&0xf, u&0xf);
+}
+
 static char *blk_desc_dom(V2_EDIDBlock *blk, int base_year) {
     if (!blk->bounds_ok) return NULL;
     int week = blk->e->u8[blk->first];
@@ -1187,6 +1215,9 @@ char *V2_edid_blk_describe(V2_EDID *e, int bi) {
             if (blk->ti) //FIXME:
                 ret = V2_edid_timing_describe(&e->timings[blk->ti]);
             break;
+        case EDID_BLK_PHYS_ADDY:
+            ret = blk_desc_hdmi_addy(blk);
+            break;
         default:
             ret = V2_edid_blk_dump(blk);
     }
@@ -1232,6 +1263,7 @@ const char *V2_edid_block_type(int type) {
         BTQ( EDID_BLK_CEA )
         BTQ( EDID_BLK_DID )
         BTQ( EDID_BLK_VSPEC )
+        BTQ( EDID_BLK_PHYS_ADDY )
     }
     return "unknown";
 }

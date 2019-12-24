@@ -77,6 +77,7 @@ enum {
     EDID_BLK_DID        = 0x70,
 
     EDID_BLK_VSPEC      = 0xe0,
+    EDID_BLK_PHYS_ADDY  = 0xe1,  /* HDMI CEC Physical Address */
 };
 
 typedef struct {
